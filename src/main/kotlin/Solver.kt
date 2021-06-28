@@ -17,7 +17,7 @@ fun calc(constraints: List<Constraint>): Double {
 
 class Solver {
 
-    fun calcAlpha(f1: Double, xold: DoubleArray, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) : Double{
+    fun calcAlpha(f1: Double, xold: DoubleArray, grad: DoubleArray, x: List<Value>, cons: List<Constraint>): Double {
         val alpha1 = 0.0
         //Take a step of alpha=1 as alpha2
         var alpha2 = 1.0
@@ -58,37 +58,41 @@ class Solver {
                 f3 = calc(cons)
             }
         }
-        // get the alpha for the minimum f of the quadratic approximation
-        var alphaStar = alpha2 + ((alpha2 - alpha1) * (f1 - f3)) / (3 * (f1 - 2 * f2 + f3))
 
-        //Guarantee that the new alphaStar is within the bracket
-        if (alphaStar > alpha3 || alphaStar < alpha1) {
-            alphaStar = alpha2
-        }
+        val denominator = (3 * (f1 - 2 * f2 + f3))
+        var alphaStar: Double
+        if (denominator == 0.0) {
+            throw RuntimeException("divide by 0")
+            //alphaStar = 0.001
+        } else {
+            // get the alpha for the minimum f of the quadratic approximation
+            alphaStar = alpha2 + ((alpha2 - alpha1) * (f1 - f3)) / denominator
 
-        if (alphaStar != alphaStar) {
-            alphaStar = .001//Fix nan problem
+            //Guarantee that the new alphaStar is within the bracket
+            if (alphaStar > alpha3 || alphaStar < alpha1) {
+                alphaStar = alpha2
+            }
         }
 
         return alphaStar
     }
 
-    fun calcGrad(f0: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>){
-        var pert = f0 * pertMag
+    fun calcGrad(currentError: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
+        var pert = currentError * pertMag
         if (pert < pertMin) pert = pertMin
         for (j in x.indices) {
             val temp = x[j].value
             x[j].value = temp + pert
-            val first = calc(cons)
+            var nextError = calc(cons)
 
-            if(first < f0){
-                grad[j] = (first - f0) / pert;
-            }else{
+            if (nextError < currentError) {
+                grad[j] = (nextError - currentError) / pert
+            } else {
                 x[j].value = temp - pert
-                val second = calc(cons)
-                if(second < f0){
-                    grad[j] = (f0 - second) / pert
-                }else{
+                nextError = calc(cons)
+                if (nextError < currentError) {
+                    grad[j] = (currentError - nextError) / pert
+                } else {
                     grad[j] = 0.0
                 }
             }
@@ -97,32 +101,33 @@ class Solver {
         }
     }
 
+    fun copyInto(target: DoubleArray, x: List<Value>) {
+        for (i in x.indices) {
+            target[i] = x[i].value
+        }
+    }
+
     fun solve(x: List<Value>, cons: List<Constraint>, isFine: Boolean): Boolean {
         //Save the original parameters for later.
         val origSolution = DoubleArray(x.size)
-        for (i in x.indices) {
-            origSolution[i] = x[i].value
-        }
+        copyInto(origSolution, x)
 
         //Calculate Function at the starting point:
         var error = calc(cons)
-        if (error < smallF){
+        if (error < smallF) {
             return true
         }
 
         val xold = DoubleArray(x.size) //Storage for the previous design variables
         val grad = DoubleArray(x.size) //The gradient vector (1xn)
 
-
         var lastError = error
         var errorChange = 1.0
         while (errorChange > smallF) {
-            calcGrad(error,grad,x,cons)
+            calcGrad(error, grad, x, cons)
 
             //copy newest values to the xold
-            for (i in x.indices) {
-                xold[i] = x[i].value//Copy last values to xold
-            }
+            copyInto(xold, x)
             //Take a step of alpha=1 as alpha2
 
             val alphaStar = calcAlpha(error, xold, grad, x, cons)
