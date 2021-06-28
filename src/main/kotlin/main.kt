@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     for(i in 0 until iter){
         val sketch = Sketch()
 
-        val A = sketch.createPoint()
+        val A = sketch.createConstPoint()
         val M = sketch.createPoint(1.0,0.0)
         val C = sketch.createPoint(2.0,0.0)
         val P = sketch.createPoint(2.0,1.0)

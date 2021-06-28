@@ -15,11 +15,16 @@ class Sketch {
         return param
     }
 
+    fun createConstPoint(x: Double = 0.0, y: Double = 0.0) : Point{
+        val a = createConst(x)
+        val b = createConst(y)
+        return Point(a,b)
+    }
+
     fun createPoint(x: Double = 0.0, y: Double = 0.0) : Point{
         val a = createParameter(x)
         val b = createParameter(y)
-        val point = Point(a,b)
-        return point
+        return Point(a,b)
     }
 
     fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0) : Line{
@@ -34,9 +39,6 @@ class Sketch {
     }
 
     fun paramIsEquals(left: Value, right: Value){
-        if(true)
-            return
-
         val leftValues = if(left is SharedValue) left else shared[left]
         val rightValues = if(right is SharedValue) right else shared[right]
 
@@ -60,6 +62,8 @@ class Sketch {
             params.remove(left)
             shared[left] = newShared
             shared[right] = newShared
+            newShared.values.add(left)
+            newShared.values.add(right)
         }
     }
 
