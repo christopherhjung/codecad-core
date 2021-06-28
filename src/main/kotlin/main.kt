@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     val v1 = Value(0.0)
     val v2 = Value(0.0)
 
-    val v3 = Value(0.1)
+    val v3 = Value(0.00001)
     val v4 = Value(0.0)
 
     val v5 = Value(3.0)
@@ -44,7 +44,7 @@ fun main(args: Array<String>) {
     constraints.add(PointOnCircle(p2, circle))
 
     val start = System.currentTimeMillis()
-    println(Solver().solve(listOf(v3,v4),constraints,false))
+    println(Solver().solve(listOf(v3,v4),constraints))
     val end = System.currentTimeMillis()
 
     println("time need: ${end-start}")

@@ -4,10 +4,8 @@ import kotlin.math.sqrt
 
 val pertMag = 1e-6
 val pertMin = 1e-10
-val smallF = 1e-20
-val validSolutionFine = 1e-40
-val validSoltuionRough = 1e-4
-val maxIterations = 50
+val minErrorChange = 1e-20
+val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
     var error = 0.0
@@ -81,17 +79,24 @@ class Solver {
         for (j in x.indices) {
             val temp = x[j].value
             x[j].value = temp + pert
-            var nextError = calc(cons)
+            var rightError = calc(cons)
 
-            if (nextError < currentError) {
-                grad[j] =  (nextError - currentError) / pert
-            } else {
-                x[j].value = temp - pert
-                nextError = calc(cons)
-                if (nextError < currentError) {
-                    grad[j] = (currentError - nextError) / pert
+            x[j].value = temp - pert
+            val leftError = calc(cons)
+
+            val avgGrad = .5*(rightError-leftError)/pert
+
+            if(kotlin.math.abs(avgGrad) > 10e-8){
+                grad[j] = avgGrad;
+            }else{
+                if (rightError < currentError) {
+                    grad[j] =  (rightError - currentError) / pert
                 } else {
-                    grad[j] = 0.0
+                    if (leftError < currentError) {
+                        grad[j] = (currentError - leftError) / pert
+                    } else {
+                        grad[j] = 0.0
+                    }
                 }
             }
 
@@ -105,21 +110,16 @@ class Solver {
         }
     }
 
-    val alpha = 0.001
-    val beta1 = 0.9
-    val beta2 = 0.999
-    val epsilon = 10e-8
 
-    var m = 0.0
-    var v = 0.0
-    var t = 0
 
-    fun solve(x: List<Value>, cons: List<Constraint>, isFine: Boolean): Boolean {
+
+
+    fun solve(x: List<Value>, cons: List<Constraint>): Boolean {
         val original = DoubleArray(x.size)
         copyInto(original, x)
 
         var error = calc(cons)
-        if (error < smallF) {
+        if (error < minErrorChange) {
             return true
         }
 
@@ -129,9 +129,16 @@ class Solver {
         var lastError = error
         var errorChange = 1.0
         var iter = 0
-        while (errorChange > smallF) {
-            calcGrad(error, grad, x, cons)
 
+        val alpha = 0.001
+        val beta1 = 0.9
+        val beta2 = 0.999
+        val epsilon = 10e-8
+        var m = 0.0
+        var v = 0.0
+        var t = 0
+        while (errorChange > minErrorChange || error > targetError) {
+            calcGrad(error, grad, x, cons)
             copyInto(xold, x)
 
             t++
@@ -143,35 +150,15 @@ class Solver {
                 x[i].value = xold[i] - alpha * mHat / ( sqrt(vHat) + epsilon )
             }
 
-            //val alphaStar = calcAlpha(error, xold, grad, x, cons)
-
-            //stepGrad(x, xold, grad, alphaStar)
-
             error = calc(cons)
             errorChange = abs(error - lastError)
             lastError = error
             iter++
         }
-/*
-        errorChange = 1.0
-        iter = 0
-        while (iter < 1000000) {
-            calcGrad(error, grad, x, cons)
-
-            copyInto(xold, x)
-
-            val alphaStar = calcAlpha(error, xold, grad, x, cons)
-
-            stepGrad(x, xold, grad, alphaStar)
-
-            error = calc(cons)
-            iter++
-        }*/
 
         println(iter)
 
-        val validSolution = if (isFine) validSolutionFine else validSoltuionRough
-        return if (error < validSolution) {
+        return if (error < targetError) {
             true
         } else {
             for (i in x.indices) {
