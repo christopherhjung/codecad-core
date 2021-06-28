@@ -130,25 +130,15 @@ class Solver {
         var errorChange = 1.0
         var iter = 0
 
-        val alpha = 0.001
-        val beta1 = 0.9
-        val beta2 = 0.999
-        val epsilon = 10e-8
-        var m = 0.0
-        var v = 0.0
-        var t = 0
+        val optimizer = AdamOptimizer{ i, diff ->
+            x[i].value += diff
+        }
+
         while (errorChange > minErrorChange || error > targetError) {
             calcGrad(error, grad, x, cons)
             copyInto(xold, x)
 
-            t++
-            for(i in x.indices){
-                m = beta1 * m + ( 1 - beta1 ) * grad[i]
-                v = beta2 * v + ( 1 - beta2 ) * grad[i] * grad[i]
-                val mHat = m / (1 - beta1.pow(t))
-                val vHat = v / (1 - beta2.pow(t))
-                x[i].value = xold[i] - alpha * mHat / ( sqrt(vHat) + epsilon )
-            }
+            optimizer.optimize(grad)
 
             error = calc(cons)
             errorChange = abs(error - lastError)
