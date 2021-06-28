@@ -1,3 +1,4 @@
+import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -6,18 +7,43 @@ abstract class Constraint {
 
     abstract fun error(): Double
 
+    open fun pruning(sketch : Sketch){
+
+    }
 }
 
-class Value(var value: Double)
+abstract class Value{
+    abstract var value : Double
 
-class Point(val x: Value, val y: Value){
-    fun toVector() : Vector{
+    override fun toString(): String {
+        return value.toString()
+    }
+}
+
+class Parameter(_value: Double) : Value(){
+    override var value: Double = _value
+}
+
+class SharedValue() : Value(){
+    val values = ArrayList<Value>()
+
+    override var value: Double = 0.0
+        set(newValue) {
+            for(value in values){
+                value.value = newValue
+            }
+            field = newValue
+        }
+}
+
+data class Point(val x: Value, val y: Value) {
+    fun toVector(): Vector {
         return Vector(x.value, y.value)
     }
 }
 
 
-class Line(val a: Point, val b: Point)
+data class Line(val a: Point, val b: Point)
 
 class Circle(val center: Point, val rad: Value)
 
@@ -81,6 +107,11 @@ class Horizontal(val line: Line) : Constraint() {
         val ody = line.b.y.value - line.a.y.value
         return ody * ody * 1000
     }
+
+    override fun pruning(sketch: Sketch) {
+        sketch.paramIsEquals(line.a.y, line.b.y)
+    }
+
 }
 
 class Vertical(val line: Line) : Constraint() {
@@ -90,38 +121,38 @@ class Vertical(val line: Line) : Constraint() {
     }
 }
 
-class Vector(val x: Double, val y: Double){
-    operator fun plus(right: Vector) : Vector{
+class Vector(val x: Double, val y: Double) {
+    operator fun plus(right: Vector): Vector {
         return Vector(x + right.x, y + right.y)
     }
 
-    operator fun minus(right: Vector) : Vector{
+    operator fun minus(right: Vector): Vector {
         return Vector(x - right.x, y - right.y)
     }
 
-    operator fun rangeTo(other: Vector) : Double{
+    operator fun rangeTo(other: Vector): Double {
         return x * other.x + y * other.y
     }
 
-    operator fun times(other: Vector) : Double{
+    operator fun times(other: Vector): Double {
         return x * other.y - y * other.x
     }
 
-    operator fun times(other: Double) : Vector{
-        return Vector(x * other,y * other)
+    operator fun times(other: Double): Vector {
+        return Vector(x * other, y * other)
     }
 
-    fun squaredLength() : Double{
-        return x*x + y*y
+    fun squaredLength(): Double {
+        return x * x + y * y
     }
 
-    fun length() : Double{
+    fun length(): Double {
         return sqrt(squaredLength())
     }
 }
 
-operator fun Double.times(right: Vector) : Vector{
-    return Vector(this * right.x, this * right.y )
+operator fun Double.times(right: Vector): Vector {
+    return Vector(this * right.x, this * right.y)
 }
 
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
@@ -148,8 +179,10 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
         val hyp = lineDirection.length()
         val hypRad = circle.rad.value / hyp
 
-        val Rx = Vector(circle.center.x.value - lineDirection.y * hypRad, circle.center.y.value + lineDirection.x * hypRad)
-        val Ry = Vector(circle.center.x.value + lineDirection.y * hypRad, circle.center.y.value- lineDirection.x * hypRad)
+        val Rx =
+            Vector(circle.center.x.value - lineDirection.y * hypRad, circle.center.y.value + lineDirection.x * hypRad)
+        val Ry =
+            Vector(circle.center.x.value + lineDirection.y * hypRad, circle.center.y.value - lineDirection.x * hypRad)
 
         val cross = lineStart * lineEnd
 
@@ -249,5 +282,36 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
             circle1.center.y.value - circle2.center.y.value
         )
         return temp * temp
+    }
+}
+
+class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
+    override fun error(): Double {
+        val eX = (line.a.x.value + line.b.x.value) / 2
+        val eY = (line.a.y.value + line.b.y.value) / 2
+        val temp = eX - point.x.value
+        val temp2 = eY - point.y.value
+        return temp * temp + temp2 * temp2
+    }
+}
+
+class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constraint() {
+    override fun error(): Double {
+        var dx = line1.b.x.value - line1.a.x.value
+        var dy = line1.b.y.value - line1.a.y.value
+        var dx2 = line2.b.x.value - line2.a.x.value
+        var dy2 = line2.b.y.value - line2.a.y.value
+
+        val hyp1 = hypot(dx, dy)
+        val hyp2 = hypot(dx2, dy2)
+
+        dx /= hyp1
+        dy /= hyp1
+        dx2 /= hyp2
+        dy2 /= hyp2
+
+        val temp = dx * dx2 + dy * dy2
+        val temp2 = cos(angle.value)
+        return (temp + temp2) * (temp + temp2)
     }
 }

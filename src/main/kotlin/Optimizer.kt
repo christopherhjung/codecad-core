@@ -8,13 +8,13 @@ interface Optimizer {
 }
 
 class AdamOptimizer(val consumer: BiConsumer<Int, Double>) : Optimizer{
-    val alpha = 0.001
-    val beta1 = 0.9
-    val beta2 = 0.999
-    val epsilon = 10e-8
-    var m = 0.0
-    var v = 0.0
-    var t = 0
+    private val alpha = 0.001
+    private val beta1 = 0.9
+    private val beta2 = 0.999
+    private val epsilon = 10e-8
+    private var m = 0.0
+    private var v = 0.0
+    private var t = 0
 
     override fun optimize(grad: DoubleArray) {
         t++

@@ -2,76 +2,23 @@ import java.lang.Math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-val pertMag = 1e-6
-val pertMin = 1e-10
-val minErrorChange = 1e-20
-val targetError = 1e-8
+val pertMag = 1e-8
+val pertMin = 1e-12
+val minErrorChange = 1e-22
+val targetError = 1e-6
 
-fun calc(constraints: List<Constraint>): Double {
+fun calc(constraints: List<Constraint>, print: Boolean = false): Double {
     var error = 0.0
-    for (constraint in constraints) {
-        error += constraint.error()
+    for ((i, constraint) in constraints.withIndex()) {
+        val constError = constraint.error()
+        if(print)
+            println("i: $i $constError")
+        error += constError
     }
     return error
 }
 
 class Solver {
-
-    fun stepGrad(x: List<Value>, xold: DoubleArray, grad: DoubleArray, alpha: Double) {
-        for (i in x.indices) {
-            x[i].value = xold[i] + alpha * -grad[i]//calculate the new x
-        }
-    }
-
-    fun calcAlpha(f1: Double, xold: DoubleArray, grad: DoubleArray, x: List<Value>, cons: List<Constraint>): Double {
-        val alpha1 = 0.0
-        var alpha2 = 0.00001
-        stepGrad(x, xold, grad, alpha2)
-        var f2 = calc(cons)
-
-        var alpha3 = 2 * alpha2
-        stepGrad(x, xold, grad, alpha3)
-        var f3 = calc(cons)
-
-        //Now reduce or lengthen alpha2 and alpha3 until the minimum is
-        //Bracketed by the triplet f1>f2<f3
-        while (f2 > f1 || f2 > f3) {
-            if (f2 > f1) {
-                //If f2 is greater than f1 then we shorten alpha2 and alpha3 closer to f1
-                //Effectively both are shortened by a factor of two.
-                alpha3 = alpha2
-                f3 = f2
-                alpha2 /= 2
-                stepGrad(x, xold, grad, alpha2)
-                f2 = calc(cons)
-            } else {
-                //If f2 is greater than f3 then we length alpah2 and alpha3 closer to f1
-                //Effectively both are lengthened by a factor of two.
-                alpha2 = alpha3
-                f2 = f3
-                alpha3 *= 2
-                stepGrad(x, xold, grad, alpha3)
-                f3 = calc(cons)
-            }
-        }
-
-        val denominator = (3 * (f1 - 2 * f2 + f3))
-        var alphaStar: Double
-        if (denominator == 0.0) {
-            //throw RuntimeException("divide by 0")
-            alphaStar = 0.001
-        } else {
-            // get the alpha for the minimum f of the quadratic approximation
-            alphaStar = alpha2 + ((alpha2 - alpha1) * (f1 - f3)) / denominator
-
-            //Guarantee that the new alphaStar is within the bracket
-            if (alphaStar > 0.01 || alphaStar < 0.0) {
-                alphaStar = 0.1
-            }
-        }
-
-        return alphaStar
-    }
 
     fun calcGrad(currentError: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
         var pert = currentError * pertMag
@@ -84,21 +31,18 @@ class Solver {
             x[j].value = temp - pert
             val leftError = calc(cons)
 
-            val avgGrad = .5*(rightError-leftError)/pert
+            val avgGrad = 0.5 * ( rightError - leftError ) / pert
 
-            if(kotlin.math.abs(avgGrad) > 10e-8){
-                grad[j] = avgGrad;
-            }else{
-                if (rightError < currentError) {
-                    grad[j] =  (rightError - currentError) / pert
-                } else {
-                    if (leftError < currentError) {
-                        grad[j] = (currentError - leftError) / pert
-                    } else {
-                        grad[j] = 0.0
-                    }
-                }
+            grad[j] = if(kotlin.math.abs(avgGrad) > 10e-8){
+                avgGrad
+            }else if (rightError < currentError) {
+                (rightError - currentError) / pert
+            } else if (leftError < currentError) {
+                (currentError - leftError) / pert
+            } else {
+                0.0
             }
+
 
             x[j].value = temp
         }
@@ -110,10 +54,6 @@ class Solver {
         }
     }
 
-
-
-
-
     fun solve(x: List<Value>, cons: List<Constraint>): Boolean {
         val original = DoubleArray(x.size)
         copyInto(original, x)
@@ -123,7 +63,7 @@ class Solver {
             return true
         }
 
-        val xold = DoubleArray(x.size)
+        //val xold = DoubleArray(x.size)
         val grad = DoubleArray(x.size)
 
         var lastError = error
@@ -134,9 +74,8 @@ class Solver {
             x[i].value += diff
         }
 
-        while (errorChange > minErrorChange || error > targetError) {
+        while ((errorChange > minErrorChange || error > targetError ) && iter < 2000000) {
             calcGrad(error, grad, x, cons)
-            copyInto(xold, x)
 
             optimizer.optimize(grad)
 
@@ -148,11 +87,13 @@ class Solver {
 
         println(iter)
 
+        calc(cons, true)
+
         return if (error < targetError) {
             true
         } else {
             for (i in x.indices) {
-                x[i].value = original[i]
+                //x[i].value = original[i]
             }
             false
         }

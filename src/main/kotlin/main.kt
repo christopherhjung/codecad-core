@@ -1,6 +1,4 @@
-
-
-
+import org.opencv.imgcodecs.Imgcodecs
 
 
 fun main(args: Array<String>) {
@@ -23,39 +21,50 @@ fun main(args: Array<String>) {
     println(v3.value)
     println(v4.value)*/
 
-    val v1 = Value(0.0)
-    val v2 = Value(0.0)
-
-    val v3 = Value(0.00001)
-    val v4 = Value(0.0)
-
-    val v5 = Value(3.0)
-    val v6 = Value(3.0)
-    val v7 = Value(1.0)
-
-    val p1 = Point(v1,v2)
-    val p2 = Point(v3,v4)
-    val p3 = Point(v5,v6)
-
-    val line = Line(p1,p2)
-    val circle = Circle(p3,v7)
-
-    constraints.add(CircleTangent(circle, line))
-    constraints.add(PointOnCircle(p2, circle))
-
+    val iter = 1
     val start = System.currentTimeMillis()
-    println(Solver().solve(listOf(v3,v4),constraints))
+    for(i in 0 until iter){
+        val sketch = Sketch()
+
+        val A = sketch.createPoint()
+        val M = sketch.createPoint(1.0,0.0)
+        val C = sketch.createPoint(2.0,0.0)
+        val P = sketch.createPoint(2.0,1.0)
+        val B = sketch.createPoint(1.0,2.0)
+
+        val r = sketch.createConst(1.0)
+        val circle = Circle(P,r)
+
+        val lineAB = Line(A,B)
+        val lineAC = Line(A,C)
+        val lineAP = Line(A,P)
+        val lineMP = Line(M,P)
+        val linePC = Line(P,C)
+        val lineMC = Line(M,C)
+
+        sketch.addConstraint(CircleTangent(circle,lineAB))
+        sketch.addConstraint(CircleTangent(circle,lineAC))
+        sketch.addConstraint(PointOnLineMidpoint(M, lineAC))
+        sketch.addConstraint(Horizontal(lineAC))
+        sketch.addConstraint(PointOnCircle(C, circle))
+        sketch.addConstraint(EqualLength(lineMC, linePC))
+
+        sketch.solve()
+
+        if(iter == 1){
+            println((lineAC.a.toVector() - lineAC.b.toVector()).length())
+            println((lineAP.a.toVector() - lineAP.b.toVector()).length())
+        }
+    }
     val end = System.currentTimeMillis()
 
     println("time need: ${end-start}")
+/*
+    */
 
-    println("v1= " + v1.value)
-    println("v2= " + v2.value)
-    println("v3= " + v3.value)
-    println("v4= " + v4.value)
-    println("v5= " + v5.value)
-    println(v6.value)
-    println(v7.value)
+    //Output().draw()
+
+
 
 }
 
