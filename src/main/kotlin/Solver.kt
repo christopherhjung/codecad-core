@@ -1,6 +1,8 @@
+import java.lang.Math.abs
+
 val pertMag = 1e-6
 val pertMin = 1e-10
-val smallF = 1e-20
+val smallF = 1e-18
 val validSolutionFine = 1e-12
 val validSoltuionRough = 1e-4
 val maxIterations = 50
@@ -16,8 +18,7 @@ fun calc(constraints: List<Constraint>): Double {
 class Solver {
 
     fun calcAlpha(f1: Double, xold: DoubleArray, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) : Double{
-
-        var alpha1 = 0.0
+        val alpha1 = 0.0
         //Take a step of alpha=1 as alpha2
         var alpha2 = 1.0
         for (i in x.indices) {
@@ -45,7 +46,7 @@ class Solver {
                     x[i].value = xold[i] + alpha2 * -grad[i]//calculate the new x
                 }
                 f2 = calc(cons)
-            } else if (f2 > f3) {
+            } else {
                 //If f2 is greater than f3 then we length alpah2 and alpha3 closer to f1
                 //Effectively both are lengthened by a factor of two.
                 alpha2 = alpha3
@@ -105,30 +106,17 @@ class Solver {
 
         //Calculate Function at the starting point:
         var error = calc(cons)
-        if (error < smallF) return true
-
-        val grad = DoubleArray(x.size) //The gradient vector (1xn)
-        calcGrad(error,grad,x,cons)
-        //Estimate the norm of N
+        if (error < smallF){
+            return true
+        }
 
         val xold = DoubleArray(x.size) //Storage for the previous design variables
-        for (i in x.indices) {
-            xold[i] = x[i].value//Copy last values to xold
-        }
+        val grad = DoubleArray(x.size) //The gradient vector (1xn)
 
-        //Make the initial position alpha1
-        val alphaStar = calcAlpha(error, xold, grad, x, cons)
 
-        /// Set the values to alphaStar
-        for (i in x.indices) {
-            x[i].value = xold[i] + alphaStar * -grad[i]//calculate the new x
-        }
-        error = calc(cons)
-
-        var iterations = 1
-
-        val maxIterNumber = maxIterations * x.size
-        while (error > smallF && iterations < maxIterNumber) {
+        var lastError = error
+        var errorChange = 1.0
+        while (errorChange > smallF) {
             calcGrad(error,grad,x,cons)
 
             //copy newest values to the xold
@@ -145,6 +133,8 @@ class Solver {
             }
 
             error = calc(cons)
+            errorChange = abs(error - lastError)
+            lastError = error
         }
 
         val validSolution = if (isFine) validSolutionFine else validSoltuionRough

@@ -1,4 +1,3 @@
-import java.lang.Math.pow
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -31,6 +30,20 @@ class LineLength(val line : Line, val length: Value) : Constraint(){
     override fun error(): Double {
         val temp = sqrt((line.b.x.value - line.a.x.value).pow(2) + (line.b.y.value - line.a.y.value).pow(2)) - length.value
         return temp * temp * 100
+    }
+}
+
+class Horizontal(val line:Line) : Constraint(){
+    override fun error(): Double {
+        val ody = line.b.y.value - line.a.y.value
+        return ody * ody * 1000
+    }
+}
+
+class Vertical(val line:Line) : Constraint(){
+    override fun error(): Double {
+        val ody = line.b.x.value - line.a.x.value
+        return ody * ody * 1000
     }
 }
 
