@@ -1,7 +1,7 @@
 import kotlin.math.sqrt
 
 
-val pertMag = 1e-6
+val pertMag = 1e-4
 val pertMin = 1e-10
 val XconvergenceRough = 1e-8
 val XconvergenceFine = 1e-10
@@ -77,6 +77,21 @@ class Solver {
         return alphaStar
     }
 
+    fun calcGrad(f0: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>){
+        var pert = f0 * pertMag
+        if (pert < pertMin) pert = pertMin
+        for (j in x.indices) {
+            val temper = x[j].value
+            x[j].value = temper - pert
+            val first = calc(cons)
+            x[j].value = temper + pert
+            val second = calc(cons)
+            grad[j] = .5 * (second - first) / pert
+
+            x[j].value = temper
+        }
+    }
+
     fun solve(x: List<Value>, cons: List<Constraint>, isFine: Boolean): Boolean {
         val convergence: Double
         //Save the original parameters for later.
@@ -98,20 +113,7 @@ class Solver {
         //Calculate the gradient
         //gradF=x
         val grad = DoubleArray(x.size) //The gradient vector (1xn)
-        var norm = 0.0
-        var pert = f0 * pertMag
-        for (j in x.indices) {
-            val temper = x[j].value
-            x[j].value = temper - pert
-            val first = calc(cons)
-            x[j].value = temper + pert
-            val second = calc(cons)
-            grad[j] = .5 * (second - first) / pert
-
-            x[j].value = temper
-            norm += (grad[j] * grad[j])
-        }
-        norm = sqrt(norm)
+        calcGrad(f0,grad,x,cons)
         //Estimate the norm of N
 
         //Initialize N and calculate s
@@ -121,6 +123,7 @@ class Solver {
         for (i in x.indices) {
             for (j in x.indices) {
                 if (i == j) {
+                    //N[i][j]=norm;
                     N[i][j] = 1.0
                     s[i] = -grad[i] //Calculate the initial search vector
 
@@ -147,9 +150,6 @@ class Solver {
         }
         var fnew = calc(cons)
 
-        var fold = fnew
-
-
         /////////////////////////////////////
         ///end of line search
         /////////////////////////////////////
@@ -175,34 +175,21 @@ class Solver {
             deltaX[i] = x[i].value - xold[i]//Calculate the difference in x for the Hessian update
         }
 
-        var maxIterNumber = maxIterations * x.size
+        val maxIterNumber = maxIterations * x.size
         while (deltaXnorm > convergence && fnew > smallF && iterations < maxIterNumber) {
             //////////////////////////////////////////////////////////////////////
             ///Start of main loop!!!!
             //////////////////////////////////////////////////////////////////////
             var bottom = 0.0
             var deltaXtDotGamma = 0.0
-            var pert = fnew * pertMag
-            if (pert < pertMin) pert = pertMin
+
+            calcGrad(fnew,gradnew,x,cons)
+
             for (i in x.indices) {
-                //Calculate the new gradient vector
-
-                val temper = x[i].value
-                x[i].value = temper - pert
-                val first = calc(cons)
-                x[i].value = temper + pert
-                val second = calc(cons)
-                gradnew[i] = .5 * (second - first) / pert
-
-                x[i].value = temper
-
-
                 //Calculate the change in the gradient
                 gamma[i] = gradnew[i] - grad[i]
                 bottom += deltaX[i] * gamma[i]
-
                 deltaXtDotGamma += deltaX[i] * gamma[i]
-
             }
 
             //make sure that bottom is never 0
