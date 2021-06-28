@@ -321,6 +321,6 @@ class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constr
 
         val temp = dx * dx2 + dy * dy2
         val temp2 = cos(angle.value)
-        return (temp + temp2) * (temp + temp2)
+        return (temp - temp2).pow(2)
     }
 }
