@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
     val v1 = Value(0.0)
     val v2 = Value(0.0)
     val v3 = Value(5.0)
-    val v4 = Value(1.0)
+    val v4 = Value(-1.0)
     val v5 = Value(10.0)
     val a = Point(v1,v2)
     val b = Point(v3,v4)
