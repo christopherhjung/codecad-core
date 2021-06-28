@@ -1,9 +1,11 @@
 import java.lang.Math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 val pertMag = 1e-6
 val pertMin = 1e-10
-val smallF = 1e-18
-val validSolutionFine = 1e-12
+val smallF = 1e-20
+val validSolutionFine = 1e-40
 val validSoltuionRough = 1e-4
 val maxIterations = 50
 
@@ -17,20 +19,20 @@ fun calc(constraints: List<Constraint>): Double {
 
 class Solver {
 
+    fun stepGrad(x: List<Value>, xold: DoubleArray, grad: DoubleArray, alpha: Double) {
+        for (i in x.indices) {
+            x[i].value = xold[i] + alpha * -grad[i]//calculate the new x
+        }
+    }
+
     fun calcAlpha(f1: Double, xold: DoubleArray, grad: DoubleArray, x: List<Value>, cons: List<Constraint>): Double {
         val alpha1 = 0.0
-        //Take a step of alpha=1 as alpha2
-        var alpha2 = 1.0
-        for (i in x.indices) {
-            x[i].value = xold[i] + alpha2 * -grad[i]//calculate the new x
-        }
+        var alpha2 = 0.00001
+        stepGrad(x, xold, grad, alpha2)
         var f2 = calc(cons)
 
-        //Take a step of alpha 3 that is 2*alpha2
-        var alpha3 = 2.0
-        for (i in x.indices) {
-            x[i].value = xold[i] + alpha3 * -grad[i]//calculate the new x
-        }
+        var alpha3 = 2 * alpha2
+        stepGrad(x, xold, grad, alpha3)
         var f3 = calc(cons)
 
         //Now reduce or lengthen alpha2 and alpha3 until the minimum is
@@ -42,9 +44,7 @@ class Solver {
                 alpha3 = alpha2
                 f3 = f2
                 alpha2 /= 2
-                for (i in x.indices) {
-                    x[i].value = xold[i] + alpha2 * -grad[i]//calculate the new x
-                }
+                stepGrad(x, xold, grad, alpha2)
                 f2 = calc(cons)
             } else {
                 //If f2 is greater than f3 then we length alpah2 and alpha3 closer to f1
@@ -52,9 +52,7 @@ class Solver {
                 alpha2 = alpha3
                 f2 = f3
                 alpha3 *= 2
-                for (i in x.indices) {
-                    x[i].value = xold[i] + alpha3 * -grad[i]//calculate the new x
-                }
+                stepGrad(x, xold, grad, alpha3)
                 f3 = calc(cons)
             }
         }
@@ -62,15 +60,15 @@ class Solver {
         val denominator = (3 * (f1 - 2 * f2 + f3))
         var alphaStar: Double
         if (denominator == 0.0) {
-            throw RuntimeException("divide by 0")
-            //alphaStar = 0.001
+            //throw RuntimeException("divide by 0")
+            alphaStar = 0.001
         } else {
             // get the alpha for the minimum f of the quadratic approximation
             alphaStar = alpha2 + ((alpha2 - alpha1) * (f1 - f3)) / denominator
 
             //Guarantee that the new alphaStar is within the bracket
-            if (alphaStar > alpha3 || alphaStar < alpha1) {
-                alphaStar = alpha2
+            if (alphaStar > 0.01 || alphaStar < 0.0) {
+                alphaStar = 0.1
             }
         }
 
@@ -86,7 +84,7 @@ class Solver {
             var nextError = calc(cons)
 
             if (nextError < currentError) {
-                grad[j] = (nextError - currentError) / pert
+                grad[j] =  (nextError - currentError) / pert
             } else {
                 x[j].value = temp - pert
                 nextError = calc(cons)
@@ -107,48 +105,77 @@ class Solver {
         }
     }
 
-    fun solve(x: List<Value>, cons: List<Constraint>, isFine: Boolean): Boolean {
-        //Save the original parameters for later.
-        val origSolution = DoubleArray(x.size)
-        copyInto(origSolution, x)
+    val alpha = 0.001
+    val beta1 = 0.9
+    val beta2 = 0.999
+    val epsilon = 10e-8
 
-        //Calculate Function at the starting point:
+    var m = 0.0
+    var v = 0.0
+    var t = 0
+
+    fun solve(x: List<Value>, cons: List<Constraint>, isFine: Boolean): Boolean {
+        val original = DoubleArray(x.size)
+        copyInto(original, x)
+
         var error = calc(cons)
         if (error < smallF) {
             return true
         }
 
-        val xold = DoubleArray(x.size) //Storage for the previous design variables
-        val grad = DoubleArray(x.size) //The gradient vector (1xn)
+        val xold = DoubleArray(x.size)
+        val grad = DoubleArray(x.size)
 
         var lastError = error
         var errorChange = 1.0
+        var iter = 0
         while (errorChange > smallF) {
             calcGrad(error, grad, x, cons)
 
-            //copy newest values to the xold
             copyInto(xold, x)
-            //Take a step of alpha=1 as alpha2
 
-            val alphaStar = calcAlpha(error, xold, grad, x, cons)
-
-            /// Set the values to alphaStar
-            for (i in x.indices) {
-                x[i].value = xold[i] + alphaStar * -grad[i]//calculate the new x
+            t++
+            for(i in x.indices){
+                m = beta1 * m + ( 1 - beta1 ) * grad[i]
+                v = beta2 * v + ( 1 - beta2 ) * grad[i] * grad[i]
+                val mHat = m / (1 - beta1.pow(t))
+                val vHat = v / (1 - beta2.pow(t))
+                x[i].value = xold[i] - alpha * mHat / ( sqrt(vHat) + epsilon )
             }
+
+            //val alphaStar = calcAlpha(error, xold, grad, x, cons)
+
+            //stepGrad(x, xold, grad, alphaStar)
 
             error = calc(cons)
             errorChange = abs(error - lastError)
             lastError = error
+            iter++
         }
+/*
+        errorChange = 1.0
+        iter = 0
+        while (iter < 1000000) {
+            calcGrad(error, grad, x, cons)
+
+            copyInto(xold, x)
+
+            val alphaStar = calcAlpha(error, xold, grad, x, cons)
+
+            stepGrad(x, xold, grad, alphaStar)
+
+            error = calc(cons)
+            iter++
+        }*/
+
+        println(iter)
 
         val validSolution = if (isFine) validSolutionFine else validSoltuionRough
         return if (error < validSolution) {
             true
         } else {
-            //Replace the bad numbers with the last result
             for (i in x.indices) {
-                x[i].value = origSolution[i]
+                x[i].value = original[i]
             }
             false
         }

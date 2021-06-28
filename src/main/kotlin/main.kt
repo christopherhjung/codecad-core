@@ -25,39 +25,37 @@ fun main(args: Array<String>) {
 
     val v1 = Value(0.0)
     val v2 = Value(0.0)
-    val v3 = Value(0.0)
+
+    val v3 = Value(0.1)
     val v4 = Value(0.0)
-    val v5 = Value(0.0)
-    val v6 = Value(0.0)
-    val v7 = Value(6.0)
-    val v8 = Value(6.0)
+
+    val v5 = Value(3.0)
+    val v6 = Value(3.0)
+    val v7 = Value(1.0)
 
     val p1 = Point(v1,v2)
     val p2 = Point(v3,v4)
     val p3 = Point(v5,v6)
-    val p4 = Point(v7,v8)
 
-    val lineA = Line(p1,p2)
-    val lineB = Line(p3,p4)
+    val line = Line(p1,p2)
+    val circle = Circle(p3,v7)
 
-    constraints.add(Horizontal(lineA))
-    constraints.add(Vertical(lineB))
-    constraints.add(LineLength(lineB, Value(3.2)))
-    val testValue = Value(0.0)
-    constraints.add(LineLength(lineB, testValue))
-    constraints.add(PointOnPoint(p2,p3))
+    constraints.add(CircleTangent(circle, line))
+    constraints.add(PointOnCircle(p2, circle))
 
-    println(Solver().solve(listOf(v1,v2,v3,v4,v5,v6, testValue),constraints,false))
+    val start = System.currentTimeMillis()
+    println(Solver().solve(listOf(v3,v4),constraints,false))
+    val end = System.currentTimeMillis()
 
-    println(v1.value)
-    println(v2.value)
-    println(v3.value)
-    println(v4.value)
-    println(v5.value)
+    println("time need: ${end-start}")
+
+    println("v1= " + v1.value)
+    println("v2= " + v2.value)
+    println("v3= " + v3.value)
+    println("v4= " + v4.value)
+    println("v5= " + v5.value)
     println(v6.value)
     println(v7.value)
-    println(v8.value)
-    println(testValue.value)
 
 }
 
