@@ -21,96 +21,112 @@ class Builder{
         return sketch.createLine(a,b)
     }
 
+    fun circle(center: Point, radius:Value) : Circle{
+        return sketch.createCircle(center,radius)
+    }
+
     fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0) : Line{
         return sketch.createLine(x,y,x2,y2)
     }
+
+    fun tangent(circle: Circle, line: Line){
+        sketch.addConstraint(CircleTangent(circle,line))
+    }
+
+    fun pointOnLineMidpoint(point: Point, line: Line){
+        sketch.addConstraint(PointOnLineMidpoint(point, line))
+    }
+
+    fun horizontal(line: Line){
+        sketch.addConstraint(Horizontal(line))
+    }
+
+    fun vertical(line: Line){
+        sketch.addConstraint(Vertical(line))
+    }
+
+    fun pointOnCircle(point: Point, circle: Circle){
+        sketch.addConstraint(PointOnCircle(point, circle))
+    }
+
+    fun equalLength(line1: Line, line2: Line){
+        sketch.addConstraint(EqualLength(line1, line2))
+    }
+
+    fun angle(line1: Line, line2: Line, angle: Value){
+        sketch.addConstraint(InternalAngle(line1, line2, angle))
+    }
+
+    fun solve(){
+        sketch.solve()
+    }
+
 }
 
-fun sketch(init: Builder.() -> Unit): Builder {
+fun sketch(init: Builder.() -> Unit): Sketch {
     val builder = Builder()
     builder.init()
-    return builder
+    return builder.sketch
 }
 
 fun main(args: Array<String>) {
-    val constraints = ArrayList<Constraint>()
 
-    sketch{
-
-    }
-
-    /*val v1 = Value(0.0)
-    val v2 = Value(0.0)
-    val v3 = Value(5.0)
-    val v4 = Value(-1.0)
-    val v5 = Value(10.0)
-    val a = Point(v1,v2)
-    val b = Point(v3,v4)
-
-    val line = Line(a,b)
-
-    constraints.add(LineLength(line, v5))
-
-    println(Solver().solve(listOf(v4),constraints,false))
-
-    println(v3.value)
-    println(v4.value)*/
-
-    val iter = 0
     val start = System.currentTimeMillis()
-    for(i in 0 until iter){
-        val sketch = Sketch()
+    val sketch = sketch{
+        val A = constPoint()
+        val M = point(0.9,0.0)
+        val C = point(1.8,0.0)
+        val P = point(10.0,1.0)
+        val B = point(1.0,2.0)
 
-        val A = sketch.createConstPoint()
-        val M = sketch.createPoint(1.0,0.0)
-        val C = sketch.createPoint(2.0,0.0)
-        val P = sketch.createPoint(2.0,1.0)
-        val B = sketch.createPoint(1.0,2.0)
+        val r = const(1.0)
+        val circle = circle(P,r)
 
-        val r = sketch.createConst(1.0)
-        val circle = Circle(P,r)
+        val lineAB = line(A,B)
+        val lineAC = line(A,C)
+        val lineAP = line(A,P)
+        val linePC = line(P,C)
+        val lineMP = line(M,P)
+        val lineMC = line(M,C)
 
-        val lineAB = sketch.createLine(A,B)
-        val lineAC = sketch.createLine(A,C)
-        val lineAP = sketch.createLine(A,P)
-        val linePC = sketch.createLine(P,C)
-        val lineMP = sketch.createLine(M,P)
-        val lineMC = sketch.createLine(M,C)
-
-        sketch.addConstraint(CircleTangent(circle,lineAB))
-        sketch.addConstraint(CircleTangent(circle,lineAC))
-        sketch.addConstraint(PointOnLineMidpoint(M, lineAC))
-        sketch.addConstraint(Horizontal(lineAC))
-        sketch.addConstraint(Vertical(linePC))
-        sketch.addConstraint(PointOnCircle(C, circle))
-        //sketch.addConstraint(EqualLength(lineMC, linePC))
-
-        val angle = sketch.createConst(Math.toRadians(45.0))
-
-        sketch.addConstraint(InternalAngle(lineMP, lineAC, angle))
-        //sketch.addConstraint(InternalAngle(lineMP, lineMC, angle))
-
-
-        //val angle = ;
+        tangent(circle, lineAB)
+        tangent(circle, lineAC)
+        pointOnLineMidpoint(M, lineAC)
+        horizontal(lineAC)
+        vertical(linePC)
+        pointOnCircle(C, circle)
+        equalLength(lineMC, linePC)
+        val rad = param(Math.toRadians(30.0))
+        angle(linePC, lineMP, rad)
+        angle(linePC, lineMP, rad)
 
 
 
-        sketch.solve()
+        solve()
 
-        println(sketch)
+        /*var theAngle = InternalAngle(linePC, lineMP,const(Math.toRadians(45.0)) )
+        println(theAngle.error())
+        theAngle = InternalAngle(lineMP, lineMC,const(Math.toRadians(45.0)) )
+        println(theAngle.error())
+*/
 
-        if(iter == 1){
-            println((lineAC.a.toVector() - lineAC.b.toVector()).length())
-            println((lineAP.a.toVector() - lineAP.b.toVector()).length())
-        }
+        println(Math.toDegrees(rad.value))
+
+
+
+
+        println((lineAC.a.toVector() - lineAC.b.toVector()).length())
+        println((lineAP.a.toVector() - lineAP.b.toVector()).length())
     }
+
+    println(sketch)
+
     val end = System.currentTimeMillis()
 
     println("time need: ${end-start}")
-/*
-    */
 
-    Output().draw()
+
+    //Output().draw()
 
 
 

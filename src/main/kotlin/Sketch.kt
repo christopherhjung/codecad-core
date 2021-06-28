@@ -37,6 +37,16 @@ class Sketch {
         return line
     }
 
+    fun createCircle(center: Point, radius: Value) : Circle{
+        val circle = Circle(center, radius)
+        elements.add(circle)
+        return circle
+    }
+
+    fun createCircle() : Circle{
+        return createCircle(createPoint(), createParameter(1.0))
+    }
+
     fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0) : Line{
         return createLine(createPoint(x,y),createPoint(x2,y2))
     }

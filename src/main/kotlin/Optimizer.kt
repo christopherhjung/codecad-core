@@ -7,7 +7,7 @@ interface Optimizer {
     fun optimize(grad: DoubleArray)
 }
 
-class AdamOptimizer(val consumer: BiConsumer<Int, Double>) : Optimizer{
+class AdamOptimizer(private val consumer: (Int, Double) -> Unit) : Optimizer{
     private val alpha = 0.001
     private val beta1 = 0.9
     private val beta2 = 0.999
@@ -23,7 +23,7 @@ class AdamOptimizer(val consumer: BiConsumer<Int, Double>) : Optimizer{
             v = beta2 * v + ( 1 - beta2 ) * grad[i] * grad[i]
             val mHat = m / (1 - beta1.pow(t))
             val vHat = v / (1 - beta2.pow(t))
-            consumer.accept(i, - alpha * mHat / ( sqrt(vHat) + epsilon ))
+            consumer(i, - alpha * mHat / ( sqrt(vHat) + epsilon ))
         }
     }
 

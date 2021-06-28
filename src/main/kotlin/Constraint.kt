@@ -1,7 +1,4 @@
-import kotlin.math.cos
-import kotlin.math.hypot
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 abstract class Constraint {
 
@@ -45,7 +42,7 @@ data class Point(val x: Value, val y: Value) : Element {
 
 data class Line(val a: Point, val b: Point) : Element
 
-class Circle(val center: Point, val rad: Value) : Element
+data class Circle(val center: Point, val rad: Value) : Element
 
 class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
 
@@ -321,6 +318,6 @@ class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constr
 
         val temp = dx * dx2 + dy * dy2
         val temp2 = cos(angle.value)
-        return (temp - temp2).pow(2)
+        return (abs(temp) - abs(temp2)).pow(2)
     }
 }
