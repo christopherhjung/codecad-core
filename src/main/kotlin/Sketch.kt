@@ -1,74 +1,83 @@
+import java.lang.RuntimeException
+
 class Sketch {
     val params = HashSet<Value>()
     val constraints = HashSet<Constraint>()
+    val elements = HashSet<Element>()
 
-    val shared = HashMap<Value, SharedValue>()
-
-    fun createParameter(value: Double = 0.0) : Parameter{
+    fun createParameter(value: Double = 0.0) : ProxyValue{
         val param = Parameter(value)
         params.add(param)
-        return param
+        return ProxyValue(param)
     }
 
     fun createConst(value: Double = 0.0) : Parameter{
-        val param = Parameter(value)
-        return param
+        return Parameter(value)
     }
 
     fun createConstPoint(x: Double = 0.0, y: Double = 0.0) : Point{
         val a = createConst(x)
         val b = createConst(y)
-        return Point(a,b)
+        val point = Point(a,b)
+        elements.add(point)
+        return point
     }
 
     fun createPoint(x: Double = 0.0, y: Double = 0.0) : Point{
         val a = createParameter(x)
         val b = createParameter(y)
-        return Point(a,b)
+        val point = Point(a,b)
+        elements.add(point)
+        return point
+    }
+
+    fun createLine(a: Point, b:Point) : Line{
+        val line = Line(a,b)
+        elements.add(line)
+        return line
     }
 
     fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0) : Line{
-        val a = createPoint(x,y)
-        val b = createPoint(x2,y2)
-        return Line(a,b)
+        return createLine(createPoint(x,y),createPoint(x2,y2))
+    }
+
+    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0) : Line{
+        return createLine(createConstPoint(x,y),createConstPoint(x2,y2))
     }
 
     fun addConstraint(constraint: Constraint){
         constraints.add(constraint)
-        constraint.pruning(this)
+        constraint.prune(this)
     }
 
     fun paramIsEquals(left: Value, right: Value){
-        val leftValues = if(left is SharedValue) left else shared[left]
-        val rightValues = if(right is SharedValue) right else shared[right]
-
-        if(leftValues != null){
-            if(rightValues != null){
-                leftValues.values.addAll(rightValues.values)
-                params.remove(rightValues)
+        if(left is ProxyValue ){
+            if(right is ProxyValue){
+                if(left.proxy != right.proxy){
+                    params.remove(left.proxy)
+                    left.proxy = right.proxy
+                }
             }else{
-                leftValues.values.add(right)
-                params.remove(right)
-                shared[right] = leftValues
+                left.proxy = right
             }
-        }else if(rightValues != null){
-            rightValues.values.add(left)
-            shared[left] = rightValues
-            params.remove(left)
+        }else if(right is ProxyValue){
+            params.remove(right.proxy)
+            right.proxy = left
         }else{
-            val newShared = SharedValue()
-            params.add(newShared)
-            params.remove(right)
-            params.remove(left)
-            shared[left] = newShared
-            shared[right] = newShared
-            newShared.values.add(left)
-            newShared.values.add(right)
+            throw RuntimeException("const cant be set equals")
         }
     }
 
     fun solve(){
         val solver = Solver()
         println(solver.solve(ArrayList(params),ArrayList(constraints)))
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        for(element in elements){
+            sb.append(element).append("\n")
+        }
+        return sb.toString()
     }
 }

@@ -35,21 +35,23 @@ fun main(args: Array<String>) {
         val r = sketch.createConst(1.0)
         val circle = Circle(P,r)
 
-        val lineAB = Line(A,B)
-        val lineAC = Line(A,C)
-        val lineAP = Line(A,P)
-        val lineMP = Line(M,P)
-        val linePC = Line(P,C)
-        val lineMC = Line(M,C)
+        val lineAB = sketch.createLine(A,B)
+        val lineAC = sketch.createLine(A,C)
+        val lineAP = sketch.createLine(A,P)
+        val linePC = sketch.createLine(P,C)
+        val lineMC = sketch.createLine(M,C)
 
         sketch.addConstraint(CircleTangent(circle,lineAB))
         sketch.addConstraint(CircleTangent(circle,lineAC))
         sketch.addConstraint(PointOnLineMidpoint(M, lineAC))
         sketch.addConstraint(Horizontal(lineAC))
+        sketch.addConstraint(Vertical(linePC))
         sketch.addConstraint(PointOnCircle(C, circle))
         sketch.addConstraint(EqualLength(lineMC, linePC))
 
         sketch.solve()
+
+        println(sketch)
 
         if(iter == 1){
             println((lineAC.a.toVector() - lineAC.b.toVector()).length())

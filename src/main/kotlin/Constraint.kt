@@ -7,7 +7,7 @@ abstract class Constraint {
 
     abstract fun error(): Double
 
-    open fun pruning(sketch : Sketch){
+    open fun prune(sketch : Sketch){
 
     }
 }
@@ -24,40 +24,45 @@ class Parameter(_value: Double) : Value(){
     override var value: Double = _value
 }
 
-class SharedValue() : Value(){
-    val values = ArrayList<Value>()
-
-    override var value: Double = 0.0
-        set(newValue) {
-            for(value in values){
-                value.value = newValue
-            }
-            field = newValue
-        }
+class ProxyValue(var proxy: Value) : Value(){
+    override var value: Double
+        get() = proxy.value
+        set(value) {proxy.value = value}
 }
 
-data class Point(val x: Value, val y: Value) {
+
+
+interface Element{
+
+}
+
+data class Point(val x: Value, val y: Value) : Element {
     fun toVector(): Vector {
         return Vector(x.value, y.value)
     }
 }
 
 
-data class Line(val a: Point, val b: Point)
+data class Line(val a: Point, val b: Point) : Element
 
-class Circle(val center: Point, val rad: Value)
+class Circle(val center: Point, val rad: Value) : Element
 
-class Arc(val center: Point, val rad: Value, val start: Value, val end: Value)
+class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
 
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
     override fun error(): Double {
         return (a.x.value - b.x.value).pow(2) + (a.y.value - b.y.value).pow(2)
     }
+
+    override fun prune(sketch: Sketch) {
+        sketch.paramIsEquals(a.x, b.x)
+        sketch.paramIsEquals(b.y, b.y)
+    }
 }
 
 class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Constraint() {
     override fun error(): Double {
-        return (a.x.value - b.x.value).pow(2) + (a.y.value - b.y.value).pow(2) - distance.value.pow(2.0)
+        return (a.x.value - b.x.value).pow(2) + (a.y.value - b.y.value).pow(2) - distance.value.pow(2)
     }
 }
 
@@ -72,11 +77,11 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
         return if (m <= 1 && m >= -1) {
             //Calculate the expected y point given the x coordinate of the point
             val Ey = line.a.y.value + m * (point.x.value - line.a.x.value)
-            (Ey - point.y.value).pow(2.0)
+            (Ey - point.y.value).pow(2)
         } else {
             //Calculate the expected x point given the y coordinate of the point
             val Ex = line.a.x.value + n * (point.y.value - line.a.y.value)
-            (Ex - point.x.value).pow(2.0)
+            (Ex - point.x.value).pow(2)
         }
     }
 }
@@ -108,7 +113,7 @@ class Horizontal(val line: Line) : Constraint() {
         return ody * ody * 1000
     }
 
-    override fun pruning(sketch: Sketch) {
+    override fun prune(sketch: Sketch) {
         sketch.paramIsEquals(line.a.y, line.b.y)
     }
 
@@ -118,6 +123,10 @@ class Vertical(val line: Line) : Constraint() {
     override fun error(): Double {
         val ody = line.b.x.value - line.a.x.value
         return ody * ody * 1000
+    }
+
+    override fun prune(sketch: Sketch) {
+        sketch.paramIsEquals(line.a.x, line.b.x)
     }
 }
 

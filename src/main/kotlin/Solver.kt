@@ -7,12 +7,10 @@ val pertMin = 1e-12
 val minErrorChange = 1e-22
 val targetError = 1e-6
 
-fun calc(constraints: List<Constraint>, print: Boolean = false): Double {
+fun calc(constraints: List<Constraint>): Double {
     var error = 0.0
     for ((i, constraint) in constraints.withIndex()) {
         val constError = constraint.error()
-        if(print)
-            println("i: $i $constError")
         error += constError
     }
     return error
@@ -74,7 +72,8 @@ class Solver {
             x[i].value += diff
         }
 
-        while ((errorChange > minErrorChange || error > targetError ) && iter < 2000000) {
+
+        while ((errorChange > minErrorChange || error > targetError ) && iter < 1000000) {
             calcGrad(error, grad, x, cons)
 
             optimizer.optimize(grad)
@@ -87,13 +86,11 @@ class Solver {
 
         println(iter)
 
-        calc(cons, true)
-
         return if (error < targetError) {
             true
         } else {
             for (i in x.indices) {
-                //x[i].value = original[i]
+                x[i].value = original[i]
             }
             false
         }
