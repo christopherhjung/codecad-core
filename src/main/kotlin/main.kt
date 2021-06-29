@@ -5,8 +5,16 @@ class Builder{
         return sketch.createParameter(value)
     }
 
+    fun paramDegree(value: Double = 0.0) : ProxyValue{
+        return sketch.createParameter(Math.toRadians(value))
+    }
+
     fun const(value: Double = 0.0) : Parameter{
         return sketch.createConst(value)
+    }
+
+    fun constDegree(value: Double = 0.0) : Parameter{
+        return sketch.createConst(Math.toRadians(value))
     }
 
     fun constPoint(x: Double = 0.0, y: Double = 0.0) : Point{
@@ -69,6 +77,14 @@ fun sketch(init: Builder.() -> Unit): Sketch {
     return builder.sketch
 }
 
+
+fun Canvas.line(line: Line){
+    line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
+}
+fun Canvas.circle(circle: Circle){
+    circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
+}
+
 fun main(args: Array<String>) {
 
     val start = System.currentTimeMillis()
@@ -95,6 +111,7 @@ fun main(args: Array<String>) {
         horizontal(lineAC)
         vertical(linePC)
         pointOnCircle(C, circle)
+        pointOnCircle(B, circle)
         equalLength(lineMC, linePC)
         val rad = param(Math.toRadians(30.0))
         angle(linePC, lineMP, rad)
@@ -117,17 +134,25 @@ fun main(args: Array<String>) {
 
         println((lineAC.a.toVector() - lineAC.b.toVector()).length())
         println((lineAP.a.toVector() - lineAP.b.toVector()).length())
+
+        val canvas = Canvas()
+        canvas.line(lineAB)
+        canvas.line(lineAC)
+        canvas.line(lineAP)
+        canvas.line(linePC)
+        canvas.line(lineMP)
+        canvas.line(lineMC)
+        canvas.circle(circle)
+        canvas.writeImage()
     }
+
+
 
     println(sketch)
 
     val end = System.currentTimeMillis()
 
     println("time need: ${end-start}")
-
-
-    //Output().draw()
-
 
 
 }
