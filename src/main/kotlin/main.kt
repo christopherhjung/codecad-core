@@ -134,15 +134,15 @@ fun main(args: Array<String>) {
 
     }
 
+    val end = System.currentTimeMillis()
+
+    println("time need: ${end-start}")
+
 
     sketch.draw()
 
 
     println(sketch)
-
-    val end = System.currentTimeMillis()
-
-    println("time need: ${end-start}")
 
 
 }

@@ -68,7 +68,7 @@ class Solver {
         var errorChange = 1.0
         var iter = 0
 
-        val optimizer = AdamOptimizer{ i, diff ->
+        val optimizer = AdamOptimizer(x.size){ i, diff ->
             x[i].value += diff
         }
 
