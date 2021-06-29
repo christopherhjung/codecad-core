@@ -277,8 +277,17 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
         //see what the current radius to the point is
         val rad1 = hypot(circle.center.x.value - point.x.value, circle.center.y.value - point.y.value)
         //Compare this radius to the radius of the circle, return the error squared
-        val temp = rad1 - circle.rad.value
-        return temp * temp
+        return (rad1 - circle.rad.value).pow(2)
+    }
+}
+
+class PointOnArc(val point: Point, val arc: Arc) : Constraint() {
+    override fun error(): Double {
+        //see what the current radius to the point is
+        val rad1 = hypot(arc.center.x.value - point.x.value,arc.center.y.value - point.y.value);
+        //val rad2 = hypot(arc.center.x.value  - (arc.center.x.value+arc.rad.value*cos(arc.start.value)),arc.center.y.value -  (arc.center.y.value+arc.rad.value*sin(arc.start.value)));
+        //Compare this radius to the radius of the circle, return the error squared
+        return (rad1-arc.rad.value).pow(2)
     }
 }
 
@@ -327,5 +336,17 @@ class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constr
         val temp = dx * dx2 + dy * dy2
         val temp2 = cos(angle.value)
         return (abs(temp) - abs(temp2)).pow(2)
+    }
+}
+
+class Radius(val circle: Circle, val radius: Value) : Constraint(){
+    override fun error(): Double {
+        return (radius.value - circle.rad.value).pow(2)
+    }
+}
+
+class Equals(val left: Value, val right: Value) : Constraint(){
+    override fun error(): Double {
+        return (left.value - right.value).pow(2)
     }
 }
