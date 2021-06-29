@@ -91,8 +91,8 @@ fun main(args: Array<String>) {
     val sketch = sketch{
         val A = constPoint()
         val M = point(0.9,0.0)
-        val C = point(1.8,0.0)
-        val P = point(10.0,1.0)
+        val C = point(3.8,0.0)
+        val P = point(4.0,1.0)
         val B = point(1.0,2.0)
 
         val r = const(1.0)
@@ -112,10 +112,10 @@ fun main(args: Array<String>) {
         vertical(linePC)
         pointOnCircle(C, circle)
         pointOnCircle(B, circle)
-        equalLength(lineMC, linePC)
+        //equalLength(lineMC, linePC)
         val rad = param(Math.toRadians(30.0))
         angle(linePC, lineMP, rad)
-        angle(linePC, lineMP, rad)
+        angle(lineMC, lineMP, rad)
 
 
 
@@ -125,27 +125,17 @@ fun main(args: Array<String>) {
         println(theAngle.error())
         theAngle = InternalAngle(lineMP, lineMC,const(Math.toRadians(45.0)) )
         println(theAngle.error())
+
 */
-
-        println(Math.toDegrees(rad.value))
-
-
 
 
         println((lineAC.a.toVector() - lineAC.b.toVector()).length())
         println((lineAP.a.toVector() - lineAP.b.toVector()).length())
 
-        val canvas = Canvas()
-        canvas.line(lineAB)
-        canvas.line(lineAC)
-        canvas.line(lineAP)
-        canvas.line(linePC)
-        canvas.line(lineMP)
-        canvas.line(lineMC)
-        canvas.circle(circle)
-        canvas.writeImage()
     }
 
+
+    sketch.draw()
 
 
     println(sketch)

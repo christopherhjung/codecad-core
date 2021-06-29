@@ -4,8 +4,8 @@ import kotlin.math.sqrt
 
 val pertMag = 1e-8
 val pertMin = 1e-12
-val minErrorChange = 1e-22
-val targetError = 1e-6
+val minErrorChange = 1e-16
+val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
     var error = 0.0

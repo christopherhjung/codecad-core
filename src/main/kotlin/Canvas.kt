@@ -17,7 +17,7 @@ class Canvas {
     }
 
     fun getPoint(x: Double, y: Double) : Point{
-        return Point(x * scale,1000 - y * scale)
+        return Point(24 + x * scale,1000 - y * scale)
     }
 
     fun line(x: Double, y: Double, x2: Double, y2: Double){
@@ -26,7 +26,8 @@ class Canvas {
             getPoint(x,y),  //p1
             getPoint(x2,y2),  //p2
             Scalar(0.0, 255.0, 0.0),  //Scalar object for color
-            1 //Thickness of the line
+            1, //Thickness of the line
+            Imgproc.LINE_AA
         )
     }
 
@@ -34,9 +35,21 @@ class Canvas {
         Imgproc.circle(
             matrix,  //Matrix obj of the image
             getPoint(x,y),  //p1
-            (rad * scale).toInt(),
+            (rad * scale + 0.5).toInt(),
             Scalar(0.0, 255.0, 0.0),  //Scalar object for color
-            1 //Thickness of the line
+            1, //Thickness of the line
+            Imgproc.LINE_AA
+        )
+    }
+
+    fun point(x: Double, y: Double){
+        Imgproc.circle(
+            matrix,  //Matrix obj of the image
+            getPoint(x,y),  //p1
+            (4).toInt(),
+            Scalar(0.0, 0.0, 255.0),  //Scalar object for color
+            Imgproc.FILLED, //Thickness of the line
+            Imgproc.LINE_AA
         )
     }
 

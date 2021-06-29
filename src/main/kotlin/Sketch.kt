@@ -83,6 +83,26 @@ class Sketch {
         println(solver.solve(ArrayList(params),ArrayList(constraints)))
     }
 
+    fun draw(){
+        val canvas = Canvas()
+        for(element in elements){
+            if(element is Line){
+                canvas.line(element.a.x.value,element.a.y.value, element.b.x.value,element.b.y.value)
+            }else if(element is Circle){
+                canvas.circle(element.center.x.value,element.center.y.value, element.rad.value)
+            }
+        }
+
+
+        for(element in elements){
+            if(element is Point){
+                canvas.point(element.x.value,element.y.value)
+            }
+        }
+
+        canvas.writeImage()
+    }
+
     override fun toString(): String {
         val sb = StringBuilder()
         for(element in elements){
@@ -91,3 +111,12 @@ class Sketch {
         return sb.toString()
     }
 }
+
+/*
+* fun Canvas.line(line: Line){
+    line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
+}
+fun Canvas.circle(circle: Circle){
+    circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
+}
+* */

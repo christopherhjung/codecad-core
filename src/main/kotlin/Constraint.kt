@@ -1,3 +1,4 @@
+import java.lang.RuntimeException
 import kotlin.math.*
 
 abstract class Constraint {
@@ -289,6 +290,13 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
         )
         return temp * temp
     }
+}
+
+class MidValue(val left : Value, val right: Value) : Value(){
+    override var value: Double
+        get() = (left.value + right.value) / 2
+        set(value) {throw RuntimeException("No Set od MidValue Possible")}
+
 }
 
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
