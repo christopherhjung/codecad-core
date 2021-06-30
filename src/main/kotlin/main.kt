@@ -36,8 +36,8 @@ class Builder {
         return sketch.createPoint(x, y)
     }
 
-    fun line(a: Point, b: Point): Line {
-        return sketch.createLine(a, b)
+    fun line(a: Point, b: Point, type: LineType = LineType.Normal): Line {
+        return sketch.createLine(a, b, type)
     }
 
     fun circle(center: Point, radius: Value): Circle {
@@ -126,21 +126,15 @@ interface Stepper {
 
 class LineStepper(val line: Line) : Stepper {
     var i = 0
-    var max = 100
-
-    val start = line.a.toVector()
-    val end = line.b.toVector()
-
-    val diff = end - start
 
     override fun hasNext(): Boolean {
-        return i <= 100
+        return i <= 1
     }
 
     override fun next(): Vector {
-        val value = start + diff * (i / 100.0)
+        val value = if(i == 0) line.a else line.b
         i++
-        return value
+        return value.toVector()
     }
 }
 
@@ -170,6 +164,8 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
 
     val path = Path()
 
+    val scaler: Double = 100.0
+
     for (element in elements) {
         val stepper: Stepper = if (element is Line) {
             LineStepper(element)
@@ -182,18 +178,18 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
         while (stepper.hasNext()) {
             val next = stepper.next()
 
-            path.add(LongPoint((next.x * 1000).toLong(), (next.y * 1000).toLong()))
+            path.add(LongPoint((next.x * scaler).toLong(), (next.y * scaler).toLong()))
         }
     }
 
 
-    val offset = ClipperOffset()
+    val offset = ClipperOffset(2.0,0.05)
 
     offset.addPath(path, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON)
 
     val paths = Paths()
 
-    offset.execute(paths, delta * 1000)
+    offset.execute(paths, delta * scaler)
 
     val lines = mutableListOf<Line>()
 
@@ -201,10 +197,12 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
     var first: Point? = null
     for (path in paths) {
         for (point in path) {
-            val thePoint = point(point.x / 1000.0, point.y / 1000.0)
+            //val thePoint = Point(const(point.x / scaler), const(point.y / scaler))
+            val thePoint = point(point.x / scaler, point.y / scaler)
+
 
             if (last != null) {
-                lines.add(line(last, thePoint))
+                lines.add(line(last, thePoint,  LineType.Construction))
             } else {
                 first = thePoint
             }
@@ -214,7 +212,7 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
     }
 
     if (last != null && first != null) {
-        lines.add(line(last, first))
+        lines.add(line(last, first,  LineType.Construction))
     }
 
     return lines

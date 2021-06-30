@@ -29,8 +29,8 @@ class Sketch {
         return point
     }
 
-    fun createLine(a: Point, b: Point): Line {
-        val line = Line(a, b)
+    fun createLine(a: Point, b: Point, type: LineType = LineType.Construction): Line {
+        val line = Line(a, b, type)
         elements.add(line)
         return line
     }
