@@ -1,12 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    java
     kotlin("jvm") version "1.4.32"
-    application
+    `java-library`
 }
 
 group = "me.chris"
 version = "1.0-SNAPSHOT"
+java.sourceCompatibility = JavaVersion.VERSION_16
 
 repositories {
     mavenCentral()
@@ -25,10 +27,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "16"
+    targetCompatibility = "16"
+}
+
+
 tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "15"
 }
-
+/*
 application {
     mainClassName = "MainKt"
 }
+*/

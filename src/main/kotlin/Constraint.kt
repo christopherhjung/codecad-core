@@ -1,51 +1,90 @@
-import java.lang.RuntimeException
 import kotlin.math.*
 
 abstract class Constraint {
 
     abstract fun error(): Double
 
-    open fun prune(sketch : Sketch){
+    open fun prune(sketch: Sketch) {
 
     }
 }
 
-abstract class Value{
-    abstract var value : Double
+abstract class Value {
+    abstract var value: Double
 
     override fun toString(): String {
         return value.toString()
     }
 }
 
-class Parameter(_value: Double) : Value(){
+
+
+class Parameter(_value: Double) : Value() {
     override var value: Double = _value
 }
 
-class ProxyValue(var proxy: Value) : Value(){
+class ProxyValue(var proxy: Value) : Value() {
     override var value: Double
         get() = proxy.value
-        set(value) {proxy.value = value}
+        set(value) {
+            proxy.value = value
+        }
 }
 
 
+interface Element
 
-interface Element{
-
+interface AbstractPoint{
+    val x: Value
+    val y: Value
 }
 
-data class Point(val x: Value, val y: Value) : Element {
+class AddValue(val left: Value, val right: Value) : Value(){
+    override var value: Double
+        get() = left.value + right.value
+        set(value) {throw RuntimeException()}
+}
+
+class MinusValue(val left: Value, val right: Value) : Value(){
+    override var value: Double
+        get() = left.value - right.value
+        set(value) {throw RuntimeException()}
+}
+
+class AddPoint(left: Point, right: Point) : AbstractPoint{
+    override val x: Value = AddValue(left.x, right.x)
+    override val y: Value = AddValue(left.y, right.y)
+}
+
+class MinusPoint(left: Point, right: Point) : AbstractPoint{
+    override val x: Value = MinusValue(left.x, right.x)
+    override val y: Value = MinusValue(left.y, right.y)
+}
+
+data class Point(override val x: Value, override val y: Value) : AbstractPoint, Element {
     fun toVector(): Vector {
         return Vector(x.value, y.value)
     }
+
+    operator fun plus(right: Point) : AbstractPoint {
+        return AddPoint(this, right)
+    }
+
+    operator fun minus(right: Point) : AbstractPoint {
+        return MinusPoint(this, right)
+    }
+
 }
 
+enum class LineType{
+    Normal, Construction
+}
 
-data class Line(val a: Point, val b: Point) : Element
+data class Line(val a: Point, val b: Point, val type: LineType = LineType.Normal) : Element
 
-data class Circle(val center: Point, val rad: Value) : Element
+data class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element
 
-class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
+//class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
 
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
     override fun error(): Double {
@@ -128,7 +167,7 @@ class Vertical(val line: Line) : Constraint() {
     }
 }
 
-class Vector(val x: Double, val y: Double) {
+data class Vector(val x: Double, val y: Double) {
     operator fun plus(right: Vector): Vector {
         return Vector(x + right.x, y + right.y)
     }
@@ -203,41 +242,40 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
 
 class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
     override fun error(): Double {
-        var dx = line1.b.x.value - line1.a.x.value
-        var dy = line1.b.y.value - line1.a.y.value
-        var dx2 = line2.b.x.value - line2.a.x.value
-        var dy2 = line2.b.y.value - line2.a.y.value
+        return lineCross(line1, line2, false).pow(2)
+    }
+}
 
-        val hyp1 = hypot(dx, dy)
-        val hyp2 = hypot(dx2, dy2)
+fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Double {
+    //val diff = line1.b - line1.a
+    //val diff2 = line2.b - line2.a
 
-        dx /= hyp1
-        dy /= hyp1
-        dx2 /= hyp2
-        dy2 /= hyp2
 
-        val temp = dx * dx2 + dy * dy2
-        return temp * temp
+
+    var dx = line1.b.x.value - line1.a.x.value
+    var dy = line1.b.y.value - line1.a.y.value
+    var dx2 = line2.b.x.value - line2.a.x.value
+    var dy2 = line2.b.y.value - line2.a.y.value
+
+    val hyp1 = hypot(dx, dy)
+    val hyp2 = hypot(dx2, dy2)
+
+    dx /= hyp1
+    dy /= hyp1
+    dx2 /= hyp2
+    dy2 /= hyp2
+
+    return if (cross) {
+        dx * dy2 - dy * dx2
+    } else {
+        dx * dx2 + dy * dy2
     }
 }
 
 class Parallel(val line1: Line, val line2: Line) : Constraint() {
     override fun error(): Double {
-        var dx = line1.b.x.value - line1.a.x.value
-        var dy = line1.b.y.value - line1.a.y.value
-        var dx2 = line2.b.x.value - line2.a.x.value
-        var dy2 = line2.b.y.value - line2.a.y.value
 
-        val hyp1 = hypot(dx, dy)
-        val hyp2 = hypot(dx2, dy2)
-
-        dx /= hyp1
-        dy /= hyp1
-        dx2 /= hyp2
-        dy2 /= hyp2
-
-        val temp = dy * dx2 - dx * dy2
-        return temp * temp
+        return lineCross(line1, line2).pow(2)
     }
 }
 
@@ -280,7 +318,7 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
         return (rad1 - circle.rad.value).pow(2)
     }
 }
-
+/*
 class PointOnArc(val point: Point, val arc: Arc) : Constraint() {
     override fun error(): Double {
         //see what the current radius to the point is
@@ -289,7 +327,7 @@ class PointOnArc(val point: Point, val arc: Arc) : Constraint() {
         //Compare this radius to the radius of the circle, return the error squared
         return (rad1-arc.rad.value).pow(2)
     }
-}
+}*/
 
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     override fun error(): Double {
@@ -301,11 +339,31 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     }
 }
 
-class MidValue(val left : Value, val right: Value) : Value(){
+class MidValue(val left: Value, val right: Value) : Value() {
     override var value: Double
         get() = (left.value + right.value) / 2
-        set(value) {throw RuntimeException("No Set od MidValue Possible")}
+        set(value) {
+            throw RuntimeException("No Set od MidValue Possible")
+        }
+}
 
+fun pointOnArcError(point: Point, arc: Circle, angle: Value): Double {
+    val x = (arc.center.x.value + arc.rad.value * cos(angle.value))
+    val y = (arc.center.y.value + arc.rad.value * sin(angle.value))
+
+    return (point.x.value - x).pow(2) + (point.y.value - y).pow(2)
+}
+
+class PointOnArcStart(val point: Point, val arc: Circle) : Constraint() {
+    override fun error(): Double {
+        return pointOnArcError(point, arc, arc.start!!)
+    }
+}
+
+class PointOnArcEnd(val point: Point, val arc: Circle) : Constraint() {
+    override fun error(): Double {
+        return pointOnArcError(point, arc, arc.end!!)
+    }
 }
 
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
@@ -320,32 +378,17 @@ class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
 
 class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constraint() {
     override fun error(): Double {
-        var dx = line1.b.x.value - line1.a.x.value
-        var dy = line1.b.y.value - line1.a.y.value
-        var dx2 = line2.b.x.value - line2.a.x.value
-        var dy2 = line2.b.y.value - line2.a.y.value
-
-        val hyp1 = hypot(dx, dy)
-        val hyp2 = hypot(dx2, dy2)
-
-        dx /= hyp1
-        dy /= hyp1
-        dx2 /= hyp2
-        dy2 /= hyp2
-
-        val temp = dx * dx2 + dy * dy2
-        val temp2 = cos(angle.value)
-        return (abs(temp) - abs(temp2)).pow(2)
+        return (lineCross(line1, line2, false) - cos(angle.value)).pow(2)
     }
 }
 
-class Radius(val circle: Circle, val radius: Value) : Constraint(){
+class Radius(val circle: Circle, val radius: Value) : Constraint() {
     override fun error(): Double {
         return (radius.value - circle.rad.value).pow(2)
     }
 }
 
-class Equals(val left: Value, val right: Value) : Constraint(){
+class Equals(val left: Value, val right: Value) : Constraint() {
     override fun error(): Double {
         return (left.value - right.value).pow(2)
     }
