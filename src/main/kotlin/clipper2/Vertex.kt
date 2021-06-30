@@ -8,7 +8,7 @@ class Vertex {
 
     constructor(ip: Point64)
     {
-        Pt.X = ip.X
-        Pt.Y = ip.Y
+        Pt.x = ip.x
+        Pt.y = ip.y
     }
 }

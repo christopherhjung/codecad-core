@@ -59,12 +59,12 @@ class IntersectNode {
 
 class MyIntersectNodeSort : Comparator<IntersectNode> {
     override fun compare(node1: IntersectNode?, node2: IntersectNode?): Int {
-        return node2!!.Pt!!.Y.compareTo(node1!!.Pt!!.Y) //descending soft
+        return node2!!.Pt!!.y.compareTo(node1!!.Pt!!.y) //descending soft
     }
 }
 
 class MyLocalMinSort : Comparator<LocalMinima> {
     override fun compare(lm1: LocalMinima?, lm2: LocalMinima?): Int {
-        return lm2!!.Vertex!!.Pt.Y.compareTo(lm1!!.Vertex!!.Pt.Y) //descending soft
+        return lm2!!.Vertex!!.Pt.y.compareTo(lm1!!.Vertex!!.Pt.y) //descending soft
     }
 }

@@ -36,14 +36,14 @@ class Clipper {
     }
 
     fun GetTopDeltaX(e1: Active, e2: Active): Long {
-        if (e1.Top!!.Y > e2.Top!!.Y)
-            return TopX(e2, e1.Top!!.Y) - e1.Top!!.X
+        if (e1.Top!!.y > e2.Top!!.y)
+            return TopX(e2, e1.Top!!.y) - e1.Top!!.x
         else
-            return e2.Top!!.X - TopX(e1, e2.Top!!.Y)
+            return e2.Top!!.x - TopX(e1, e2.Top!!.y)
     }
 
     private fun E2InsertsBeforeE1(e1: Active, e2: Active): Boolean {
-        return if (e2.Curr!!.X == e1.Curr!!.X) GetTopDeltaX(e1, e2) < 0 else e2.Curr!!.X < e1.Curr!!.X
+        return if (e2.Curr!!.x == e1.Curr!!.x) GetTopDeltaX(e1, e2) < 0 else e2.Curr!!.x < e1.Curr!!.x
     }
 
     private fun GetIntersectPoint(edge1: Active, edge2: Active): Point64 {
@@ -53,43 +53,43 @@ class Clipper {
         //nb: with very large coordinate values, it's possible for SlopesEqual() to
         //return false but for the edge.Dx value be equal due to Double precision rounding.
         if (edge1.Dx == edge2.Dx) {
-            ip.Y = edge1.Curr!!.Y
-            ip.X = TopX(edge1, ip.Y)
+            ip.y = edge1.Curr!!.y
+            ip.x = TopX(edge1, ip.y)
             return ip
         }
 
         if (edge1.Dx == 0.0) {
-            ip.X = edge1.Bot!!.X
+            ip.x = edge1.Bot!!.x
             if (IsHorizontal(edge2)) {
-                ip.Y = edge2.Bot!!.Y
+                ip.y = edge2.Bot!!.y
             } else {
-                b2 = edge2.Bot!!.Y - (edge2.Bot!!.X / edge2.Dx!!)
-                ip.Y = Round(ip.X / edge2.Dx!! + b2)
+                b2 = edge2.Bot!!.y - (edge2.Bot!!.x / edge2.Dx!!)
+                ip.y = Round(ip.x / edge2.Dx!! + b2)
             }
         } else if (edge2.Dx == 0.0) {
-            ip.X = edge2.Bot!!.X
+            ip.x = edge2.Bot!!.x
             if (IsHorizontal(edge1)) {
-                ip.Y = edge1.Bot!!.Y
+                ip.y = edge1.Bot!!.y
             } else {
-                b1 = edge1.Bot!!.Y - (edge1.Bot!!.X / edge1.Dx!!)
-                ip.Y = Round(ip.X / edge1.Dx!! + b1)
+                b1 = edge1.Bot!!.y - (edge1.Bot!!.x / edge1.Dx!!)
+                ip.y = Round(ip.x / edge1.Dx!! + b1)
             }
         } else {
-            b1 = edge1.Bot!!.X - edge1.Bot!!.Y * edge1.Dx!!
-            b2 = edge2.Bot!!.X - edge2.Bot!!.Y * edge2.Dx!!
+            b1 = edge1.Bot!!.x - edge1.Bot!!.y * edge1.Dx!!
+            b2 = edge2.Bot!!.x - edge2.Bot!!.y * edge2.Dx!!
             val q = (b2 - b1) / (edge1.Dx!! - edge2.Dx!!)
-            ip.Y = Round(q)
+            ip.y = Round(q)
             if (abs(edge1.Dx!!) < abs(edge2.Dx!!))
-                ip.X = Round(edge1.Dx!! * q + b1)
+                ip.x = Round(edge1.Dx!! * q + b1)
             else
-                ip.X = Round(edge2.Dx!! * q + b2)
+                ip.x = Round(edge2.Dx!! * q + b2)
         }
         return ip
     }
 
     private fun SetDx(e: Active) {
-        val dy: Long = (e.Top!!.Y - e.Bot!!.Y)
-        e.Dx = if(dy == 0L) horizontal else ((e.Top!!.X-e.Bot!!.X) / dy).toDouble()
+        val dy: Long = (e.Top!!.y - e.Bot!!.y)
+        e.Dx = if(dy == 0L) horizontal else ((e.Top!!.x-e.Bot!!.x) / dy).toDouble()
     }
     //---------------------------------------------------------------------------
 
@@ -106,12 +106,12 @@ class Clipper {
         if (IsHorizontal(e)) {
             //we can't be sure whether the MaximaPair is on the left or right, so ...
             e2 = e.PrevInAEL
-            while (e2 != null && e2.Curr!!.X >= e.Top!!.X) {
+            while (e2 != null && e2.Curr!!.x >= e.Top!!.x) {
                 if (e2.VertTop == e.VertTop) return e2  //Found!
                 e2 = e2.PrevInAEL
             }
             e2 = e.NextInAEL
-            while (e2 != null && TopX(e2, e.Top!!.Y) <= e.Top!!.X) {
+            while (e2 != null && TopX(e2, e.Top!!.y) <= e.Top!!.x) {
                 if (e2.VertTop == e.VertTop) return e2  //Found!
                 e2 = e2.NextInAEL
             }
@@ -146,7 +146,7 @@ class Clipper {
             LocMinListSorted = true
         }
         for (locMin in LocMinimaList) {
-            InsertScanline(locMin.Vertex!!.Pt.Y)
+            InsertScanline(locMin.Vertex!!.Pt.y)
         }
         CurrentLocMinIdx = 0
         Actives = null
@@ -199,7 +199,7 @@ class Clipper {
     private fun PopLocalMinima(Y: Long): Pair<Boolean, LocalMinima?> {
         if (CurrentLocMinIdx == LocMinimaList.size) return false to null
         val locMin = LocMinimaList[CurrentLocMinIdx]
-        if (locMin.Vertex!!.Pt.Y == Y) {
+        if (locMin.Vertex!!.Pt.y == Y) {
             CurrentLocMinIdx++
             return true to locMin
         }
@@ -234,20 +234,20 @@ class Clipper {
         var goingUp = false
         var i = 1
         //find the first non-horizontal segment in the path ...
-        while (i < pathLen && p[i].Y == p[0].Y) i++
+        while (i < pathLen && p[i].y == p[0].y) i++
         if (i == pathLen) //it's a totally flat path
         {
             if (!isOpen) return       //Ignore closed paths that have ZERO area.
         } else {
-            goingUp = p[i].Y < p[0].Y //because I'm using an inverted Y-axis display
+            goingUp = p[i].y < p[0].y //because I'm using an inverted Y-axis display
             if (goingUp) {
                 i = pathLen - 1
-                while (p[i].Y == p[0].Y) i--
-                P0IsMinima = p[i].Y < p[0].Y //p[0].Y == a minima
+                while (p[i].y == p[0].y) i--
+                P0IsMinima = p[i].y < p[0].y //p[0].Y == a minima
             } else {
                 i = pathLen - 1
-                while (p[i].Y == p[0].Y) i--
-                P0IsMaxima = p[i].Y > p[0].Y //p[0].Y == a maxima
+                while (p[i].y == p[0].y) i--
+                P0IsMaxima = p[i].y > p[0].y //p[0].Y == a maxima
             }
         }
 
@@ -266,10 +266,10 @@ class Clipper {
             var v2 = Vertex(p[j])
             v.Next = v2
             v2.Prev = v
-            if (v2.Pt.Y > v.Pt.Y && goingUp) {
+            if (v2.Pt.y > v.Pt.y && goingUp) {
                 v.Flags = v.Flags or VertexFlags.LocMax
                 goingUp = false
-            } else if (v2.Pt.Y < v.Pt.Y && !goingUp) {
+            } else if (v2.Pt.y < v.Pt.y && !goingUp) {
                 goingUp = true
                 addLocMin(v, pt, isOpen)
             }
@@ -289,14 +289,14 @@ class Clipper {
             }
         } else if (goingUp) {
             //going up so find local maxima ...
-            while (v.Next!!.Pt.Y <= v.Pt.Y) {
+            while (v.Next!!.Pt.y <= v.Pt.y) {
                 v = v.Next!!
             }
             v.Flags = v.Flags or VertexFlags.LocMax
             if (P0IsMinima) addLocMin(va[0], pt, isOpen) //ie just turned to going up
         } else {
             //going down so find local minima ...
-            while (v.Next!!.Pt.Y >= v.Pt.Y) {
+            while (v.Next!!.Pt.y >= v.Pt.y) {
                 v = v.Next!!
             }
             addLocMin(v, pt, isOpen)
@@ -398,7 +398,7 @@ class Clipper {
         //the edge. (Note also that adjacent region wind counts only ever differ
         //by one, and open paths have no meaningful wind directions or counts.)
 
-        var e: Active = leftE.PrevInAEL!!
+        var e: Active? = leftE.PrevInAEL
         //find the nearest closed path edge of the same PathType in AEL (heading left)
         var pt = GetPathType(leftE)
         while (e != null && (GetPathType(e) != pt || IsOpen(e))) e = e.PrevInAEL!!
@@ -444,13 +444,13 @@ class Clipper {
         //update WindCnt2 ...
         if (fillType == FillRule.EvenOdd)
             while (e != leftE) {
-                if (GetPathType(e) != pt && !IsOpen(e))
+                if (GetPathType(e!!) != pt && !IsOpen(e))
                     leftE.WindCnt2 = if(leftE.WindCnt2 == 0)  1 else 0
                 e = e.NextInAEL!!
             }
         else
             while (e != leftE) {
-                if (GetPathType(e) != pt && !IsOpen(e))
+                if (GetPathType(e!!) != pt && !IsOpen(e))
                     leftE.WindCnt2 += e.WindDx
                 e = e.NextInAEL!!
             }
@@ -470,9 +470,9 @@ class Clipper {
         } else {
             if (startEdge == null) startEdge = Actives!!
             while (startEdge!!.NextInAEL != null &&
-                !E2InsertsBeforeE1(startEdge.NextInAEL!!, edge)
+                true//!E2InsertsBeforeE1(startEdge.NextInAEL!!, edge)
             )
-                startEdge = startEdge.NextInAEL!!
+                startEdge = startEdge.NextInAEL
 
             edge.NextInAEL = startEdge.NextInAEL
             if (startEdge.NextInAEL != null)
@@ -503,9 +503,9 @@ class Clipper {
         var leftB: Active?
         var rightB: Active?
 
-        var (result, locMin) = PopLocalMinima(BotY)
+        var locMin: LocalMinima?
         //add any local minima at BotY ...
-        while (result) {
+        while (PopLocalMinima(BotY).run { locMin = second; first }) {
             if ((locMin!!.Vertex!!.Flags and VertexFlags.OpenStart) > 0)
             {
                 leftB = null
@@ -513,25 +513,25 @@ class Clipper {
             else
             {
                 leftB = Active()
-                leftB.Bot = locMin.Vertex!!.Pt
+                leftB.Bot = locMin!!.Vertex!!.Pt
                 leftB.Curr = leftB.Bot
-                leftB.VertTop = locMin.Vertex!!.Prev //ie descending
+                leftB.VertTop = locMin!!.Vertex!!.Prev //ie descending
                 leftB.Top = leftB.VertTop!!.Pt
                 leftB.WindDx = -1
                 leftB.LocalMin = locMin
                 SetDx(leftB)
             }
 
-            if ((locMin.Vertex!!.Flags and VertexFlags.OpenEnd) > 0)
+            if ((locMin!!.Vertex!!.Flags and VertexFlags.OpenEnd) > 0)
             {
                 rightB = null
             }
             else
             {
                 rightB = Active()
-                rightB.Bot = locMin.Vertex!!.Pt
+                rightB.Bot = locMin!!.Vertex!!.Pt
                 rightB.Curr = rightB.Bot
-                rightB.VertTop = locMin.Vertex!!.Next //ie ascending
+                rightB.VertTop = locMin!!.Vertex!!.Next //ie ascending
                 rightB.Top = rightB.VertTop!!.Pt
                 rightB.WindDx = 1
                 rightB.LocalMin = locMin
@@ -542,9 +542,9 @@ class Clipper {
             //Now if the LeftB isn't on the left of RightB then we need swap them.
             if (leftB != null && rightB != null) {
                 if (IsHorizontal(leftB)) {
-                    if (leftB.Top!!.X > leftB.Bot!!.X) leftB = rightB.also { rightB = leftB }
+                    if (leftB.Top!!.x > leftB.Bot!!.x) leftB = rightB.also { rightB = leftB }
                 } else if (IsHorizontal(rightB!!)) {
-                    if (rightB!!.Top!!.X < rightB!!.Bot!!.X) leftB = rightB.also { rightB = leftB }
+                    if (rightB!!.Top!!.x < rightB!!.Bot!!.x) leftB = rightB.also { rightB = leftB }
                 } else if (leftB.Dx!! < rightB!!.Dx!!) leftB = rightB.also { rightB = leftB }
             } else if (leftB == null) {
                 leftB = rightB
@@ -570,17 +570,17 @@ class Clipper {
                 if (IsHorizontal(rightB!!))
                     PushHorz(rightB!!)
                 else
-                    InsertScanline(rightB!!.Top!!.Y)
+                    InsertScanline(rightB!!.Top!!.y)
             } else if (contributing)
                 StartOpenPath(leftB, leftB.Bot!!)
 
             if (IsHorizontal(leftB))
                 PushHorz(leftB); else
-                InsertScanline(leftB.Top!!.Y)
+                InsertScanline(leftB.Top!!.y)
 
             if (rightB != null && leftB.NextInAEL != rightB) {
                 //intersect edges that are between left and right bounds ...
-                var e: Active = rightB!!.NextInAEL!!
+                var e: Active? = rightB!!.NextInAEL
                 MoveEdgeToFollowLeftInAEL(rightB!!, leftB)
                 while (rightB!!.NextInAEL != e) {
                     //nb: For calculating winding counts etc, IntersectEdges() assumes
@@ -601,20 +601,20 @@ class Clipper {
 
     private fun GetOwner(e: Active): OutRec? {
         var e: Active? = e
-        return if (IsHorizontal(e!!) && e.Top!!.X < e.Bot!!.X) {
+        return if (IsHorizontal(e!!) && e.Top!!.x < e.Bot!!.x) {
             e = e.NextInAEL!!
             while (e != null && (!IsHotEdge(e) || IsOpen(e)))
                 e = e.NextInAEL
             if (e == null) null
             else if ((e.OutRec!!.Flag == OutrecFlag.Outer) == (e.OutRec!!.StartE == e))
-                e.OutRec!!.Owner!!; else e.OutRec!!
+                e.OutRec!!.Owner; else e.OutRec
         } else {
             e = e.PrevInAEL
             while (e != null && (!IsHotEdge(e) || IsOpen(e)))
                 e = e.PrevInAEL
             if (e == null) null
             else if ((e.OutRec!!.Flag == OutrecFlag.Outer) == (e.OutRec!!.EndE == e))
-                e.OutRec!!.Owner!!; else e.OutRec!!
+                e.OutRec!!.Owner; else e.OutRec
         }
     }
 
@@ -636,9 +636,9 @@ class Clipper {
         //now set orientation ...
         var swapSideNeeded = false    //todo: recheck this with open paths
         if (IsHorizontal(e1)) {
-            if (e1.Top!!.X > e1.Bot!!.X) swapSideNeeded = true
+            if (e1.Top!!.x > e1.Bot!!.x) swapSideNeeded = true
         } else if (IsHorizontal(e2)) {
-            if (e2.Top!!.X < e2.Bot!!.X) swapSideNeeded = true
+            if (e2.Top!!.x < e2.Bot!!.x) swapSideNeeded = true
         } else if (e1.Dx!! < e2.Dx!!) swapSideNeeded = true
         if ((outRec.Flag == OutrecFlag.Inner) == swapSideNeeded)
             SetOrientation(outRec, e1, e2); else
@@ -830,7 +830,7 @@ class Clipper {
         e.Top = e.VertTop!!.Pt
         e.Curr = e.Bot
         SetDx(e)
-        if (!IsHorizontal(e)) InsertScanline(e.Top!!.Y)
+        if (!IsHorizontal(e)) InsertScanline(e.Top!!.y)
     }
 
     private fun IntersectEdges(e1: Active, e2: Active, pt: Point64) {
@@ -979,8 +979,8 @@ class Clipper {
     }
 
     private fun DeleteFromAEL(e: Active) {
-        var AelPrev: Active = e.PrevInAEL!!
-        var AelNext: Active = e.NextInAEL!!
+        var AelPrev: Active? = e.PrevInAEL
+        var AelNext: Active? = e.NextInAEL
         if (AelPrev == null && AelNext == null && (e != Actives))
             return //already deleted
         if (AelPrev != null) AelPrev.NextInAEL = AelNext
@@ -992,23 +992,23 @@ class Clipper {
     }
 
     private fun CopyAELToSEL() {
-        var e: Active = Actives!!
+        var e: Active? = Actives
         SEL = e
         while (e != null) {
             e.PrevInSEL = e.PrevInAEL
             e.NextInSEL = e.NextInAEL
-            e = e.NextInAEL!!
+            e = e.NextInAEL
         }
     }
 
     private fun CopyActivesToSELAdjustCurrX(topY: Long) {
-        var e: Active = Actives!!
+        var e: Active? = Actives
         SEL = e
         while (e != null) {
             e.PrevInSEL = e.PrevInAEL
             e.NextInSEL = e.NextInAEL
-            e.Curr!!.X = TopX(e, topY)
-            e = e.NextInAEL!!
+            e.Curr!!.x = TopX(e, topY)
+            e = e.NextInAEL
         }
     }
 
@@ -1017,33 +1017,17 @@ class Clipper {
         fillType = ft
         clipType = ct
         Reset()
-        var result : Boolean = false
         var Y : Long? = 0L
-
-        PopScanline().apply {
-            result = first
-            Y = second
-        }
-        if (!result) return false
+        if (!PopScanline().run {Y = second; first }) return false
 
         while (true) /////////////////////////////////////////////
         {
             InsertLocalMinimaIntoAEL(Y!!)
 
-            var e: Active
-            PopHorz().apply {
-                result = first
-                e = second!!
-            }
+            var e: Active?
+            while (PopHorz().run {e = second; first }) ProcessHorizontal(e!!)
 
-            while (result) ProcessHorizontal(e)
-
-            PopScanline().apply {
-                result = first
-                Y = second
-            }
-
-            if (!result) break   //Y is now at the top of the scanbeam
+            if (!PopScanline().run {Y = second; first }) break   //Y is now at the top of the scanbeam
             ProcessIntersections(Y!!)
             SEL = null                       //SEL reused to flag horizontals
             DoTopOfScanbeam(Y!!)
@@ -1051,7 +1035,7 @@ class Clipper {
         return true
     }
 
-    open fun Execute(clipType: ClipType, Closed: Paths, ft: FillRule = FillRule.EvenOdd): Boolean {
+    open fun Execute(clipType: ClipType, Closed: Paths?, ft: FillRule = FillRule.EvenOdd): Boolean {
         try {
             if (Closed == null) return false
             Closed.clear()
@@ -1062,7 +1046,7 @@ class Clipper {
             CleanUp(); }
     }
 
-    open fun Execute(clipType: ClipType, Closed: Paths, Open: Paths, ft: FillRule = FillRule.EvenOdd): Boolean {
+    open fun Execute(clipType: ClipType, Closed: Paths?, Open: Paths?, ft: FillRule = FillRule.EvenOdd): Boolean {
         try {
             if (Closed == null) return false
             Closed.clear()
@@ -1076,14 +1060,14 @@ class Clipper {
 
     open fun Execute(
         clipType: ClipType,
-        polytree: PolyTree,
-        Open: Paths,
+        polytree: PolyTree?,
+        Open: Paths?,
         ft: FillRule = FillRule.EvenOdd
     ): Boolean {
         try {
             if (polytree == null) return false
             polytree.Clear()
-            if (Open != null) Open.clear()
+            Open?.clear()
             if (!ExecuteInternal(clipType, ft)) return false
             BuildResult2(polytree, Open)
             return true
@@ -1107,20 +1091,20 @@ class Clipper {
 
         //Rounding errors can occasionally place the calculated intersection
         //point either below or above the scanbeam, so check and correct ...
-        if (pt.Y > e1.Curr!!.Y) {
-            pt.Y = e1.Curr!!.Y      //E.Curr.Y is still the bottom of scanbeam
+        if (pt.y > e1.Curr!!.y) {
+            pt.y = e1.Curr!!.y      //E.Curr.Y is still the bottom of scanbeam
             //use the more vertical of the 2 edges to derive pt.X ...
             if (abs(e1.Dx!!) < abs(e2.Dx!!))
-                pt.X = TopX(e1, pt.Y)
+                pt.x = TopX(e1, pt.y)
             else
-                pt.X = TopX(e2, pt.Y)
-        } else if (pt.Y < topY) {
-            pt.Y = topY          //TopY = top of scanbeam
+                pt.x = TopX(e2, pt.y)
+        } else if (pt.y < topY) {
+            pt.y = topY          //TopY = top of scanbeam
 
-            if (e1.Top!!.Y == topY) pt.X = e1.Top!!.X
-            else if (e2.Top!!.Y == topY) pt.X = e2.Top!!.X
-            else if (abs(e1.Dx!!) < abs(e2.Dx!!)) pt.X = e1.Curr!!.X
-            else pt.X = e2.Curr!!.X
+            if (e1.Top!!.y == topY) pt.x = e1.Top!!.x
+            else if (e2.Top!!.y == topY) pt.x = e2.Top!!.x
+            else if (abs(e1.Dx!!) < abs(e2.Dx!!)) pt.x = e1.Curr!!.x
+            else pt.x = e2.Curr!!.x
         }
 
         val node = IntersectNode()
@@ -1141,10 +1125,10 @@ class Clipper {
         var mul = 1
         while (true) {
             var first: Active? = SEL
-            var second: Active? = null
-            var baseE: Active
+            var second: Active?
+            var baseE: Active?
             var prevBase: Active? = null
-            var tmp: Active
+            var tmp: Active?
 
             //sort successive larger 'mul' count of nodes ...
             while (first != null) {
@@ -1163,14 +1147,14 @@ class Clipper {
                 var lCnt = mul
                 var rCnt = mul
                 while (lCnt > 0 && rCnt > 0) {
-                    if (second!!.Curr!!.X < first!!.Curr!!.X) {
+                    if (second!!.Curr!!.x < first!!.Curr!!.x) {
                         // create one or more Intersect nodes ///////////
-                        tmp = second.PrevInSEL!!
+                        tmp = second.PrevInSEL
                         for (i in 0 until lCnt)
                         {
                             //create a intersect node...
-                            InsertNewIntersectNode(tmp, second, TopY)
-                            tmp = tmp.PrevInSEL!!
+                            InsertNewIntersectNode(tmp!!, second, TopY)
+                            tmp = tmp!!.PrevInSEL
                         }
                         /////////////////////////////////////////////////
 
@@ -1180,7 +1164,7 @@ class Clipper {
                             baseE.MergeJump = first.MergeJump
                             if (first.PrevInSEL == null) SEL = second
                         }
-                        tmp = second.NextInSEL!!
+                        tmp = second.NextInSEL
                         //now move the out of place edge to it's position in SEL ...
                         Insert2Before1InSel(first, second)
                         second = tmp
@@ -1191,7 +1175,7 @@ class Clipper {
                         --lCnt
                     }
                 }
-                first = baseE.MergeJump
+                first = baseE!!.MergeJump
                 prevBase = baseE
             }
             if (SEL!!.MergeJump == null) break
@@ -1310,25 +1294,25 @@ class Clipper {
     }
 
     private fun ResetHorzDirection(
-        horz: Active, maxPair: Active
+        horz: Active, maxPair: Active?
     ): Pair<Boolean, Pair<Long, Long>> {
         var horzLeft: Long
         var horzRight: Long
         var result: Boolean
-        if (horz.Bot!!.X == horz.Top!!.X) {
+        if (horz.Bot!!.x == horz.Top!!.x) {
             //the horizontal edge is going nowhere ...
-            horzLeft = horz.Curr!!.X
-            horzRight = horz.Curr!!.X
-            var e: Active? = horz.NextInAEL!!
+            horzLeft = horz.Curr!!.x
+            horzRight = horz.Curr!!.x
+            var e: Active? = horz.NextInAEL
             while (e != null && e != maxPair) e = e.NextInAEL
             result = e != null
-        } else if (horz.Curr!!.X < horz.Top!!.X) {
-            horzLeft = horz.Curr!!.X
-            horzRight = horz.Top!!.X
+        } else if (horz.Curr!!.x < horz.Top!!.x) {
+            horzLeft = horz.Curr!!.x
+            horzRight = horz.Top!!.x
             result = true
         } else {
-            horzLeft = horz.Top!!.X
-            horzRight = horz.Curr!!.X
+            horzLeft = horz.Top!!.x
+            horzRight = horz.Curr!!.x
             result = false //right to left
         }
 
@@ -1356,7 +1340,7 @@ class Clipper {
         //with closed paths, simplify consecutive horizontals into a 'single' edge ...
         if (!IsOpen(horz)) {
             pt = horz.Bot!!
-            while (!IsMaxima(horz) && NextVertex(horz)!!.Pt.Y == pt.Y)
+            while (!IsMaxima(horz) && NextVertex(horz)!!.Pt.y == pt.y)
                 UpdateEdgeIntoAEL(horz)
             horz.Bot = pt
             horz.Curr = pt
@@ -1368,30 +1352,29 @@ class Clipper {
         maxPair = GetMaximaPair(horz)
 
 
-        var (isLeftToRight, horiz) = ResetHorzDirection(horz, maxPair!!)
+        var (isLeftToRight, horiz) = ResetHorzDirection(horz, maxPair)
         var (horzLeft, horzRight) = horiz
 
         if (IsHotEdge(horz)) addOutPt(horz, horz.Curr!!)
 
         while (true) //loops through consec. horizontal edges (if open)
         {
-            var e: Active
             var isMax = IsMaxima (horz)
-            if (isLeftToRight)
-                e = horz.NextInAEL!!
+            var e = if (isLeftToRight)
+                horz.NextInAEL
             else
-                e = horz.PrevInAEL!!
+                horz.PrevInAEL
 
             while (e != null) {
                 //break if we've gone past the } of the horizontal ...
-                if ((isLeftToRight && (e.Curr!!.X > horzRight)) ||
-                    (!isLeftToRight && (e.Curr!!.X < horzLeft))
+                if ((isLeftToRight && (e.Curr!!.x > horzRight)) ||
+                    (!isLeftToRight && (e.Curr!!.x < horzLeft))
                 ) break
                 //or if we've got to the } of an intermediate horizontal edge ...
-                if (e.Curr!!.X == horz.Top!!.X && !isMax && !IsHorizontal(e)) {
+                if (e.Curr!!.x == horz.Top!!.x && !isMax && !IsHorizontal(e)) {
                     pt = NextVertex(horz)!!.Pt
-                    if (isLeftToRight && (TopX(e, pt.Y) >= pt.X) ||
-                        (!isLeftToRight && (TopX(e, pt.Y) <= pt.X))
+                    if (isLeftToRight && (TopX(e, pt.y) >= pt.x) ||
+                        (!isLeftToRight && (TopX(e, pt.y) <= pt.x))
                     ) break
                 }
 
@@ -1404,25 +1387,25 @@ class Clipper {
                 }
 
                 if (isLeftToRight) {
-                    pt = Point64(e.Curr!!.X, horz.Curr!!.Y)
+                    pt = Point64(e.Curr!!.x, horz.Curr!!.y)
                     IntersectEdges(horz, e, pt)
                 } else {
-                    pt = Point64(e.Curr!!.X, horz.Curr!!.Y)
+                    pt = Point64(e.Curr!!.x, horz.Curr!!.y)
                     IntersectEdges(e, horz, pt)
                 }
 
-                var  eNext = if (isLeftToRight) e.NextInAEL!!; else e.PrevInAEL!!
+                var eNext = if (isLeftToRight) e.NextInAEL; else e.PrevInAEL
                 SwapPositionsInAEL(horz, e)
                 e = eNext
             }
 
             //check if we've finished with (consecutive) horizontals ...
-            if (isMax || NextVertex(horz)!!.Pt.Y != horz.Top!!.Y) break
+            if (isMax || NextVertex(horz)!!.Pt.y != horz.Top!!.y) break
 
             //still more horizontals in bound to process ...
             UpdateEdgeIntoAEL(horz)
 
-            val (testing, horiz) = ResetHorzDirection(horz, maxPair!!)
+            val (testing, horiz) = ResetHorzDirection(horz, maxPair)
             isLeftToRight = testing
 
             horzLeft = horiz.first
@@ -1454,7 +1437,7 @@ class Clipper {
         var e = Actives
         while (e != null) {
             //nb: E will never be horizontal at this point
-            if (e.Top!!.Y == Y) {
+            if (e.Top!!.y == Y) {
                 e.Curr = e.Top //needed for horizontal processing
                 if (IsMaxima(e)) {
                     e = DoMaxima(e) //TOP OF BOUND (MAXIMA)
@@ -1467,8 +1450,8 @@ class Clipper {
                         PushHorz(e) //horizontals are processed later
                 }
             } else {
-                e.Curr!!.Y = Y
-                e.Curr!!.X = TopX(e, Y)
+                e.Curr!!.y = Y
+                e.Curr!!.x = TopX(e, Y)
             }
             e = e.NextInAEL
         }
@@ -1594,13 +1577,13 @@ class Clipper {
         private fun IntersectNodeSort(node1: IntersectNode, node2: IntersectNode): Int {
             //the following typecast should be safe because the differences in Pt.Y will
             //be limited to the height of the Scanline ...
-            return (node2.Pt!!.Y - node1.Pt!!.Y) as Int
+            return (node2.Pt!!.y - node1.Pt!!.y) as Int
         }
 
         private fun TopX(edge: Active, currentY: Long): Long {
-            if (currentY == edge.Top!!.Y)
-                return edge.Top!!.X
-            return edge.Bot!!.X + Round(edge.Dx!! * (currentY - edge.Bot!!.Y))
+            if (currentY == edge.Top!!.y)
+                return edge.Top!!.x
+            return edge.Bot!!.x + Round(edge.Dx!! * (currentY - edge.Bot!!.y))
         }
 
         fun IsHorizontal(e: Active): Boolean {

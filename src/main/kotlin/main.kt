@@ -1,8 +1,4 @@
-import de.lighti.clipper.Clipper
-import de.lighti.clipper.ClipperOffset
-import de.lighti.clipper.Path
-import de.lighti.clipper.Paths
-import de.lighti.clipper.Point.LongPoint
+import clipper2.*
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -178,14 +174,14 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
         while (stepper.hasNext()) {
             val next = stepper.next()
 
-            path.add(LongPoint((next.x * scaler).toLong(), (next.y * scaler).toLong()))
+            path.add(Point64((next.x * scaler).toLong(), (next.y * scaler).toLong()))
         }
     }
 
 
     val offset = ClipperOffset(2.0,0.05)
 
-    offset.addPath(path, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON)
+    offset.addPath(path, JoinType.Round, EndType.Polygon)
 
     val paths = Paths()
 
