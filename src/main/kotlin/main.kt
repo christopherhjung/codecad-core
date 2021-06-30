@@ -44,14 +44,17 @@ class Builder {
         return sketch.createArc(center, radius, start, end)
     }
 
-    fun polygon(vararg points: Point) {
+    fun polygon(vararg points: Point) : List<Line> {
         val points = mutableListOf(*points)
         points.add(points.first())
         var current = points.first()
+        val lines = mutableListOf<Line>()
         for (point in points) {
-            line(current, point)
+            lines.add(line(current, point))
             current = point
         }
+
+        return lines
     }
 
     fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line {
@@ -124,7 +127,7 @@ class LineStepper(val line: Line) : Stepper {
     var i = 0
 
     override fun hasNext(): Boolean {
-        return i <= 1
+        return i < 1
     }
 
     override fun next(): Vector {
@@ -234,7 +237,7 @@ fun main(args: Array<String>) {
         pointOnArcStart(C,arc)
         pointOnArcEnd(B, arc)*/
 
-        polygon(
+        val poly = polygon(
             point(0.0, 0.0),
             point(2.0, 0.0),
             point(2.0, 2.0),
@@ -242,15 +245,7 @@ fun main(args: Array<String>) {
             point(0.0, 2.0),
         )
 
-
-        val list = ArrayList<Element>()
-        for (element in sketch.elements) {
-            if (element is Line || element is Circle) {
-                list.add(element)
-            }
-        }
-
-        val offsetLines = offsetPolygons(list, -0.3)
+        val offsetLines = offsetPolygons(poly, -0.3)
 
 
         //offsetPolygons(offsetLines, 0.3)

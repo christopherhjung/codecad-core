@@ -47,9 +47,7 @@ class Clipper {
     }
 
     private fun GetIntersectPoint(edge1: Active, edge2: Active): Point64 {
-        var ip: Point64 = Point64()
-        var b1: Double = 0.0
-        var b2: Double = 0.0
+        var ip = Point64()
         //nb: with very large coordinate values, it's possible for SlopesEqual() to
         //return false but for the edge.Dx value be equal due to Double precision rounding.
         if (edge1.Dx == edge2.Dx) {
@@ -63,7 +61,7 @@ class Clipper {
             if (IsHorizontal(edge2)) {
                 ip.y = edge2.Bot!!.y
             } else {
-                b2 = edge2.Bot!!.y - (edge2.Bot!!.x / edge2.Dx!!)
+                val b2 = edge2.Bot!!.y - (edge2.Bot!!.x / edge2.Dx!!)
                 ip.y = Round(ip.x / edge2.Dx!! + b2)
             }
         } else if (edge2.Dx == 0.0) {
@@ -71,12 +69,12 @@ class Clipper {
             if (IsHorizontal(edge1)) {
                 ip.y = edge1.Bot!!.y
             } else {
-                b1 = edge1.Bot!!.y - (edge1.Bot!!.x / edge1.Dx!!)
+                val b1 = edge1.Bot!!.y - (edge1.Bot!!.x / edge1.Dx!!)
                 ip.y = Round(ip.x / edge1.Dx!! + b1)
             }
         } else {
-            b1 = edge1.Bot!!.x - edge1.Bot!!.y * edge1.Dx!!
-            b2 = edge2.Bot!!.x - edge2.Bot!!.y * edge2.Dx!!
+            val b1 = edge1.Bot!!.x - edge1.Bot!!.y * edge1.Dx!!
+            val b2 = edge2.Bot!!.x - edge2.Bot!!.y * edge2.Dx!!
             val q = (b2 - b1) / (edge1.Dx!! - edge2.Dx!!)
             ip.y = Round(q)
             if (abs(edge1.Dx!!) < abs(edge2.Dx!!))
@@ -251,7 +249,7 @@ class Clipper {
             }
         }
 
-        var va = mutableListOf<Vertex>()
+        val va = mutableListOf<Vertex>()
         VertexList.add(va)
         var v = Vertex(p[0])
         if (isOpen) {
@@ -263,7 +261,7 @@ class Clipper {
         //nb: polygon orientation is determined later (see InsertLocalMinimaIntoAEL).
         for (j in 0 until pathLen) {
             if (p[j] == v.Pt) continue //ie skips duplicates
-            var v2 = Vertex(p[j])
+            val v2 = Vertex(p[j])
             v.Next = v2
             v2.Prev = v
             if (v2.Pt.y > v.Pt.y && goingUp) {
@@ -470,7 +468,7 @@ class Clipper {
         } else {
             if (startEdge == null) startEdge = Actives!!
             while (startEdge!!.NextInAEL != null &&
-                true//!E2InsertsBeforeE1(startEdge.NextInAEL!!, edge)
+                !E2InsertsBeforeE1(startEdge.NextInAEL!!, edge)
             )
                 startEdge = startEdge.NextInAEL
 
@@ -485,8 +483,8 @@ class Clipper {
 
     private fun MoveEdgeToFollowLeftInAEL(e: Active, eLeft: Active) {
         //extract first ...
-        var aelPrev = e.PrevInAEL
-        var aelNext = e.NextInAEL
+        val aelPrev = e.PrevInAEL
+        val aelNext = e.NextInAEL
         aelPrev!!.NextInAEL = aelNext
         if (aelNext != null) {
             aelNext.PrevInAEL = aelPrev
@@ -1017,7 +1015,7 @@ class Clipper {
         fillType = ft
         clipType = ct
         Reset()
-        var Y : Long? = 0L
+        var Y : Long?
         if (!PopScanline().run {Y = second; first }) return false
 
         while (true) /////////////////////////////////////////////
@@ -1050,7 +1048,7 @@ class Clipper {
         try {
             if (Closed == null) return false
             Closed.clear()
-            if (Open != null) Open.clear()
+            Open?.clear()
             if (!ExecuteInternal(clipType, ft)) return false
             BuildResult(Closed, Open)
             return true
@@ -1154,7 +1152,7 @@ class Clipper {
                         {
                             //create a intersect node...
                             InsertNewIntersectNode(tmp!!, second, TopY)
-                            tmp = tmp!!.PrevInSEL
+                            tmp = tmp.PrevInSEL
                         }
                         /////////////////////////////////////////////////
 
@@ -1359,7 +1357,7 @@ class Clipper {
 
         while (true) //loops through consec. horizontal edges (if open)
         {
-            var isMax = IsMaxima (horz)
+            val isMax = IsMaxima (horz)
             var e = if (isLeftToRight)
                 horz.NextInAEL
             else

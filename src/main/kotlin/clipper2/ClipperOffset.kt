@@ -6,8 +6,8 @@ import kotlin.math.*
 enum class JoinType { Square, Round, Miter }
 enum class EndType { Polygon, OpenJoined, OpenButt, OpenSquare, OpenRound }
 
-class PointD(var X: Double = 0.0, var Y: Double = 0.0) {
-    constructor(dp: PointD) : this(dp.X, dp.Y)
+class PointD(var x: Double = 0.0, var y: Double = 0.0) {
+    constructor(dp: PointD) : this(dp.x, dp.y)
     constructor(dp: Point64) : this(dp.x.toDouble(), dp.y.toDouble())
 
 } //PointD
@@ -47,7 +47,7 @@ class PathNode(p: Path, jt: JoinType, et: EndType) {
                 if (p[i].y >= path[lowestIdx].y &&
                     (p[i].y > path[lowestIdx].y || p[i].x < path[lowestIdx].x)
                 )
-                    lowestIdx = path.size
+                    lowestIdx = path.size - 1
             }
             if (endType == EndType.Polygon && path.size < 3) path.clear()
         }
@@ -68,7 +68,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
     private var pathIn: Path? = null
     private var pathOut: Path? = null
     private var norms = mutableListOf<PointD>()
-    private var nodes = mutableListOf<PathNode?>()
+    private var nodes = mutableListOf<PathNode>()
     private var lowestIdx: Int = 0
     private var PointZero = Point64(0, 0)
 
@@ -103,13 +103,13 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         var ip1 = PointZero
         var ip2: Point64
         for (i in nodes.indices) {
-            var node = nodes[i]
-            if (node!!.endType != EndType.Polygon) continue
+            val node = nodes[i]
+            if (node.endType != EndType.Polygon) continue
             if (lowestIdx < 0) {
-                ip1 = node!!.path[node!!.lowestIdx]
+                ip1 = node.path[node.lowestIdx]
                 lowestIdx = i
             } else {
-                ip2 = node!!.path[node.lowestIdx]
+                ip2 = node.path[node.lowestIdx]
                 if (ip2.y >= ip1.y && (ip2.y > ip1.y || ip2.x < ip1.x)) {
                     lowestIdx = i
                     ip1 = ip2
@@ -127,12 +127,12 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         //cos(A) > 0: angles on both left and right sides > 90 degrees
 
         //cross product ...
-        sinA = (norms[k].X * norms[j].Y - norms[j].X * norms[k].Y)
+        sinA = (norms[k].x * norms[j].y - norms[j].x * norms[k].y)
 
         if (abs(sinA * delta) < 1.0) //angle is approaching 180 or 360 deg.
         {
             //dot product ...
-            var cosA = (norms[k].X * norms[j].X + norms[j].Y * norms[k].Y)
+            var cosA = (norms[k].x * norms[j].x + norms[j].y * norms[k].y)
             if (cosA > 0) //given condition above the angle is approaching 360 deg.
             {
                 //with angles approaching 360 deg collinear (whether concave or convex),
@@ -141,8 +141,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                 //So we offset with just a single vertex here ...
                 pathOut!!.add(
                     Point64(
-                        Round(pathIn!![j].x + norms[k].X * delta),
-                        Round(pathIn!![j].y + norms[k].Y * delta)
+                        round(pathIn!![j].x + norms[k].x * delta),
+                        round(pathIn!![j].y + norms[k].y * delta)
                     )
                 )
                 return k
@@ -154,15 +154,15 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         {
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + norms[k].X * delta),
-                    Round(pathIn!![j].y + norms[k].Y * delta)
+                    round(pathIn!![j].x + norms[k].x * delta),
+                    round(pathIn!![j].y + norms[k].y * delta)
                 )
             )
             pathOut!!.add(pathIn!![j])
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + norms[j].X * delta),
-                    Round(pathIn!![j].y + norms[j].Y * delta)
+                    round(pathIn!![j].x + norms[j].x * delta),
+                    round(pathIn!![j].y + norms[j].y * delta)
                 )
             )
         } else {
@@ -170,13 +170,13 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
             var cosA: Double
             when (jointype) {
                 JoinType.Miter -> {
-                    cosA = (norms[j].X * norms[k].X + norms[j].Y * norms[k].Y)
+                    cosA = (norms[j].x * norms[k].x + norms[j].y * norms[k].y)
                     //see offset_triginometry3.svg
                     if (1 + cosA < miterLim) DoSquare(j, k)
                     else DoMiter(j, k, 1 + cosA)
                 }
                 JoinType . Square -> {
-                    cosA = (norms[j].X * norms[k].X + norms[j].Y * norms[k].Y)
+                    cosA = (norms[j].x * norms[k].x + norms[j].y * norms[k].y)
                     if (cosA >= 0) DoMiter(j, k, 1 + cosA) //angles >= 90 deg. don't need squaring
                     else DoSquare(j, k)
                 }
@@ -194,27 +194,27 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         if (delta > 0) {
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + delta * (norms[k].X - norms[k].Y)),
-                    Round(pathIn!![j].y + delta * (norms[k].Y + norms[k].X))
+                    round(pathIn!![j].x + delta * (norms[k].x - norms[k].y)),
+                    round(pathIn!![j].y + delta * (norms[k].y + norms[k].x))
                 )
             )
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + delta * (norms[j].X + norms[j].Y)),
-                    Round(pathIn!![j].y + delta * (norms[j].Y - norms[j].X))
+                    round(pathIn!![j].x + delta * (norms[j].x + norms[j].y)),
+                    round(pathIn!![j].y + delta * (norms[j].y - norms[j].x))
                 )
             )
         } else {
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + delta * (norms[k].X + norms[k].Y)),
-                    Round(pathIn!![j].y + delta * (norms[k].Y - norms[k].X))
+                    round(pathIn!![j].x + delta * (norms[k].x + norms[k].y)),
+                    round(pathIn!![j].y + delta * (norms[k].y - norms[k].x))
                 )
             )
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + delta * (norms[j].X - norms[j].Y)),
-                    Round(pathIn!![j].y + delta * (norms[j].Y + norms[j].X))
+                    round(pathIn!![j].x + delta * (norms[j].x - norms[j].y)),
+                    round(pathIn!![j].y + delta * (norms[j].y + norms[j].x))
                 )
             )
         }
@@ -226,8 +226,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         var q = delta / cosAplus1 //0 < cosAplus1 <= 2
         pathOut!!.add(
             Point64(
-                Round(pathIn!![j].x + (norms[k].X + norms[j].X) * q),
-                Round(pathIn!![j].y + (norms[k].Y + norms[j].Y) * q)
+                round(pathIn!![j].x + (norms[k].x + norms[j].x) * q),
+                round(pathIn!![j].y + (norms[k].y + norms[j].y) * q)
             )
         )
     }
@@ -236,19 +236,19 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
     fun DoRound(j: Int, k: Int) {
         var a = atan2(
             sinA,
-            norms[k].X * norms[j].X + norms[k].Y * norms[j].Y
+            norms[k].x * norms[j].x + norms[k].y * norms[j].y
         )
-        var steps = max(Round (stepsPerRad * abs(a)), 1)
+        var steps = max(round(stepsPerRad * abs(a)), 1)
 
-        var X = norms[k].X
-        var Y = norms[k].Y
+        var X = norms[k].x
+        var Y = norms[k].y
         var X2 : Double
         for ( i in 0 until steps)
         {
             pathOut!!.add(
                 Point64(
-                    Round(pathIn!![j].x + X * delta),
-                    Round(pathIn!![j].y + Y * delta)
+                    round(pathIn!![j].x + X * delta),
+                    round(pathIn!![j].y + Y * delta)
                 )
             )
             X2 = X
@@ -257,8 +257,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         }
         pathOut!!.add(
             Point64(
-                Round(pathIn!![j].x + norms[j].X * delta),
-                Round(pathIn!![j].y + norms[j].Y * delta)
+                round(pathIn!![j].x + norms[j].x * delta),
+                round(pathIn!![j].y + norms[j].y * delta)
             )
         )
     }
@@ -272,8 +272,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         if (absDelta < Tolerance) {
             solution = Paths()
             for( node in nodes){
-                if (node!!.endType == EndType.Polygon) {
-                    solution?.add(node!!.path)
+                if (node.endType == EndType.Polygon) {
+                    solution?.add(node.path)
                 }
             }
             return
@@ -301,21 +301,21 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         solution = Paths()
         for( node in nodes)
         {
-            pathIn = node!!.path
+            pathIn = node.path
             pathOut = Path()
-            var pathInCnt = pathIn!!.size
+            val pathInCnt = pathIn!!.size
 
             //if a single vertex then build circle or a square ...
             if (pathInCnt == 1) {
-                if (node!!.joinType == JoinType.Round) {
+                if (node.joinType == JoinType.Round) {
                     var X = 1.0
                     var Y = 0.0
                     for (j in 1 until ceil(steps).roundToInt())
                     {
                         pathOut!!.add(
                             Point64(
-                                Round(pathIn!![0].x + X * delta),
-                                Round(pathIn!![0].y + Y * delta)
+                                round(pathIn!![0].x + X * delta),
+                                round(pathIn!![0].y + Y * delta)
                             )
                         )
                         var X2 = X
@@ -329,8 +329,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                     {
                         pathOut!!.add(
                             Point64(
-                                Round(pathIn!![0].x + X * delta),
-                                Round(pathIn!![0].y + Y * delta)
+                                round(pathIn!![0].x + X * delta),
+                                round(pathIn!![0].y + Y * delta)
                             )
                         )
                         if (X < 0) X = 1.0
@@ -345,10 +345,10 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
             //build norms ...
             norms.clear()
             for (j in 0 until pathInCnt - 1){
-                norms.add(GetUnitNormal(pathIn!![j], pathIn!![j + 1]))
+                norms.add(getUnitNormal(pathIn!![j], pathIn!![j + 1]))
             }
             if (node.endType == EndType.OpenJoined || node.endType == EndType.Polygon)
-                norms.add(GetUnitNormal(pathIn!![pathInCnt - 1], pathIn!![0]))
+                norms.add(getUnitNormal(pathIn!![pathInCnt - 1], pathIn!![0]))
             else
                 norms.add(PointD (norms[pathInCnt - 2]))
 
@@ -367,12 +367,12 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                 pathOut = Path()
                 //re-build norms ...
                 var n = norms [pathInCnt - 1]
-                for (j in pathInCnt - 1 downTo  0) {
-                    norms[j] = PointD(-norms[j - 1].X, -norms[j - 1].Y)
+                for (j in pathInCnt - 1 downTo  1) {
+                    norms[j] = PointD(-norms[j - 1].x, -norms[j - 1].y)
                 }
-                norms[0] = PointD(-n.X, -n.Y)
+                norms[0] = PointD(-n.x, -n.y)
                 k = 0
-                for (j in pathInCnt - 1 downTo  -1){
+                for (j in pathInCnt - 1 downTo  0){
                     k =  OffsetPoint(j, k, node.joinType)
                 }
                 solution?.add(pathOut!!)
@@ -385,20 +385,20 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                 if (node.endType == EndType.OpenButt) {
                     var j = pathInCnt -1
                     pt1 = Point64(
-                        Round (pathIn!![j].x + norms[j].X *
-                                delta), Round (pathIn!![j].y + norms[j].Y * delta)
+                        round(pathIn!![j].x + norms[j].x *
+                                delta), round(pathIn!![j].y + norms[j].y * delta)
                     )
                     pathOut!!.add(pt1)
                     pt1 = Point64(
-                         Round (pathIn!![j].x - norms[j].X *
-                                delta),  Round (pathIn!![j].y - norms[j].Y * delta)
+                        round(pathIn!![j].x - norms[j].x *
+                                delta), round(pathIn!![j].y - norms[j].y * delta)
                     )
                     pathOut!!.add(pt1)
                 } else {
                     var j = pathInCnt -1
                     k = pathInCnt - 2
                     sinA = 0.0
-                    norms[j] = PointD(-norms[j].X, -norms[j].Y)
+                    norms[j] = PointD(-norms[j].x, -norms[j].y)
                     if (node.endType == EndType.OpenSquare)
                         DoSquare(j, k)
                     else
@@ -406,26 +406,26 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                 }
 
                 //reverse norms ...
-                for (j in pathInCnt - 1 downTo  0 ){
-                    norms[j] = PointD(-norms[j - 1].X, -norms[j - 1].Y)
+                for (j in pathInCnt - 1 downTo  1 ){
+                    norms[j] = PointD(-norms[j - 1].x, -norms[j - 1].y)
 
                 }
-                norms[0] = PointD(-norms[1].X, -norms[1].Y)
+                norms[0] = PointD(-norms[1].x, -norms[1].y)
 
                 k = pathInCnt - 1
-                for (j in k - 1 downTo  0 ) {
+                for (j in k - 1 downTo  1 ) {
                     k = OffsetPoint(j, k, node.joinType)
                 }
 
                 if (node.endType == EndType.OpenButt) {
                     pt1 = Point64(
-                         Round (pathIn!![0].x - norms[0].X * delta).toLong(),
-                         Round (pathIn!![0].y - norms[0].Y * delta).toLong()
+                         round(pathIn!![0].x - norms[0].x * delta),
+                         round(pathIn!![0].y - norms[0].y * delta)
                     )
                     pathOut!!.add(pt1)
                     pt1 = Point64(
-                         Round (pathIn!![0].x + norms[0].X * delta).toLong(),
-                         Round (pathIn!![0].y + norms[0].Y * delta).toLong()
+                         round(pathIn!![0].x + norms[0].x * delta),
+                         round(pathIn!![0].y + norms[0].y * delta)
                     )
                     pathOut!!.add(pt1)
                 } else {
@@ -447,11 +447,13 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         if (nodes.size == 0) return
 
         GetLowestPolygonIdx()
-        var negate = (lowestIdx >= 0 && Area(nodes[lowestIdx]!!.path) < 0)
+        var negate = (lowestIdx >= 0 && area(nodes[lowestIdx].path) < 0)
         //if polygon orientations are reversed, then 'negate' ...
         if (negate) this.delta = -delta
         else this.delta = delta
         DoOffset(this.delta)
+
+
 
         //now clean up 'corners' ...
         var clpr = Clipper()
@@ -466,7 +468,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
     companion object {
 
 
-        fun GetUnitNormal(pt1: Point64, pt2: Point64): PointD {
+        fun getUnitNormal(pt1: Point64, pt2: Point64): PointD {
             var dx = (pt2.x - pt1.x).toDouble()
             var dy = (pt2.y - pt1.y).toDouble()
             if ((dx == 0.0) && (dy == 0.0)) return PointD()
@@ -478,7 +480,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
             return PointD(dy, -dx)
         }
 
-        fun OffsetPaths(pp: Paths, delta: Double, jt: JoinType, et: EndType): Paths {
+        fun offsetPaths(pp: Paths, delta: Double, jt: JoinType, et: EndType): Paths {
             var result = Paths()
             var co = ClipperOffset ()
             co.addPaths(pp, jt, et)
@@ -487,7 +489,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         }
 
 
-        fun Area(p: Path): Double {
+        fun area(p: Path): Double {
             val cnt = p.size
             if (cnt < 3) return 0.0
             var a = 0.0
@@ -499,7 +501,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
             return -a * 0.5
         }
 
-        fun Round(value: Double): Long {
+        fun round(value: Double): Long {
             return if(value < 0 )  (value-0.5).toLong() else (value+0.5).toLong()
         }
     }
