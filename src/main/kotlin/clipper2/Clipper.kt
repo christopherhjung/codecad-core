@@ -369,23 +369,23 @@ class Clipper {
 
 
     private fun SetWindingLeftEdgeOpen(e: Active) {
-        var e2: Active = Actives!!
+        var e2: Active? = Actives
         if (fillType == FillRule.EvenOdd) {
             var cnt1 = 0
             var cnt2 = 0
             while (e2 != e) {
-                if (GetPathType(e2) == PathType.Clip) cnt2++
+                if (GetPathType(e2!!) == PathType.Clip) cnt2++
                 else if (!IsOpen(e2)) cnt1++
-                e2 = e2.NextInAEL!!
+                e2 = e2.NextInAEL
             }
             e.WindCnt = cnt1 % 2
             e.WindCnt2 = cnt2 % 2
         } else {
             //if FClipType in [ctUnion, ctDifference] then e.WindCnt := e.WindDx;
             while (e2 != e) {
-                if (GetPathType(e2) == PathType.Clip) e.WindCnt2 += e2.WindDx
+                if (GetPathType(e2!!) == PathType.Clip) e.WindCnt2 += e2.WindDx
                 else if (!IsOpen(e2)) e.WindCnt += e2.WindDx
-                e2 = e2.NextInAEL!!
+                e2 = e2.NextInAEL
             }
         }
     }
@@ -403,11 +403,11 @@ class Clipper {
 
         if (e == null) {
             leftE.WindCnt = leftE.WindDx
-            e = Actives!!
+            e = Actives
         } else if (fillType == FillRule.EvenOdd) {
             leftE.WindCnt = leftE.WindDx
             leftE.WindCnt2 = e.WindCnt2
-            e = e.NextInAEL!!
+            e = e.NextInAEL
         } else {
             //NonZero, Positive, or Negative filling here ...
             //if e's WindCnt is in the SAME direction as its WindDx, then e is either
@@ -436,7 +436,7 @@ class Clipper {
                     leftE.WindCnt = e.WindCnt + leftE.WindDx
             }
             leftE.WindCnt2 = e.WindCnt2
-            e = e.NextInAEL!! //ie get ready to calc WindCnt2
+            e = e.NextInAEL //ie get ready to calc WindCnt2
         }
 
         //update WindCnt2 ...
@@ -444,13 +444,13 @@ class Clipper {
             while (e != leftE) {
                 if (GetPathType(e!!) != pt && !IsOpen(e))
                     leftE.WindCnt2 = if(leftE.WindCnt2 == 0)  1 else 0
-                e = e.NextInAEL!!
+                e = e.NextInAEL
             }
         else
             while (e != leftE) {
                 if (GetPathType(e!!) != pt && !IsOpen(e))
                     leftE.WindCnt2 += e.WindDx
-                e = e.NextInAEL!!
+                e = e.NextInAEL
             }
     }
 
@@ -600,7 +600,7 @@ class Clipper {
     private fun GetOwner(e: Active): OutRec? {
         var e: Active? = e
         return if (IsHorizontal(e!!) && e.Top!!.x < e.Bot!!.x) {
-            e = e.NextInAEL!!
+            e = e.NextInAEL
             while (e != null && (!IsHotEdge(e) || IsOpen(e)))
                 e = e.NextInAEL
             if (e == null) null
@@ -846,11 +846,12 @@ class Clipper {
                 ClipType.Intersection,
                 ClipType.Difference -> if (IsSamePathType(e1, e2) || (abs(e2.WindCnt) != 1)) return
 
-                ClipType.Union ->
+                ClipType.Union -> {
                     if (IsHotEdge(e1) != ((abs(e2.WindCnt) != 1) ||
                                 (IsHotEdge(e1) != (e2.WindCnt2 != 0)))
                     )
-                        return //just works!
+                    return //just works!
+                }
 
                 ClipType.Xor ->
                     if (abs(e2.WindCnt) != 1)
@@ -1293,7 +1294,7 @@ class Clipper {
 
     private fun ResetHorzDirection(
         horz: Active, maxPair: Active?
-    ): Pair<Boolean, Pair<Long, Long>> {
+    ): Triple<Boolean, Long, Long> {
         var horzLeft: Long
         var horzRight: Long
         var result: Boolean
@@ -1314,7 +1315,7 @@ class Clipper {
             result = false //right to left
         }
 
-        return result to (horzLeft to horzRight)
+        return Triple(result, horzLeft, horzRight)
     }
     //------------------------------------------------------------------------
 
@@ -1349,9 +1350,14 @@ class Clipper {
                     ((horz.VertTop!!.Flags and (VertexFlags.OpenStart or VertexFlags.OpenEnd)) == 0)))
         maxPair = GetMaximaPair(horz)
 
+        var horzLeft : Long
+        var horzRight : Long
 
-        var (isLeftToRight, horiz) = ResetHorzDirection(horz, maxPair)
-        var (horzLeft, horzRight) = horiz
+        var isLeftToRight = ResetHorzDirection(horz, maxPair).run {
+            horzLeft = second
+            horzRight = third
+            first
+        }
 
         if (IsHotEdge(horz)) addOutPt(horz, horz.Curr!!)
 
@@ -1403,12 +1409,11 @@ class Clipper {
             //still more horizontals in bound to process ...
             UpdateEdgeIntoAEL(horz)
 
-            val (testing, horiz) = ResetHorzDirection(horz, maxPair)
-            isLeftToRight = testing
-
-            horzLeft = horiz.first
-            horzRight = horiz.second
-
+            isLeftToRight = ResetHorzDirection(horz, maxPair).run {
+                horzLeft = second
+                horzRight = third
+                first
+            }
 
             if (IsOpen(horz)) {
                 if (IsMaxima(horz)) maxPair = GetMaximaPair(horz)
