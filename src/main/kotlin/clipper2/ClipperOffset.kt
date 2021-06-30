@@ -234,11 +234,11 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
 
 
     fun DoRound(j: Int, k: Int) {
-        var a = atan2(
+        val a = atan2(
             sinA,
             norms[k].x * norms[j].x + norms[k].y * norms[j].y
         )
-        var steps = max(round(stepsPerRad * abs(a)), 1)
+        val steps = max(round(stepsPerRad * abs(a)), 1)
 
         var X = norms[k].x
         var Y = norms[k].y
@@ -266,7 +266,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
     private fun DoOffset(d: Double) {
         solution = null
         delta = d
-        var absDelta = abs(d)
+        val absDelta = abs(d)
 
         //if a Zero offset, then just copy CLOSED polygons to FSolution and return ...
         if (absDelta < Tolerance) {
@@ -285,7 +285,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         else
             miterLim = 0.5
 
-        var arcTol = if (ArcTolerance < DefaultArcFrac)
+        val arcTol = if (ArcTolerance < DefaultArcFrac)
              absDelta * DefaultArcFrac; else
              ArcTolerance
 
@@ -318,8 +318,8 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
                                 round(pathIn!![0].y + Y * delta)
                             )
                         )
-                        var X2 = X
-                                X = X * cos - sin * Y
+                        val X2 = X
+                        X = X * cos - sin * Y
                         Y = X2 * sin + Y * cos
                     }
                 } else {

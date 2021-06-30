@@ -241,7 +241,7 @@ fun main(args: Array<String>) {
             point(0.0, 0.0),
             point(2.0, 0.0),
             point(2.0, 2.0),
-            point(1.0, 1.0),
+           // point(1.0, 1.0),
             point(0.0, 2.0),
         )
 
