@@ -453,6 +453,7 @@ class ClipperOffset(val MiterLimit: Double = 2.0, val ArcTolerance: Double = 0.0
         else this.delta = delta
         DoOffset(this.delta)
 
+        //sol.add(solution!![0])
 
 
         //now clean up 'corners' ...

@@ -259,7 +259,7 @@ class Clipper {
         }
         va.add(v)
         //nb: polygon orientation is determined later (see InsertLocalMinimaIntoAEL).
-        for (j in 0 until pathLen) {
+        for (j in 1 until pathLen) {
             if (p[j] == v.Pt) continue //ie skips duplicates
             val v2 = Vertex(p[j])
             v.Next = v2
@@ -326,7 +326,41 @@ class Clipper {
         return (e1.LocalMin!!.PathType == e2.LocalMin!!.PathType)
     }
 
+
     private fun IsContributingClosed(e: Active): Boolean {
+        when (this.fillType) {
+            FillRule.NonZero -> if(abs(e.WindCnt) != 1) return false
+            FillRule.Positive -> if (e.WindCnt != 1) return false
+            FillRule.Negative -> if (e.WindCnt != -1) return false
+        }
+        when (this.clipType) {
+            ClipType.Intersection -> return when (this.fillType) {
+                FillRule.EvenOdd, FillRule.NonZero -> e.WindCnt2 != 0
+                FillRule.Positive -> e.WindCnt2 > 0
+                FillRule.Negative -> e.WindCnt2 < 0
+            }
+            ClipType.Union -> return when (this.fillType) {
+                FillRule.EvenOdd, FillRule.NonZero -> e.WindCnt2 == 0
+                FillRule.Positive -> e.WindCnt2 <= 0
+                FillRule.Negative -> e.WindCnt2 >= 0
+            }
+            ClipType.Difference -> {
+                return if (GetPathType(e) === PathType.Subject) when (this.fillType) {
+                    FillRule.EvenOdd, FillRule.NonZero -> e.WindCnt2 == 0
+                    FillRule.Positive -> e.WindCnt2 <= 0
+                    FillRule.Negative -> e.WindCnt2 >= 0
+                } else when (this.fillType) {
+                    FillRule.EvenOdd, FillRule.NonZero -> e.WindCnt2 != 0
+                    FillRule.Positive -> e.WindCnt2 > 0
+                    FillRule.Negative -> e.WindCnt2 < 0
+                }
+            }
+            ClipType.Xor -> return true //XOr is always contributing unless open
+            else -> return false
+        }
+    }
+
+    /*private fun IsContributingClosed(e: Active): Boolean {
         when (fillType) {
             FillRule.NonZero -> if (abs(e.WindCnt) != 1) return false
             FillRule.Positive -> if (e.WindCnt != 1) return false
@@ -347,7 +381,7 @@ class Clipper {
             else ->
                 false
         }
-    }
+    }*/
 
     fun test(e: Active): Boolean {
         return when (fillType) {
