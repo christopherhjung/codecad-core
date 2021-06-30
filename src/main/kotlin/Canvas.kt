@@ -29,7 +29,7 @@ class Canvas {
             matrix,  //Matrix obj of the image
             getPoint(x,y),  //p1
             getPoint(x2,y2),  //p2
-            if(construction) Scalar(0.0, 0.0, 255.0) else Scalar(0.0, 255.0, 0.0),  //Scalar object for color
+            Scalar(0.0, 255.0, 0.0),  //Scalar object for color
             1, //Thickness of the line
             Imgproc.LINE_AA
         )

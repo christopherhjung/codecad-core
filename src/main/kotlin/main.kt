@@ -40,10 +40,6 @@ class Builder {
         return sketch.createLine(a, b)
     }
 
-    fun line(a: Point, b: Point, type: LineType): Line {
-        return sketch.createLine(a, b, type)
-    }
-
     fun circle(center: Point, radius: Value): Circle {
         return sketch.createCircle(center, radius)
     }
@@ -183,45 +179,11 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
             throw RuntimeException()
         }
 
-
         while (stepper.hasNext()) {
             val next = stepper.next()
 
             path.add(LongPoint((next.x * 1000).toLong(), (next.y * 1000).toLong()))
         }
-
-
-        /*
-        while( stepper.hasNext() ){
-            val next = stepper.next()
-
-            val diff = next - current
-            val d = diff.length()
-
-            val e1 = diff * ( 1 / d )
-            val e2 = Vector(e1.y, -e1.x)
-
-            val x = d/2
-            val y = sqrt(radius.pow(2) - x)
-
-            val point = current + x * e1 + y * e2
-
-
-            val thePoint = Point(const(point.x), const(point.y))
-
-            marks.add(point)
-
-            if(last != null){
-                line(last, thePoint)
-            }
-
-            last = thePoint
-
-            current = next
-
-            println(point)
-        }*/
-
     }
 
 
@@ -239,10 +201,10 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
     var first: Point? = null
     for (path in paths) {
         for (point in path) {
-            val thePoint = Point(const(point.x / 1000.0), const(point.y / 1000.0))
+            val thePoint = point(point.x / 1000.0, point.y / 1000.0)
 
             if (last != null) {
-                lines.add(line(last, thePoint, LineType.Construction))
+                lines.add(line(last, thePoint))
             } else {
                 first = thePoint
             }
@@ -252,7 +214,7 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
     }
 
     if (last != null && first != null) {
-        lines.add(line(last, first, LineType.Construction))
+        lines.add(line(last, first))
     }
 
     return lines

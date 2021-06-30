@@ -76,11 +76,7 @@ data class Point(override val x: Value, override val y: Value) : AbstractPoint, 
 
 }
 
-enum class LineType{
-    Normal, Construction
-}
-
-data class Line(val a: Point, val b: Point, val type: LineType = LineType.Normal) : Element
+data class Line(val a: Point, val b: Point) : Element
 
 data class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element
 
