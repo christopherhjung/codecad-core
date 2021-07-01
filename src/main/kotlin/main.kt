@@ -1,4 +1,8 @@
 import clipper2.*
+import de.lighti.clipper.Clipper
+import de.lighti.clipper.ClipperOffset
+import de.lighti.clipper.Path
+import de.lighti.clipper.Paths
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -159,10 +163,8 @@ class ArcStepper(val arc: Circle) : Stepper {
     }
 }
 
-fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
-
+fun elementsToPath(elements: List<Element>) : Paths{
     val path = Path()
-
     val scaler: Double = 100.0
 
     for (element in elements) {
@@ -177,14 +179,21 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
         while (stepper.hasNext()) {
             val next = stepper.next()
 
-            path.add(Point64((next.x * scaler).toLong(), (next.y * scaler).toLong()))
+            path.add(de.lighti.clipper.Point.LongPoint((next.x * scaler).toLong(), (next.y * scaler).toLong()))
         }
     }
 
+    val paths = Paths()
+    paths.add(path)
+    return paths
+}
+
+fun Builder.offsetPolygons(paths : Paths, delta: Double): Paths {
+    val scaler: Double = 100.0
 
     val offset = ClipperOffset(2.0,0.05)
 
-    offset.addPath(path, JoinType.Round, EndType.Polygon)
+    offset.addPaths(paths, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON)
 
     val paths = Paths()
 
@@ -192,12 +201,13 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
 
     val lines = mutableListOf<Line>()
 
-    var last: Point? = null
-    var first: Point? = null
+
     for (path in paths) {
+        var last: Point? = null
+        var first: Point? = null
         for (point in path) {
-            //val thePoint = Point(const(point.x / scaler), const(point.y / scaler))
-            val thePoint = point(point.x / scaler, point.y / scaler)
+            val thePoint = Point(const(point.x / scaler), const(point.y / scaler))
+            //val thePoint = point(point.x / scaler, point.y / scaler)
 
 
             if (last != null) {
@@ -208,20 +218,17 @@ fun Builder.offsetPolygons(elements: List<Element>, delta: Double): List<Line> {
 
             last = thePoint
         }
+
+
+        if (last != null && first != null) {
+            lines.add(line(last, first,  LineType.Construction))
+        }
     }
 
-    if (last != null && first != null) {
-        lines.add(line(last, first,  LineType.Construction))
-    }
-
-    return lines
+    return paths
 }
 
 fun main(args: Array<String>) {
-
-    val clipperOffset = ClipperOffset()
-
-    val path = Path()
 
 
     val start = System.currentTimeMillis()
@@ -241,14 +248,14 @@ fun main(args: Array<String>) {
             point(0.0, 0.0),
             point(2.0, 0.0),
             point(2.0, 2.0),
-            point(1.0, 1.0),
+            point(1.0, 0.55),
             point(0.0, 2.0),
         )
 
-        val offsetLines = offsetPolygons(poly, -0.3)
+        val paths = offsetPolygons(elementsToPath(poly), -0.3)
 
 
-        //offsetPolygons(offsetLines, 0.3)
+        offsetPolygons(paths, 0.3)
 
         //angle(lineA, lineB, const(179.0 unit deg))
     }
