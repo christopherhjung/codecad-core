@@ -92,7 +92,7 @@ class Sketch {
         val canvas = Canvas()
         for (element in elements) {
             if (element is Line) {
-                canvas.line(element.a.x.value, element.a.y.value, element.b.x.value, element.b.y.value, element.type == LineType.Construction)
+                canvas.line(element.a.x.value, element.a.y.value, element.b.x.value, element.b.y.value, element.type )
             } else if (element is Circle) {
                 if (element.start == null || element.end == null) {
                     canvas.circle(element.center.x.value, element.center.y.value, element.rad.value)

@@ -77,7 +77,7 @@ data class Point(override val x: Value, override val y: Value) : AbstractPoint, 
 }
 
 enum class LineType{
-    Normal, Construction
+    Normal, Construction, ToolContour
 }
 
 data class Line(val a: Point, val b: Point, val type: LineType = LineType.Normal) : Element

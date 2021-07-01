@@ -1,4 +1,3 @@
-import clipper2.*
 import de.lighti.clipper.Clipper
 import de.lighti.clipper.ClipperOffset
 import de.lighti.clipper.Path
@@ -188,7 +187,7 @@ fun elementsToPath(elements: List<Element>) : Paths{
     return paths
 }
 
-fun Builder.offsetPolygons(paths : Paths, delta: Double): Paths {
+fun Builder.offsetPolygons(paths : Paths, delta: Double, outerContour: Boolean = false): Paths {
     val scaler: Double = 100.0
 
     val offset = ClipperOffset(2.0,0.05)
@@ -201,6 +200,8 @@ fun Builder.offsetPolygons(paths : Paths, delta: Double): Paths {
 
     val lines = mutableListOf<Line>()
 
+    val lineType = if(outerContour) LineType.ToolContour else LineType.Construction
+
 
     for (path in paths) {
         var last: Point? = null
@@ -211,7 +212,7 @@ fun Builder.offsetPolygons(paths : Paths, delta: Double): Paths {
 
 
             if (last != null) {
-                lines.add(line(last, thePoint,  LineType.Construction))
+                lines.add(line(last, thePoint,  lineType))
             } else {
                 first = thePoint
             }
@@ -221,7 +222,7 @@ fun Builder.offsetPolygons(paths : Paths, delta: Double): Paths {
 
 
         if (last != null && first != null) {
-            lines.add(line(last, first,  LineType.Construction))
+            lines.add(line(last, first,  lineType))
         }
     }
 
@@ -245,8 +246,9 @@ fun main(args: Array<String>) {
         pointOnArcEnd(B, arc)*/
 
         val poly = polygon(
-            point(0.0, 0.0),
-            point(2.0, 0.0),
+            point(0.0, -2.0),
+            point(1.0, -0.55),
+            point(2.0, -2.0),
             point(2.0, 2.0),
             point(1.0, 0.55),
             point(0.0, 2.0),
@@ -255,7 +257,8 @@ fun main(args: Array<String>) {
         val paths = offsetPolygons(elementsToPath(poly), -0.3)
 
 
-        offsetPolygons(paths, 0.3)
+        offsetPolygons(paths, 0.3, true)
+        offsetPolygons(paths, -0.3, true)
 
         //angle(lineA, lineB, const(179.0 unit deg))
     }

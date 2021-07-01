@@ -24,12 +24,16 @@ class Canvas {
         return Point( x * scale + size/2,y * scale + size/2)
     }
 
-    fun line(x: Double, y: Double, x2: Double, y2: Double, construction: Boolean = false){
+    fun line(x: Double, y: Double, x2: Double, y2: Double, construction: LineType){
         Imgproc.line(
             matrix,  //Matrix obj of the image
             getPoint(x,y),  //p1
             getPoint(x2,y2),  //p2
-            if(construction) Scalar(0.0, 0.0, 255.0) else Scalar(0.0,255.0,0.0),  //Scalar object for color
+            when(construction){
+                LineType.Construction ->Scalar(0.0, 0.0, 255.0)
+                LineType.Normal -> Scalar(0.0,255.0,0.0)
+                LineType.ToolContour -> Scalar(0.0,255.0,255.0)
+            } ,  //Scalar object for color
             1, //Thickness of the line
             Imgproc.LINE_AA
         )
