@@ -1,7 +1,5 @@
-import de.lighti.clipper.Clipper
-import de.lighti.clipper.ClipperOffset
-import de.lighti.clipper.Path
-import de.lighti.clipper.Paths
+
+import com.angusj.clipper.Clipper
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -130,7 +128,7 @@ class LineStepper(val line: Line) : Stepper {
     var i = 0
 
     override fun hasNext(): Boolean {
-        return i < 1
+        return i <= 1
     }
 
     override fun next(): Vector {
@@ -162,9 +160,8 @@ class ArcStepper(val arc: Circle) : Stepper {
     }
 }
 
-fun elementsToPath(elements: List<Element>) : Paths{
-    val path = Path()
-    val scaler: Double = 100.0
+fun elementsToPath(elements: List<Element>) : Array<DoubleArray>{
+    val path = mutableListOf<Double>()
 
     for (element in elements) {
         val stepper: Stepper = if (element is Line) {
@@ -177,42 +174,32 @@ fun elementsToPath(elements: List<Element>) : Paths{
 
         while (stepper.hasNext()) {
             val next = stepper.next()
-
-            path.add(de.lighti.clipper.Point.LongPoint((next.x * scaler).toLong(), (next.y * scaler).toLong()))
+            path.add(next.x)
+            path.add(next.y)
         }
     }
 
-    val paths = Paths()
-    paths.add(path)
-    return paths
+
+    return arrayOf(path.toTypedArray().toDoubleArray())
 }
 
-fun Builder.offsetPolygons(paths : Paths, delta: Double, outerContour: Boolean = false): Paths {
-    val scaler: Double = 100.0
-
-    val offset = ClipperOffset(2.0,0.05)
-
-    offset.addPaths(paths, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON)
-
-    val paths = Paths()
-
-    offset.execute(paths, delta * scaler)
-
-    val lines = mutableListOf<Line>()
+fun Builder.offsetPolygons(input : Array<DoubleArray>, delta: Double, outerContour: Boolean = false): Array<DoubleArray> {
+    val clipper = Clipper()
+    val output = clipper.generatePath(2.0,0.01, input, delta)
 
     val lineType = if(outerContour) LineType.ToolContour else LineType.Construction
 
-
-    for (path in paths) {
+    for (path in output) {
         var last: Point? = null
         var first: Point? = null
-        for (point in path) {
-            val thePoint = Point(const(point.x / scaler), const(point.y / scaler))
-            //val thePoint = point(point.x / scaler, point.y / scaler)
+        for (i in path.indices step 2) {
+            val x = path[i]
+            val y = path[i + 1]
 
+            val thePoint = Point(const(x), const(y))
 
             if (last != null) {
-                lines.add(line(last, thePoint,  lineType))
+                line(last, thePoint,  lineType)
             } else {
                 first = thePoint
             }
@@ -222,29 +209,17 @@ fun Builder.offsetPolygons(paths : Paths, delta: Double, outerContour: Boolean =
 
 
         if (last != null && first != null) {
-            lines.add(line(last, first,  lineType))
+            line(last, first,  lineType)
         }
     }
 
-    return paths
+    return output
 }
 
 fun main(args: Array<String>) {
 
-
     val start = System.currentTimeMillis()
     val sketch = sketch {
-        /*val A = constPoint(0.0,0.0)
-        val B = constPoint(1.0,1.0)
-        val C = constPoint(1.0, 0.0)
-        val arc = arc(constPoint(1.0,0.5), param(1.0), param(0.0 unit deg), param(180.0 unit deg))
-
-        val lineA = line(A, B)
-        val lineB = line(C, A)
-
-        pointOnArcStart(C,arc)
-        pointOnArcEnd(B, arc)*/
-
         val poly = polygon(
             point(0.0, -2.0),
             point(1.0, -0.55),
@@ -256,20 +231,14 @@ fun main(args: Array<String>) {
 
         val paths = offsetPolygons(elementsToPath(poly), -0.3)
 
-
         offsetPolygons(paths, 0.3, true)
         offsetPolygons(paths, -0.3, true)
-
-        //angle(lineA, lineB, const(179.0 unit deg))
     }
 
 
     sketch.draw()
 
-
     val end = System.currentTimeMillis()
     println("time need: ${end - start}")
-
-
 }
 

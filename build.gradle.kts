@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    java
     kotlin("jvm") version "1.4.32"
 }
 
@@ -18,7 +19,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
     //implementation("org.openpnp:opencv:4.5.1-2")
-    implementation("de.lighti:Clipper:6.4.2")
+    //implementation("de.lighti:Clipper:6.4.2")
+
+    implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
+
 
     implementation(files("/usr/local/Cellar/opencv/4.5.2_4/share/java/opencv4/opencv-452.jar"))
 }
@@ -28,8 +32,8 @@ tasks.test {
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "15"
-    targetCompatibility = "15"
+    sourceCompatibility = "16"
+    targetCompatibility = "16"
 }
 
 
