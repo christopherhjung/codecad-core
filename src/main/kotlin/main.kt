@@ -229,10 +229,22 @@ fun main(args: Array<String>) {
             point(0.0, 2.0),
         )
 
-        val paths = offsetPolygons(elementsToPath(poly), -0.3)
+        val shaftRadius = 0.2
+        val offset = 0.1
 
-        offsetPolygons(paths, 0.3, true)
-        offsetPolygons(paths, -0.3, true)
+        var paths = elementsToPath(poly)
+        var i = 0
+        while(true){
+            val toolPath = offsetPolygons(paths, -( shaftRadius + i * offset))
+
+            val innerPath = offsetPolygons(toolPath, -shaftRadius, true)
+
+            offsetPolygons(toolPath, shaftRadius, true)
+            if(innerPath.isEmpty()){
+                break
+            }
+            i++
+        }
     }
 
 

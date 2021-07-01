@@ -32,7 +32,7 @@ class ProxyValue(var proxy: Value) : Value() {
 }
 
 
-interface Element
+open class Element(var type: LineType = LineType.Normal)
 
 interface AbstractPoint{
     val x: Value
@@ -61,7 +61,7 @@ class MinusPoint(left: Point, right: Point) : AbstractPoint{
     override val y: Value = MinusValue(left.y, right.y)
 }
 
-data class Point(override val x: Value, override val y: Value) : AbstractPoint, Element {
+class Point(override val x: Value, override val y: Value, type: LineType = LineType.Normal) : Element(type), AbstractPoint {
     fun toVector(): Vector {
         return Vector(x.value, y.value)
     }
@@ -76,13 +76,13 @@ data class Point(override val x: Value, override val y: Value) : AbstractPoint, 
 
 }
 
-enum class LineType{
-    Normal, Construction, ToolContour
+enum class LineType(val prio: Int){
+    Normal(2), Construction(3), ToolContour(1)
 }
 
-data class Line(val a: Point, val b: Point, val type: LineType = LineType.Normal) : Element
+class Line(val a: Point, val b: Point, type: LineType = LineType.Normal) : Element(type)
 
-data class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element
+class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element()
 
 //class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
 

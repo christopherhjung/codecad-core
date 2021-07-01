@@ -1,7 +1,14 @@
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
+
 class Sketch {
     val params = HashSet<Value>()
     val constraints = HashSet<Constraint>()
-    val elements = HashSet<Element>()
+    val elements = TreeSet<Element>(){  a,b  ->
+        val comp = a.type.prio.compareTo(b.type.prio)
+        if(comp == 0) 1 else comp
+    }
 
     fun createParameter(value: Double = 0.0): ProxyValue {
         val param = Parameter(value)
