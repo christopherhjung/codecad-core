@@ -2,7 +2,7 @@ import java.lang.Math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-val minErrorChange = 1e-16
+val minErrorChange = 1e-12
 val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
@@ -89,7 +89,7 @@ class Solver {
             true
         } else {
             for (i in x.indices) {
-                x[i].value = original[i]
+                //x[i].value = original[i]
             }
             false
         }

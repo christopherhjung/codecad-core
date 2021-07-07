@@ -1,15 +1,15 @@
+import Builder.Companion.AXIS_X
+import Builder.Companion.ORIGIN
 import com.angusj.clipper.Clipper
 var length: Value? = null
+var radius: Value? = null
 
 sketch {
     //circle(point(0.0,0.0), const(1.0))
 
-    val nullPoint = constPoint()
-    val xAxis = line(nullPoint, constPoint(1.0, 0.0))
 
-
-    val a = line(nullPoint,point(1.0,0.5))
-    val b = line(nullPoint,point(1.0,1.0))
+    val a = line(ORIGIN,point(1.0,0.5))
+    val b = line(ORIGIN,point(1.0,1.0))
 
 
     //perpendicular(a,b)
@@ -19,22 +19,27 @@ sketch {
     //pointOnPoint(a.a, b.a)
     //pointOnPoint(a.a, nullPoint)
 
-    val arc = arc(point(1.5,0.5), param(1.2), param(0.0), param(90.0 unit deg))
+    radius = param(1.2)
+    val arc = arc(point(1.5,0.5), radius!!, param(0.2), param(90.0 unit deg))
 
     pointOnArcEnd(b.b, arc)
     pointOnArcStart(a.b, arc)
     equalLength(a,b)
-    length = const(1.0 unit mm)
+    length = param(1.0 unit mm)
     length(a, length!!)
     angle(a,b,const(30.0 unit deg))
-    angle(a, xAxis, const(30.0 unit deg))
+    angle(a, AXIS_X, const(30.0 unit deg))
 
     //pointOnLine(arc.center, b)
     tangent(arc, a)
     tangent(arc, b)
+
+
+    //val area = getArea(arc.center)
 }
 
 
-println(length!!.value)
+println(length?.value)
+println(radius?.value)
 
 

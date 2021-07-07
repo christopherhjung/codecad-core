@@ -11,6 +11,12 @@ import kotlin.math.sin
 class Builder {
     val sketch = Sketch()
 
+    companion object{
+        val ORIGIN = Point(Parameter(0.0), Parameter(0.0))
+        val AXIS_X = Line(ORIGIN, Point(Parameter(1.0), Parameter(0.0)))
+        val AXIS_Y = Line(ORIGIN, Point(Parameter(0.0), Parameter(1.0)))
+    }
+
     val deg = 0
     val rad = 1
 
@@ -144,7 +150,12 @@ class Builder {
 fun sketch(init: Builder.() -> Unit): Sketch {
     val builder = Builder()
     builder.init()
-    builder.sketch.solve(10e-8)
+    try{
+        builder.sketch.solve(10e-8)
+    }catch (e: Exception){
+        e.printStackTrace(System.err)
+    }
+
     builder.sketch.draw()
     return builder.sketch
 }

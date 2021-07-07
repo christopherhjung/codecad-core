@@ -70,7 +70,12 @@ class Sketch {
     fun addConstraint(constraint: Constraint) : Constraint{
         constraints.add(constraint)
         constraint.prune(this)
-        solve(10e-6)
+        try{
+            solve(10e-6)
+        }catch (e: Exception){
+            draw()
+            throw e
+        }
         return constraint
     }
 
@@ -103,8 +108,8 @@ class Sketch {
             for(constraint in constraints){
                 val constraintError = constraint.error()
                 error += constraintError
-                if(constraintError > 10e-5){
-                    println("$constraint: line: ${constraint.lineNumber}")
+                if(constraintError > accuracy){
+                    println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
                 }
             }
 

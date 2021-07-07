@@ -251,8 +251,6 @@ fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Double {
     //val diff = line1.b - line1.a
     //val diff2 = line2.b - line2.a
 
-
-
     var dx = line1.b.x.value - line1.a.x.value
     var dy = line1.b.y.value - line1.a.y.value
     var dx2 = line2.b.x.value - line2.a.x.value
@@ -319,16 +317,6 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
         return (rad1 - circle.rad.value).pow(2)
     }
 }
-/*
-class PointOnArc(val point: Point, val arc: Arc) : Constraint() {
-    override fun error(): Double {
-        //see what the current radius to the point is
-        val rad1 = hypot(arc.center.x.value - point.x.value,arc.center.y.value - point.y.value);
-        //val rad2 = hypot(arc.center.x.value  - (arc.center.x.value+arc.rad.value*cos(arc.start.value)),arc.center.y.value -  (arc.center.y.value+arc.rad.value*sin(arc.start.value)));
-        //Compare this radius to the radius of the circle, return the error squared
-        return (rad1-arc.rad.value).pow(2)
-    }
-}*/
 
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     override fun error(): Double {
@@ -337,6 +325,10 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
             circle1.center.y.value - circle2.center.y.value
         )
         return temp * temp
+    }
+
+    override fun prune(sketch: Sketch) {
+        sketch.paramIsEquals(circle1.rad, circle2.rad)
     }
 }
 
@@ -387,10 +379,18 @@ class Radius(val circle: Circle, val radius: Value) : Constraint() {
     override fun error(): Double {
         return (radius.value - circle.rad.value).pow(2)
     }
+
+    override fun prune(sketch: Sketch) {
+        sketch.paramIsEquals(circle.rad, radius)
+    }
 }
 
 class Equals(val left: Value, val right: Value) : Constraint() {
     override fun error(): Double {
         return (left.value - right.value).pow(2)
+    }
+
+    override fun prune(sketch: Sketch) {
+        sketch.paramIsEquals(left, right)
     }
 }
