@@ -1,8 +1,8 @@
 import org.opencv.core.*
 import org.opencv.core.Point
-import org.opencv.highgui.HighGui
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
+import kotlin.math.abs
 
 class Canvas {
     val matrix: Mat
@@ -11,13 +11,6 @@ class Canvas {
     init{
         System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
         matrix =  Mat.zeros(size,size, CvType.CV_8UC3)
-
-
-
-        // Drawing a line
-
-        // Drawing a line
-
     }
 
     fun getPoint(x: Double, y: Double) : Point{
@@ -30,7 +23,7 @@ class Canvas {
             getPoint(x,y),  //p1
             getPoint(x2,y2),  //p2
             when(construction){
-                LineType.Construction ->Scalar(0.0, 0.0, 255.0)
+                LineType.ToolPath ->Scalar(0.0, 0.0, 255.0)
                 LineType.Normal -> Scalar(0.0,255.0,0.0)
                 LineType.ToolContour -> Scalar(0.0,255.0,255.0)
             } ,  //Scalar object for color
@@ -54,7 +47,10 @@ class Canvas {
         Imgproc.ellipse(
             matrix,  //Matrix obj of the image
             getPoint(x,y),  //p1
-            Size(rad * scale + 0.5, rad * scale + 0.5),
+            Size(
+                abs(rad) * scale + 0.5,
+                abs(rad) * scale + 0.5
+            ),
             0.0,
             Math.toDegrees(start),
             Math.toDegrees(end),

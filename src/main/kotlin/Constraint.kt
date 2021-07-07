@@ -2,6 +2,8 @@ import kotlin.math.*
 
 abstract class Constraint {
 
+    var lineNumber: Int = -1
+
     abstract fun error(): Double
 
     open fun prune(sketch: Sketch) {
@@ -73,11 +75,10 @@ class Point(override val x: Value, override val y: Value, type: LineType = LineT
     operator fun minus(right: Point) : AbstractPoint {
         return MinusPoint(this, right)
     }
-
 }
 
 enum class LineType(val prio: Int){
-    Normal(2), Construction(3), ToolContour(1)
+    Normal(2), ToolPath(3), ToolContour(1)
 }
 
 class Line(val a: Point, val b: Point, type: LineType = LineType.Normal) : Element(type)
@@ -93,7 +94,7 @@ class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 
     override fun prune(sketch: Sketch) {
         sketch.paramIsEquals(a.x, b.x)
-        sketch.paramIsEquals(b.y, b.y)
+        sketch.paramIsEquals(a.y, b.y)
     }
 }
 
@@ -127,7 +128,7 @@ class LineLength(val line: Line, val length: Value) : Constraint() {
     override fun error(): Double {
         val temp =
             sqrt((line.b.x.value - line.a.x.value).pow(2) + (line.b.y.value - line.a.y.value).pow(2)) - length.value
-        return temp * temp * 100
+        return temp * temp
     }
 }
 

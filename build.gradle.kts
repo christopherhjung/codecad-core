@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
-    kotlin("jvm") version "1.4.32"
+    kotlin("jvm") version "1.5.20"
 }
 
 group = "me.chris"
@@ -21,9 +21,18 @@ dependencies {
     //implementation("org.openpnp:opencv:4.5.1-2")
     //implementation("de.lighti:Clipper:6.4.2")
 
+    implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
+    implementation(kotlin("script-runtime"))
+    implementation(kotlin("compiler-embeddable"))
+    implementation(kotlin("script-util"))
+    runtimeOnly(kotlin("scripting-compiler-embeddable"))
+    runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.20")
+
+
+
     implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
-
-
+    implementation("org.kabeja:kabeja:0.5.0")
     implementation(files("/usr/local/Cellar/opencv/4.5.2_4/share/java/opencv4/opencv-452.jar"))
 }
 

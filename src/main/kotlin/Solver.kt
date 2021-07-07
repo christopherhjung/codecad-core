@@ -2,9 +2,7 @@ import java.lang.Math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-val pertMag = 1e-8
-val pertMin = 1e-12
-val minErrorChange = 1e-14
+val minErrorChange = 1e-16
 val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
@@ -19,8 +17,6 @@ fun calc(constraints: List<Constraint>): Double {
 class Solver {
 
     fun calcGrad(currentError: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
-        //var pert = currentError * pertMag
-        //if (pert < pertMin) pert = pertMin
         val pert = 10e-8
         for (j in x.indices) {
             val temp = x[j].value
@@ -53,11 +49,11 @@ class Solver {
         }
     }
 
-    fun solve(x: List<Value>, cons: List<Constraint>): Boolean {
+    fun solve(x: List<Value>, cons: List<Constraint>, accuracy: Double = targetError): Boolean {
         val original = DoubleArray(x.size)
         copyInto(original, x)
 
-        val scaledError = targetError * x.size
+        val scaledError = accuracy * x.size
 
         var error = calc(cons)
         if (error < scaledError) {
@@ -75,7 +71,7 @@ class Solver {
         }
 
 
-        while ((errorChange > minErrorChange || error > scaledError ) && iter < 1000000) {
+        while ((errorChange > minErrorChange && error > scaledError ) && iter < 1000000) {
             calcGrad(error, grad, x, cons)
 
             optimizer.optimize(grad)
@@ -93,7 +89,7 @@ class Solver {
             true
         } else {
             for (i in x.indices) {
-                //x[i].value = original[i]
+                x[i].value = original[i]
             }
             false
         }

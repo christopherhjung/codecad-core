@@ -1,3 +1,4 @@
+import org.python.bouncycastle.asn1.tsp.Accuracy
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -36,7 +37,7 @@ class Sketch {
         return point
     }
 
-    fun createLine(a: Point, b: Point, type: LineType = LineType.Construction): Line {
+    fun createLine(a: Point, b: Point, type: LineType = LineType.ToolPath): Line {
         val line = Line(a, b, type)
         elements.add(line)
         return line
@@ -66,10 +67,11 @@ class Sketch {
         return createLine(createConstPoint(x, y), createConstPoint(x2, y2))
     }
 
-    fun addConstraint(constraint: Constraint) {
+    fun addConstraint(constraint: Constraint) : Constraint{
         constraints.add(constraint)
         constraint.prune(this)
-        solve()
+        solve(10e-6)
+        return constraint
     }
 
     fun paramIsEquals(left: Value, right: Value) {
@@ -90,9 +92,28 @@ class Sketch {
         }
     }
 
-    fun solve() {
+    fun solve(accuracy: Double) {
+        val start = System.currentTimeMillis()
+
         val solver = Solver()
-        println(solver.solve(ArrayList(params), ArrayList(constraints)))
+        val result = solver.solve(ArrayList(params), ArrayList(constraints),accuracy)
+
+        if(!result){
+            var error = 0.0
+            for(constraint in constraints){
+                val constraintError = constraint.error()
+                error += constraintError
+                if(constraintError > 10e-5){
+                    println("$constraint: line: ${constraint.lineNumber}")
+                }
+            }
+
+            throw RuntimeException("Could not solve constraints! Error: $error")
+        }
+
+
+        val end = System.currentTimeMillis()
+        println("time need: ${end - start}")
     }
 
     fun draw() {
