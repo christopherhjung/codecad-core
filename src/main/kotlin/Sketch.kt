@@ -131,9 +131,10 @@ class Sketch {
         if(!result){
             var error = 0.0
             for(constraint in constraints){
-                val constraintError = constraint.error()
-                error += constraintError
-                if(constraintError > accuracy){
+                val constraintError = constraint.formular()
+                val value = constraintError.value
+                error += value
+                if(value > accuracy){
                     println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
                 }
             }
