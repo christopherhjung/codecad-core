@@ -37,11 +37,11 @@ abstract class Value {
     }
 
     operator fun unaryMinus() : Value{
-        if(this.isZero()){
+        if(isZero()){
             return Const.ZERO
         }
 
-        return MinusValue(Const(0.0), this)
+        return MinusValue(Const.ZERO, this)
     }
 
     operator fun minus(right: Value) : Value{
@@ -128,7 +128,7 @@ abstract class Value {
     }
 
     fun pow(right : Int) : Value{
-        return pow(Parameter(right.toDouble()))
+        return pow(right.toDouble())
     }
 
     fun sqrt() : Value{
@@ -139,7 +139,7 @@ abstract class Value {
         return SmallerValue(this, other)
     }
 
-    abstract fun derivate(parameter: Parameter) : Value
+    abstract fun derivative(parameter: Parameter) : Value
     abstract fun isZero() : Boolean
     abstract fun isOne() : Boolean
 }
@@ -152,7 +152,7 @@ class Const(_value: Double) : Value() {
         val ONE: Const = Const(1.0)
     }
 
-    override fun derivate(parameter: Parameter): Value {
+    override fun derivative(parameter: Parameter): Value {
         return Const(0.0)
     }
 
@@ -168,7 +168,7 @@ class Const(_value: Double) : Value() {
 class Parameter(_value: Double) : Value() {
     override var value: Double = _value
 
-    override fun derivate(parameter: Parameter): Value {
+    override fun derivative(parameter: Parameter): Value {
         return Const(if(this === parameter){
             1.0
         }else{
@@ -192,8 +192,8 @@ class ProxyValue(var proxy: Value) : Value() {
             proxy.value = value
         }
 
-    override fun derivate(parameter: Parameter): Value {
-        return proxy.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return proxy.derivative(parameter)
     }
 
     override fun isOne(): Boolean {
@@ -263,8 +263,8 @@ class PowValue(val left: Value, val right: Value) : Value(){
         get() = left.value.pow(right.value)
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return right * left.pow(right - 1) * left.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return right * left.pow(right - 1) * left.derivative(parameter)
     }
 
     override fun isZero(): Boolean {
@@ -281,8 +281,8 @@ class CosValue(val left: Value) : Value(){
         get() = cos(left.value)
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return -SinValue(left) * left.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return -SinValue(left) * left.derivative(parameter)
     }
 
     override fun isOne(): Boolean {
@@ -299,8 +299,8 @@ class SinValue(val left: Value) : Value(){
         get() = sin(left.value)
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return CosValue(left) * left.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return CosValue(left) * left.derivative(parameter)
     }
 
     override fun isOne(): Boolean {
@@ -318,8 +318,8 @@ class AddValue(val left: Value, val right: Value) : Value(){
         get() = left.value + right.value
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return left.derivate(parameter) + right.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return left.derivative(parameter) + right.derivative(parameter)
     }
 
     override fun isZero(): Boolean {
@@ -336,8 +336,8 @@ class TimesValue(val left: Value, val right: Value) : Value(){
         get() = left.value * right.value
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return left.derivate(parameter) * right + left * right.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return left.derivative(parameter) * right + left * right.derivative(parameter)
     }
 
     override fun isZero(): Boolean {
@@ -350,12 +350,12 @@ class TimesValue(val left: Value, val right: Value) : Value(){
 }
 
 
-class SmallerValue(val left: Value, val right: Value) : Value(){
+class SmallerValue(private val left: Value, private val right: Value) : Value(){
     override var value: Double
         get() = if(left.value < right.value) 1.0 else 0.0
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
+    override fun derivative(parameter: Parameter): Value {
         return Const.ZERO
     }
 
@@ -373,8 +373,8 @@ class DivValue(val left: Value, val right: Value) : Value(){
         get() = left.value / right.value
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return (left.derivate(parameter) * right + left * right.derivate(parameter)) / right.pow(2)
+    override fun derivative(parameter: Parameter): Value {
+        return (left.derivative(parameter) * right + left * right.derivative(parameter)) / right.pow(2)
     }
 
     override fun isZero(): Boolean {
@@ -392,8 +392,8 @@ class MinusValue(val left: Value, val right: Value) : Value(){
         get() = left.value - right.value
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return left.derivate(parameter) - right.derivate(parameter)
+    override fun derivative(parameter: Parameter): Value {
+        return left.derivative(parameter) - right.derivative(parameter)
     }
 
     override fun isZero(): Boolean {
@@ -411,8 +411,8 @@ class ConditionalValue(val condition: Value, val left: Value, val right: Value) 
         get() = if(condition.value > 0.5) left.value else right.value
         set(value) {throw RuntimeException()}
 
-    override fun derivate(parameter: Parameter): Value {
-        return ConditionalValue(condition, left.derivate(parameter), right.derivate(parameter))
+    override fun derivative(parameter: Parameter): Value {
+        return ConditionalValue(condition, left.derivative(parameter), right.derivative(parameter))
     }
 
     override fun isZero(): Boolean {

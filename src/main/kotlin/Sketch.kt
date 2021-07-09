@@ -10,14 +10,19 @@ class Sketch {
         if(comp == 0) 1 else comp
     }
 
+    class PruningEntry(val proxies: MutableList<ProxyValue> = mutableListOf(), var fixed: Value? = null)
+    val pruningTable = mutableMapOf<ProxyValue, PruningEntry>()
+
     fun createParameter(value: Double = 0.0): ProxyValue {
         val param = Parameter(value)
         params.add(param)
-        return ProxyValue(param)
+        val proxy = ProxyValue(param)
+        pruningTable[proxy] = PruningEntry(mutableListOf(proxy))
+        return proxy
     }
 
-    fun createConst(value: Double = 0.0): Parameter {
-        return Parameter(value)
+    fun createConst(value: Double = 0.0): Const {
+        return Const(value)
     }
 
     fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point {
@@ -80,17 +85,38 @@ class Sketch {
 
     fun paramIsEquals(left: Value, right: Value) {
         if (left is ProxyValue) {
+            val leftEntry = pruningTable[left]!!
             if (right is ProxyValue) {
-                if (left.proxy != right.proxy) {
-                    params.remove(left.proxy)
-                    left.proxy = right.proxy
+                val rightEntry = pruningTable[right]!!
+
+                if(leftEntry === rightEntry){
+                    return
                 }
+
+                leftEntry.proxies.addAll(rightEntry.proxies)
+
+                if(leftEntry.fixed != null && rightEntry.fixed != null){
+                    throw java.lang.RuntimeException("not possible!!")
+                }else if(rightEntry.fixed != null){
+                    leftEntry.fixed = rightEntry.fixed
+                }
+
+                pruningTable[right] = leftEntry
             } else {
-                left.proxy = right
+                if(leftEntry.fixed != null){
+                    throw java.lang.RuntimeException("not possible!!")
+                }
+
+                leftEntry.fixed = right
             }
         } else if (right is ProxyValue) {
-            params.remove(right.proxy)
-            right.proxy = left
+            val rightEntry = pruningTable[right]!!
+
+            if(rightEntry.fixed != null){
+                throw java.lang.RuntimeException("not possible!!")
+            }
+
+            rightEntry.fixed = left
         } else {
             throw RuntimeException("const cant be set equals")
         }

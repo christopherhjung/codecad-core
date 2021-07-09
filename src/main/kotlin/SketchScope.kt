@@ -2,9 +2,9 @@ class SketchScope {
     val sketch = Sketch()
 
     companion object{
-        val ORIGIN = Point(Parameter(0.0), Parameter(0.0))
-        val AXIS_X = Line(ORIGIN, Point(Parameter(1.0), Parameter(0.0)))
-        val AXIS_Y = Line(ORIGIN, Point(Parameter(0.0), Parameter(1.0)))
+        val ORIGIN = Point(Const(0.0), Const(0.0))
+        val AXIS_X = Line(ORIGIN, Point(Const(1.0), Const(0.0)))
+        val AXIS_Y = Line(ORIGIN, Point(Const(0.0), Const(1.0)))
     }
 
     val deg = 0
@@ -25,7 +25,7 @@ class SketchScope {
         return sketch.createParameter(value)
     }
 
-    fun const(value: Double = 0.0): Parameter {
+    fun const(value: Double = 0.0): Const {
         return sketch.createConst(value)
     }
 
@@ -149,7 +149,7 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
     val builder = SketchScope()
     builder.init()
     try{
-        builder.sketch.solve(10e-10)
+        builder.sketch.solve(1e-10)
     }catch (e: Exception){
         e.printStackTrace(System.err)
     }

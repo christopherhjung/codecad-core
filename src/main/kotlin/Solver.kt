@@ -1,9 +1,7 @@
 import java.lang.Math.abs
 import java.lang.Math.random
-import kotlin.math.pow
-import kotlin.math.sqrt
 
-val minErrorChange = 1e-14
+val minErrorChange = 1e-20
 val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
@@ -55,7 +53,6 @@ class Solver {
         }
 
         val grad = DoubleArray(x.size)
-        val grad2 = DoubleArray(x.size)
 
         var lastError = error
         var errorChange = 1.0
@@ -66,7 +63,7 @@ class Solver {
         }
 
 
-        var errorTerm: Value = Const(0.0)
+        var errorTerm: Value = Const.ZERO
 
         for(con in cons){
             val form = con.formular()
@@ -76,15 +73,15 @@ class Solver {
         val derivatives = mutableListOf<Value>()
 
         for (j in x.indices) {
-            derivatives.add(errorTerm.derivate(x[j] as Parameter))
+            derivatives.add(errorTerm.derivative(x[j] as Parameter))
         }
 
-        while ((errorChange > minErrorChange && error > scaledError ) && iter < 1000000) {
+        while ((errorChange > minErrorChange && error > scaledError ) && iter < 200000) {
             for (j in x.indices) {
                 grad[j] = derivatives[j].value
             }
 
-            calcGrad(grad2, x, cons)
+            //calcGrad(grad, x, cons)
 
             optimizer.optimize(grad)
 
