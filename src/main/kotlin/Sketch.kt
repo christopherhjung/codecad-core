@@ -117,7 +117,7 @@ class Sketch {
 
 
         val end = System.currentTimeMillis()
-        //println("time need: ${end - start}")
+        println("time need: ${end - start}")
     }
 
     fun draw() {

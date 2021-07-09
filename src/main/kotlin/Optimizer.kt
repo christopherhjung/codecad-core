@@ -8,7 +8,7 @@ interface Optimizer {
 }
 
 class AdamOptimizer(private val size: Int, private val consumer: (Int, Double) -> Unit) : Optimizer{
-    private val alpha = 0.005
+    private val alpha = 0.001
     private val beta1 = 0.9
     private val beta2 = 0.999
     private val epsilon = 10e-8

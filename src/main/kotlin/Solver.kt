@@ -1,4 +1,5 @@
 import java.lang.Math.abs
+import java.lang.Math.random
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -16,8 +17,11 @@ fun calc(constraints: List<Constraint>): Double {
 
 class Solver {
 
-    fun calcGrad(currentError: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
+
+
+    fun calcGrad(grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
         val pert = 10e-12
+
         for (j in x.indices) {
             val temp = x[j].value
             x[j].value = temp + pert
@@ -28,21 +32,7 @@ class Solver {
 
             val avgGrad = 0.5 * ( rightError - leftError ) / pert
 
-            /*grad[j] = if(kotlin.math.abs(avgGrad) > 10e-8){
-                avgGrad
-            }else{
-                if (rightError < currentError) {
-                    (rightError - currentError) / pert
-                } else if (leftError < currentError) {
-                    (currentError - leftError) / pert
-                } else {
-                    0.0
-                }
-            }*/
-
             grad[j] = avgGrad
-
-
             x[j].value = temp
         }
     }
@@ -65,22 +55,40 @@ class Solver {
         }
 
         val grad = DoubleArray(x.size)
+        val grad2 = DoubleArray(x.size)
 
         var lastError = error
         var errorChange = 1.0
         var iter = 0
 
         val optimizer = AdamOptimizer(x.size){ i, diff ->
-            x[i].value += diff
+            x[i].value += diff + (random() - 0.5) * 1e-14
         }
 
 
+        var errorTerm: Value = Const(0.0)
+
+        for(con in cons){
+            val form = con.formular()
+            errorTerm += form
+        }
+
+        val derivatives = mutableListOf<Value>()
+
+        for (j in x.indices) {
+            derivatives.add(errorTerm.derivate(x[j] as Parameter))
+        }
+
         while ((errorChange > minErrorChange && error > scaledError ) && iter < 1000000) {
-            calcGrad(error, grad, x, cons)
+            for (j in x.indices) {
+                grad[j] = derivatives[j].value
+            }
+
+            calcGrad(grad2, x, cons)
 
             optimizer.optimize(grad)
 
-            error = calc(cons)
+            error = errorTerm.value
             errorChange = abs(error - lastError)
             lastError = error
             iter++
