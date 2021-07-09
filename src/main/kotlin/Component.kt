@@ -152,6 +152,24 @@ abstract class Value {
         return SmallerValue(this, other)
     }
 
+    companion object{
+        fun cos(value: Value) : Value{
+            return if(value.isConst()){
+                Const(cos(value.value))
+            }else{
+                CosValue(value)
+            }
+        }
+
+        fun sin(value: Value) : Value{
+            return if(value.isConst()){
+                Const(sin(value.value))
+            }else{
+                SinValue(value)
+            }
+        }
+    }
+
     abstract fun derivative(parameter: Parameter) : Value
     abstract fun isZero() : Boolean
     abstract fun isOne() : Boolean
@@ -187,11 +205,11 @@ class Parameter(_value: Double) : Value() {
     override var value: Double = _value
 
     override fun derivative(parameter: Parameter): Value {
-        return Const(if(this === parameter){
-            1.0
+        return if(this === parameter){
+            Const.ONE
         }else{
-            0.0
-        })
+            Const.ZERO
+        }
     }
 
     override fun isZero(): Boolean {
@@ -312,7 +330,7 @@ class CosValue(val left: Value) : Value(){
         set(value) {throw RuntimeException()}
 
     override fun derivative(parameter: Parameter): Value {
-        return -SinValue(left) * left.derivative(parameter)
+        return -sin(left) * left.derivative(parameter)
     }
 
     override fun isOne(): Boolean {
@@ -334,7 +352,7 @@ class SinValue(val left: Value) : Value(){
         set(value) {throw RuntimeException()}
 
     override fun derivative(parameter: Parameter): Value {
-        return CosValue(left) * left.derivative(parameter)
+        return cos(left) * left.derivative(parameter)
     }
 
     override fun isOne(): Boolean {
