@@ -122,6 +122,14 @@ class SketchScope {
         sketch.addConstraint(PointOnPoint(point1, point2))
     }
 
+    fun equals(value1 : Value, value2: Value) {
+        sketch.addConstraint(Equals(value1, value2))
+    }
+
+    fun radius(circle: Circle, value: Value) {
+        sketch.addConstraint(Radius(circle, value))
+    }
+
     fun pointOnArcEnd(point: Point, arc: Circle) {
         sketch.addConstraint(PointOnArcEnd(point, arc))
     }
@@ -149,7 +157,7 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
     val builder = SketchScope()
     builder.init()
     try{
-        builder.sketch.solve(1e-10)
+        builder.sketch.solve(1e-8)
     }catch (e: Exception){
         e.printStackTrace(System.err)
     }

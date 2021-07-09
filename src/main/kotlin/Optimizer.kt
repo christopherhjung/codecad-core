@@ -8,7 +8,7 @@ interface Optimizer {
 }
 
 class AdamOptimizer(private val size: Int, private val consumer: (Int, Double) -> Unit) : Optimizer{
-    private val alpha = 0.001
+    private val alpha = 0.002
     private val beta1 = 0.9
     private val beta2 = 0.999
     private val epsilon = 10e-8
@@ -27,7 +27,8 @@ class AdamOptimizer(private val size: Int, private val consumer: (Int, Double) -
             v[i] = beta2 * v[i] + ( 1 - beta2 ) * grad[i] * grad[i]
             val mHat = m[i] / (1 - currentBeta1)
             val vHat = v[i] / (1 - currentBeta2)
-            consumer(i, - alpha * mHat / ( sqrt(vHat) + epsilon ))
+            val random = 0.0// (Math.random() - 0.5) * 2 * 1e-1
+            consumer(i, - (alpha * (1 + random)) * mHat / ( sqrt(vHat) + epsilon ))
         }
     }
 

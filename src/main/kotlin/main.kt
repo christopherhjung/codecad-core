@@ -1,5 +1,9 @@
 
+import java.lang.Exception
 import javax.script.ScriptEngineManager
+import kotlin.math.hypot
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 
 class Util{
@@ -11,8 +15,9 @@ class Util{
 }
 
 fun main(args: Array<String>) {
-    val file = Util.load("model.kts")
-    Executor.execute(file)
+
+    val value = 1e-200
+    println((hypot(value, value) - sqrt(value.pow(2) + value.pow(2))) / value)
 }
 
 

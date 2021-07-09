@@ -1,9 +1,10 @@
+import java.lang.Math.random
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 class Sketch {
-    val params = HashSet<Value>()
+    val params = HashSet<Parameter>()
     val constraints = HashSet<Constraint>()
     val elements = TreeSet<Element>(){  a,b  ->
         val comp = a.type.prio.compareTo(b.type.prio)
@@ -14,7 +15,7 @@ class Sketch {
     val pruningTable = mutableMapOf<ProxyValue, PruningEntry>()
 
     fun createParameter(value: Double = 0.0): ProxyValue {
-        val param = Parameter(value)
+        val param = Parameter(value + (random() - 0.5) * 1e-5)
         params.add(param)
         val proxy = ProxyValue(param)
         pruningTable[proxy] = PruningEntry(mutableListOf(proxy))
@@ -77,7 +78,6 @@ class Sketch {
         try{
             solve(10e-6)
         }catch (e: Exception){
-            draw()
             throw e
         }
         return constraint
@@ -144,36 +144,6 @@ class Sketch {
 
         val end = System.currentTimeMillis()
         println("time need: ${end - start}")
-    }
-
-    fun draw() {
-        val canvas = Canvas()
-        for (element in elements) {
-            if (element is Line) {
-                canvas.line(element.a.x.value, element.a.y.value, element.b.x.value, element.b.y.value, element.type )
-            } else if (element is Circle) {
-                if (element.start == null || element.end == null) {
-                    canvas.circle(element.center.x.value, element.center.y.value, element.rad.value)
-                } else {
-                    canvas.arc(
-                        element.center.x.value,
-                        element.center.y.value,
-                        element.rad.value,
-                        element.start.value,
-                        element.end.value
-                    )
-                }
-            }
-        }
-
-
-        for (element in elements) {
-            if (element is Point) {
-                canvas.point(element.x.value, element.y.value)
-            }
-        }
-
-        canvas.writeImage()
     }
 
     override fun toString(): String {
