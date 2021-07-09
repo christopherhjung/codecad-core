@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    java
-    kotlin("jvm") version "1.5.20"
+    //java
+    kotlin("jvm")// version "1.5.20"
 }
 
-group = "me.chris"
+group = "com.codecad.core"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_16
 
@@ -31,8 +31,10 @@ dependencies {
 
 
 
-    implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
-    implementation("org.kabeja:kabeja:0.5.0")
+
+
+    //implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
+    //implementation("org.kabeja:kabeja:0.5.0")
     implementation(files("/usr/local/Cellar/opencv/4.5.2_4/share/java/opencv4/opencv-452.jar"))
 }
 
@@ -47,8 +49,11 @@ tasks.withType<JavaCompile> {
 
 
 tasks.withType<KotlinCompile>() {
-    kotlinOptions.jvmTarget = "15"
+    kotlinOptions.jvmTarget = "16"
 }
+
+
+
 /*
 application {
     mainClassName = "MainKt"

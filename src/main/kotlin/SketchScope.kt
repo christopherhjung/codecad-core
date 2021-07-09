@@ -1,14 +1,4 @@
-
-import org.kabeja.dxf.DXFConstants
-import org.kabeja.dxf.DXFDocument
-import org.kabeja.dxf.DXFSpline
-import org.kabeja.parser.DXFParser
-import org.kabeja.parser.ParserBuilder
-import java.util.*
-import kotlin.math.cos
-import kotlin.math.sin
-
-class Builder {
+class SketchScope {
     val sketch = Sketch()
 
     companion object{
@@ -145,19 +135,52 @@ class Builder {
         //sketch.solve()
     }
 }
+class ProjectScope(val sketches: MutableList<Sketch> = mutableListOf())
 
+class Project(val sketches: MutableList<Sketch> = mutableListOf())
 
-fun sketch(init: Builder.() -> Unit): Sketch {
-    val builder = Builder()
+fun project(block: ProjectScope.() -> Unit) : Project{
+    val projectScope = ProjectScope()
+    block(projectScope)
+    return Project(projectScope.sketches)
+}
+
+fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
+    val builder = SketchScope()
     builder.init()
     try{
-        builder.sketch.solve(10e-8)
+        builder.sketch.solve(10e-10)
     }catch (e: Exception){
         e.printStackTrace(System.err)
     }
 
-    builder.sketch.draw()
+    sketches.add(builder.sketch)
+    //builder.sketch.draw()
     return builder.sketch
+}
+
+class LineSegment(val a: Vector, val b: Vector)
+
+fun sketchToLines(sketch: Sketch) : List<LineSegment>{
+    val list = mutableListOf<LineSegment>()
+    for(element in sketch.elements){
+        if(element is Line){
+            list.add(LineSegment(element.a.toVector(), element.b.toVector()))
+        }else if(element is Circle){
+            val span = ArcSpan(element)
+            var last: Vector? = null
+            for( i in 0 .. 100){
+                val t = i / 100.0
+
+                val point = span.getPoint(t)
+                if(last != null){
+                    list.add(LineSegment(last, point))
+                }
+                last = point
+            }
+        }
+    }
+    return list
 }
 
 /*
@@ -174,41 +197,6 @@ interface Stepper {
     fun hasNext(): Boolean
 }
 
-class LineStepper(val line: Line) : Stepper {
-    var i = 0
-
-    override fun hasNext(): Boolean {
-        return i <= 1
-    }
-
-    override fun next(): Vector {
-        val value = if(i == 0) line.a else line.b
-        i++
-        return value.toVector()
-    }
-}
-
-class ArcStepper(val arc: Circle) : Stepper {
-    var i = 0
-    var max = 100
-
-    val start = arc.end!!.value
-    val end = arc.start!!.value
-
-    val diff = end - start
-
-    override fun hasNext(): Boolean {
-        return i <= 100
-    }
-
-    override fun next(): Vector {
-        val currentAngle = start + diff * (i / 100.0)
-        val x = (arc.center.x.value + arc.rad.value * cos(currentAngle))
-        val y = (arc.center.y.value + arc.rad.value * sin(currentAngle))
-        i++
-        return Vector(x, y)
-    }
-}
 
 fun elementsToPath(elements: List<Element>) : Array<DoubleArray>{
     val path = mutableListOf<Double>()
@@ -233,7 +221,7 @@ fun elementsToPath(elements: List<Element>) : Array<DoubleArray>{
     return arrayOf(path.toTypedArray().toDoubleArray())
 }
 
-fun Builder.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
+fun SketchScope.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
     for (path in input) {
         var last: Point? = null
         var first: Point? = null
@@ -259,7 +247,7 @@ fun Builder.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
     }
 }
 
-
+/*
 fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {
 
     val lines = ArrayList<Line>()
@@ -313,4 +301,4 @@ fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {
     }
 
     return lines
-}
+}*/

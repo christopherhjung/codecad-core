@@ -1,4 +1,3 @@
-import org.python.bouncycastle.asn1.tsp.Accuracy
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -118,7 +117,7 @@ class Sketch {
 
 
         val end = System.currentTimeMillis()
-        println("time need: ${end - start}")
+        //println("time need: ${end - start}")
     }
 
     fun draw() {

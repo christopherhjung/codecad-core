@@ -1,4 +1,3 @@
-import com.angusj.clipper.Clipper
 
 
 sketch {
@@ -30,7 +29,9 @@ sketch {
 
     val innerPaths = mutableListOf<DoubleArray>()
     val outerPaths = mutableListOf<DoubleArray>()
-    while(true){
+
+
+    /*while(true){
         val toolPath =  Clipper().offsetPath(2.0,0.01, paths, -( shaftRadius + i * offset))
 
         pathsToPoly(toolPath, LineType.ToolPath)
@@ -51,5 +52,5 @@ sketch {
     pathsToPoly(innerResult, LineType.ToolContour)*/
 
     val outerResult = Clipper().unionPath(outerPaths.toTypedArray())
-    pathsToPoly(outerResult, LineType.ToolContour)
+    pathsToPoly(outerResult, LineType.ToolContour)*/
 }

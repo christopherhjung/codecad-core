@@ -2,7 +2,7 @@ import java.lang.Math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-val minErrorChange = 1e-12
+val minErrorChange = 1e-14
 val targetError = 1e-8
 
 fun calc(constraints: List<Constraint>): Double {
@@ -17,7 +17,7 @@ fun calc(constraints: List<Constraint>): Double {
 class Solver {
 
     fun calcGrad(currentError: Double, grad: DoubleArray, x: List<Value>, cons: List<Constraint>) {
-        val pert = 10e-8
+        val pert = 10e-12
         for (j in x.indices) {
             val temp = x[j].value
             x[j].value = temp + pert
@@ -28,15 +28,19 @@ class Solver {
 
             val avgGrad = 0.5 * ( rightError - leftError ) / pert
 
-            grad[j] = if(kotlin.math.abs(avgGrad) > 10e-8){
+            /*grad[j] = if(kotlin.math.abs(avgGrad) > 10e-8){
                 avgGrad
-            }else if (rightError < currentError) {
-                (rightError - currentError) / pert
-            } else if (leftError < currentError) {
-                (currentError - leftError) / pert
-            } else {
-                0.0
-            }
+            }else{
+                if (rightError < currentError) {
+                    (rightError - currentError) / pert
+                } else if (leftError < currentError) {
+                    (currentError - leftError) / pert
+                } else {
+                    0.0
+                }
+            }*/
+
+            grad[j] = avgGrad
 
 
             x[j].value = temp
@@ -53,7 +57,7 @@ class Solver {
         val original = DoubleArray(x.size)
         copyInto(original, x)
 
-        val scaledError = accuracy * x.size
+        val scaledError = accuracy
 
         var error = calc(cons)
         if (error < scaledError) {
@@ -82,7 +86,7 @@ class Solver {
             iter++
         }
 
-        println(iter)
+        //println(iter)
         //println(error)
 
         return if (error < scaledError) {
