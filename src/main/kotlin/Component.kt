@@ -21,6 +21,9 @@ class Circle(val center: Point, val rad: Value, val start: Value? = null, val en
 
 abstract class Value {
     abstract var value: Double
+    abstract val references: Set<Value>
+    open var modCounter: Int = 0
+    val id = counter++
 
     override fun toString(): String {
         return value.toString()
@@ -182,6 +185,8 @@ abstract class Value {
                 ConditionalValue(condition, left, right)
             }
         }
+
+        private var counter = 0
     }
 
     abstract fun derivative(parameter: Parameter) : Value
@@ -192,6 +197,7 @@ abstract class Value {
 
 class Const(_value: Double) : Value() {
     override var value: Double = _value
+    override val references: Set<Value> = emptySet()
 
     companion object{
         val ZERO: Const = Const(0.0)
@@ -224,8 +230,15 @@ class Const(_value: Double) : Value() {
     }
 }
 
+
 class Parameter(_value: Double) : Value() {
     override var value: Double = _value
+        set(value){
+            field = value
+            modCounter++
+        }
+
+    override val references: Set<Value> = setOf(this)
 
     override fun derivative(parameter: Parameter): Value {
         return if(this === parameter){
@@ -255,12 +268,23 @@ class Parameter(_value: Double) : Value() {
     }
 }
 
-class ProxyValue(var proxy: Value) : Value() {
+class ProxyValue(_proxy: Value) : Value() {
+    var proxy: Value = _proxy
+        set(value) {
+            modCounter = modCounter + 1 - proxy.modCounter
+            field = value
+        }
+
     override var value: Double
         get() = proxy.value
         set(value) {
             proxy.value = value
         }
+
+    override var modCounter: Int = 0
+        get() = field + proxy.modCounter
+
+    override val references: Set<Value> = setOf(this)
 
     override fun derivative(parameter: Parameter): Value {
         return proxy.derivative(parameter)
@@ -335,11 +359,46 @@ interface AbstractPoint{
     }
 }
 
+abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
+    override val references: Set<Value> = super.references + right.references
+}
 
-class PowValue(val left: Value, val right: Value) : Value(){
+class Context(val param: Value, var counter: Int)
+
+abstract class UnaryValue(val left: Value) : Value(){
+    override val references: Set<Value> = left.references
+    var listRef: List<Context>? = null
+    var cache: Double = 0.0
+
+    abstract fun calc() : Double
+
     override var value: Double
-        get() = left.value.pow(right.value)
+        get() {
+
+            if(listRef != null){
+                var found = false
+                for(ref in listRef!!){
+                    if(ref.counter != ref.param.modCounter){
+                        if(!found){
+                            cache = calc()
+                            found = true
+                        }
+
+                        ref.counter = ref.param.modCounter
+                    }
+                }
+            }else{
+                listRef = references.map { Context(it,-1) }.toList()
+                cache = calc()
+            }
+
+            return cache
+        }
         set(value) {throw RuntimeException()}
+}
+
+class PowValue(left: Value, right: Value) : BinaryValue(left, right){
+    override fun calc(): Double =  left.value.pow(right.value)
 
     override fun derivative(parameter: Parameter): Value {
         return right * left.pow(right - 1) * left.derivative(parameter)
@@ -358,10 +417,8 @@ class PowValue(val left: Value, val right: Value) : Value(){
     }
 }
 
-class CosValue(val left: Value) : Value(){
-    override var value: Double
-        get() = cos(left.value)
-        set(value) {throw RuntimeException()}
+class CosValue( left: Value) : UnaryValue(left){
+    override fun calc(): Double = cos(left.value)
 
     override fun derivative(parameter: Parameter): Value {
         return -sin(left) * left.derivative(parameter)
@@ -380,10 +437,8 @@ class CosValue(val left: Value) : Value(){
     }
 }
 
-class SinValue(val left: Value) : Value(){
-    override var value: Double
-        get() = sin(left.value)
-        set(value) {throw RuntimeException()}
+class SinValue(left: Value) : UnaryValue(left){
+    override fun calc(): Double = sin(left.value)
 
     override fun derivative(parameter: Parameter): Value {
         return cos(left) * left.derivative(parameter)
@@ -403,10 +458,8 @@ class SinValue(val left: Value) : Value(){
 }
 
 
-class AddValue(val left: Value, val right: Value) : Value(){
-    override var value: Double
-        get() = left.value + right.value
-        set(value) {throw RuntimeException()}
+class AddValue( left: Value, right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = left.value + right.value
 
     override fun derivative(parameter: Parameter): Value {
         return left.derivative(parameter) + right.derivative(parameter)
@@ -425,10 +478,8 @@ class AddValue(val left: Value, val right: Value) : Value(){
     }
 }
 
-class TimesValue(val left: Value, val right: Value) : Value(){
-    override var value: Double
-        get() = left.value * right.value
-        set(value) {throw RuntimeException()}
+class TimesValue(left: Value, right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = left.value * right.value
 
     override fun derivative(parameter: Parameter): Value {
         return left.derivative(parameter) * right + left * right.derivative(parameter)
@@ -448,10 +499,8 @@ class TimesValue(val left: Value, val right: Value) : Value(){
 }
 
 
-class SmallerValue(private val left: Value, private val right: Value) : Value(){
-    override var value: Double
-        get() = if(left.value < right.value) 1.0 else 0.0
-        set(value) {throw RuntimeException()}
+class SmallerValue(left: Value,  right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = if(left.value < right.value) 1.0 else 0.0
 
     override fun derivative(parameter: Parameter): Value {
         return Const.ZERO
@@ -470,10 +519,8 @@ class SmallerValue(private val left: Value, private val right: Value) : Value(){
     }
 }
 
-class DivValue(val left: Value, val right: Value) : Value(){
-    override var value: Double
-        get() = left.value / right.value
-        set(value) {throw RuntimeException()}
+class DivValue(left: Value, right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = left.value / right.value
 
     override fun derivative(parameter: Parameter): Value {
         return (left.derivative(parameter) * right + left * right.derivative(parameter)) / right.pow(2)
@@ -492,10 +539,8 @@ class DivValue(val left: Value, val right: Value) : Value(){
     }
 }
 
-class MinusValue(val left: Value, val right: Value) : Value(){
-    override var value: Double
-        get() = left.value - right.value
-        set(value) {throw RuntimeException()}
+class MinusValue(left: Value,  right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = left.value - right.value
 
     override fun derivative(parameter: Parameter): Value {
         return left.derivative(parameter) - right.derivative(parameter)
@@ -515,13 +560,13 @@ class MinusValue(val left: Value, val right: Value) : Value(){
 }
 
 
-class ConditionalValue(val condition: Value, val left: Value, val right: Value) : Value(){
-    override var value: Double
-        get() = if(condition.value > 0.5) left.value else right.value
-        set(value) {throw RuntimeException()}
+class ConditionalValue(val condition: Value, left: Value, right: Value) : BinaryValue(left, right){
+    override fun calc(): Double = if(condition.value > 0.5) left.value else right.value
+
+    override val references: Set<Value> = condition.references + super.references
 
     override fun derivative(parameter: Parameter): Value {
-        return Value.conditional(condition, left.derivative(parameter), right.derivative(parameter))
+        return conditional(condition, left.derivative(parameter), right.derivative(parameter))
     }
 
     override fun isZero(): Boolean {
