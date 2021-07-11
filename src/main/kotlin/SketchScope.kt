@@ -1,7 +1,7 @@
 import kotlin.math.cos
 import kotlin.math.sin
 
-class PatternScope : SketchScope() {
+class PatternScope(val count: Int, val center: Point) : SketchScope() {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
     val pointLookup = mutableMapOf<Point, Array<Point?>>()
@@ -11,27 +11,26 @@ class PatternScope : SketchScope() {
     }
 
     var current = 0
-    var repeats = 0
 
     private fun rotatePoint(point: Point, angle: Value) : Point{
-        val array = pointLookup.computeIfAbsent(point){Array(repeats){null} }
+        val array = pointLookup.computeIfAbsent(point){Array(count - 1){null} }
 
         if(array[current] == null){
             val a = Value.sin(angle)
             val b = Value.cos(angle)
-            array[current] = Point(b * point.x - a * point.y, a * point.x + b * point.y)
+            array[current] = Point(
+                b * (point.x - center.x) - a * (point.y - center.y) + center.x,
+                a * ( point.x - center.x) + b * ( point.y - center.y) + center.y)
         }
 
         return array[current]!!
     }
 
-    fun finish(count: Int, point: Point){
+    fun finish(){
         sketch.solve(1e-8)
         val rawElements = sketch.elements.toList()
 
-        repeats = count - 1
-
-        for(i in 0 until repeats){
+        for(i in 0 until count - 1){
             val angle = const((2 * Math.PI / count) * (i + 1))
             current = i
 
@@ -99,9 +98,9 @@ open class SketchScope {
     }
 
     fun pattern(repeat: Int, point: Point, init: PatternScope.(Point) -> Unit): Sketch {
-        val builder = PatternScope()
+        val builder = PatternScope(repeat, point)
         builder.init(point)
-        builder.finish(repeat, point)
+        builder.finish()
 
         sketch.elements.addAll(builder.sketch.elements)
 
