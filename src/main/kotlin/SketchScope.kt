@@ -1,4 +1,83 @@
-class SketchScope {
+import kotlin.math.cos
+import kotlin.math.sin
+
+class PatternScope : SketchScope() {
+
+    val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
+    val pointLookup = mutableMapOf<Point, Array<Point?>>()
+
+    fun all(ref: Point, list: MutableList<Point>)  {
+        allCrawler.computeIfAbsent(ref){ mutableListOf()}.add(list)
+    }
+
+    var current = 0
+    var repeats = 0
+
+    private fun rotatePoint(point: Point, angle: Value) : Point{
+
+
+        val array = pointLookup.computeIfAbsent(point){Array(repeats){null} }
+
+        if(array[current] == null){
+            val a = Value.sin(angle)
+            val b = Value.cos(angle)
+            array[current] = Point(b * point.x - a * point.y, a * point.x + b * point.y)
+        }
+
+        return array[current]!!
+    }
+
+    fun finish(count: Int, point: Point){
+        sketch.solve(1e-8)
+        val rawElements = sketch.elements.toList()
+
+        repeats = count - 1
+
+        for(i in 0 until repeats){
+            val angle = const((2 * Math.PI / count) * (i + 1))
+            current = i
+
+            for(element in rawElements){
+                if(element is Point){
+                    sketch.elements.add(rotatePoint(element, angle))
+                }else if(element is Line){
+                    sketch.elements.add(Line(
+                        rotatePoint(element.a, angle),
+                        rotatePoint(element.b, angle)
+                    ))
+                }else if(element is Circle){
+                    val start = if(element.start == null){
+                        null
+                    }else{
+                        element.start + angle
+                    }
+
+                    val end = if(element.end == null){
+                        null
+                    }else{
+                        element.end + angle
+                    }
+
+                    sketch.elements.add(Circle(
+                        rotatePoint(element.center, angle),
+                        element.rad,
+                        start,
+                        end
+                    ))
+                }
+            }
+        }
+
+        for((ref, crawler) in allCrawler.entries){
+            for(list in crawler){
+                list.add(ref)
+                list.addAll(pointLookup[ref]!!.map { it!! })
+            }
+        }
+    }
+}
+
+open class SketchScope {
     val sketch = Sketch()
 
     companion object{
@@ -21,8 +100,23 @@ class SketchScope {
         }
     }
 
+    fun pattern(repeat: Int, point: Point, init: PatternScope.(Point) -> Unit): Sketch {
+        val builder = PatternScope()
+        builder.init(point)
+        builder.finish(repeat, point)
+
+        sketch.elements.addAll(builder.sketch.elements)
+
+        //builder.sketch.draw()
+        return builder.sketch
+    }
+
     fun param(value: Double = 0.0): ProxyValue {
         return sketch.createParameter(value)
+    }
+
+    fun <T> list() : MutableList<T>{
+        return mutableListOf()
     }
 
     fun const(value: Double = 0.0): Const {
@@ -67,35 +161,35 @@ class SketchScope {
     }
 
     fun tangent(circle: Circle, line: Line) {
-        sketch.addConstraint(CircleTangent(circle, line))
+        addConstraintImpl(CircleTangent(circle, line))
     }
 
     fun pointOnLineMidpoint(point: Point, line: Line) {
-        sketch.addConstraint(PointOnLineMidpoint(point, line))
+        addConstraintImpl(PointOnLineMidpoint(point, line))
     }
 
     fun pointOnLine(point: Point, line: Line) {
-        sketch.addConstraint(PointOnLine(point, line))
+        addConstraintImpl(PointOnLine(point, line))
     }
 
     fun horizontal(line: Line) {
-        sketch.addConstraint(Horizontal(line))
+        addConstraintImpl(Horizontal(line))
     }
 
     fun vertical(line: Line) {
-        sketch.addConstraint(Vertical(line))
+        addConstraintImpl(Vertical(line))
     }
 
     fun pointOnCircle(point: Point, circle: Circle) {
-        sketch.addConstraint(PointOnCircle(point, circle))
+        addConstraintImpl(PointOnCircle(point, circle))
     }
 
     fun equalLength(line1: Line, line2: Line) {
-        sketch.addConstraint(EqualLength(line1, line2))
+        addConstraintImpl(EqualLength(line1, line2))
     }
 
     fun length(line1: Line, length: Value) {
-        sketch.addConstraint(LineLength(line1, length))
+        addConstraintImpl(LineLength(line1, length))
     }
 
     fun angle(line1: Line, line2: Line, angle: Value) {
@@ -103,35 +197,35 @@ class SketchScope {
     }
 
     fun pointOnArcStart(point: Point, arc: Circle) {
-        sketch.addConstraint(PointOnArcStart(point, arc))
+        addConstraintImpl(PointOnArcStart(point, arc))
     }
 
     fun addConstraint(constraint: Constraint) {
-        sketch.addConstraint(constraint)
+        addConstraintImpl(constraint)
     }
 
     fun perpendicular(line1: Line, line2: Line){
-        sketch.addConstraint(Perpendicular(line1, line2))
+        addConstraintImpl(Perpendicular(line1, line2))
     }
 
     fun parallel(line1: Line, line2: Line){
-        sketch.addConstraint(Parallel(line1, line2))
+        addConstraintImpl(Parallel(line1, line2))
     }
 
     fun pointOnPoint(point1: Point, point2: Point) {
-        sketch.addConstraint(PointOnPoint(point1, point2))
+        addConstraintImpl(PointOnPoint(point1, point2))
     }
 
     fun equals(value1 : Value, value2: Value) {
-        sketch.addConstraint(Equals(value1, value2))
+        addConstraintImpl(Equals(value1, value2))
     }
 
     fun radius(circle: Circle, value: Value) {
-        sketch.addConstraint(Radius(circle, value))
+        addConstraintImpl(Radius(circle, value))
     }
 
     fun pointOnArcEnd(point: Point, arc: Circle) {
-        sketch.addConstraint(PointOnArcEnd(point, arc))
+        addConstraintImpl(PointOnArcEnd(point, arc))
     }
 
     private fun addConstraintImpl(constraint: Constraint){
@@ -156,16 +250,13 @@ fun project(block: ProjectScope.() -> Unit) : Project{
 fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
     val builder = SketchScope()
     builder.init()
-    try{
-        builder.sketch.solve(1e-8)
-    }catch (e: Exception){
-        e.printStackTrace(System.err)
-    }
-
     sketches.add(builder.sketch)
+    builder.sketch.solve(1e-8)
+
     //builder.sketch.draw()
     return builder.sketch
 }
+
 
 class LineSegment(val a: Vector, val b: Vector)
 

@@ -1,9 +1,6 @@
-import kotlinx.coroutines.CompletableDeferred
 import java.lang.Math.abs
-import java.lang.Math.random
-import java.util.concurrent.CompletableFuture
 
-val minErrorChange = 1e-20
+val minErrorChange = 1e-18
 val targetError = 1e-8
 
 class Solver {
@@ -14,7 +11,23 @@ class Solver {
         }
     }
 
-    fun solve(x: List<Parameter>, cons: List<Constraint>, accuracy: Double = targetError): Boolean {
+    fun solve(x: List<Set<Parameter>>, cons: List<Constraint>, accuracy: Double = targetError): Boolean {
+        val current = mutableListOf<Parameter>()
+        val number = x.sumOf { it.size }
+        for( params in x ){
+            current.addAll(params)
+            val result = solveImpl(current, cons, accuracy)
+
+            if(result){
+                println("${current.size} instead of ${number}")
+                return true
+            }
+        }
+
+        return false
+    }
+
+    fun solveImpl(x: List<Parameter>, cons: List<Constraint>, accuracy: Double = targetError): Boolean{
         val original = DoubleArray(x.size)
         copyInto(original, x)
 
@@ -23,7 +36,7 @@ class Solver {
         var errorTerm: Value = Const.ZERO
 
         for(con in cons){
-            val form = con.formular()
+            val form = con.formular
             errorTerm += form
         }
 

@@ -73,10 +73,79 @@ class Sketch {
     }
 
     fun addConstraint(constraint: Constraint) : Constraint{
+        val left = constraints.toMutableList()
         constraints.add(constraint)
         constraint.prune(this)
+
+
+        val constraintLookup = mutableMapOf<Constraint, HashSet<Parameter>>()
+        val parameterLookup = mutableMapOf<Parameter, HashSet<Constraint>>()
+
+        for( con in constraints ){
+            for(param in params){
+                val derivate = con.formular.derivative(param)
+                if(!derivate.isConst()){
+                    constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
+                    parameterLookup.computeIfAbsent(param){ HashSet() }.add(con)
+                }
+            }
+        }
+
+        class Test(var level: Int, val parameter : Parameter) : Comparable<Test>{
+            override fun compareTo(other: Test): Int {
+                return level.compareTo(other.level)
+            }
+        }
+
+        val priorityQueue = PriorityQueue<Test>()
+        val visited = mutableSetOf<Parameter>()
+        val stages = mutableListOf<MutableSet<Parameter>>()
+
+        stages.add( mutableSetOf())
+
+        constraintLookup[constraint]!!.forEach {
+            visited.add(it)
+            priorityQueue.offer(Test(0, it))
+            stages[0].add(it)
+        }
+
         try{
-            solve(10e-6)
+            while(priorityQueue.isNotEmpty()){
+                val test = priorityQueue.poll()
+
+                parameterLookup[test.parameter]!!.forEach { con ->
+                    constraintLookup[con]!!.forEach { param ->
+                        if(visited.add(param)){
+                            priorityQueue.offer(Test(test.level + 1, param))
+                            if(test.level + 1 >= stages.size){
+                                stages.add(mutableSetOf())
+                            }
+                            stages[test.level + 1].add(param)
+                        }
+                    }
+                }
+
+                /*
+                val constraint = left[i]
+
+                val found = lookup[constraint]?.any { test.contains(it) } ?: false
+
+                if(found){
+                    test.addAll(lookup[constraint]!!)
+                    left.removeAt(i)
+                    i=0
+                }else{
+                    i++
+                }*/
+            }
+        }catch (e: Exception){
+            throw e
+        }
+
+        //println("${params.size} - ${test.size}")
+
+        try{
+            solve(10e-6, stages)
         }catch (e: Exception){
             throw e
         }
@@ -122,24 +191,26 @@ class Sketch {
         }
     }
 
-    fun solve(accuracy: Double) {
+    fun solve(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
 
         val solver = Solver()
-        val result = solver.solve(ArrayList(params), ArrayList(constraints),accuracy)
+        val result = solver.solve(params, ArrayList(constraints),accuracy)
 
         if(!result){
             var error = 0.0
+            val locations = mutableListOf<Location>()
             for(constraint in constraints){
-                val constraintError = constraint.formular()
+                val constraintError = constraint.formular
                 val value = constraintError.value
                 error += value
                 if(value > accuracy){
+                    locations.add(Location(constraint.lineNumber, 0))
                     println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
                 }
             }
 
-            throw RuntimeException("Could not solve constraints! Error: $error")
+            throw LineException(locations)
         }
 
 

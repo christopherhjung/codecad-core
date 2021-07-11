@@ -31,6 +31,22 @@ class Executor{
             val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as Project
             stream.flush()
             return ExecutionResult(output.toString(), project)
+        }catch (e: ScriptException){
+            val cause = e.cause
+            if(cause is LineException){
+                throw cause
+            }else{
+                val locations = mutableListOf<Location>()
+                val pattern = "^(?<msg>.+) \\((?<file>.+?):(?<line>\\d+):(?<column>\\d+)\\)$".toRegex()
+                for(line in e.message?.lines() ?: emptyList()){
+                    val result = pattern.matchEntire(line)
+                    if(result != null){
+                        locations.add(Location(result.groups[3]!!.value.toInt(), 0))
+                    }
+                }
+
+                throw LineException(locations)
+            }
         }finally {
             System.setOut(reset)
             System.setErr(reset)

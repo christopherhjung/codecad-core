@@ -3,12 +3,20 @@ import kotlin.math.*
 abstract class Constraint {
 
     var lineNumber: Int = -1
+    var cache: Value? = null
 
+    protected abstract fun formularImpl() : Value
 
-    abstract fun formular() : Value
+    val formular: Value
+        get() {
+            if(cache == null) {
+                cache = formularImpl()
+            }
+
+            return cache!!
+        }
 
     open fun prune(sketch: Sketch) {
-
     }
 }
 
@@ -17,7 +25,7 @@ abstract class Constraint {
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 
 
-    override fun formular() : Value{
+    override fun formularImpl() : Value{
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2)
     }
 
@@ -30,7 +38,7 @@ class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Constraint() {
 
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2) - distance.pow(2)
     }
 }
@@ -54,19 +62,19 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
         }
     }*/
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         TODO("Not yet implemented")
     }
 }
 
 class LineLength(val line: Line, val length: Value) : Constraint() {
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return (line.length() - length).pow(2)
     }
 }
 
 class EqualLength(val line1: Line, val line2: Line) : Constraint() {
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return (line1.length() - line2.length()).pow(2)
     }
 }
@@ -76,7 +84,7 @@ class Horizontal(val line: Line) : Constraint() {
         sketch.paramIsEquals(line.a.y, line.b.y)
     }
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         val ody = line.b.y - line.a.y
         return ody * ody * 1000
     }
@@ -87,7 +95,7 @@ class Vertical(val line: Line) : Constraint() {
         sketch.paramIsEquals(line.a.x, line.b.x)
     }
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         val ody = line.b.x - line.a.x
         return ody * ody * 1000
     }
@@ -130,7 +138,7 @@ operator fun Double.times(right: Vector): Vector {
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
 
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         /*val circleCenter = circle.center
         val lineStart = line.a
         val lineEnd = line.b
@@ -165,43 +173,17 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
         error1 *= error1
         error2 *= error2
 
-        return ConditionalValue(error1.smaller(error2), error1, error2)
+        return Value.conditional(error1.smaller(error2), error1, error2)
     }
 }
 
 class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
-
-
-    override fun formular(): Value {
-        return lineCrossFormular(line1, line2, false).pow(2)
+    override fun formularImpl(): Value {
+        return lineCross(line1, line2, false).pow(2)
     }
 }
 
-fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Double {
-    //val diff = line1.b - line1.a
-    //val diff2 = line2.b - line2.a
-
-    var dx = line1.b.x.value - line1.a.x.value
-    var dy = line1.b.y.value - line1.a.y.value
-    var dx2 = line2.b.x.value - line2.a.x.value
-    var dy2 = line2.b.y.value - line2.a.y.value
-
-    val hyp1 = hypot(dx, dy)
-    val hyp2 = hypot(dx2, dy2)
-
-    dx /= hyp1
-    dy /= hyp1
-    dx2 /= hyp2
-    dy2 /= hyp2
-
-    return if (cross) {
-        dx * dy2 - dy * dx2
-    } else {
-        dx * dx2 + dy * dy2
-    }
-}
-
-fun lineCrossFormular(line1: Line, line2: Line, cross: Boolean = true): Value {
+fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
     var dx = line1.b.x - line1.a.x
     var dy = line1.b.y - line1.a.y
     var dx2 = line2.b.x - line2.a.x
@@ -223,9 +205,8 @@ fun lineCrossFormular(line1: Line, line2: Line, cross: Boolean = true): Value {
 }
 
 class Parallel(val line1: Line, val line2: Line) : Constraint() {
-
-    override fun formular(): Value {
-        return lineCrossFormular(line1, line2).pow(2)
+    override fun formularImpl(): Value {
+        return lineCross(line1, line2).pow(2)
     }
 }
 
@@ -259,65 +240,53 @@ class Colinear(val line1: Line, val line2: Line) : Constraint() {
         return error
     }*/
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         TODO("Not yet implemented")
     }
-
 }
 
 class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         val rad1 = circle.center.length(point)
         return (rad1 - circle.rad).pow(2)
     }
 }
 
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
-
-
     override fun prune(sketch: Sketch) {
         sketch.paramIsEquals(circle1.rad, circle2.rad)
     }
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return circle1.center.squaredLength(circle2.center)
     }
 }
 
-fun pointOnArcError(point: Point, arc: Circle, angle: Value): Double {
-    val x = (arc.center.x.value + arc.rad.value * cos(angle.value))
-    val y = (arc.center.y.value + arc.rad.value * sin(angle.value))
 
-    return (point.x.value - x).pow(2) + (point.y.value - y).pow(2)
-}
-
-fun pointOnArcErrorValue(point: Point, arc: Circle, angle: Value): Value {
-    val x = (arc.center.x + arc.rad * CosValue(angle))
-    val y = (arc.center.y + arc.rad * SinValue(angle))
+fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
+    val x = (arc.center.x + arc.rad * Value.cos(angle))
+    val y = (arc.center.y + arc.rad * Value.sin(angle))
 
     return (point.x - x).pow(2) + (point.y - y).pow(2)
 }
 
 class PointOnArcStart(val point: Point, val arc: Circle) : Constraint() {
-
-    override fun formular(): Value {
-        return pointOnArcErrorValue(point, arc, arc.start!!)
+    override fun formularImpl(): Value {
+        return pointOnArcError(point, arc, arc.start!!)
     }
 }
 
 class PointOnArcEnd(val point: Point, val arc: Circle) : Constraint() {
-
-
-    override fun formular(): Value {
-        return pointOnArcErrorValue(point, arc, arc.end!!)
+    override fun formularImpl(): Value {
+        return pointOnArcError(point, arc, arc.end!!)
     }
 }
 
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
 
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         val eX = (line.a.x + line.b.x) / 2
         val eY = (line.a.y + line.b.y) / 2
         val temp = eX - point.x
@@ -328,8 +297,8 @@ class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
 
 class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constraint() {
 
-    override fun formular(): Value {
-        return (lineCrossFormular(line1, line2, false) - CosValue(angle)).pow(2)
+    override fun formularImpl(): Value {
+        return (lineCross(line1, line2, false) - CosValue(angle)).pow(2)
     }
 }
 
@@ -339,7 +308,7 @@ class Radius(val circle: Circle, val radius: Value) : Constraint() {
         sketch.paramIsEquals(circle.rad, radius)
     }
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return (radius - circle.rad).pow(2)
     }
 }
@@ -351,7 +320,7 @@ class Equals(val left: Value, val right: Value) : Constraint() {
         sketch.paramIsEquals(left, right)
     }
 
-    override fun formular(): Value {
+    override fun formularImpl(): Value {
         return (left - right).pow(2)
     }
 }

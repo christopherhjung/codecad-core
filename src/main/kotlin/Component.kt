@@ -168,6 +168,20 @@ abstract class Value {
                 SinValue(value)
             }
         }
+
+        fun conditional(condition: Value, left: Value, right: Value) : Value{
+            return if(condition.isConst()){
+                if(condition.value > 0.5){
+                    left
+                }else{
+                    right
+                }
+            }else if(left.isConst() && right.isConst() && left == right){
+                left
+            }else{
+                ConditionalValue(condition, left, right)
+            }
+        }
     }
 
     abstract fun derivative(parameter: Parameter) : Value
@@ -199,6 +213,15 @@ class Const(_value: Double) : Value() {
     override fun isConst(): Boolean {
         return true
     }
+
+    override fun equals(other: Any?): Boolean {
+        if(other is Const){
+            return value == other.value
+        }else if(other is ProxyValue){
+            return other == this
+        }
+        return super.equals(other)
+    }
 }
 
 class Parameter(_value: Double) : Value() {
@@ -223,6 +246,13 @@ class Parameter(_value: Double) : Value() {
     override fun isConst(): Boolean {
         return false
     }
+
+    override fun equals(other: Any?): Boolean {
+        if(other is ProxyValue){
+            return other === this
+        }
+        return this === other
+    }
 }
 
 class ProxyValue(var proxy: Value) : Value() {
@@ -246,6 +276,10 @@ class ProxyValue(var proxy: Value) : Value() {
 
     override fun isConst(): Boolean {
         return proxy.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return proxy === this
     }
 }
 
@@ -487,7 +521,7 @@ class ConditionalValue(val condition: Value, val left: Value, val right: Value) 
         set(value) {throw RuntimeException()}
 
     override fun derivative(parameter: Parameter): Value {
-        return ConditionalValue(condition, left.derivative(parameter), right.derivative(parameter))
+        return Value.conditional(condition, left.derivative(parameter), right.derivative(parameter))
     }
 
     override fun isZero(): Boolean {
@@ -499,12 +533,16 @@ class ConditionalValue(val condition: Value, val left: Value, val right: Value) 
     }
 
     override fun isConst(): Boolean {
-        return condition.isOne() && left.isConst() || condition.isZero() && right.isConst()
+        return left.isConst() && right.isConst() || condition.isOne() && left.isConst() || condition.isZero() && right.isConst()
     }
 }
 
 class Point(override val x: Value, override val y: Value, type: LineType = LineType.Normal) : Element(type), AbstractPoint {
     fun toVector(): Vector {
         return Vector(x.value, y.value)
+    }
+
+    override fun toString(): String {
+        return "Point(x=$x, y=$y)"
     }
 }

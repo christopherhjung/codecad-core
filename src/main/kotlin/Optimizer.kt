@@ -27,7 +27,7 @@ class AdamOptimizer(private val size: Int, private val consumer: (Int, Double) -
             v[i] = beta2 * v[i] + ( 1 - beta2 ) * grad[i] * grad[i]
             val mHat = m[i] / (1 - currentBeta1)
             val vHat = v[i] / (1 - currentBeta2)
-            val random = 0.0// (Math.random() - 0.5) * 2 * 1e-1
+            val random =  (Math.random() - 0.5) * 2 * 1e-2
             consumer(i, - (alpha * (1 + random)) * mHat / ( sqrt(vHat) + epsilon ))
         }
     }
