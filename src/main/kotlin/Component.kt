@@ -367,7 +367,8 @@ class Context(val param: Value, var counter: Int)
 
 abstract class UnaryValue(val left: Value) : Value(){
     override val references: Set<Value> = left.references
-    var listRef: List<Context>? = null
+    var listRef: Array<Value>? = null
+    var listMod: IntArray? = null
     var cache: Double = 0.0
 
     abstract fun calc() : Double
@@ -377,19 +378,21 @@ abstract class UnaryValue(val left: Value) : Value(){
 
             if(listRef != null){
                 var found = false
-                for(ref in listRef!!){
-                    if(ref.counter != ref.param.modCounter){
+
+                for(i in listRef!!.indices){
+                    if(listMod!![i] != listRef!![i].modCounter){
                         if(!found){
                             cache = calc()
                             found = true
                         }
 
-                        ref.counter = ref.param.modCounter
+                        listMod!![i] = listRef!![i].modCounter
                     }
                 }
             }else{
-                listRef = references.map { Context(it,-1) }.toList()
+                listRef = references.toTypedArray()
                 cache = calc()
+                listMod = IntArray(references.size){listRef!![it].modCounter}
             }
 
             return cache
