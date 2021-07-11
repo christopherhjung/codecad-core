@@ -14,8 +14,6 @@ class PatternScope : SketchScope() {
     var repeats = 0
 
     private fun rotatePoint(point: Point, angle: Value) : Point{
-
-
         val array = pointLookup.computeIfAbsent(point){Array(repeats){null} }
 
         if(array[current] == null){
