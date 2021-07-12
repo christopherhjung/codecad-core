@@ -30,14 +30,12 @@ class CachedValue(val ref: Value) : RawValue(){
                 var found = false
 
                 for(i in listRef!!.indices){
-                    if(listMod!![i] != listRef!![i].modCounter){
-                        if(!found){
-                            cache = ref.calc()
-                            found = true
-                        }
-
-                        listMod!![i] = listRef!![i].modCounter
+                    if(!found && listMod!![i] != listRef!![i].modCounter){
+                        cache = ref.calc()
+                        found = true
                     }
+
+                    listMod!![i] = listRef!![i].modCounter
                 }
             }else{
                 listRef = ref.references.toTypedArray()
@@ -69,10 +67,10 @@ abstract class RawValue{
 
 abstract class MutableValue : Value(){
     open var modCounter: Int = 0
-    open val height : Int = 0
 }
 
 abstract class Value : RawValue(){
+
     abstract val references: Set<MutableValue>
 
     override fun toString(): String {
@@ -201,7 +199,7 @@ abstract class Value : RawValue(){
         }else if(isZero()){
             Const.ZERO
         }else if(right.isOne()){
-            (this)
+            this
         }else if(isConst() && right.isConst()){
             return Const(value.pow(right.value))
         }else{
@@ -307,7 +305,6 @@ class Parameter(_value: Double) : MutableValue() {
         }
 
     override val references: Set<MutableValue> = setOf(this)
-
 
     override fun derivative(parameter: Parameter): Value {
         return if(this === parameter){
@@ -469,7 +466,6 @@ abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
     override val references: Set<MutableValue> = super.references + right.references
 }
 
-class Context(val param: Value, var counter: Int)
 
 class NotCachedValue(val ref: Value) : RawValue(){
     override var value: Double
@@ -479,10 +475,12 @@ class NotCachedValue(val ref: Value) : RawValue(){
 
 abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
     override val references: Set<MutableValue> = left.references
-    private val proxy = if(cached) CachedValue(this) else NotCachedValue(this)
+    private val proxy = CachedValue(this)//if(cached) CachedValue(this) else NotCachedValue(this)
 
     override var value: Double
-        get() = proxy.value
+        get() {
+            return proxy.value
+        }
         set(value) {throw RuntimeException()}
 }
 
