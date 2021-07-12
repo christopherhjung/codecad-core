@@ -18,18 +18,72 @@ class Line(val a: Point, val b: Point, type: LineType = LineType.Normal) : Eleme
 
 class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element()
 
+class Observable{
+
+}
+
+class CachedValue(val ref: Value) : Value(){
+    override val references: Set<Value> = emptySet()
+    var listRef: Array<Value>? = null
+    var listMod: IntArray? = null
+    var cache: Double = 0.0
+
+    override var value: Double
+        get() {
+            if(listRef != null){
+                var found = false
+
+                for(i in listRef!!.indices){
+                    if(listMod!![i] != listRef!![i].modCounter){
+                        if(!found){
+                            cache = ref.calc()
+                            found = true
+                        }
+
+                        listMod!![i] = listRef!![i].modCounter
+                    }
+                }
+            }else{
+                listRef = ref.references.toTypedArray()
+                cache = ref.calc()
+                listMod = IntArray(ref.references.size){listRef!![it].modCounter}
+            }
+
+            return cache
+        }
+        set(value) {throw RuntimeException()}
+
+    override var modCounter: Int
+        get() = super.modCounter
+        set(value) {}
+
+    override fun derivative(parameter: Parameter): Value {
+        TODO("Not yet implemented")
+    }
+
+    override fun isZero(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun isOne(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun isConst(): Boolean {
+        TODO("Not yet implemented")
+    }
+}
 
 abstract class Value {
     abstract var value: Double
     abstract val references: Set<Value>
     open var modCounter: Int = 0
-    val id = counter++
 
     override fun toString(): String {
         return value.toString()
     }
 
-    fun replaceWithConst(value: Value) : Value{
+    private fun replaceWithConst(value: Value) : Value{
         return if(value.isZero()){
             Const.ZERO
         }else if(value.isOne()){
@@ -185,14 +239,16 @@ abstract class Value {
                 ConditionalValue(condition, left, right)
             }
         }
-
-        private var counter = 0
     }
 
     abstract fun derivative(parameter: Parameter) : Value
     abstract fun isZero() : Boolean
     abstract fun isOne() : Boolean
     abstract fun isConst() : Boolean
+    open fun calc() : Double{
+        return value
+    }
+
 }
 
 class Const(_value: Double) : Value() {
@@ -268,42 +324,100 @@ class Parameter(_value: Double) : Value() {
     }
 }
 
-class ProxyValue(_proxy: Value) : Value() {
-    var proxy: Value = _proxy
-        set(value) {
-            modCounter = modCounter + 1 - proxy.modCounter
-            field = value
-        }
+class DerivativeValue(val target: Value, val param: Parameter) : Value(){
+    var cache: Value = target.derivative(param)
 
     override var value: Double
-        get() = proxy.value
+        get() = cache.value
         set(value) {
-            proxy.value = value
+            throw RuntimeException("not possible to set value")
         }
 
     override var modCounter: Int = 0
-        get() = field + proxy.modCounter
+        get() = target.modCounter
 
     override val references: Set<Value> = setOf(this)
 
     override fun derivative(parameter: Parameter): Value {
-        return proxy.derivative(parameter)
+        return DerivativeValue(this, parameter)
     }
 
     override fun isOne(): Boolean {
-        return proxy.isOne()
+        return false
     }
 
     override fun isZero(): Boolean {
-        return proxy.isZero()
+        return false
     }
 
     override fun isConst(): Boolean {
-        return proxy.isConst()
+        return false
     }
 
     override fun equals(other: Any?): Boolean {
-        return proxy === this
+        return false
+    }
+}
+
+class ProxyValue(_ref: Value) : Value() {
+    var ref: Value = _ref
+        set(value) {
+            modCounter = modCounter + 1 - ref.modCounter
+            field = value
+        }
+
+    override var modCounter: Int = 0
+        get() = field + ref.modCounter
+
+    override val references: Set<Value> = setOf(this)
+
+    var listRef: Array<Value>? = null
+    var listMod: IntArray? = null
+    var cache: Double = 0.0
+
+    override var value: Double
+        get() {
+            if(listRef != null){
+                var found = false
+
+                for(i in listRef!!.indices){
+                    if(listMod!![i] != listRef!![i].modCounter){
+                        if(!found){
+                            cache = ref.calc()
+                            found = true
+                        }
+
+                        listMod!![i] = listRef!![i].modCounter
+                    }
+                }
+            }else{
+                listRef = ref.references.toTypedArray()
+                cache = ref.calc()
+                listMod = IntArray(ref.references.size){listRef!![it].modCounter}
+            }
+
+            return cache
+        }
+        set(value) {throw RuntimeException()}
+
+    override fun derivative(parameter: Parameter): Value {
+        return ref.derivative(parameter)
+    }
+
+    override fun isOne(): Boolean {
+        return ref.isOne()
+    }
+
+    override fun isZero(): Boolean {
+        return ref.isZero()
+    }
+
+    override fun isConst(): Boolean {
+        return ref.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return ref === this
     }
 }
 
@@ -365,38 +479,12 @@ abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
 
 class Context(val param: Value, var counter: Int)
 
-abstract class UnaryValue(val left: Value) : Value(){
+abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
     override val references: Set<Value> = left.references
-    var listRef: Array<Value>? = null
-    var listMod: IntArray? = null
-    var cache: Double = 0.0
-
-    abstract fun calc() : Double
+    private val observer = if(cached) ProxyValue(this) else this
 
     override var value: Double
-        get() {
-
-            if(listRef != null){
-                var found = false
-
-                for(i in listRef!!.indices){
-                    if(listMod!![i] != listRef!![i].modCounter){
-                        if(!found){
-                            cache = calc()
-                            found = true
-                        }
-
-                        listMod!![i] = listRef!![i].modCounter
-                    }
-                }
-            }else{
-                listRef = references.toTypedArray()
-                cache = calc()
-                listMod = IntArray(references.size){listRef!![it].modCounter}
-            }
-
-            return cache
-        }
+        get() = observer.value
         set(value) {throw RuntimeException()}
 }
 
