@@ -1,64 +1,55 @@
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
-import kotlin.math.sqrt
+import kotlin.math.pow
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SketchTest {
 
     @Test
     fun complexSketch(){
-        sketch{
-            val A = constPoint()
-            val M = point(0.9,0.0)
-            val C = point(3.8,0.0)
-            val P = point(4.0,1.0)
-            val B = point(1.0,2.0)
 
-            val r = const(1.0)
-            val circle = circle(P,r)
-
-            val lineAB = line(A,B)
-            val lineAC = line(A,C)
-            val lineAP = line(A,P)
-            val linePC = line(P,C)
-            val lineMP = line(M,P)
-            val linePM = line(P,M)
-            val lineMC = line(M,C)
-
-            tangent(circle, lineAB)
-            tangent(circle, lineAC)
-            pointOnLineMidpoint(M, lineAC)
-            horizontal(lineAC)
-            vertical(linePC)
-
-            pointOnCircle(C, circle)
-            pointOnCircle(B, circle)
-
-            val rad = param(30.0 unit deg)
-            angle(linePC, linePM, rad)
-            angle(lineMC, lineMP, rad)
-
-            assertTrue {
-                val evaluatedLength = (lineAP.a.toVector() - lineAP.b.toVector()).length()
-                val realLength = sqrt(5.0)
-
-                abs(evaluatedLength - realLength) < 10e-6
-            }
-        }
     }
 
     @Test
-    fun angleTest(){
-        val start = System.currentTimeMillis()
-        val sketch = sketch{
-            val A = constPoint()
-            val B = constPoint(1.0,1.0)
-            val C = point(2.0,1.0)
+    fun cubicDerivativeTest(){
+        val param = Parameter(0.0)
+        val x2 = param.pow(3)
+        val derivative = x2.derivative(param)
+        val value = derivative.value
+        assertEquals(value, 3.0 * Math.PI.pow(2))
+    }
 
-            val lineA = line(A, B)
-            val lineB = line(A, C)
+    @Test
+    fun constBecomeConst(){
+        val param1 = Const(Math.PI)
+        val param2 = Const(Math.PI)
+        val x2 = param1.pow(param2)
+        assertTrue(x2 is Const)
+        assertEquals(x2.value, Math.PI.pow(Math.PI))
+    }
 
-            angle(lineA, lineB, const(179.0 unit deg))
-        }
+    @Test
+    fun proxyTest(){
+        val param1 = Parameter(0.0)
+        val param2 = Const(Math.PI)
+        val x2 = param1.pow(param2)
+        assertTrue(x2 is Const)
+        assertEquals(x2.value, Math.PI.pow(Math.PI))
+    }
+
+    @Test
+    fun absTest(){
+        val param1 = Parameter(1.0)
+        val abs = Value.abs(param1)
+        val derivative = abs.derivative(param1)
+
+        assertEquals(abs.value, 1.0)
+        assertEquals(derivative.value, 1.0)
+        param1.value = -1.0
+        assertEquals(abs.value, 1.0)
+        assertEquals(derivative.value, -1.0)
+
+
+
     }
 }

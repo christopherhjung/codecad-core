@@ -18,7 +18,7 @@ class Solver {
         var errorTerm: Value = Const.ZERO
 
         for(constraint in constraints){
-            errorTerm += constraint.formular
+            errorTerm += constraint.equation
         }
 
         val derivatives = mutableListOf<Value>()

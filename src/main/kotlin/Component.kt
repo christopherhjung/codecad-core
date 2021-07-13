@@ -1,23 +1,7 @@
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
-
-enum class LineType(val prio: Int){
-    Normal(2), ToolPath(3), ToolContour(1)
-}
-
-class Line(val a: Point, val b: Point, type: LineType = LineType.Normal) : Element(type){
-    fun squaredLength() : Value{
-        return ((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
-    }
-
-    fun length() : Value{
-        return squaredLength().sqrt()
-    }
-}
-
-class Circle(val center: Point, val rad: Value, val start: Value? = null, val end: Value? = null) : Element()
-
 
 class CachedValue(val ref: Value) : RawValue(){
     var listRef: Array<MutableValue>? = null
@@ -261,6 +245,18 @@ abstract class Value : RawValue(){
                 ConditionalValue(condition, left, right)
             }
         }
+
+        fun min(left: Value, right: Value) : Value{
+            return conditional(left.smaller(right), left, right)
+        }
+
+        fun abs(other: Value) : Value{
+            return if(other.isConst()){
+                Const(abs(other.value))
+            }else{
+                AbsValue(other)
+            }
+        }
     }
 
     abstract fun derivative(parameter: Parameter) : Value
@@ -411,11 +407,13 @@ class ProxyValue(_ref: MutableValue) : MutableValue() {
 }
 
 
-open class Element(var type: LineType = LineType.Normal)
-
 interface AbstractPoint{
     val x: Value
     val y: Value
+
+    fun copy(): Point {
+        return Point(Const(x.value), Const(y.value))
+    }
 
     fun scalarProduct(other: AbstractPoint) : Value{
         return x * other.x + y * other.y
@@ -431,6 +429,11 @@ interface AbstractPoint{
 
     operator fun times(other: Value) : Point{
         return Point(x * other, y * other)
+    }
+
+    operator fun times(other: Double) : Point{
+        val value = Const(other)
+        return Point(x * value, y * value)
     }
 
     operator fun plus(right: AbstractPoint) : AbstractPoint {
@@ -668,12 +671,23 @@ class ConditionalValue(val condition: Value, left: Value, right: Value) : Binary
     }
 }
 
-class Point(override val x: Value, override val y: Value, type: LineType = LineType.Normal) : Element(type), AbstractPoint {
-    fun toVector(): Vector {
-        return Vector(x.value, y.value)
+class AbsValue(left: Value) : UnaryValue(left){
+    override fun calc(): Double = abs(left.value)
+
+    override fun derivative(parameter: Parameter): Value {
+        val derivative = left.derivative(parameter)
+        return conditional(left.smaller(Const.ZERO), -derivative, derivative)
     }
 
-    override fun toString(): String {
-        return "Point(x=$x, y=$y)"
+    override fun isZero(): Boolean {
+        return left.isZero()
+    }
+
+    override fun isOne(): Boolean {
+        return left.isOne()
+    }
+
+    override fun isConst(): Boolean {
+        return left.isConst()
     }
 }

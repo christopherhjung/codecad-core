@@ -6,7 +6,7 @@ import kotlin.collections.HashSet
 class Sketch {
     val params = HashSet<Parameter>()
     val constraints = HashSet<Constraint>()
-    val elements = TreeSet<Element>(){  a,b  ->
+    val figures = TreeSet<Figure>(){ a, b  ->
         val comp = a.type.prio.compareTo(b.type.prio)
         if(comp == 0) 1 else comp
     }
@@ -30,7 +30,7 @@ class Sketch {
         val a = createConst(x)
         val b = createConst(y)
         val point = Point(a, b)
-        elements.add(point)
+        figures.add(point)
         return point
     }
 
@@ -38,25 +38,25 @@ class Sketch {
         val a = createParameter(x)
         val b = createParameter(y)
         val point = Point(a, b)
-        elements.add(point)
+        figures.add(point)
         return point
     }
 
     fun createLine(a: Point, b: Point, type: LineType = LineType.ToolPath): Line {
         val line = Line(a, b, type)
-        elements.add(line)
+        figures.add(line)
         return line
     }
 
     fun createCircle(center: Point, radius: Value): Circle {
         val circle = Circle(center, radius)
-        elements.add(circle)
+        figures.add(circle)
         return circle
     }
 
-    fun createArc(center: Point, radius: Value, start: Value, end: Value): Circle {
-        val circle = Circle(center, radius, start, end)
-        elements.add(circle)
+    fun createArc(center: Point, radius: Value, start: Value, end: Value): Arc {
+        val circle = Arc(center, radius, start, end)
+        figures.add(circle)
         return circle
     }
 
@@ -83,7 +83,7 @@ class Sketch {
 
         for( con in constraints ){
             for(param in params){
-                val derivate = con.formular.derivative(param)
+                val derivate = con.equation.derivative(param)
                 if(!derivate.isConst()){
                     constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
                     parameterLookup.computeIfAbsent(param){ HashSet() }.add(con)
@@ -201,7 +201,7 @@ class Sketch {
             var error = 0.0
             val locations = mutableListOf<Location>()
             for(constraint in constraints){
-                val constraintError = constraint.formular
+                val constraintError = constraint.equation
                 val value = constraintError.value
                 error += value
                 if(value > accuracy){
@@ -220,7 +220,7 @@ class Sketch {
 
     override fun toString(): String {
         val sb = StringBuilder()
-        for (element in elements) {
+        for (element in figures) {
             sb.append(element).append("\n")
         }
         return sb.toString()

@@ -1,3 +1,4 @@
+import Value.Companion.conditional
 import kotlin.math.*
 
 abstract class Constraint {
@@ -5,12 +6,12 @@ abstract class Constraint {
     var lineNumber: Int = -1
     var cache: Value? = null
 
-    protected abstract fun formularImpl() : Value
+    protected abstract fun equationImpl() : Value
 
-    val formular: Value
+    val equation: Value
         get() {
             if(cache == null) {
-                cache = formularImpl()
+                cache = equationImpl()
             }
 
             return cache!!
@@ -25,7 +26,7 @@ abstract class Constraint {
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 
 
-    override fun formularImpl() : Value{
+    override fun equationImpl() : Value{
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2)
     }
 
@@ -38,7 +39,7 @@ class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Constraint() {
 
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2) - distance.pow(2)
     }
 }
@@ -62,19 +63,19 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
         }
     }*/
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         TODO("Not yet implemented")
     }
 }
 
 class LineLength(val line: Line, val length: Value) : Constraint() {
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (line.length() - length).pow(2)
     }
 }
 
 class EqualLength(val line1: Line, val line2: Line) : Constraint() {
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (line1.length() - line2.length()).pow(2)
     }
 }
@@ -84,7 +85,7 @@ class Horizontal(val line: Line) : Constraint() {
         sketch.paramIsEquals(line.a.y, line.b.y)
     }
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         val ody = line.b.y - line.a.y
         return ody * ody * 1000
     }
@@ -95,7 +96,7 @@ class Vertical(val line: Line) : Constraint() {
         sketch.paramIsEquals(line.a.x, line.b.x)
     }
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         val ody = line.b.x - line.a.x
         return ody * ody * 1000
     }
@@ -138,7 +139,7 @@ operator fun Double.times(right: Vector): Vector {
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
 
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         /*val circleCenter = circle.center
         val lineStart = line.a
         val lineEnd = line.b
@@ -172,13 +173,12 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
         var error2 = (lineDirection.vectorProduct(Ry) + cross) / hyp
         error1 *= error1
         error2 *= error2
-
-        return Value.conditional(error1.smaller(error2), error1, error2)
+        return Value.min(error1, error2)
     }
 }
 
 class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return lineCross(line1, line2, false).pow(2)
     }
 }
@@ -205,7 +205,7 @@ fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
 }
 
 class Parallel(val line1: Line, val line2: Line) : Constraint() {
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return lineCross(line1, line2).pow(2)
     }
 }
@@ -240,14 +240,14 @@ class Colinear(val line1: Line, val line2: Line) : Constraint() {
         return error
     }*/
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         TODO("Not yet implemented")
     }
 }
 
 class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         val rad1 = circle.center.length(point)
         return (rad1 - circle.rad).pow(2)
     }
@@ -258,11 +258,10 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
         sketch.paramIsEquals(circle1.rad, circle2.rad)
     }
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return circle1.center.squaredLength(circle2.center)
     }
 }
-
 
 fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
     val x = (arc.center.x + arc.rad * Value.cos(angle))
@@ -271,44 +270,38 @@ fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
     return (point.x - x).pow(2) + (point.y - y).pow(2)
 }
 
-class PointOnArcStart(val point: Point, val arc: Circle) : Constraint() {
-    override fun formularImpl(): Value {
-        return pointOnArcError(point, arc, arc.start!!)
+class PointOnArcStart(val point: Point, val arc: Arc) : Constraint() {
+    override fun equationImpl(): Value {
+        return pointOnArcError(point, arc, arc.start)
     }
 }
 
-class PointOnArcEnd(val point: Point, val arc: Circle) : Constraint() {
-    override fun formularImpl(): Value {
-        return pointOnArcError(point, arc, arc.end!!)
+class PointOnArcEnd(val point: Point, val arc: Arc) : Constraint() {
+    override fun equationImpl(): Value {
+        return pointOnArcError(point, arc, arc.end)
     }
 }
 
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
-
-
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         val eX = (line.a.x + line.b.x) / 2
         val eY = (line.a.y + line.b.y) / 2
-        val temp = eX - point.x
-        val temp2 = eY - point.y
-        return temp * temp + temp2 * temp2
+        return (eX - point.x).pow(2) + (eY - point.y).pow(2)
     }
 }
 
 class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constraint() {
-
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (lineCross(line1, line2, false) - CosValue(angle)).pow(2)
     }
 }
 
 class Radius(val circle: Circle, val radius: Value) : Constraint() {
-
     override fun prune(sketch: Sketch) {
         sketch.paramIsEquals(circle.rad, radius)
     }
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (radius - circle.rad).pow(2)
     }
 }
@@ -320,7 +313,7 @@ class Equals(val left: Value, val right: Value) : Constraint() {
         sketch.paramIsEquals(left, right)
     }
 
-    override fun formularImpl(): Value {
+    override fun equationImpl(): Value {
         return (left - right).pow(2)
     }
 }

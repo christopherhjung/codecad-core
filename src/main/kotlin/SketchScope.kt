@@ -1,6 +1,3 @@
-import kotlin.math.cos
-import kotlin.math.sin
-
 class PatternScope(val count: Int, val center: Point) : SketchScope() {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
@@ -28,7 +25,7 @@ class PatternScope(val count: Int, val center: Point) : SketchScope() {
 
     fun finish(){
         sketch.solve(1e-8)
-        val rawElements = sketch.elements.toList()
+        val rawElements = sketch.figures.toList()
 
         for(i in 0 until count - 1){
             val angle = const((2 * Math.PI / count) * (i + 1))
@@ -36,31 +33,26 @@ class PatternScope(val count: Int, val center: Point) : SketchScope() {
 
             for(element in rawElements){
                 if(element is Point){
-                    sketch.elements.add(rotatePoint(element, angle))
+                    sketch.figures.add(rotatePoint(element, angle))
                 }else if(element is Line){
-                    sketch.elements.add(Line(
+                    sketch.figures.add(Line(
                         rotatePoint(element.a, angle),
                         rotatePoint(element.b, angle)
                     ))
                 }else if(element is Circle){
-                    val start = if(element.start == null){
-                        null
+                    if(element is Arc){
+                        sketch.figures.add(Arc(
+                            rotatePoint(element.center, angle),
+                            element.rad,
+                            element.start + angle,
+                            element.end + angle
+                        ))
                     }else{
-                        element.start + angle
+                        sketch.figures.add(Circle(
+                            rotatePoint(element.center, angle),
+                            element.rad
+                        ))
                     }
-
-                    val end = if(element.end == null){
-                        null
-                    }else{
-                        element.end + angle
-                    }
-
-                    sketch.elements.add(Circle(
-                        rotatePoint(element.center, angle),
-                        element.rad,
-                        start,
-                        end
-                    ))
                 }
             }
         }
@@ -102,7 +94,7 @@ open class SketchScope {
         builder.init(point)
         builder.finish()
 
-        sketch.elements.addAll(builder.sketch.elements)
+        sketch.figures.addAll(builder.sketch.figures)
 
         //builder.sketch.draw()
         return builder.sketch
@@ -136,7 +128,7 @@ open class SketchScope {
         return sketch.createCircle(center, radius)
     }
 
-    fun arc(center: Point, radius: Value, start: Value, end: Value): Circle {
+    fun arc(center: Point, radius: Value, start: Value, end: Value): Arc {
         return sketch.createArc(center, radius, start, end)
     }
 
@@ -193,7 +185,7 @@ open class SketchScope {
         addConstraintImpl(InternalAngle(line1, line2, angle))
     }
 
-    fun pointOnArcStart(point: Point, arc: Circle) {
+    fun pointOnArcStart(point: Point, arc: Arc) {
         addConstraintImpl(PointOnArcStart(point, arc))
     }
 
@@ -221,7 +213,7 @@ open class SketchScope {
         addConstraintImpl(Radius(circle, value))
     }
 
-    fun pointOnArcEnd(point: Point, arc: Circle) {
+    fun pointOnArcEnd(point: Point, arc: Arc) {
         addConstraintImpl(PointOnArcEnd(point, arc))
     }
 
@@ -255,16 +247,16 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
 }
 
 
-class LineSegment(val a: Vector, val b: Vector)
+class LineSegment(val a: Point, val b: Point)
 
 fun sketchToLines(sketch: Sketch) : List<LineSegment>{
     val list = mutableListOf<LineSegment>()
-    for(element in sketch.elements){
-        if(element is Line){
-            list.add(LineSegment(element.a.toVector(), element.b.toVector()))
-        }else if(element is Circle){
-            val span = ArcSpan(element)
-            var last: Vector? = null
+    for(figure in sketch.figures){
+        if(figure is Line){
+            list.add(LineSegment(figure.a.copy(), figure.b.copy()))
+        }else if(figure is Arc){
+            val span = ArcSpan(figure)
+            var last: Point? = null
             for( i in 0 .. 100){
                 val t = i / 100.0
 
@@ -294,28 +286,6 @@ interface Stepper {
 }
 
 
-fun elementsToPath(elements: List<Element>) : Array<DoubleArray>{
-    val path = mutableListOf<Double>()
-
-    for (element in elements) {
-        val stepper: Stepper = if (element is Line) {
-            LineStepper(element)
-        } else if (element is Circle) {
-            ArcStepper(element)
-        } else {
-            throw RuntimeException()
-        }
-
-        while (stepper.hasNext()) {
-            val next = stepper.next()
-            path.add(next.x)
-            path.add(next.y)
-        }
-    }
-
-
-    return arrayOf(path.toTypedArray().toDoubleArray())
-}
 
 fun SketchScope.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
     for (path in input) {
