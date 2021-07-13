@@ -26,18 +26,16 @@ class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 
 
     override fun equationImpl() : Value{
-        return (a.x - b.x).pow(2) + (a.y - b.y).pow(2)
+        return ((a.x - b.x).pow(2) + (a.y - b.y).pow(2))
     }
 
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(a.x, b.x)
-        sketch.paramIsEquals(a.y, b.y)
+        sketch.merge(a.x, b.x)
+        sketch.merge(a.y, b.y)
     }
 }
 
 class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Constraint() {
-
-
     override fun equationImpl(): Value {
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2) - distance.pow(2)
     }
@@ -69,70 +67,41 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
 
 class LineLength(val line: Line, val length: Value) : Constraint() {
     override fun equationImpl(): Value {
-        return (line.length() - length).pow(2)
+        return (line.length - length).pow(2)
     }
 }
 
 class EqualLength(val line1: Line, val line2: Line) : Constraint() {
     override fun equationImpl(): Value {
-        return (line1.length() - line2.length()).pow(2)
+        return (line1.length - line2.length).pow(2)
     }
 }
 
 class Horizontal(val line: Line) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(line.p0.y, line.p1.y)
+        sketch.merge(line.p0.y, line.p1.y)
     }
 
     override fun equationImpl(): Value {
         val ody = line.p1.y - line.p0.y
-        return ody * ody * 1000
+        return ody.pow(2) * 1000
+/*
+        val direction = line.p1 - line.p0
+        val angle = ArcSinValue(direction.x / direction.length())
+        return angle.pow(2)*/
     }
 }
 
 class Vertical(val line: Line) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(line.p0.x, line.p1.x)
+        sketch.merge(line.p0.x, line.p1.x)
     }
 
     override fun equationImpl(): Value {
-        val ody = line.p1.x - line.p0.x
-        return ody * ody * 1000
+        val direction = line.p1 - line.p0
+        val angle = ArcSinValue(direction.x / direction.length())
+        return angle.pow(2)
     }
-}
-
-data class Vector(val x: Double, val y: Double) {
-    operator fun plus(right: Vector): Vector {
-        return Vector(x + right.x, y + right.y)
-    }
-
-    operator fun minus(right: Vector): Vector {
-        return Vector(x - right.x, y - right.y)
-    }
-
-    operator fun rangeTo(other: Vector): Double {
-        return x * other.x + y * other.y
-    }
-
-    operator fun times(other: Vector): Double {
-        return x * other.y - y * other.x
-    }
-
-    operator fun times(other: Double): Vector {
-        return Vector(x * other, y * other)
-    }
-
-    fun squaredLength(): Double {
-        return x * x + y * y
-    }
-
-    fun length(): Double {
-        return sqrt(squaredLength())
-    }
-}
-
-operator fun Double.times(right: Vector): Vector {
-    return Vector(this * right.x, this * right.y)
 }
 
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
@@ -188,8 +157,8 @@ fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
     var dx2 = line2.p1.x - line2.p0.x
     var dy2 = line2.p1.y - line2.p0.y
 
-    val hyp1 = line1.length()
-    val hyp2 = line2.length()
+    val hyp1 = line1.length
+    val hyp2 = line2.length
 
     dx /= hyp1
     dy /= hyp1
@@ -254,7 +223,7 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
 
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(circle1.radius, circle2.radius)
+        sketch.merge(circle1.radius, circle2.radius)
     }
 
     override fun equationImpl(): Value {
@@ -297,7 +266,7 @@ class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constr
 
 class Radius(val circle: Circle, val radius: Value) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(circle.radius, radius)
+        sketch.merge(circle.radius, radius)
     }
 
     override fun equationImpl(): Value {
@@ -309,7 +278,7 @@ class Equals(val left: Value, val right: Value) : Constraint() {
 
 
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(left, right)
+        sketch.merge(left, right)
     }
 
     override fun equationImpl(): Value {

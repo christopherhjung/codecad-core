@@ -3,7 +3,7 @@ import kotlin.math.abs
 val minErrorChange = 1e-18
 val targetError = 1e-8
 
-class Solver {
+class Solver(val tracker: Tracker) {
 
     fun copyInto(target: DoubleArray, x: List<Value>) {
         for (i in x.indices) {
@@ -27,13 +27,13 @@ class Solver {
                 current.add(param)
                 derivatives.add(errorTerm.derivative(param))
             }
+        }
 
-            val result = solveImpl(current, errorTerm, derivatives, accuracy)
+        val result = solveImpl(current, errorTerm, derivatives, accuracy)
 
-            if(result){
-                println("${current.size} instead of ${number}")
-                return true
-            }
+        if(result){
+            println("${current.size} instead of ${number}")
+            return true
         }
 
         return false
@@ -53,7 +53,10 @@ class Solver {
 
         val optimizer = AdamOptimizer(x)
 
+        val start = System.currentTimeMillis()
         while ((errorChange > minErrorChange && error > accuracy ) && iter < 100000) {
+            tracker.addEntry(x, errorTerm)
+
             for (j in x.indices) {
                 grad[j] = derivatives[j].value
             }
@@ -64,7 +67,13 @@ class Solver {
             errorChange = abs(error - lastError)
             lastError = error
             iter++
+
+            if(System.currentTimeMillis() - start > 1000){
+                return false
+            }
         }
+
+        println(iter)
 
         return error < accuracy
     }

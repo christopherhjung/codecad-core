@@ -3,7 +3,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
-class Sketch {
+class Sketch(val project: Project) {
     val params = HashSet<Parameter>()
     val constraints = HashSet<Constraint>()
     val figures = TreeSet<Figure>(){ a, b  ->
@@ -15,7 +15,8 @@ class Sketch {
     val pruningTable = mutableMapOf<ProxyValue, PruningEntry>()
 
     fun createParameter(value: Double = 0.0): ProxyValue {
-        val param = Parameter(value + (random() - 0.5) * 1e-5)
+        val param = Parameter(value )
+        project.tracker.params.add(param)
         params.add(param)
         val proxy = ProxyValue(param)
         pruningTable[proxy] = PruningEntry(mutableListOf(proxy))
@@ -73,9 +74,9 @@ class Sketch {
     }
 
     fun addConstraint(constraint: Constraint) : Constraint{
-        val left = constraints.toMutableList()
+        println(constraint::class.simpleName)
         constraints.add(constraint)
-        constraint.prune(this)
+
 
 
         val constraintLookup = mutableMapOf<Constraint, HashSet<Parameter>>()
@@ -146,13 +147,14 @@ class Sketch {
 
         try{
             solve(10e-6, stages)
+            //constraint.prune(this)
         }catch (e: Exception){
             throw e
         }
         return constraint
     }
 
-    fun paramIsEquals(left: Value, right: Value) {
+    fun merge(left: Value, right: Value) {
         if (left is ProxyValue) {
             val leftEntry = pruningTable[left]!!
             if (right is ProxyValue) {
@@ -165,36 +167,46 @@ class Sketch {
                 leftEntry.proxies.addAll(rightEntry.proxies)
 
                 if(leftEntry.fixed != null && rightEntry.fixed != null){
-                    throw java.lang.RuntimeException("not possible!!")
+                    return
                 }else if(rightEntry.fixed != null){
                     leftEntry.fixed = rightEntry.fixed
+                    for( proxy in leftEntry.proxies ){
+                        params.remove(proxy.ref)
+                        proxy.ref = rightEntry.fixed!!
+                    }
                 }
 
                 pruningTable[right] = leftEntry
             } else {
                 if(leftEntry.fixed != null){
-                    throw java.lang.RuntimeException("not possible!!")
+                    return
                 }
 
                 leftEntry.fixed = right
+                for( proxy in leftEntry.proxies ){
+                    params.remove(proxy.ref)
+                    proxy.ref = right
+                }
             }
         } else if (right is ProxyValue) {
             val rightEntry = pruningTable[right]!!
 
             if(rightEntry.fixed != null){
-                throw java.lang.RuntimeException("not possible!!")
+                return
             }
 
             rightEntry.fixed = left
-        } else {
-            throw RuntimeException("const cant be set equals")
+            for( proxy in rightEntry.proxies ){
+                params.remove(proxy.ref)
+                proxy.ref = left
+            }
         }
     }
 
     fun solve(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
 
-        val solver = Solver()
+        val solver = Solver(project.tracker)
         val result = solver.solve(params, ArrayList(constraints),accuracy)
 
         if(!result){

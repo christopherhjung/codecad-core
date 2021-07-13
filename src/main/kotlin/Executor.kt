@@ -17,19 +17,19 @@ class Executor{
 
     fun execute(engine: ScriptEngine, code: String) : ExecutionResult{
         val reset = System.out
+
+        val newContext = SimpleScriptContext()
+        val output = ByteArrayOutputStream()
+        val printWriter = PrintWriter(output, true)
+        newContext.writer = printWriter
+        newContext.errorWriter = printWriter
+        val stream = PrintStream(output)
+
+
+        System.setOut(stream)
+        System.setErr(stream)
         try{
-            val newContext = SimpleScriptContext()
-            val output = ByteArrayOutputStream()
-            val printWriter = PrintWriter(output, true)
-            newContext.writer = printWriter
-            newContext.errorWriter = printWriter
-            val stream = PrintStream(output)
-
-
-            System.setOut(stream)
-            System.setErr(stream)
             val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as Project
-            stream.flush()
             return ExecutionResult(output.toString(), project)
         }catch (e: ScriptException){
             val cause = e.cause
@@ -45,7 +45,7 @@ class Executor{
                     }
                 }
 
-                throw LineException(locations)
+                throw LineException(locations, output.toString())
             }
         }finally {
             System.setOut(reset)

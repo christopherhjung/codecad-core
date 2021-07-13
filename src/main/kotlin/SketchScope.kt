@@ -1,4 +1,4 @@
-class PatternScope(val count: Int, val center: Point) : SketchScope() {
+class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
     val pointLookup = mutableMapOf<Point, Array<Point?>>()
@@ -13,11 +13,7 @@ class PatternScope(val count: Int, val center: Point) : SketchScope() {
         val array = pointLookup.computeIfAbsent(point){Array(count - 1){null} }
 
         if(array[current] == null){
-            val a = Value.sin(angle)
-            val b = Value.cos(angle)
-            array[current] = Point(
-                b * (point.x - center.x) - a * (point.y - center.y) + center.x,
-                a * ( point.x - center.x) + b * ( point.y - center.y) + center.y)
+            array[current] = point.rotate(center, angle)
         }
 
         return array[current]!!
@@ -66,8 +62,8 @@ class PatternScope(val count: Int, val center: Point) : SketchScope() {
     }
 }
 
-open class SketchScope {
-    val sketch = Sketch()
+open class SketchScope(val project: Project) {
+    val sketch = Sketch(project)
 
     companion object{
         val ORIGIN = Point(Const(0.0), Const(0.0))
@@ -90,7 +86,7 @@ open class SketchScope {
     }
 
     fun pattern(repeat: Int, point: Point, init: PatternScope.(Point) -> Unit): Sketch {
-        val builder = PatternScope(repeat, point)
+        val builder = PatternScope(project, repeat, point)
         builder.init(point)
         builder.finish()
 
@@ -130,6 +126,10 @@ open class SketchScope {
 
     fun arc(center: Point, radius: Value, start: Value, end: Value): Arc {
         return sketch.createArc(center, radius, start, end)
+    }
+
+    fun arc(center: Point, radius: Value): Arc {
+        return sketch.createArc(center, radius, param(0.0), param(Math.PI / 2))
     }
 
     fun polygon(vararg points: Point) : List<Line> {
@@ -184,10 +184,15 @@ open class SketchScope {
     fun angle(line1: Line, line2: Line, angle: Value) {
         addConstraintImpl(InternalAngle(line1, line2, angle))
     }
-
+/*
     fun pointOnArcStart(point: Point, arc: Arc) {
         addConstraintImpl(PointOnArcStart(point, arc))
     }
+
+    fun pointOnArcEnd(point: Point, arc: Arc) {
+        addConstraintImpl(PointOnArcEnd(point, arc))
+    }
+    */
 
     fun addConstraint(constraint: Constraint) {
         addConstraintImpl(constraint)
@@ -205,6 +210,10 @@ open class SketchScope {
         addConstraintImpl(PointOnPoint(point1, point2))
     }
 
+    fun equals(point1: Point, point2: Point) {
+        addConstraintImpl(PointOnPoint(point1, point2))
+    }
+
     fun equals(value1 : Value, value2: Value) {
         addConstraintImpl(Equals(value1, value2))
     }
@@ -213,33 +222,28 @@ open class SketchScope {
         addConstraintImpl(Radius(circle, value))
     }
 
-    fun pointOnArcEnd(point: Point, arc: Arc) {
-        addConstraintImpl(PointOnArcEnd(point, arc))
-    }
-
     private fun addConstraintImpl(constraint: Constraint){
         val callersLineNumber = Thread.currentThread().stackTrace[3].lineNumber
         sketch.addConstraint(constraint).lineNumber = callersLineNumber
     }
-
-    fun solve() {
-        //sketch.solve()
-    }
 }
-class ProjectScope(val sketches: MutableList<Sketch> = mutableListOf())
+class ProjectScope(val project: Project)
 
-class Project(val sketches: MutableList<Sketch> = mutableListOf())
+class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: Tracker = Tracker()){
+
+}
 
 fun project(block: ProjectScope.() -> Unit) : Project{
-    val projectScope = ProjectScope()
+    val project = Project()
+    val projectScope = ProjectScope(project)
     block(projectScope)
-    return Project(projectScope.sketches)
+    return project
 }
 
 fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
-    val builder = SketchScope()
+    val builder = SketchScope(project)
     builder.init()
-    sketches.add(builder.sketch)
+    project.sketches.add(builder.sketch)
     builder.sketch.solve(1e-8)
 
     //builder.sketch.draw()
@@ -280,10 +284,6 @@ fun Canvas.circle(circle: Circle){
     circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
 }*/
 
-interface Stepper {
-    fun next(): Vector
-    fun hasNext(): Boolean
-}
 
 
 

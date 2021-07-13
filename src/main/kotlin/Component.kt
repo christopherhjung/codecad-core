@@ -1,7 +1,4 @@
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
+import kotlin.math.*
 
 class CachedValue(val ref: Value) : RawValue(){
     var listRef: Array<MutableValue>? = null
@@ -51,6 +48,32 @@ abstract class RawValue{
 
 abstract class MutableValue : Value(){
     open var modCounter: Int = 0
+}
+
+operator fun Double.minus(right: Value) : Value{
+    return if(this == 0.0){
+        right.unaryMinus()
+    }else if(right.isZero()){
+        Const(this)
+    }else if(this == 1.0 && right.isOne()){
+        Const.ZERO
+    }else if( right.isConst()){
+        Const(this - right.value)
+    }else{
+        MinusValue(Const(this), right)
+    }
+}
+
+operator fun Double.div(right: Value) : Value{
+    return if(this == 0.0){
+        Const.ZERO
+    }else if(this == 1.0 && right.isOne()){
+        Const.ONE
+    }else if( right.isConst()){
+        Const(this - right.value)
+    }else{
+        DivValue(Const(this), right)
+    }
 }
 
 abstract class Value : RawValue(){
@@ -365,15 +388,53 @@ class DerivativeValue(val target: MutableValue, val param: Parameter) : MutableV
     }
 }
 
-class ProxyValue(_ref: MutableValue) : MutableValue() {
-    var ref: MutableValue = _ref
+interface ModSource{
+    fun modCounter() : Int
+}
+
+class ParamModSource(val value : Parameter) : ModSource{
+    override fun modCounter() : Int{
+        return value.modCounter
+    }
+}
+
+class ConstModSource() : ModSource{
+    override fun modCounter() : Int{
+        return 0
+    }
+}
+
+class ComplexModSource(val value : Value) : ModSource{
+    override fun modCounter() : Int{
+        var result = 0
+        for( ref in value.references ){
+            result += ref.modCounter
+        }
+        return result
+    }
+}
+
+fun getModCounter(value: Value) : Int{
+    return if(value is Parameter){
+        value.modCounter
+    }else{
+        var result = 0
+        for( ref in value.references ){
+            result += ref.modCounter
+        }
+        result
+    }
+}
+
+class ProxyValue(_ref: Value) : MutableValue() {
+    var ref: Value = _ref
         set(value) {
-            modCounter = modCounter + 1 - ref.modCounter
+            modCounter = modCounter + 1 - getModCounter(value)
             field = value
         }
 
     override var modCounter: Int = 0
-        get() = field + ref.modCounter
+        get() = field + getModCounter(ref)
 
     override val references: Set<MutableValue> = setOf(this)
 
@@ -427,6 +488,10 @@ abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value()
             return proxy.value
         }
         set(value) {throw RuntimeException()}
+
+    override fun isConst(): Boolean {
+        return left.isConst()
+    }
 }
 
 class PowValue(left: Value, right: Value) : BinaryValue(left, right){
@@ -466,6 +531,22 @@ class CosValue( left: Value) : UnaryValue(left){
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+}
+
+class ArcSinValue( left: Value) : UnaryValue(left){
+    override fun calc(): Double = asin(left.value)
+
+    override fun derivative(parameter: Parameter): Value {
+        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(parameter)
+    }
+
+    override fun isOne(): Boolean {
+        return false
+    }
+
+    override fun isZero(): Boolean {
+        return false
     }
 }
 
