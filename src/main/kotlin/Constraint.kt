@@ -1,4 +1,3 @@
-import Value.Companion.conditional
 import kotlin.math.*
 
 abstract class Constraint {
@@ -82,22 +81,22 @@ class EqualLength(val line1: Line, val line2: Line) : Constraint() {
 
 class Horizontal(val line: Line) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(line.a.y, line.b.y)
+        sketch.paramIsEquals(line.p0.y, line.p1.y)
     }
 
     override fun equationImpl(): Value {
-        val ody = line.b.y - line.a.y
+        val ody = line.p1.y - line.p0.y
         return ody * ody * 1000
     }
 }
 
 class Vertical(val line: Line) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(line.a.x, line.b.x)
+        sketch.paramIsEquals(line.p0.x, line.p1.x)
     }
 
     override fun equationImpl(): Value {
-        val ody = line.b.x - line.a.x
+        val ody = line.p1.x - line.p0.x
         return ody * ody * 1000
     }
 }
@@ -156,12 +155,12 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
 
         return a + b*/
 
-        val lineStart = line.a
-        val lineEnd = line.b
+        val lineStart = line.p0
+        val lineEnd = line.p1
         val lineDirection = lineEnd - lineStart
 
         val hyp = lineDirection.length()
-        val hypRad = circle.rad / hyp
+        val hypRad = circle.radius / hyp
 
         val Rx =
             Point(circle.center.x - lineDirection.y * hypRad, circle.center.y + lineDirection.x * hypRad)
@@ -184,10 +183,10 @@ class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
 }
 
 fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
-    var dx = line1.b.x - line1.a.x
-    var dy = line1.b.y - line1.a.y
-    var dx2 = line2.b.x - line2.a.x
-    var dy2 = line2.b.y - line2.a.y
+    var dx = line1.p1.x - line1.p0.x
+    var dy = line1.p1.y - line1.p0.y
+    var dx2 = line2.p1.x - line2.p0.x
+    var dy2 = line2.p1.y - line2.p0.y
 
     val hyp1 = line1.length()
     val hyp2 = line2.length()
@@ -249,13 +248,13 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
 
     override fun equationImpl(): Value {
         val rad1 = circle.center.length(point)
-        return (rad1 - circle.rad).pow(2)
+        return (rad1 - circle.radius).pow(2)
     }
 }
 
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(circle1.rad, circle2.rad)
+        sketch.paramIsEquals(circle1.radius, circle2.radius)
     }
 
     override fun equationImpl(): Value {
@@ -264,8 +263,8 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
 }
 
 fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
-    val x = (arc.center.x + arc.rad * Value.cos(angle))
-    val y = (arc.center.y + arc.rad * Value.sin(angle))
+    val x = (arc.center.x + arc.radius * Value.cos(angle))
+    val y = (arc.center.y + arc.radius * Value.sin(angle))
 
     return (point.x - x).pow(2) + (point.y - y).pow(2)
 }
@@ -284,8 +283,8 @@ class PointOnArcEnd(val point: Point, val arc: Arc) : Constraint() {
 
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
     override fun equationImpl(): Value {
-        val eX = (line.a.x + line.b.x) / 2
-        val eY = (line.a.y + line.b.y) / 2
+        val eX = (line.p0.x + line.p1.x) / 2
+        val eY = (line.p0.y + line.p1.y) / 2
         return (eX - point.x).pow(2) + (eY - point.y).pow(2)
     }
 }
@@ -298,11 +297,11 @@ class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constr
 
 class Radius(val circle: Circle, val radius: Value) : Constraint() {
     override fun prune(sketch: Sketch) {
-        sketch.paramIsEquals(circle.rad, radius)
+        sketch.paramIsEquals(circle.radius, radius)
     }
 
     override fun equationImpl(): Value {
-        return (radius - circle.rad).pow(2)
+        return (radius - circle.radius).pow(2)
     }
 }
 

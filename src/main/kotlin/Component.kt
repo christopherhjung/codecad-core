@@ -407,64 +407,6 @@ class ProxyValue(_ref: MutableValue) : MutableValue() {
 }
 
 
-interface AbstractPoint{
-    val x: Value
-    val y: Value
-
-    fun copy(): Point {
-        return Point(Const(x.value), Const(y.value))
-    }
-
-    fun scalarProduct(other: AbstractPoint) : Value{
-        return x * other.x + y * other.y
-    }
-
-    fun vectorProduct(other: AbstractPoint) : Value{
-        return x * other.y - y * other.x
-    }
-
-    operator fun times(other: AbstractPoint) : Value{
-        return x * other.y - y * other.x
-    }
-
-    operator fun times(other: Value) : Point{
-        return Point(x * other, y * other)
-    }
-
-    operator fun times(other: Double) : Point{
-        val value = Const(other)
-        return Point(x * value, y * value)
-    }
-
-    operator fun plus(right: AbstractPoint) : AbstractPoint {
-        return Point(this.x + right.x, this.y + right.y)
-    }
-
-    operator fun minus(right: AbstractPoint) : AbstractPoint {
-        return Point(this.x - right.x, this.y - right.y)
-    }
-
-    operator fun minus(right: Value) : AbstractPoint {
-        return Point(this.x - right, this.y - right)
-    }
-
-    fun squaredLength(): Value {
-        return x.pow(2) + y.pow(2)
-    }
-
-    fun length(): Value {
-        return squaredLength().sqrt()
-    }
-
-    fun squaredLength(other: AbstractPoint): Value {
-        return (x - other.x).pow(2) + (y-other.y).pow(2)
-    }
-
-    fun length(other: AbstractPoint): Value {
-        return squaredLength(other).sqrt()
-    }
-}
-
 abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
     override val references: Set<MutableValue> = super.references + right.references
 }

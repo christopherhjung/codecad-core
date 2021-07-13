@@ -36,21 +36,21 @@ class PatternScope(val count: Int, val center: Point) : SketchScope() {
                     sketch.figures.add(rotatePoint(element, angle))
                 }else if(element is Line){
                     sketch.figures.add(Line(
-                        rotatePoint(element.a, angle),
-                        rotatePoint(element.b, angle)
+                        rotatePoint(element.p0, angle),
+                        rotatePoint(element.p1, angle)
                     ))
                 }else if(element is Circle){
                     if(element is Arc){
                         sketch.figures.add(Arc(
                             rotatePoint(element.center, angle),
-                            element.rad,
+                            element.radius,
                             element.start + angle,
                             element.end + angle
                         ))
                     }else{
                         sketch.figures.add(Circle(
                             rotatePoint(element.center, angle),
-                            element.rad
+                            element.radius
                         ))
                     }
                 }
@@ -253,7 +253,7 @@ fun sketchToLines(sketch: Sketch) : List<LineSegment>{
     val list = mutableListOf<LineSegment>()
     for(figure in sketch.figures){
         if(figure is Line){
-            list.add(LineSegment(figure.a.copy(), figure.b.copy()))
+            list.add(LineSegment(figure.p0.copy(), figure.p1.copy()))
         }else if(figure is Arc){
             val span = ArcSpan(figure)
             var last: Point? = null
