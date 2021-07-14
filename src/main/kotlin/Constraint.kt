@@ -83,12 +83,9 @@ class Horizontal(val line: Line) : Constraint() {
     }
 
     override fun equationImpl(): Value {
-        val ody = line.p1.y - line.p0.y
-        return ody.pow(2) * 1000
-/*
         val direction = line.p1 - line.p0
-        val angle = ArcSinValue(direction.x / direction.length())
-        return angle.pow(2)*/
+        val angle = ArcSinValue(direction.y / direction.length())
+        return angle.pow(2)
     }
 }
 
@@ -105,12 +102,33 @@ class Vertical(val line: Line) : Constraint() {
 }
 
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
-
+    fun getDelta() : Value{
+        val direction = line.p1 - line.p0
+        val distanceCenter = line.p0 - circle.center
+        val offset = direction.vectorProduct(distanceCenter).pow(2) / direction.squaredLength()
+        return offset.sqrt()
+    }
 
     override fun equationImpl(): Value {
+        val direction = line.p1 - line.p0
+        val distanceCenter = line.p0 - circle.center
+        val offset = direction.vectorProduct(distanceCenter).pow(2) / direction.squaredLength()
+        val error = (offset - circle.radius.pow(2)).pow(2)
+        return error
+
+/*
+        val distanceCenter = circle.center - line.p0
+        val direction = line.p1 - line.p0
+        val projected = direction * distanceCenter.scalarProduct(direction) / direction.squaredLength()
+        val offset = distanceCenter - projected
+        val error = (offset.length() - circle.radius).pow(2)
+        return error */
+
+
+
         /*val circleCenter = circle.center
-        val lineStart = line.a
-        val lineEnd = line.b
+        val lineStart = line.p0
+        val lineEnd = line.p1
         val lineDirection = lineEnd - lineStart
 
         val distToCenter = circleCenter - lineStart
@@ -119,11 +137,25 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
         val temp2 = lineDirection * temp
         val perpendicular = distToCenter - temp2
 
-        val a = (perpendicular.squaredLength() - circle.rad.pow(2.0) ).pow(2.0)
+        val a = (perpendicular.squaredLength() - circle.radius.pow(2.0) ).pow(2.0)
         val b = ( perpendicular.scalarProduct(lineDirection) ).pow(2.0)
 
-        return a + b*/
+        return (a + b).sqrt()*/
+/*
+        val projection = projectOntoLine(this.line, this.circle.center);
+        val projectionRadius = distanceBetweenPoints(this.circle.center, projection);
 
+        val dr = projectionRadius - this.circle.radius
+
+        val dx = projection.x - this.circle.center.x;
+        val dy = projection.y - this.circle.center.y;
+        val da = Point(dx, dy);
+
+        val normalized = da / da.length()
+        val offset = Point(normalized.x * dr, normalized.y * dr);
+
+        return (this.circle.radius - dr).pow(2) + offset.squaredLength()*/
+/*
         val lineStart = line.p0
         val lineEnd = line.p1
         val lineDirection = lineEnd - lineStart
@@ -141,8 +173,32 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
         var error2 = (lineDirection.vectorProduct(Ry) + cross) / hyp
         error1 *= error1
         error2 *= error2
-        return Value.min(error1, error2)
+        return Value.min(error1, error2)*/
     }
+}
+
+fun pointAlongLine(line: Line, r: Value): Point {
+    val px = line.p0.x + r * (line.p1.x - line.p0.x)
+    val py = line.p0.y + r * (line.p1.y - line.p0.y)
+    return Point(px, py);
+}
+
+fun projectionFactorBetween(line: Line, point: Point): Value {
+    val dx = line.p0.x - line.p1.x;
+    val dy = line.p0.y - line.p1.y;
+    val len2 = dx * dx + dy * dy;
+    return -((point.x - line.p0.x) * dx + (point.y - line.p0.y) * dy) / len2;
+}
+
+fun projectOntoLine(line: Line, point: Point): Point {
+    val r = projectionFactorBetween(line, point);
+    return pointAlongLine(line, r);
+}
+
+fun distanceBetweenPoints(p0: Point, p1: Point): Value {
+    val dx = p0.x - p1.x;
+    val dy = p0.y - p1.y;
+    return (dx * dx + dy * dy).sqrt();
 }
 
 class Perpendicular(val line1: Line, val line2: Line) : Constraint() {

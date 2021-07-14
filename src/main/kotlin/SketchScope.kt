@@ -77,6 +77,10 @@ open class SketchScope(val project: Project) {
     val mm = 2
     val cm = 3
 
+    fun Value.isEqual(other : Value) {
+        equals(this, other)
+    }
+
     infix fun Double.unit(other: Int): Double {
         return if (other == deg) {
             Math.toRadians(this)
@@ -236,7 +240,11 @@ class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: 
 fun project(block: ProjectScope.() -> Unit) : Project{
     val project = Project()
     val projectScope = ProjectScope(project)
-    block(projectScope)
+    try{
+        block(projectScope)
+    }catch (e: StackOverflowError){
+        e.printStackTrace()
+    }
     return project
 }
 

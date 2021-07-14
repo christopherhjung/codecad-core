@@ -434,7 +434,9 @@ class ProxyValue(_ref: Value) : MutableValue() {
         }
 
     override var modCounter: Int = 0
-        get() = field + getModCounter(ref)
+        get(){
+            return field + getModCounter(ref)
+        }
 
     override val references: Set<MutableValue> = setOf(this)
 

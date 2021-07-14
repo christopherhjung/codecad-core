@@ -147,11 +147,22 @@ class Sketch(val project: Project) {
 
         try{
             solve(10e-6, stages)
-            //constraint.prune(this)
+            constraint.prune(this)
         }catch (e: Exception){
             throw e
         }
         return constraint
+    }
+
+    fun collectReferences(value: Value, res: MutableSet<ProxyValue>){
+        if(value is ProxyValue){
+            res.add(value)
+            collectReferences(value.ref, res)
+        }else if(value !is Parameter){
+            for(ref in value.references){
+                collectReferences(ref, res)
+            }
+        }
     }
 
     fun merge(left: Value, right: Value) {
@@ -169,6 +180,13 @@ class Sketch(val project: Project) {
                 if(leftEntry.fixed != null && rightEntry.fixed != null){
                     return
                 }else if(rightEntry.fixed != null){
+                    val set = mutableSetOf<ProxyValue>()
+                    collectReferences(rightEntry.fixed!!, set)
+
+                    if(leftEntry.proxies.any { set.contains(it) }){
+                        return
+                    }
+
                     leftEntry.fixed = rightEntry.fixed
                     for( proxy in leftEntry.proxies ){
                         params.remove(proxy.ref)
@@ -182,6 +200,13 @@ class Sketch(val project: Project) {
                     return
                 }
 
+                val set = mutableSetOf<ProxyValue>()
+                collectReferences(right, set)
+
+                if(leftEntry.proxies.any { set.contains(it) }){
+                    return
+                }
+
                 leftEntry.fixed = right
                 for( proxy in leftEntry.proxies ){
                     params.remove(proxy.ref)
@@ -192,6 +217,13 @@ class Sketch(val project: Project) {
             val rightEntry = pruningTable[right]!!
 
             if(rightEntry.fixed != null){
+                return
+            }
+
+            val set = mutableSetOf<ProxyValue>()
+            collectReferences(left, set)
+
+            if(rightEntry.proxies.any { set.contains(it) }){
                 return
             }
 
