@@ -77,7 +77,7 @@ abstract class Value : RawValue(){
         }else if(isConst()){
             Const(-value)
         }else{
-            MinusValue(Const.ZERO, this)
+            NegativeValue(this)
         }
     }
 
@@ -613,6 +613,26 @@ class MinusValue(left: Value,  right: Value) : BinaryValue(left, right){
 
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
+    }
+}
+
+class NegativeValue(left: Value) : UnaryValue(left){
+    override fun calc(): Double = -left.value
+
+    override fun derivative(parameter: Parameter): Value {
+        return -left.derivative(parameter)
+    }
+
+    override fun isZero(): Boolean {
+        return left.isZero()
+    }
+
+    override fun isOne(): Boolean {
+        return false
+    }
+
+    override fun isConst(): Boolean {
+        return left.isConst()
     }
 }
 
