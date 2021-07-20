@@ -18,7 +18,12 @@ class Solver(val tracker: Tracker) {
         var errorTerm: Value = Const.ZERO
 
         for(constraint in constraints){
-            errorTerm += constraint.equation
+            var eq = constraint.equation
+            if(eq.value < 1e-2){
+                eq *= 10 // important constraints already minimized add some weight
+            }
+
+            errorTerm += eq
         }
 
         val derivatives = mutableListOf<Value>()
@@ -69,7 +74,7 @@ class Solver(val tracker: Tracker) {
             iter++
 
             if(System.currentTimeMillis() - start > 1000){
-                return false
+                //return false
             }
         }
 

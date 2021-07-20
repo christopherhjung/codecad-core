@@ -35,12 +35,16 @@ class Sketch(val project: Project) {
         return point
     }
 
+    fun createPoint(x: Value , y: Value ): Point {
+        val point = Point(x,y)
+        figures.add(point)
+        return point
+    }
+
     fun createPoint(x: Double = 0.0, y: Double = 0.0): Point {
         val a = createParameter(x)
         val b = createParameter(y)
-        val point = Point(a, b)
-        figures.add(point)
-        return point
+        return createPoint(a,b)
     }
 
     fun createLine(a: Point, b: Point, type: LineType = LineType.ToolPath): Line {
@@ -73,10 +77,13 @@ class Sketch(val project: Project) {
         return createLine(createConstPoint(x, y), createConstPoint(x2, y2))
     }
 
-    fun addConstraint(constraint: Constraint) : Constraint{
+    fun addConstraintImpl(constraint: Constraint){
+        constraints.add(constraint)
+    }
+
+    fun addConstraint(constraint: Constraint, tryBest: Boolean = false) : Constraint{
         println(constraint::class.simpleName)
         constraints.add(constraint)
-
 
 
         val constraintLookup = mutableMapOf<Constraint, HashSet<Parameter>>()
@@ -104,7 +111,7 @@ class Sketch(val project: Project) {
 
         stages.add( mutableSetOf())
 
-        constraintLookup[constraint]!!.forEach {
+        constraintLookup[constraint]?.forEach {
             visited.add(it)
             priorityQueue.offer(Test(0, it))
             stages[0].add(it)
@@ -125,32 +132,18 @@ class Sketch(val project: Project) {
                         }
                     }
                 }
-
-                /*
-                val constraint = left[i]
-
-                val found = lookup[constraint]?.any { test.contains(it) } ?: false
-
-                if(found){
-                    test.addAll(lookup[constraint]!!)
-                    left.removeAt(i)
-                    i=0
-                }else{
-                    i++
-                }*/
             }
-        }catch (e: Exception){
-            throw e
-        }
 
-        //println("${params.size} - ${test.size}")
-
-        try{
-            solve(10e-6, stages)
+            if(tryBest){
+                solveImpl(10e-4, stages)
+            }else{
+                solve(10e-4, stages)
+            }
             constraint.prune(this)
         }catch (e: Exception){
             throw e
         }
+
         return constraint
     }
 
@@ -235,11 +228,16 @@ class Sketch(val project: Project) {
         }
     }
 
+    fun solveImpl(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) : Boolean{
+        val solver = Solver(project.tracker)
+        val result = solver.solve(params, ArrayList(constraints),accuracy)
+        return result
+    }
+
     fun solve(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
 
-        val solver = Solver(project.tracker)
-        val result = solver.solve(params, ArrayList(constraints),accuracy)
+        val result = solveImpl(accuracy, params)
 
         if(!result){
             var error = 0.0
@@ -268,6 +266,55 @@ class Sketch(val project: Project) {
             sb.append(element).append("\n")
         }
         return sb.toString()
+    }
+}
+
+
+abstract class Pattern{
+    abstract fun names() : List<String>
+    abstract fun build(sketch: SketchScope)
+}
+
+class Rect : Pattern() {
+    lateinit var a: Point
+    lateinit var b: Point
+    lateinit var c: Point
+    lateinit var d: Point
+
+    lateinit var center: Point
+
+    lateinit var top: Line
+    lateinit var right: Line
+    lateinit var bottom: Line
+    lateinit var left: Line
+
+    lateinit var width: Value
+    lateinit var height: Value
+
+    override fun names(): List<String> {
+        return listOf("width", "height", "top", "bottom")
+    }
+
+    override fun build(sketch: SketchScope) {
+        with(sketch){
+            a = point(0.0,0.0)
+            b = point(1.0,0.0)
+            c = point(1.0,1.0)
+            d = point(0.0,1.0)
+
+            top = line(a,b)
+            right = line(b,c)
+            bottom = line(c,d)
+            left = line(d,a)
+
+            width = top.length
+            height = right.length
+            center = (a + b + c + d) / 4.0
+
+            equals((c-a).length(), (d - b).length())
+            equals(top.length , bottom.length)
+            equals(left.length , right.length)
+        }
     }
 }
 

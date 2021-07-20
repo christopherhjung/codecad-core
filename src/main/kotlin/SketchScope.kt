@@ -230,6 +230,10 @@ open class SketchScope(val project: Project) {
         val callersLineNumber = Thread.currentThread().stackTrace[3].lineNumber
         sketch.addConstraint(constraint).lineNumber = callersLineNumber
     }
+
+    fun add(pattern: Pattern){
+        pattern.build(this)
+    }
 }
 class ProjectScope(val project: Project)
 
@@ -320,6 +324,8 @@ fun SketchScope.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
         }
     }
 }
+
+
 
 /*
 fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {

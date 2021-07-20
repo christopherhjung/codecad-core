@@ -48,8 +48,5 @@ class SketchTest {
         param1.value = -1.0
         assertEquals(abs.value, 1.0)
         assertEquals(derivative.value, -1.0)
-
-
-
     }
 }

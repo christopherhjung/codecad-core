@@ -112,8 +112,8 @@ class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
     override fun equationImpl(): Value {
         val direction = line.p1 - line.p0
         val distanceCenter = line.p0 - circle.center
-        val offset = direction.vectorProduct(distanceCenter).pow(2) / direction.squaredLength()
-        val error = (offset - circle.radius.pow(2)).pow(2)
+        val offset = Value.abs(direction.vectorProduct(distanceCenter)) / direction.length()
+        val error = (offset - circle.radius).pow(2)
         return error
 
 /*

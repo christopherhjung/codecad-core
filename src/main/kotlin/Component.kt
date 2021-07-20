@@ -80,6 +80,10 @@ abstract class Value : RawValue(){
 
     abstract val references: Set<MutableValue>
 
+    fun detach() : Const{
+        return Const(value)
+    }
+
     override fun toString(): String {
         return value.toString()
     }
@@ -714,5 +718,11 @@ class AbsValue(left: Value) : UnaryValue(left){
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+}
+
+class Vector(vararg val values: Value){
+    fun squaredLength(){
+
     }
 }
