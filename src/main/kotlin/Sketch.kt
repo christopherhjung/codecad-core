@@ -151,7 +151,7 @@ class Sketch(val project: Project) {
             res.add(value)
             collectReferences(value.ref, res)
         }else if(value !is Parameter){
-            for(ref in value.children){
+            for(ref in value.proxyChildren){
                 collectReferences(ref, res)
             }
         }
