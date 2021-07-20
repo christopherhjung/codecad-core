@@ -26,8 +26,22 @@ class CacheTest {
     }
 
     @Test
-    fun equalsTest2(){
+    fun addSimplification(){
         val a = Parameter(2.0)
-        assertEquals(a+a, 2.0 * a)
+        assertSame(a+a, 2.0 * a)
+    }
+
+    @Test
+    fun timesSimplification(){
+        val a = Parameter(2.0)
+        assertSame(a*a, a.pow(2))
+    }
+
+    @Test
+    fun complexCacheTest(){
+        val a = Parameter(2.0)
+        val b = Parameter(3.0)
+        val c = Parameter(3.0)
+        assertSame(a + b * c, a + b * c )
     }
 }

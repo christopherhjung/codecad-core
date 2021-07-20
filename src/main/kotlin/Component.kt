@@ -149,7 +149,7 @@ abstract class Value : RawValue(){
             Const(value * right.value)
         }else if(this === right){
             cached{
-                PowValue(this, right)
+                PowValue(this, Const(2.0))
             }
         }else{
             cached{
