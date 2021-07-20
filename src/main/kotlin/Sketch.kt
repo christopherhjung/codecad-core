@@ -91,7 +91,7 @@ class Sketch(val project: Project) {
         for( con in constraints ){
             for(param in params){
                 val derivate = con.equation.derivative(param)
-                if(!derivate.isConst()){
+                if(derivate !is Const){
                     constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
                     parameterLookup.computeIfAbsent(param){ HashSet() }.add(con)
                 }
