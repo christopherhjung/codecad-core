@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 class CacheTest {
@@ -13,6 +14,17 @@ class CacheTest {
         assertSame(a / b, a / b)
         assertSame(a.pow(b), a.pow(b))
         assertSame(a.smaller(b), a.smaller(b))
+    }
+
+    @Test
+    fun commuTest(){
+        val a = Parameter(2.0)
+        val b = Parameter(3.0)
+        assertSame(a + b, b + a)
+        assertSame(a * b, b * a)
+        assertNotSame(a / b, b / a)
+        assertNotSame(a.pow(b), b.pow(a))
+        assertNotSame(a.smaller(b), b.smaller(a))
     }
 
     @Test

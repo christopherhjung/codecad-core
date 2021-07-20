@@ -651,8 +651,28 @@ class LogValue(left: Value) : UnaryValue(left){
     }
 }
 
+abstract class CommutativeValue( left: Value, right: Value): BinaryValue(left, right){
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is AddValue) return false
+        if (left !== other.left) {
+            if(left !== other.right){
+                return false
+            }else if(right !== other.left){
+                return false
+            }
+        }else if(right !== other.right){
+            return false
+        }
+        return true
+    }
 
-class AddValue( left: Value, right: Value) : BinaryValue(left, right){
+    override fun hashCode(): Int {
+        return left.hashCode() xor right.hashCode()
+    }
+}
+
+class AddValue( left: Value, right: Value) : CommutativeValue(left, right){
     override fun calc(): Double = left.value + right.value
 
     override fun derivative(parameter: Parameter): Value {
@@ -670,13 +690,9 @@ class AddValue( left: Value, right: Value) : BinaryValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
     }
-
-    override fun equals(other: Any?): Boolean {
-        return other is AddValue && super.equals(other)
-    }
 }
 
-class TimesValue(left: Value, right: Value) : BinaryValue(left, right){
+class TimesValue(left: Value, right: Value) : CommutativeValue(left, right){
     override fun calc(): Double = left.value * right.value
 
     override fun derivative(parameter: Parameter): Value {
@@ -694,12 +710,7 @@ class TimesValue(left: Value, right: Value) : BinaryValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || left.isZero() || right.isZero()
     }
-
-    override fun equals(other: Any?): Boolean {
-        return other is TimesValue && super.equals(other)
-    }
 }
-
 
 class SmallerValue(left: Value,  right: Value) : BinaryValue(left, right){
     override fun calc(): Double = if(left.value < right.value) 1.0 else 0.0
