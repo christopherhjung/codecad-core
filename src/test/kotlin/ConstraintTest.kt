@@ -88,7 +88,7 @@ class ConstraintTest {
         val project = Project()
         val sketch = Sketch(project)
         val x = sketch.createParameter(10.0)
-        val y = sketch.createParameter(10000.0)
+        val y = sketch.createParameter(100.0)
         val current = sketch.createPoint(x,y)
         val target = sketch.createConstPoint(Math.PI, 2 * Math.PI)
         val constraint = PointOnPoint(current, target)

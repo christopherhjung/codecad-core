@@ -28,28 +28,30 @@ class PatternScope(project: Project, val count: Int, val center: Point) : Sketch
             current = i
 
             for(element in rawElements){
-                if(element is Point){
-                    sketch.figures.add(rotatePoint(element, angle))
-                }else if(element is Line){
-                    sketch.figures.add(Line(
-                        rotatePoint(element.p0, angle),
-                        rotatePoint(element.p1, angle)
-                    ))
-                }else if(element is Circle){
-                    if(element is Arc){
-                        sketch.figures.add(Arc(
-                            rotatePoint(element.center, angle),
-                            element.radius,
-                            element.start + angle,
-                            element.end + angle
-                        ))
-                    }else{
-                        sketch.figures.add(Circle(
-                            rotatePoint(element.center, angle),
-                            element.radius
-                        ))
-                    }
-                }
+                sketch.figures.add(
+                    if(element is Point){
+                        rotatePoint(element, angle)
+                    }else if(element is Line){
+                        Line(
+                            rotatePoint(element.p0, angle),
+                            rotatePoint(element.p1, angle)
+                        )
+                    }else if(element is Circle){
+                        if(element is Arc){
+                            Arc(
+                                rotatePoint(element.center, angle),
+                                element.radius,
+                                element.start + angle,
+                                element.end + angle
+                            )
+                        }else{
+                            Circle(
+                                rotatePoint(element.center, angle),
+                                element.radius
+                            )
+                        }
+                    }else continue
+                )
             }
         }
 
@@ -77,7 +79,7 @@ open class SketchScope(val project: Project) {
     val mm = 2
     val cm = 3
 
-    fun Value.isEqual(other : Value) {
+    fun Value.isEquals(other : Value) {
         equals(this, other)
     }
 
