@@ -501,8 +501,8 @@ class NotCachedValue(val ref: Value) : RawValue(){
 abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
     override val proxyChildren: Set<ProxyValue> = left.proxyChildren
 
-    var cachedModCounter = -1
-    var cache: Double = 0.0
+    private var cachedModCounter = -1
+    private var cache: Double = 0.0
 
     override var value: Double
         get() {
@@ -639,7 +639,7 @@ class LogValue(left: Value) : UnaryValue(left){
     }
 
     override fun isZero(): Boolean {
-        return left.isZero()
+        return left.isOne()
     }
 
     override fun isConst(): Boolean {
