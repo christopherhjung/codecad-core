@@ -35,33 +35,24 @@ abstract class RawValue{
 }
 
 operator fun Double.minus(right: Value) : Value{
-    return if(this == 0.0){
-        right.unaryMinus()
-    }else if(right.isZero()){
-        Const(this)
-    }else if(this == 1.0 && right.isOne()){
-        Const.ZERO
-    }else if( right.isConst()){
-        Const(this - right.value)
-    }else{
-        MinusValue(Const(this), right)
-    }
+    return Const(this) - right
+}
+
+operator fun Double.times(right: Value) : Value{
+    return Const(this) * right
 }
 
 operator fun Double.div(right: Value) : Value{
-    return if(this == 0.0){
-        Const.ZERO
-    }else if(this == 1.0 && right.isOne()){
-        Const.ONE
-    }else if( right.isConst()){
-        Const(this - right.value)
-    }else{
-        DivValue(Const(this), right)
-    }
+    return Const(this) / right
+}
+
+fun Double.pow(right: Value) : Value{
+    return Const(this).pow(right)
 }
 
 abstract class Value : RawValue(){
     abstract val proxyChildren: Set<ProxyValue>
+
 
     fun detach() : Const{
         return Const(value)
@@ -77,7 +68,9 @@ abstract class Value : RawValue(){
         }else if(isConst()){
             Const(-value)
         }else{
-            NegativeValue(this)
+            cached{
+                NegativeValue(this)
+            }
         }
     }
 
@@ -90,8 +83,12 @@ abstract class Value : RawValue(){
             Const.ZERO
         }else if(isConst() && right.isConst()){
             Const(value - right.value)
+        }else if(this === right){
+            Const.ZERO
         }else{
-            MinusValue(this, right)
+            cached{
+                MinusValue(this, right)
+            }
         }
     }
 
@@ -99,7 +96,9 @@ abstract class Value : RawValue(){
         return if(isConst()){
             Const(value - right)
         }else{
-            MinusValue(this, Const(right))
+            cached{
+                MinusValue(this, Const(right))
+            }
         }
     }
 
@@ -114,8 +113,14 @@ abstract class Value : RawValue(){
             this
         }else if(isConst() && right.isConst()){
             Const(value + right.value)
+        }else if(this === right){
+            cached{
+                TimesValue(Const(2.0), right)
+            }
         }else{
-            AddValue(this, right)
+            cached{
+                AddValue(this, right)
+            }
         }
     }
 
@@ -123,7 +128,9 @@ abstract class Value : RawValue(){
         return if(isConst()){
             Const(value + right)
         }else{
-            AddValue(this, Const(right))
+            cached{
+                AddValue(this, Const(right))
+            }
         }
     }
 
@@ -140,8 +147,14 @@ abstract class Value : RawValue(){
             this
         }else if(isConst() && right.isConst()){
             Const(value * right.value)
+        }else if(this === right){
+            cached{
+                PowValue(this, right)
+            }
         }else{
-            TimesValue(this, right)
+            cached{
+                TimesValue(this, right)
+            }
         }
     }
 
@@ -153,7 +166,9 @@ abstract class Value : RawValue(){
         }else if(isConst()){
             Const(value * right)
         }else{
-            TimesValue(this, Const(right))
+            cached{
+                TimesValue(this, Const(right))
+            }
         }
     }
 
@@ -167,9 +182,13 @@ abstract class Value : RawValue(){
         }else if(right.isOne()){
             this
         }else if(isConst() && right.isConst()){
-            return Const(value / right.value)
+            Const(value / right.value)
+        }else if(this === right){
+            Const.ONE
         }else{
-            return DivValue(this, right)
+            cached{
+                DivValue(this, right)
+            }
         }
     }
 
@@ -179,7 +198,9 @@ abstract class Value : RawValue(){
         }else if(isConst()){
             Const(value / right)
         }else{
-            DivValue(this, Const(right))
+            cached{
+                DivValue(this, Const(right))
+            }
         }
     }
 
@@ -195,9 +216,11 @@ abstract class Value : RawValue(){
         }else if(right.isOne()){
             this
         }else if(isConst() && right.isConst()){
-            return Const(value.pow(right.value))
+            Const(value.pow(right.value))
         }else{
-            return PowValue(this, right)
+            cached{
+                PowValue(this, right)
+            }
         }
     }
 
@@ -209,7 +232,9 @@ abstract class Value : RawValue(){
         }else if(isConst()){
             Const(value.pow(right))
         }else{
-            PowValue(this, Const(right))
+            cached{
+                PowValue(this, Const(right))
+            }
         }
     }
 
@@ -222,15 +247,33 @@ abstract class Value : RawValue(){
     }
 
     fun smaller(other: Value) : Value{
-        return SmallerValue(this, other)
+        val newVal =  SmallerValue(this, other)
+        if(isConst() < other.isConst()){
+            return Const(newVal.value)
+        }
+
+        return cached{
+            newVal
+        }
     }
 
     companion object{
+        private val repeatCache = HashMap<Value, Value>()
+
+        fun cached(block: () -> Value) : Value{
+            val newVal = block()
+            return repeatCache.computeIfAbsent(newVal) {
+                newVal
+            }
+        }
+
         fun cos(value: Value) : Value{
             return if(value.isConst()){
                 Const(cos(value.value))
             }else{
-                CosValue(value)
+                cached {
+                    CosValue(value)
+                }
             }
         }
 
@@ -238,7 +281,19 @@ abstract class Value : RawValue(){
             return if(value.isConst()){
                 Const(sin(value.value))
             }else{
-                SinValue(value)
+                cached {
+                    SinValue(value)
+                }
+            }
+        }
+
+        fun log(value: Value) : Value{
+            return if(value.isConst()){
+                Const(log(value.value, Math.E))
+            }else{
+                cached {
+                    LogValue(value)
+                }
             }
         }
 
@@ -252,7 +307,9 @@ abstract class Value : RawValue(){
             }else if(left.isConst() && right.isConst() && left == right){
                 left
             }else{
-                ConditionalValue(condition, left, right)
+                cached {
+                    ConditionalValue(condition, left, right)
+                }
             }
         }
 
@@ -264,7 +321,9 @@ abstract class Value : RawValue(){
             return if(other.isConst()){
                 Const(abs(other.value))
             }else{
-                AbsValue(other)
+                cached {
+                    AbsValue(other)
+                }
             }
         }
 
@@ -301,6 +360,10 @@ class Const(_value: Double) : Value() {
             return other == this
         }
         return super.equals(other)
+    }
+
+    override fun hashCode(): Int {
+        return value.toRawBits().toInt()
     }
 }
 
@@ -414,6 +477,18 @@ class ProxyValue(_ref: Value) : Value() {
 
 abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
     override val proxyChildren: Set<ProxyValue> = super.proxyChildren + right.proxyChildren
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BinaryValue) return false
+        if (left != other.left) return false
+        if (right != other.right) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return left.hashCode() * 31 + right.hashCode()
+    }
 }
 
 
@@ -425,16 +500,34 @@ class NotCachedValue(val ref: Value) : RawValue(){
 
 abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
     override val proxyChildren: Set<ProxyValue> = left.proxyChildren
-    private val proxy = CachedValue(this)//if(cached) CachedValue(this) else NotCachedValue(this)
+
+    var cachedModCounter = -1
+    var cache: Double = 0.0
 
     override var value: Double
         get() {
-            return proxy.value
+            if(cachedModCounter != modCounter){
+                cachedModCounter = modCounter
+                cache = calc()
+            }
+
+            return cache
         }
         set(value) {throw RuntimeException()}
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is UnaryValue) return false
+        if (left != other.left) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return left.hashCode()
     }
 }
 
@@ -442,7 +535,11 @@ class PowValue(left: Value, right: Value) : BinaryValue(left, right){
     override fun calc(): Double =  left.value.pow(right.value)
 
     override fun derivative(parameter: Parameter): Value {
-        return right * left.pow(right - 1) * left.derivative(parameter)
+        return if(right.isConst()){
+            right * left.pow(right - 1) * left.derivative(parameter)
+        }else{
+            (right.derivative(parameter) * log(left) + right / left * left.derivative(parameter)) * this
+        }
     }
 
     override fun isZero(): Boolean {
@@ -455,6 +552,10 @@ class PowValue(left: Value, right: Value) : BinaryValue(left, right){
 
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || right.isZero() || left.isOne()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is PowValue && super.equals(other)
     }
 }
 
@@ -476,6 +577,10 @@ class CosValue( left: Value) : UnaryValue(left){
     override fun isConst(): Boolean {
         return left.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is CosValue && super.equals(other)
+    }
 }
 
 class ArcSinValue( left: Value) : UnaryValue(left){
@@ -491,6 +596,10 @@ class ArcSinValue( left: Value) : UnaryValue(left){
 
     override fun isZero(): Boolean {
         return false
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is ArcSinValue && super.equals(other)
     }
 }
 
@@ -511,6 +620,34 @@ class SinValue(left: Value) : UnaryValue(left){
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is SinValue && super.equals(other)
+    }
+}
+
+class LogValue(left: Value) : UnaryValue(left){
+    override fun calc(): Double = sin(left.value)
+
+    override fun derivative(parameter: Parameter): Value {
+        return left.derivative(parameter) / this
+    }
+
+    override fun isOne(): Boolean {
+        return false
+    }
+
+    override fun isZero(): Boolean {
+        return left.isZero()
+    }
+
+    override fun isConst(): Boolean {
+        return left.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is LogValue && super.equals(other)
     }
 }
 
@@ -533,6 +670,10 @@ class AddValue( left: Value, right: Value) : BinaryValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is AddValue && super.equals(other)
+    }
 }
 
 class TimesValue(left: Value, right: Value) : BinaryValue(left, right){
@@ -552,6 +693,10 @@ class TimesValue(left: Value, right: Value) : BinaryValue(left, right){
 
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || left.isZero() || right.isZero()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is TimesValue && super.equals(other)
     }
 }
 
@@ -574,6 +719,10 @@ class SmallerValue(left: Value,  right: Value) : BinaryValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is SmallerValue && super.equals(other)
+    }
 }
 
 class DivValue(left: Value, right: Value) : BinaryValue(left, right){
@@ -593,6 +742,10 @@ class DivValue(left: Value, right: Value) : BinaryValue(left, right){
 
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || left.isZero()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is DivValue && super.equals(other)
     }
 }
 
@@ -614,6 +767,10 @@ class MinusValue(left: Value,  right: Value) : BinaryValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is MinusValue && super.equals(other)
+    }
 }
 
 class NegativeValue(left: Value) : UnaryValue(left){
@@ -633,6 +790,10 @@ class NegativeValue(left: Value) : UnaryValue(left){
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is NegativeValue && super.equals(other)
     }
 }
 
@@ -654,6 +815,19 @@ class ConditionalValue(val condition: Value, left: Value, right: Value) : Binary
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || condition.isOne() && left.isConst() || condition.isZero() && right.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ConditionalValue) return false
+        if (left != other.left) return false
+        if (right != other.right) return false
+        if (condition != other.condition) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode() * 31 + condition.hashCode();
+    }
 }
 
 class AbsValue(left: Value) : UnaryValue(left){
@@ -674,6 +848,10 @@ class AbsValue(left: Value) : UnaryValue(left){
 
     override fun isConst(): Boolean {
         return left.isConst()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is AbsValue && super.equals(other)
     }
 }
 

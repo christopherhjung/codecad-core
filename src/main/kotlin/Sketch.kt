@@ -229,7 +229,7 @@ class Sketch(val project: Project) {
 
     fun solveImpl(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) : Boolean{
         val solver = Solver(project.tracker)
-        val result = solver.solve(params, ArrayList(constraints),accuracy)
+        val result = solver.solve(ArrayList(params), ArrayList(constraints),accuracy)
         return result
     }
 
