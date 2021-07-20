@@ -21,6 +21,6 @@ class ArcSpan(val arc: Arc) : Span {
         val currentAngle = start + diff * t
         val x = (arc.center.x.value + arc.radius.value * cos(currentAngle))
         val y = (arc.center.y.value + arc.radius.value * sin(currentAngle))
-        return Point(Const(x), Const(y))
+        return Point(Value.const(x), Value.const(y))
     }
 }

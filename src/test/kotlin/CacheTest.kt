@@ -54,6 +54,6 @@ class CacheTest {
         val a = Parameter(2.0)
         val b = Parameter(3.0)
         val c = Parameter(3.0)
-        assertSame(a + b * c, a + b * c )
+        assertSame(a + b * c, c * b + a )
     }
 }

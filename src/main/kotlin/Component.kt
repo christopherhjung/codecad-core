@@ -48,7 +48,7 @@ operator fun Double.div(right: Value) : Value{
 }
 
 fun Double.pow(right: Value) : Value{
-    return Const(this).pow(right)
+    return Value.const(this).pow(right)
 }
 
 abstract class Value : RawValue(){
@@ -97,7 +97,7 @@ abstract class Value : RawValue(){
             const(value - right)
         }else{
             cached{
-                MinusValue(this, Const(right))
+                MinusValue(this, const(right))
             }
         }
     }
@@ -129,7 +129,7 @@ abstract class Value : RawValue(){
             const(value + right)
         }else{
             cached{
-                AddValue(this, Const(right))
+                AddValue(this, const(right))
             }
         }
     }
@@ -171,7 +171,7 @@ abstract class Value : RawValue(){
             const(value * right)
         }else{
             cached{
-                TimesValue(this, Const(right))
+                TimesValue(this, const(right))
             }
         }
     }

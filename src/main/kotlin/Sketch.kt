@@ -23,7 +23,7 @@ class Sketch(val project: Project) {
     }
 
     fun createConst(value: Double = 0.0): Const {
-        return Const(value)
+        return Value.const(value)
     }
 
     fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point {

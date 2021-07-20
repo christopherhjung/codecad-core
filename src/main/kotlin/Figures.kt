@@ -61,7 +61,7 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
     }
 
     fun copy(): Point {
-        return Point(Const(x.value), Const(y.value))
+        return Point(Value.const(x.value), Value.const(y.value))
     }
 
     fun scalarProduct(other: Point) : Value{
@@ -81,7 +81,7 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
     }
 
     operator fun times(other: Double) : Point{
-        val value = Const(other)
+        val value = Value.const(other)
         return Point(x * value, y * value)
     }
 
@@ -90,7 +90,7 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
     }
 
     operator fun div(other: Double) : Point{
-        val value = Const(other)
+        val value = Value.const(other)
         return Point(x / value, y / value)
     }
 
