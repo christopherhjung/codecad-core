@@ -1,4 +1,3 @@
-import java.lang.Math.random
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -152,7 +151,7 @@ class Sketch(val project: Project) {
             res.add(value)
             collectReferences(value.ref, res)
         }else if(value !is Parameter){
-            for(ref in value.references){
+            for(ref in value.children){
                 collectReferences(ref, res)
             }
         }

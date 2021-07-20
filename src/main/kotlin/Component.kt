@@ -1,27 +1,14 @@
 import kotlin.math.*
 
 class CachedValue(val ref: Value) : RawValue(){
-    var listRef: Array<MutableValue>? = null
-    var listMod: IntArray? = null
+    var computationCounter = -1
     var cache: Double = 0.0
 
     override var value: Double
         get() {
-            if(listRef != null){
-                var found = false
-
-                for(i in listRef!!.indices){
-                    if(!found && listMod!![i] != listRef!![i].modCounter){
-                        cache = ref.calc()
-                        found = true
-                    }
-
-                    listMod!![i] = listRef!![i].modCounter
-                }
-            }else{
-                listRef = ref.references.toTypedArray()
+            if(computationCounter != Value.modCounter){
+                computationCounter = Value.modCounter
                 cache = ref.calc()
-                listMod = IntArray(ref.references.size){listRef!![it].modCounter}
             }
 
             return cache
@@ -47,7 +34,7 @@ abstract class RawValue{
 }
 
 abstract class MutableValue : Value(){
-    open var modCounter: Int = 0
+
 }
 
 operator fun Double.minus(right: Value) : Value{
@@ -78,7 +65,7 @@ operator fun Double.div(right: Value) : Value{
 
 abstract class Value : RawValue(){
 
-    abstract val references: Set<MutableValue>
+    abstract val children: Set<MutableValue>
 
     fun detach() : Const{
         return Const(value)
@@ -284,6 +271,8 @@ abstract class Value : RawValue(){
                 AbsValue(other)
             }
         }
+
+        var modCounter = 0
     }
 
     abstract fun derivative(parameter: Parameter) : Value
@@ -294,7 +283,7 @@ abstract class Value : RawValue(){
 
 class Const(_value: Double) : Value() {
     override var value: Double = _value
-    override val references: Set<MutableValue> = emptySet()
+    override val children: Set<MutableValue> = emptySet()
 
     companion object{
         val ZERO: Const = Const(0.0)
@@ -324,10 +313,10 @@ class Parameter(_value: Double) : MutableValue() {
     override var value: Double = _value
         set(value){
             field = value
-            modCounter++
+            Value.modCounter++
         }
 
-    override val references: Set<MutableValue> = setOf(this)
+    override val children: Set<MutableValue> = setOf(this)
 
     override fun derivative(parameter: Parameter): Value {
         return if(this === parameter){
@@ -366,10 +355,7 @@ class DerivativeValue(val target: MutableValue, val param: Parameter) : MutableV
             throw RuntimeException("not possible to set value")
         }
 
-    override var modCounter: Int = 0
-        get() = target.modCounter
-
-    override val references: Set<MutableValue> = setOf(this)
+    override val children: Set<MutableValue> = setOf(this)
 
     override fun derivative(parameter: Parameter): Value {
         return DerivativeValue(this, parameter)
@@ -392,57 +378,14 @@ class DerivativeValue(val target: MutableValue, val param: Parameter) : MutableV
     }
 }
 
-interface ModSource{
-    fun modCounter() : Int
-}
-
-class ParamModSource(val value : Parameter) : ModSource{
-    override fun modCounter() : Int{
-        return value.modCounter
-    }
-}
-
-class ConstModSource() : ModSource{
-    override fun modCounter() : Int{
-        return 0
-    }
-}
-
-class ComplexModSource(val value : Value) : ModSource{
-    override fun modCounter() : Int{
-        var result = 0
-        for( ref in value.references ){
-            result += ref.modCounter
-        }
-        return result
-    }
-}
-
-fun getModCounter(value: Value) : Int{
-    return if(value is Parameter){
-        value.modCounter
-    }else{
-        var result = 0
-        for( ref in value.references ){
-            result += ref.modCounter
-        }
-        result
-    }
-}
-
 class ProxyValue(_ref: Value) : MutableValue() {
     var ref: Value = _ref
         set(value) {
-            modCounter = modCounter + 1 - getModCounter(value)
+            Value.modCounter++
             field = value
         }
 
-    override var modCounter: Int = 0
-        get(){
-            return field + getModCounter(ref)
-        }
-
-    override val references: Set<MutableValue> = setOf(this)
+    override val children: Set<MutableValue> = setOf(this)
 
     override var value: Double
         get() {
@@ -475,7 +418,7 @@ class ProxyValue(_ref: Value) : MutableValue() {
 
 
 abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
-    override val references: Set<MutableValue> = super.references + right.references
+    override val children: Set<MutableValue> = super.children + right.children
 }
 
 
@@ -486,7 +429,7 @@ class NotCachedValue(val ref: Value) : RawValue(){
 }
 
 abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
-    override val references: Set<MutableValue> = left.references
+    override val children: Set<MutableValue> = left.children
     private val proxy = CachedValue(this)//if(cached) CachedValue(this) else NotCachedValue(this)
 
     override var value: Double
@@ -680,8 +623,6 @@ class MinusValue(left: Value,  right: Value) : BinaryValue(left, right){
 
 class ConditionalValue(val condition: Value, left: Value, right: Value) : BinaryValue(left, right){
     override fun calc(): Double = if(condition.value > 0.5) left.value else right.value
-
-    override val references: Set<MutableValue> = condition.references + super.references
 
     override fun derivative(parameter: Parameter): Value {
         return conditional(condition, left.derivative(parameter), right.derivative(parameter))
