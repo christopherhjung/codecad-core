@@ -7,12 +7,9 @@ class OptimizerTest {
     @Test
     fun tangentConstraint(){
         val solver = Solver(Tracker())
-
         val target = Const(Math.PI)
-        val current = Parameter(10000.0)
-
+        val current = Parameter(100.0)
         val errorTerm = (current - target).pow(2)
-
         val success = solver.solveImpl(listOf(current), errorTerm, listOf(errorTerm.derivative(current)), 1e-6)
 
         assertEquals(target.value, current.value, 1e-3)
@@ -34,7 +31,7 @@ class OptimizerTest {
 
     @Test
     fun accelTest(){
-        var currentX = 0.0
+        /*var currentX = 0.0
         var currentXD = 0.0
         var targetX = 10.0
         var targetXD = 0.0
@@ -47,7 +44,7 @@ class OptimizerTest {
             currentXD += 0.01 * u
 
             println(u)
-        }
+        }*/
 
     }
 

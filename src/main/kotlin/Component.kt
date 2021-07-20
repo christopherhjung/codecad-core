@@ -53,9 +53,8 @@ fun Double.pow(right: Value) : Value{
 abstract class Value : RawValue(){
     abstract val proxyChildren: Set<ProxyValue>
 
-
     fun detach() : Const{
-        return Const(value)
+        return const(value)
     }
 
     override fun toString(): String {
@@ -66,7 +65,7 @@ abstract class Value : RawValue(){
         return if(isZero()){
             Const.ZERO
         }else if(isConst()){
-            Const(-value)
+            const(-value)
         }else{
             cached{
                 NegativeValue(this)
@@ -82,7 +81,7 @@ abstract class Value : RawValue(){
         }else if(isOne() && right.isOne()){
             Const.ZERO
         }else if(isConst() && right.isConst()){
-            Const(value - right.value)
+            const(value - right.value)
         }else if(this === right){
             Const.ZERO
         }else{
@@ -94,7 +93,7 @@ abstract class Value : RawValue(){
 
     operator fun minus(right: Double) : Value{
         return if(isConst()){
-            Const(value - right)
+            const(value - right)
         }else{
             cached{
                 MinusValue(this, Const(right))
@@ -112,10 +111,10 @@ abstract class Value : RawValue(){
         }else if(right.isZero()){
             this
         }else if(isConst() && right.isConst()){
-            Const(value + right.value)
+            const(value + right.value)
         }else if(this === right){
             cached{
-                TimesValue(Const(2.0), right)
+                TimesValue(const(2.0), right)
             }
         }else{
             cached{
@@ -126,7 +125,7 @@ abstract class Value : RawValue(){
 
     operator fun plus(right: Double) : Value{
         return if(isConst()){
-            Const(value + right)
+            const(value + right)
         }else{
             cached{
                 AddValue(this, Const(right))
@@ -146,7 +145,7 @@ abstract class Value : RawValue(){
         }else if(right.isOne()){
             this
         }else if(isConst() && right.isConst()){
-            Const(value * right.value)
+            const(value * right.value)
         }else if(this === right){
             cached{
                 PowValue(this, Const(2.0))
@@ -164,7 +163,7 @@ abstract class Value : RawValue(){
         }else if(right == 1.0) {
             this
         }else if(isConst()){
-            Const(value * right)
+            const(value * right)
         }else{
             cached{
                 TimesValue(this, Const(right))
@@ -182,7 +181,7 @@ abstract class Value : RawValue(){
         }else if(right.isOne()){
             this
         }else if(isConst() && right.isConst()){
-            Const(value / right.value)
+            const(value / right.value)
         }else if(this === right){
             Const.ONE
         }else{
@@ -196,7 +195,7 @@ abstract class Value : RawValue(){
         return if(right == 1.0){
             this
         }else if(isConst()){
-            Const(value / right)
+            const(value / right)
         }else{
             cached{
                 DivValue(this, Const(right))
@@ -216,7 +215,7 @@ abstract class Value : RawValue(){
         }else if(right.isOne()){
             this
         }else if(isConst() && right.isConst()){
-            Const(value.pow(right.value))
+            const(value.pow(right.value))
         }else{
             cached{
                 PowValue(this, right)
@@ -230,7 +229,7 @@ abstract class Value : RawValue(){
         }else if(right == 1.0){
             this
         }else if(isConst()){
-            Const(value.pow(right))
+            const(value.pow(right))
         }else{
             cached{
                 PowValue(this, Const(right))
@@ -248,8 +247,8 @@ abstract class Value : RawValue(){
 
     fun smaller(other: Value) : Value{
         val newVal =  SmallerValue(this, other)
-        if(isConst() < other.isConst()){
-            return Const(newVal.value)
+        if(isConst() && other.isConst()){
+            return const(newVal.value)
         }
 
         return cached{
@@ -260,16 +259,22 @@ abstract class Value : RawValue(){
     companion object{
         private val repeatCache = HashMap<Value, Value>()
 
-        fun cached(block: () -> Value) : Value{
+        fun const(value: Double) : Const{
+            return cached {
+                Const(value)
+            }
+        }
+
+        fun <T> cached(block: () -> T) : T where T : Value{
             val newVal = block()
             return repeatCache.computeIfAbsent(newVal) {
                 newVal
-            }
+            } as T
         }
 
         fun cos(value: Value) : Value{
             return if(value.isConst()){
-                Const(cos(value.value))
+                const(cos(value.value))
             }else{
                 cached {
                     CosValue(value)
@@ -279,7 +284,7 @@ abstract class Value : RawValue(){
 
         fun sin(value: Value) : Value{
             return if(value.isConst()){
-                Const(sin(value.value))
+                const(sin(value.value))
             }else{
                 cached {
                     SinValue(value)
@@ -289,7 +294,7 @@ abstract class Value : RawValue(){
 
         fun log(value: Value) : Value{
             return if(value.isConst()){
-                Const(log(value.value, Math.E))
+                const(log(value.value, Math.E))
             }else{
                 cached {
                     LogValue(value)
@@ -317,9 +322,13 @@ abstract class Value : RawValue(){
             return conditional(left.smaller(right), left, right)
         }
 
+        fun max(left: Value, right: Value) : Value{
+            return conditional(left.smaller(right), right, left)
+        }
+
         fun abs(other: Value) : Value{
             return if(other.isConst()){
-                Const(abs(other.value))
+                const(abs(other.value))
             }else{
                 cached {
                     AbsValue(other)
@@ -341,8 +350,8 @@ class Const(_value: Double) : Value() {
     override val proxyChildren: Set<ProxyValue> = emptySet()
 
     companion object{
-        val ZERO: Const = Const(0.0)
-        val ONE: Const = Const(1.0)
+        val ZERO: Const = const(0.0)
+        val ONE: Const = const(1.0)
     }
 
     override fun derivative(parameter: Parameter): Value {
@@ -481,8 +490,8 @@ abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is BinaryValue) return false
-        if (left != other.left) return false
-        if (right != other.right) return false
+        if (left !== other.left) return false
+        if (right !== other.right) return false
         return true
     }
 
@@ -522,7 +531,7 @@ abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is UnaryValue) return false
-        if (left != other.left) return false
+        if (left !== other.left) return false
         return true
     }
 
@@ -654,7 +663,7 @@ class LogValue(left: Value) : UnaryValue(left){
 abstract class CommutativeValue( left: Value, right: Value): BinaryValue(left, right){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is AddValue) return false
+        if (other !is CommutativeValue) return false
         if (left !== other.left) {
             if(left !== other.right){
                 return false
@@ -690,6 +699,10 @@ class AddValue( left: Value, right: Value) : CommutativeValue(left, right){
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is AddValue && super.equals(other)
+    }
 }
 
 class TimesValue(left: Value, right: Value) : CommutativeValue(left, right){
@@ -709,6 +722,10 @@ class TimesValue(left: Value, right: Value) : CommutativeValue(left, right){
 
     override fun isConst(): Boolean {
         return left.isConst() && right.isConst() || left.isZero() || right.isZero()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is TimesValue && super.equals(other)
     }
 }
 
@@ -830,9 +847,9 @@ class ConditionalValue(val condition: Value, left: Value, right: Value) : Binary
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ConditionalValue) return false
-        if (left != other.left) return false
-        if (right != other.right) return false
-        if (condition != other.condition) return false
+        if (left !== other.left) return false
+        if (right !== other.right) return false
+        if (condition !== other.condition) return false
         return true
     }
 
