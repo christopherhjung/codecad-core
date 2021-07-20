@@ -66,9 +66,9 @@ open class SketchScope(val project: Project) {
     val sketch = Sketch(project)
 
     companion object{
-        val ORIGIN = Point(Const(0.0), Const(0.0))
-        val AXIS_X = Line(ORIGIN, Point(Const(1.0), Const(0.0)))
-        val AXIS_Y = Line(ORIGIN, Point(Const(0.0), Const(1.0)))
+        val ORIGIN = Point(Value.const(0.0), Value.const(0.0))
+        val AXIS_X = Line(ORIGIN, Point(Value.const(1.0), Value.const(0.0)))
+        val AXIS_Y = Line(ORIGIN, Point(Value.const(0.0), Value.const(1.0)))
     }
 
     val deg = 0
