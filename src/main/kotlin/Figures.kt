@@ -1,3 +1,9 @@
+import SketchScope.Companion.AXIS_X
+import java.lang.Math.atan2
+import kotlin.math.atan
+import kotlin.math.tan
+import kotlin.reflect.jvm.internal.ReflectProperties
+
 enum class LineType(val prio: Int){
     Normal(2), ToolPath(3), ToolContour(1)
 }
@@ -36,9 +42,27 @@ class Line(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Fig
 
 open class Circle(val center: Point, val radius: Value) : Figure()
 
+/*
 class Arc(center: Point, radius: Value, val start: Value, val end: Value) : Circle(center,radius){
     val p0 = Point.onCircle(center, radius, start)
     val p1 = Point.onCircle(center, radius, end)
+}*/
+
+
+class Arc(val p0: Point, val p1: Point, val helper: Value ) : Circle( centerFunction(p0,p1,helper), (p0 -  centerFunction(p0,p1,helper)).length()){
+
+    companion object{
+
+        private fun centerFunction(p0: Point,p1: Point,arcRadius: Value ): Point{
+            val direction = p1 - p0
+            val half = direction / 2.0
+            val middle = p0 + half
+            val normalizedDirection = direction.normalized()
+            val positive = Point(-normalizedDirection.y, normalizedDirection.x)
+            return middle + positive * arcRadius
+        }
+
+    }
 }
 
 class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figure(type) {
@@ -49,6 +73,23 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
                 (center.y + radius * Value.sin(angle))
             )
         }
+
+        fun conditional(condition: Value, left: Point, right: Point) : Point{
+            return Point(
+                Value.conditional(condition, left.x, right.x),
+                Value.conditional(condition, left.y, right.y)
+            )
+        }
+    }
+
+    fun absoluteAngle(target: Point) : Double{
+        val a = AXIS_X.p1
+        val b = target - this
+        return atan2((a.x * b.y - a.y * b.x).value , (a.x * b.x + a.y * b.y).value)
+    }
+
+    fun normalized() : Point{
+        return this / length()
     }
 
     fun rotate(center: Point, angle: Value) : Point{

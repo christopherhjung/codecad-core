@@ -294,18 +294,6 @@ fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
     return (point.x - x).pow(2) + (point.y - y).pow(2)
 }
 
-class PointOnArcStart(val point: Point, val arc: Arc) : Constraint() {
-    override fun equationImpl(): Value {
-        return pointOnArcError(point, arc, arc.start)
-    }
-}
-
-class PointOnArcEnd(val point: Point, val arc: Arc) : Constraint() {
-    override fun equationImpl(): Value {
-        return pointOnArcError(point, arc, arc.end)
-    }
-}
-
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
     override fun equationImpl(): Value {
         val eX = (line.p0.x + line.p1.x) / 2

@@ -42,7 +42,7 @@ class SketchTest {
         assertEquals(-1.0, derivative.value)
     }
 
-    @Test
+    /*@Test
     fun complexTest(){
         val proj = project {
             sketch {
@@ -82,8 +82,8 @@ class SketchTest {
         }
 
         assertTrue(proj.sketches.first().solveImpl(1e-8))
-    }
-
+    }*/
+/*
     @Test
     fun complexTest2() {
         val proj = project {
@@ -124,5 +124,5 @@ class SketchTest {
         }
 
         assertTrue(proj.sketches.first().solveImpl(1e-8))
-    }
+    }*/
 }

@@ -58,8 +58,8 @@ class Sketch(val project: Project) {
         return circle
     }
 
-    fun createArc(center: Point, radius: Value, start: Value, end: Value): Arc {
-        val circle = Arc(center, radius, start, end)
+    fun createArc(p0: Point, p1: Point, radius: Value): Arc {
+        val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
     }

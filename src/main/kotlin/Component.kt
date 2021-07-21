@@ -340,6 +340,16 @@ abstract class Value : RawValue(){
             }
         }
 
+        fun sign(other: Value) : Value{
+            return if(other is Const){
+                const(sign(other.value))
+            }else{
+                cached {
+                    SignValue(other)
+                }
+            }
+        }
+
         var modCounter = 0
     }
 
@@ -687,6 +697,18 @@ class AbsValue(left: Value) : UnaryValue(left){
 
     override fun equals(other: Any?): Boolean {
         return other is AbsValue && super.equals(other)
+    }
+}
+
+class SignValue(left: Value) : UnaryValue(left){
+    override fun calc(): Double = sign(left.value)
+
+    override fun derivative(parameter: Parameter): Value {
+        return Const.ZERO
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is SignValue && super.equals(other)
     }
 }
 

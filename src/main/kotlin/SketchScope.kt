@@ -39,10 +39,9 @@ class PatternScope(project: Project, val count: Int, val center: Point) : Sketch
                     }else if(element is Circle){
                         if(element is Arc){
                             Arc(
-                                rotatePoint(element.center, angle),
-                                element.radius,
-                                element.start + angle,
-                                element.end + angle
+                                rotatePoint(element.p0, angle),
+                                rotatePoint(element.p1, angle),
+                                element.helper
                             )
                         }else{
                             Circle(
@@ -130,12 +129,8 @@ open class SketchScope(val project: Project) {
         return sketch.createCircle(center, radius)
     }
 
-    fun arc(center: Point, radius: Value, start: Value, end: Value): Arc {
-        return sketch.createArc(center, radius, start, end)
-    }
-
-    fun arc(center: Point, radius: Value): Arc {
-        return sketch.createArc(center, radius, param(0.0), param(Math.PI / 2))
+    fun arc(p0: Point, p1: Point, radius: Value): Arc {
+        return sketch.createArc(p0,p1,radius)
     }
 
     fun polygon(vararg points: Point) : List<Line> {
