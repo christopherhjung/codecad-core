@@ -12,34 +12,21 @@ abstract class Figure(var type: LineType = LineType.Normal){
 }
 
 class Line(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
-    private var _squaredLength: Value? = null
-    private var _length: Value? = null
-    private var _midPoint: Point? = null
 
     val squaredLength : Value
-        get(){
-            if(_squaredLength == null){
-                _squaredLength = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
-            }
-            return _squaredLength!!
-        }
+        get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
 
     val length : Value
-        get(){
-            if(_length == null){
-                _length = squaredLength.sqrt()
-            }
-            return _length!!
-        }
+        get() = squaredLength.sqrt()
 
     val midPoint : Point
-        get(){
-            if(_midPoint == null){
-                _midPoint = (p0 + p1) / 2.0
-            }
-            return _midPoint!!
-        }
+        get() = (p0 + p1) / 2.0
 
+    val difference : Point
+        get() = p1 - p0
+
+    val direction : Point
+        get() = difference.normalized()
 }
 
 open class Circle(val center: Point, val radius: Value) : Figure()
@@ -108,11 +95,11 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
         return Point(Value.const(x.value), Value.const(y.value))
     }
 
-    fun scalarProduct(other: Point) : Value{
+    fun scalar(other: Point) : Value{
         return x * other.x + y * other.y
     }
 
-    fun vectorProduct(other: Point) : Value{
+    fun cross(other: Point) : Value{
         return x * other.y - y * other.x
     }
 

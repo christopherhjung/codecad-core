@@ -1,5 +1,3 @@
-import kotlin.math.*
-
 abstract class Constraint {
 
     var lineNumber: Int = -1
@@ -40,7 +38,7 @@ class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Co
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2) - distance.pow(2)
     }
 }
-
+/*
 class PointOnLine(val point: Point, val line: Line) : Constraint() {
     /*override fun error(): Double {
         val dx = line.b.x.value - line.a.x.value
@@ -64,7 +62,7 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
         TODO("Not yet implemented")
     }
 }
-
+*/
 class LineLength(val line: Line, val length: Value) : Constraint() {
     override fun equationImpl(): Value {
         return (line.length - length).pow(2)
@@ -102,97 +100,29 @@ class Vertical(val line: Line) : Constraint() {
 }
 
 class CircleTangent(val circle: Circle, val line: Line) : Constraint() {
-    fun getDelta() : Value{
-        val direction = line.p1 - line.p0
-        val distanceCenter = line.p0 - circle.center
-        val offset = direction.vectorProduct(distanceCenter).pow(2) / direction.squaredLength()
-        return offset.sqrt()
-    }
-
     override fun equationImpl(): Value {
         val direction = line.p1 - line.p0
         val distanceCenter = line.p0 - circle.center
-        val offset = Value.abs(direction.vectorProduct(distanceCenter)) / direction.length()
+        val offset = Value.abs(direction.cross(distanceCenter)) / direction.length()
         val error = (offset - circle.radius).pow(2)
         return error
-
-/*
-        val distanceCenter = circle.center - line.p0
-        val direction = line.p1 - line.p0
-        val projected = direction * distanceCenter.scalarProduct(direction) / direction.squaredLength()
-        val offset = distanceCenter - projected
-        val error = (offset.length() - circle.radius).pow(2)
-        return error */
-
-
-
-        /*val circleCenter = circle.center
-        val lineStart = line.p0
-        val lineEnd = line.p1
-        val lineDirection = lineEnd - lineStart
-
-        val distToCenter = circleCenter - lineStart
-
-        val temp = ( distToCenter.scalarProduct(lineDirection) ) / ( lineDirection.scalarProduct(lineDirection) )
-        val temp2 = lineDirection * temp
-        val perpendicular = distToCenter - temp2
-
-        val a = (perpendicular.squaredLength() - circle.radius.pow(2.0) ).pow(2.0)
-        val b = ( perpendicular.scalarProduct(lineDirection) ).pow(2.0)
-
-        return (a + b).sqrt()*/
-/*
-        val projection = projectOntoLine(this.line, this.circle.center);
-        val projectionRadius = distanceBetweenPoints(this.circle.center, projection);
-
-        val dr = projectionRadius - this.circle.radius
-
-        val dx = projection.x - this.circle.center.x;
-        val dy = projection.y - this.circle.center.y;
-        val da = Point(dx, dy);
-
-        val normalized = da / da.length()
-        val offset = Point(normalized.x * dr, normalized.y * dr);
-
-        return (this.circle.radius - dr).pow(2) + offset.squaredLength()*/
-/*
-        val lineStart = line.p0
-        val lineEnd = line.p1
-        val lineDirection = lineEnd - lineStart
-
-        val hyp = lineDirection.length()
-        val hypRad = circle.radius / hyp
-
-        val Rx =
-            Point(circle.center.x - lineDirection.y * hypRad, circle.center.y + lineDirection.x * hypRad)
-        val Ry =
-            Point(circle.center.x + lineDirection.y * hypRad, circle.center.y - lineDirection.x * hypRad)
-
-        val cross = lineStart * lineEnd
-        var error1 = (lineDirection.vectorProduct(Rx) + cross) / hyp
-        var error2 = (lineDirection.vectorProduct(Ry) + cross) / hyp
-        error1 *= error1
-        error2 *= error2
-        return Value.min(error1, error2)*/
     }
 }
 
 fun pointAlongLine(line: Line, r: Value): Point {
-    val px = line.p0.x + r * (line.p1.x - line.p0.x)
-    val py = line.p0.y + r * (line.p1.y - line.p0.y)
-    return Point(px, py);
+    return line.p0 + line.difference * r
 }
 
 fun projectionFactorBetween(line: Line, point: Point): Value {
-    val dx = line.p0.x - line.p1.x;
-    val dy = line.p0.y - line.p1.y;
+    val dx = line.p0.x - line.p1.x
+    val dy = line.p0.y - line.p1.y
     val len2 = dx * dx + dy * dy;
-    return -((point.x - line.p0.x) * dx + (point.y - line.p0.y) * dy) / len2;
+    return -((point.x - line.p0.x) * dx + (point.y - line.p0.y) * dy) / len2
 }
 
 fun projectOntoLine(line: Line, point: Point): Point {
-    val r = projectionFactorBetween(line, point);
-    return pointAlongLine(line, r);
+    val r = projectionFactorBetween(line, point)
+    return pointAlongLine(line, r)
 }
 
 fun distanceBetweenPoints(p0: Point, p1: Point): Value {
@@ -203,10 +133,10 @@ fun distanceBetweenPoints(p0: Point, p1: Point): Value {
 
 class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
     override fun equationImpl(): Value {
-        return lineCross(line1, line2, false).pow(2)
+        return line1.direction.scalar(line2.direction).pow(2)
     }
 }
-
+/*
 fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
     var dx = line1.p1.x - line1.p0.x
     var dy = line1.p1.y - line1.p0.y
@@ -226,11 +156,11 @@ fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
     } else {
         dx * dx2 + dy * dy2
     }
-}
+}*/
 
 class Parallel(val line1: Line, val line2: Line) : Constraint() {
     override fun equationImpl(): Value {
-        return lineCross(line1, line2).pow(2)
+        return line1.direction.cross(line2.direction).pow(2)
     }
 }
 
@@ -277,6 +207,13 @@ class PointOnCircle(val point: Point, val circle: Circle) : Constraint() {
     }
 }
 
+class PointOnLine(val point: Point, val line: Line) : Constraint() {
+
+    override fun equationImpl(): Value {
+        return (line.p0 - point).normalized().cross(line.direction).pow(2)
+    }
+}
+
 class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     override fun prune(sketch: Sketch) {
         sketch.merge(circle1.radius, circle2.radius)
@@ -287,24 +224,15 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     }
 }
 
-fun pointOnArcError(point: Point, arc: Circle, angle: Value): Value {
-    val x = (arc.center.x + arc.radius * Value.cos(angle))
-    val y = (arc.center.y + arc.radius * Value.sin(angle))
-
-    return (point.x - x).pow(2) + (point.y - y).pow(2)
-}
-
 class PointOnLineMidpoint(val point: Point, val line: Line) : Constraint() {
     override fun equationImpl(): Value {
-        val eX = (line.p0.x + line.p1.x) / 2
-        val eY = (line.p0.y + line.p1.y) / 2
-        return (eX - point.x).pow(2) + (eY - point.y).pow(2)
+        return (line.midPoint - point).squaredLength()
     }
 }
 
 class InternalAngle(val line1: Line, val line2: Line, val angle: Value) : Constraint() {
     override fun equationImpl(): Value {
-        return (lineCross(line1, line2, false) - CosValue(angle)).pow(2)
+        return (line1.direction.scalar(line2.direction) - CosValue(angle)).pow(2)
     }
 }
 
@@ -319,8 +247,6 @@ class Radius(val circle: Circle, val radius: Value) : Constraint() {
 }
 
 class Equals(val left: Value, val right: Value) : Constraint() {
-
-
     override fun prune(sketch: Sketch) {
         sketch.merge(left, right)
     }
