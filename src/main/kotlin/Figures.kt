@@ -8,7 +8,8 @@ enum class LineType(val prio: Int){
     Normal(2), ToolPath(3), ToolContour(1)
 }
 
-open class Figure(var type: LineType = LineType.Normal)
+abstract class Figure(var type: LineType = LineType.Normal){
+}
 
 class Line(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
     private var _squaredLength: Value? = null
@@ -38,6 +39,7 @@ class Line(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Fig
             }
             return _midPoint!!
         }
+
 }
 
 open class Circle(val center: Point, val radius: Value) : Figure()
@@ -50,9 +52,7 @@ class Arc(center: Point, radius: Value, val start: Value, val end: Value) : Circ
 
 
 class Arc(val p0: Point, val p1: Point, val helper: Value ) : Circle( centerFunction(p0,p1,helper), (p0 -  centerFunction(p0,p1,helper)).length()){
-
     companion object{
-
         private fun centerFunction(p0: Point,p1: Point,arcRadius: Value ): Point{
             val direction = p1 - p0
             val half = direction / 2.0
@@ -61,8 +61,11 @@ class Arc(val p0: Point, val p1: Point, val helper: Value ) : Circle( centerFunc
             val positive = Point(-normalizedDirection.y, normalizedDirection.x)
             return middle + positive * arcRadius
         }
-
     }
+}
+
+class FunctionFigure(val t: Parameter, val function: Point) : Figure(){
+
 }
 
 class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figure(type) {

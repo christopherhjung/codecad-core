@@ -1,4 +1,5 @@
 import java.util.*
+import kotlin.Function
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
@@ -62,6 +63,12 @@ class Sketch(val project: Project) {
         val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
+    }
+
+    fun createFunction(param: Parameter, function: Point) : FunctionFigure{
+        val function = FunctionFigure(param, function)
+        figures.add(function)
+        return function
     }
 
     fun createCircle(): Circle {

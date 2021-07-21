@@ -32,3 +32,10 @@ class ArcSpan(val arc: Arc) : Span {
         return Point(Value.const(x), Value.const(y))
     }
 }
+
+class FunctionSpan(val func: FunctionFigure) : Span {
+    override fun getPoint(t: Double): Point {
+        func.t .value = t
+        return func.function.copy()
+    }
+}

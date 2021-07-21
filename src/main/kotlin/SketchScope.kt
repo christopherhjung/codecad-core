@@ -133,6 +133,12 @@ open class SketchScope(val project: Project) {
         return sketch.createArc(p0,p1,radius)
     }
 
+    fun func(block: (Value) -> Point): FunctionFigure{
+        val param = Parameter(0.0)
+        val function = block(param)
+        return sketch.createFunction(param, function)
+    }
+
     fun polygon(vararg points: Point) : List<Line> {
         val points = mutableListOf(*points)
         points.add(points.first())
@@ -270,8 +276,20 @@ fun sketchToLines(sketch: Sketch) : List<LineSegment>{
         }else if(figure is Arc){
             val span = ArcSpan(figure)
             var last: Point? = null
-            for( i in 0 .. 100){
-                val t = i / 100.0
+            for( i in 0 .. 500){
+                val t = i / 500.0
+
+                val point = span.getPoint(t)
+                if(last != null){
+                    list.add(LineSegment(last, point))
+                }
+                last = point
+            }
+        }else if(figure is FunctionFigure){
+            val span = FunctionSpan(figure)
+            var last: Point? = null
+            for( i in 0 .. 500){
+                val t = i / 500.0
 
                 val point = span.getPoint(t)
                 if(last != null){

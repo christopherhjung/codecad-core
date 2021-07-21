@@ -7,13 +7,13 @@ import kotlin.test.assertTrue
 class SketchTest {
 
     @Test
-    fun complexSketch(){
+    fun complexSketch() {
 
     }
 
     @Test
-    fun cubicDerivativeTest(){
-        val param = Parameter( Math.PI)
+    fun cubicDerivativeTest() {
+        val param = Parameter(Math.PI)
         val x2 = param.pow(3)
         val derivative = x2.derivative(param)
         val value = derivative.value
@@ -21,7 +21,7 @@ class SketchTest {
     }
 
     @Test
-    fun constBecomeConst(){
+    fun constBecomeConst() {
         val param1 = Const(Math.PI)
         val param2 = Const(Math.PI)
         val x2 = param1.pow(param2)
@@ -30,7 +30,7 @@ class SketchTest {
     }
 
     @Test
-    fun absTest(){
+    fun absTest() {
         val param1 = Parameter(1.0)
         val abs = Value.abs(param1)
         val derivative = abs.derivative(param1)
@@ -42,28 +42,20 @@ class SketchTest {
         assertEquals(-1.0, derivative.value)
     }
 
-    /*@Test
-    fun complexTest(){
+    @Test
+    fun complexTest() {
         val proj = project {
             sketch {
-                val topLine = line(point(0.0, 1.0),point(1.0,1.0))
-                val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
-
-                val leftArc = arc(point(-1.0,0.0), param(1.0), param(2.0), param(4.0))
-                val rightArc = arc(point(1.0,0.0), param(1.0))
+                val topLine = line(point(0.0, 1.0), point(1.0, 1.0))
+                val bottomLine = line(point(0.0, 0.0), point(1.0, 0.0))
 
                 val vertLine = line(topLine.p0, bottomLine.p0)
                 val vertLine2 = line(topLine.p1, bottomLine.p1)
 
-                equals(topLine.p0, leftArc.p0)
-                equals(bottomLine.p0, leftArc.p1)
-
-                equals(topLine.p1, rightArc.p1)
-                equals(bottomLine.p1, rightArc.p0)
-
+                val leftArc = arc(vertLine.p0, vertLine.p1, param(1.0))
+                val rightArc = arc(vertLine2.p1, vertLine2.p0, param(1.0))
+                equals(topLine.length, bottomLine.length)
                 perpendicular(topLine, vertLine)
-
-
                 equals(topLine.length, bottomLine.length)
                 equals(leftArc.radius, rightArc.radius)
                 equals(topLine.length, rightArc.radius)
@@ -71,8 +63,8 @@ class SketchTest {
                 equals(vertLine.length, vertLine2.length)
                 equals(vertLine2.length, const(2.0))
 
-                equals(leftArc.center, vertLine.midPoint )
-                equals(rightArc.center, vertLine2.midPoint )
+                equals(leftArc.center, vertLine.midPoint)
+                equals(rightArc.center, vertLine2.midPoint)
 
                 equals(leftArc.radius, topLine.length)
                 equals(topLine.p0, ORIGIN)
@@ -82,8 +74,8 @@ class SketchTest {
         }
 
         assertTrue(proj.sketches.first().solveImpl(1e-8))
-    }*/
-/*
+    }
+
     @Test
     fun complexTest2() {
         val proj = project {
@@ -98,16 +90,12 @@ class SketchTest {
                     val a = line(center, point(1.0, 1.0))
                     val b = line(center, point(1.0, 0.5))
 
-                    val arc = arc(point(), param(1.0), param(0.0), param((360.0 / repeat) unit deg))
+                    val arc = arc(b.p1, a.p1, param(1.0))
 
-                    equals(a.p1, arc.p1)
-                    equals(b.p1, arc.p0)
                     angle(a, b, const((360.0 / repeat) unit deg))
                     equals(a.length, b.length)
                     equals(b.length, const(1.0))
                     tangent(arc, a)
-                    /*tangent(arc, a)
-                    tangent(arc, b)*/
 
                     all(a.p1, points)
                     all(b.p1, points2)
@@ -124,5 +112,18 @@ class SketchTest {
         }
 
         assertTrue(proj.sketches.first().solveImpl(1e-8))
-    }*/
+    }
+
+
+    @Test
+    fun functionTest() {
+        val proj = project {
+            sketch {
+                func {
+                    t -> Point(Value.cos(t), Value.sin(t))
+                }
+            }
+        }
+    }
+
 }
