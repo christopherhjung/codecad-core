@@ -562,7 +562,7 @@ class SinValue(left: Value) : UnaryValue(left){
 }
 
 class LogValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = sin(left.value)
+    override fun calc(): Double = log(left.value, Math.E)
 
     override fun derivative(parameter: Parameter): Value {
         return left.derivative(parameter) / this
