@@ -254,7 +254,7 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
 
     val segments = sketchToLines(builder.sketch)
 
-    splitLineSegments(segments)
+    isIntersect(segments)
 
     //builder.sketch.draw()
     return builder.sketch
@@ -282,22 +282,6 @@ class PointD(val x: Double, val y: Double){
     }
 }
 class LineD(val p0: PointD, val p1: PointD){
-
-}
-
-fun splitLineSegments(list : List<LineD>){
-    val ordered = ArrayList<LineD>()
-    for(segment in list){
-        if(segment.p0.x < segment.p1.x){
-            ordered.add(LineD(segment.p0, segment.p1))
-        }else{
-            ordered.add(LineD(segment.p1, segment.p0))
-        }
-    }
-
-    val size = isIntersect(ordered)
-
-    println(size)
 
 }
 

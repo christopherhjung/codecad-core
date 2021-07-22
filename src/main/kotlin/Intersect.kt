@@ -95,7 +95,6 @@ fun get_line_intersection(line1: LineD, line2: LineD): PointD? {
 fun isIntersect(arr: List<LineD>): Int {
     val e = LinkedList<Event>()
 
-    // Pushing all points to a vector of events
     for (i in arr.indices) {
         if (arr[i].p0.x < arr[i].p1.x) {
             e.add(Event(arr[i].p0, arr[i], true))
@@ -125,8 +124,6 @@ fun isIntersect(arr: List<LineD>): Int {
             s.remove(event.line)
         }
     }
-
-    println(intersections)
 
     return intersections
 }
