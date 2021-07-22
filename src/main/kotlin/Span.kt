@@ -7,9 +7,7 @@ interface Span{
 
 class LineSpan(val line: Line) : Span {
     override fun getPoint(t: Double) : Point{
-        val a = line.p0
-        val b = line.p1
-        return ((b - a) * t + a).copy()
+        return (line.difference * t + line.p0).copy()
     }
 }
 
@@ -25,17 +23,19 @@ class ArcSpan(val arc: Arc) : Span {
         diff = end - start
     }
     override fun getPoint(t: Double): Point {
-
         val currentAngle = start + diff * t
         val x = (arc.center.x.value + arc.radius.value * cos(currentAngle))
         val y = (arc.center.y.value + arc.radius.value * sin(currentAngle))
-        return Point(Value.const(x), Value.const(y))
+        return Point(Const(x), Const(y))
     }
 }
 
-class FunctionSpan(val func: FunctionFigure) : Span {
+class FunctionSpan(func: FunctionFigure) : Span {
+    private val t: Parameter = Parameter(0.0)
+    private val formula: Point = func.function(t)
+
     override fun getPoint(t: Double): Point {
-        func.t .value = t
-        return func.function.copy()
+        this.t.value = t
+        return formula.copy()
     }
 }

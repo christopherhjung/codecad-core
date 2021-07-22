@@ -65,8 +65,8 @@ class Sketch(val project: Project) {
         return circle
     }
 
-    fun createFunction(param: Parameter, function: Point) : FunctionFigure{
-        val function = FunctionFigure(param, function)
+    fun createFunction(function : (Value) -> Point) : FunctionFigure{
+        val function = FunctionFigure(function)
         figures.add(function)
         return function
     }

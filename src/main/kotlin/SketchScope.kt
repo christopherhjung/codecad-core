@@ -1,3 +1,5 @@
+import kotlin.collections.ArrayList
+
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
@@ -134,9 +136,7 @@ open class SketchScope(val project: Project) {
     }
 
     fun func(block: (Value) -> Point): FunctionFigure{
-        val param = Parameter(0.0)
-        val function = block(param)
-        return sketch.createFunction(param, function)
+        return sketch.createFunction(block)
     }
 
     fun polygon(vararg points: Point) : List<Line> {
@@ -191,15 +191,6 @@ open class SketchScope(val project: Project) {
     fun angle(line1: Line, line2: Line, angle: Value) {
         addConstraintImpl(InternalAngle(line1, line2, angle))
     }
-/*
-    fun pointOnArcStart(point: Point, arc: Arc) {
-        addConstraintImpl(PointOnArcStart(point, arc))
-    }
-
-    fun pointOnArcEnd(point: Point, arc: Arc) {
-        addConstraintImpl(PointOnArcEnd(point, arc))
-    }
-    */
 
     fun addConstraint(constraint: Constraint) {
         addConstraintImpl(constraint)
@@ -261,18 +252,60 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
     project.sketches.add(builder.sketch)
     builder.sketch.solve(1e-8)
 
+    val segments = sketchToLines(builder.sketch)
+
+    splitLineSegments(segments)
+
     //builder.sketch.draw()
     return builder.sketch
 }
 
+class PointD(val x: Double, val y: Double){
+    override fun toString(): String {
+        return "PointD(x=$x, y=$y)"
+    }
 
-class LineSegment(val a: Point, val b: Point)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PointD) return false
 
-fun sketchToLines(sketch: Sketch) : List<LineSegment>{
-    val list = mutableListOf<LineSegment>()
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        return result
+    }
+}
+class LineD(val p0: PointD, val p1: PointD){
+
+}
+
+fun splitLineSegments(list : List<LineD>){
+    val ordered = ArrayList<LineD>()
+    for(segment in list){
+        if(segment.p0.x < segment.p1.x){
+            ordered.add(LineD(segment.p0, segment.p1))
+        }else{
+            ordered.add(LineD(segment.p1, segment.p0))
+        }
+    }
+
+    val size = isIntersect(ordered)
+
+    println(size)
+
+}
+
+fun sketchToLines(sketch: Sketch) : List<LineD>{
+    val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
         if(figure is Line){
-            list.add(LineSegment(figure.p0.copy(), figure.p1.copy()))
+            list.add(LineD(figure.p0.fixed(), figure.p1.fixed()))
         }else if(figure is Arc){
             val span = ArcSpan(figure)
             var last: Point? = null
@@ -281,7 +314,7 @@ fun sketchToLines(sketch: Sketch) : List<LineSegment>{
 
                 val point = span.getPoint(t)
                 if(last != null){
-                    list.add(LineSegment(last, point))
+                    list.add(LineD(last.fixed(), point.fixed()))
                 }
                 last = point
             }
@@ -293,7 +326,7 @@ fun sketchToLines(sketch: Sketch) : List<LineSegment>{
 
                 val point = span.getPoint(t)
                 if(last != null){
-                    list.add(LineSegment(last, point))
+                    list.add(LineD(last.fixed(), point.fixed()))
                 }
                 last = point
             }

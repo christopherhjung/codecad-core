@@ -51,7 +51,7 @@ class Arc(val p0: Point, val p1: Point, val helper: Value ) : Circle( centerFunc
     }
 }
 
-class FunctionFigure(val t: Parameter, val function: Point) : Figure(){
+class FunctionFigure( val function: (Value) -> Point) : Figure(){
 
 }
 
@@ -93,6 +93,10 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
 
     fun copy(): Point {
         return Point(Value.const(x.value), Value.const(y.value))
+    }
+
+    fun fixed() : PointD {
+        return PointD(x.value, y.value)
     }
 
     fun scalar(other: Point) : Value{
