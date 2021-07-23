@@ -106,7 +106,7 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
 class Node(
     val p: PointD
 ) : Comparable<Node> {
-    val rightEdges = mutableListOf<Edge>()
+    val edges = mutableListOf<Edge>()
     val leftEdges = mutableListOf<Edge>()
 
     override fun compareTo(other: Node): Int {
@@ -178,48 +178,57 @@ fun findFaces(arr: List<LineD>): List<LineD> {
         a.opposite = b
         b.opposite = a
 
-        left.rightEdges.add(a)
-        right.leftEdges.add(b)
+        left.edges.add(a)
+        right.edges.add(b)
     }
 
 
-    val nodes = pointMap.values.filter { it.leftEdges.size + it.rightEdges.size >= 2 }.sorted()
+    val nodes = pointMap.values.filter { it.leftEdges.size + it.edges.size >= 2 }.sorted()
 
     for (node in nodes) {
-        node.rightEdges.sortWith { a,b -> a.orientationTo(b) }
-        node.leftEdges.sortWith { a,b -> b.orientationTo(a) }
+        node.edges.sortWith { a, b ->
+            if(a.source.p.x < 0 && b.target.p.x < 0 ){
+                if(a.source.p.y < 0 && b.target.p.y > 0 ){
+                    return@sortWith 1
+                }else if(a.source.p.x > 0 && b.target.p.x < 0 ){
+                    return@sortWith -1
+                }
+            }
+
+            a.orientationTo(b)
+        }
     }
 
     val scanline = ArrayList<Edge>()
 
-    val currentIndex = 0
     for(node in nodes){
-        for( edge in node.leftEdges ){
-            scanline.remove(edge.opposite)
-        }
-        if(node.leftEdges.size == 0){
-            val pos = scanline.search(node.p)
-
-            var outside = true
-            if(pos != 0){
-                val a = scanline[pos - 1]
-                val b = scanline[pos]
-
-                outside = a.index != b.index
-            }
-
-            scanline.addAll(pos, node.rightEdges)
-            for((top, bottom) in node.rightEdges.zipWithNext()){
-                if(outside){
-                    bottom.connection = top
-                }else{
-                    top.connection = bottom
-                }
-            }
-        }else{
-
+        for(i in node.edges.indices){
+            val top = node.edges[i]
+            val bottom = node.edges[(i+1)%node.edges.size]
+            bottom.connection = top
         }
     }
+
+    for(node in nodes){
+        for(edge in edges){
+
+        }
+
+        val pos = scanline.search(node.p)
+
+        var outside = true
+        if(pos != 0){
+            val a = scanline[pos - 1]
+            val b = scanline[pos]
+
+            outside = a.index != b.index
+        }
+
+        scanline.addAll(pos, node.rightEdges)
+    }
+
+
+
 
 
     return emptyList()
@@ -234,6 +243,7 @@ fun main() {
     val e = PointD(0.2,0.0)
     val f = PointD(0.7,0.5)
     val g = PointD(0.7,-0.5)
+
 
 
     findFaces(listOf(
