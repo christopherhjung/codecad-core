@@ -2,6 +2,7 @@ import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 import kotlin.math.sign
 
 
@@ -103,10 +104,10 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
     return result
 }
 
-class Node(
+data class Node(
     val p: PointD
 ) : Comparable<Node> {
-    val edges = mutableListOf<Edge>()
+    val rightEdges = mutableListOf<Edge>()
     val leftEdges = mutableListOf<Edge>()
 
     override fun compareTo(other: Node): Int {
@@ -115,9 +116,9 @@ class Node(
     }
 }
 
-class Edge(val source : Node, val target: Node){
+data class Edge(val source : Node, val target: Node){
     var connection: Edge? = null
-    lateinit var opposite: Edge
+    lateinit var twin: Edge
     //var inner = false
     var index = -1
 }
@@ -138,16 +139,19 @@ fun rotateComparator() : Comparator<Edge>{
 
 fun ArrayList<Edge>.search(point: PointD) : Int{
     var left = 0
-    var right = size
+    var right = size - 1
 
     while(left < right){
         val middlePos = (right - left) / 2
         val middle = this[middlePos]
+        val orientation = middle.orientationTo(point)
 
-        if( middle.orientationTo(point) > 0 ){
+        if(orientation == 0){
+            return middlePos
+        }else if( orientation > 0 ){
             left = middlePos
         }else{
-            right = middlePos
+            right = middlePos - 1
         }
     }
 
@@ -168,6 +172,8 @@ fun findFaces(arr: List<LineD>): List<LineD> {
 
     val pointMap = HashMap<PointD, Node>()
 
+    val edges = HashSet<Edge>()
+
     for (line in ordered) {
         val left = pointMap.computeIfAbsent(line.p0){Node(it)}
         val right = pointMap.computeIfAbsent(line.p1){Node(it)}
@@ -175,43 +181,52 @@ fun findFaces(arr: List<LineD>): List<LineD> {
         val a = Edge(left, right)
         val b = Edge(right, left)
 
-        a.opposite = b
-        b.opposite = a
+        a.twin = b
+        b.twin = a
 
-        left.edges.add(a)
-        right.edges.add(b)
+        left.rightEdges.add(a)
+        right.leftEdges.add(b)
+        edges.add(a)
+        edges.add(b)
     }
 
 
-    val nodes = pointMap.values.filter { it.leftEdges.size + it.edges.size >= 2 }.sorted()
+    val nodes = pointMap.values.filter { it.leftEdges.size + it.rightEdges.size >= 2 }.sorted()
 
     for (node in nodes) {
-        node.edges.sortWith { a, b ->
-            if(a.source.p.x < 0 && b.target.p.x < 0 ){
-                if(a.source.p.y < 0 && b.target.p.y > 0 ){
-                    return@sortWith 1
-                }else if(a.source.p.x > 0 && b.target.p.x < 0 ){
-                    return@sortWith -1
-                }
-            }
-
-            a.orientationTo(b)
-        }
+        node.rightEdges.sortWith { a, b -> a.orientationTo(b)}
+        node.leftEdges.sortWith { a, b -> b.orientationTo(a)}
     }
 
     val scanline = ArrayList<Edge>()
 
     for(node in nodes){
-        for(i in node.edges.indices){
-            val top = node.edges[i]
-            val bottom = node.edges[(i+1)%node.edges.size]
-            bottom.connection = top
+        for((top, bottom) in node.rightEdges.zipWithNext()){
+            bottom.twin.connection = top
         }
+
+        if(node.leftEdges.size != 0){
+            if( node.rightEdges.size != 0 ){
+                node.leftEdges.first().twin.connection = node.rightEdges.last()
+                node.rightEdges.first().twin.connection = node.leftEdges.last()
+            }else{
+                node.leftEdges.first().twin.connection = node.leftEdges.last()
+            }
+
+            for((bottom, top) in node.leftEdges.zipWithNext()){
+                top.twin.connection = bottom
+            }
+        }else{
+            node.rightEdges.first().twin.connection = node.rightEdges.last()
+        }
+
+        println(node)
+
     }
 
     for(node in nodes){
-        for(edge in edges){
-
+        for( edge in node.leftEdges ){
+            scanline.remove(edge.twin)
         }
 
         val pos = scanline.search(node.p)
@@ -227,6 +242,22 @@ fun findFaces(arr: List<LineD>): List<LineD> {
         scanline.addAll(pos, node.rightEdges)
     }
 
+    while(edges.isNotEmpty()){
+        val next = edges.first()
+        edges.remove(next)
+
+        val face = mutableListOf<PointD>()
+
+        face.add(next.source.p)
+        var current = next
+        while(current.target !== next.source){
+            face.add(current.target.p)
+            current = current.connection!!
+            edges.remove(current)
+        }
+
+        println(face)
+    }
 
 
 
