@@ -1,17 +1,9 @@
 import java.util.*
+import kotlin.Comparator
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.math.sign
 
-class Event(
-    val p: PointD,
-    val line: LineD,
-    val isLeft: Boolean
-) : Comparable<Event> {
-
-    override fun compareTo(other: Event): Int {
-        if (p.x == other.p.x) return p.y.compareTo(other.p.y)
-        return p.x.compareTo(other.p.x)
-    }
-}
 
 fun findIntersection(line1: LineD, line2: LineD): PointD? {
     val p0_x = line1.p0.x
@@ -41,9 +33,21 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     return null
 }
 
+class Event(
+    val p: PointD,
+    val line: LineD,
+    val isLeft: Boolean
+) : Comparable<Event> {
 
-// Returns true if any two lines intersect.
-fun isIntersect(arr: List<LineD>): Int {
+    override fun compareTo(other: Event): Int {
+        if (p.x == other.p.x) return p.y.compareTo(other.p.y)
+        return p.x.compareTo(other.p.x)
+    }
+}
+
+
+fun removeIntersections(arr: List<LineD>): List<LineD> {
+
     val events = LinkedList<Event>()
 
     val ordered = mutableListOf<LineD>()
@@ -62,7 +66,6 @@ fun isIntersect(arr: List<LineD>): Int {
 
     events.sort()
 
-    var intersections = 0
     val active = HashMap<LineD, Event>()
     val splittingPoints = HashMap<LineD, MutableList<PointD>>()
     for (event in events) {
@@ -97,5 +100,150 @@ fun isIntersect(arr: List<LineD>): Int {
         }
     }
 
-    return intersections
+    return result
+}
+
+class Node(
+    val p: PointD
+) : Comparable<Node> {
+    val rightEdges = mutableListOf<Edge>()
+    val leftEdges = mutableListOf<Edge>()
+
+    override fun compareTo(other: Node): Int {
+        if (p.x == other.p.x) return p.y.compareTo(other.p.y)
+        return p.x.compareTo(other.p.x)
+    }
+}
+
+class Edge(val source : Node, val target: Node){
+    var connection: Edge? = null
+    lateinit var opposite: Edge
+    //var inner = false
+    var index = -1
+}
+
+fun Edge.orientationTo(other: Edge) : Int{
+    return (target.p - source.p).cross(other.target.p - other.source.p).sign.toInt()
+}
+
+fun Edge.orientationTo(other: PointD) : Int{
+    return (target.p - source.p).cross(other - source.p).sign.toInt()
+}
+
+fun rotateComparator() : Comparator<Edge>{
+    return Comparator{
+        a,b -> a.orientationTo(b)
+    }
+}
+
+fun ArrayList<Edge>.search(point: PointD) : Int{
+    var left = 0
+    var right = size
+
+    while(left < right){
+        val middlePos = (right - left) / 2
+        val middle = this[middlePos]
+
+        if( middle.orientationTo(point) > 0 ){
+            left = middlePos
+        }else{
+            right = middlePos
+        }
+    }
+
+    return left
+}
+
+fun findFaces(arr: List<LineD>): List<LineD> {
+    removeIntersections(arr)
+
+    val ordered = mutableListOf<LineD>()
+    for(line in arr){
+        if (line.p0.x > line.p1.x) {
+            ordered.add(LineD(line.p1, line.p0))
+        }else{
+            ordered.add(line)
+        }
+    }
+
+    val pointMap = HashMap<PointD, Node>()
+
+    for (line in ordered) {
+        val left = pointMap.computeIfAbsent(line.p0){Node(it)}
+        val right = pointMap.computeIfAbsent(line.p1){Node(it)}
+
+        val a = Edge(left, right)
+        val b = Edge(right, left)
+
+        a.opposite = b
+        b.opposite = a
+
+        left.rightEdges.add(a)
+        right.leftEdges.add(b)
+    }
+
+
+    val nodes = pointMap.values.filter { it.leftEdges.size + it.rightEdges.size >= 2 }.sorted()
+
+    for (node in nodes) {
+        node.rightEdges.sortWith { a,b -> a.orientationTo(b) }
+        node.leftEdges.sortWith { a,b -> b.orientationTo(a) }
+    }
+
+    val scanline = ArrayList<Edge>()
+
+    val currentIndex = 0
+    for(node in nodes){
+        for( edge in node.leftEdges ){
+            scanline.remove(edge.opposite)
+        }
+        if(node.leftEdges.size == 0){
+            val pos = scanline.search(node.p)
+
+            var outside = true
+            if(pos != 0){
+                val a = scanline[pos - 1]
+                val b = scanline[pos]
+
+                outside = a.index != b.index
+            }
+
+            scanline.addAll(pos, node.rightEdges)
+            for((top, bottom) in node.rightEdges.zipWithNext()){
+                if(outside){
+                    bottom.connection = top
+                }else{
+                    top.connection = bottom
+                }
+            }
+        }else{
+
+        }
+    }
+
+
+    return emptyList()
+}
+
+fun main() {
+    val a = PointD(0.0,0.0)
+    val b = PointD(1.0,1.0)
+    val c = PointD(2.0,0.0)
+    val d = PointD(1.0,-1.0)
+
+    val e = PointD(0.2,0.0)
+    val f = PointD(0.7,0.5)
+    val g = PointD(0.7,-0.5)
+
+
+    findFaces(listOf(
+        LineD(a, d),
+        LineD(a, b),
+        LineD(b, c),
+        LineD(d, c),
+
+        LineD(e, f),
+        LineD(e, g),
+        LineD(g, f),
+    ))
 }

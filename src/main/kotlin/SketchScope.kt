@@ -1,5 +1,3 @@
-import kotlin.collections.ArrayList
-
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
@@ -254,7 +252,7 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
 
     val segments = sketchToLines(builder.sketch)
 
-    isIntersect(segments)
+    removeIntersections(segments)
 
     //builder.sketch.draw()
     return builder.sketch
@@ -263,6 +261,18 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
 class PointD(val x: Double, val y: Double){
     override fun toString(): String {
         return "PointD(x=$x, y=$y)"
+    }
+
+    operator fun minus(other: PointD): PointD{
+        return PointD(this.x - other.x, this.y - other.y)
+    }
+
+    operator fun plus(other: PointD): PointD{
+        return PointD(this.x + other.x, this.y + other.y)
+    }
+
+    fun cross(other: PointD): Double{
+        return this.x * other.y - this.y * other.x
     }
 
     override fun equals(other: Any?): Boolean {
