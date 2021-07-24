@@ -1,5 +1,6 @@
+package com.codecad.core
+
 import java.util.*
-import kotlin.Function
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
@@ -35,7 +36,7 @@ class Sketch(val project: Project) {
         return point
     }
 
-    fun createPoint(x: Value , y: Value ): Point {
+    fun createPoint(x: Value, y: Value): Point {
         val point = Point(x,y)
         figures.add(point)
         return point
@@ -65,7 +66,7 @@ class Sketch(val project: Project) {
         return circle
     }
 
-    fun createFunction(function : (Value) -> Point) : FunctionFigure{
+    fun createFunction(function : (Value) -> Point) : FunctionFigure {
         val function = FunctionFigure(function)
         figures.add(function)
         return function
@@ -87,7 +88,7 @@ class Sketch(val project: Project) {
         constraints.add(constraint)
     }
 
-    fun addConstraint(constraint: Constraint, tryBest: Boolean = false) : Constraint{
+    fun addConstraint(constraint: Constraint, tryBest: Boolean = false) : Constraint {
         println(constraint::class.simpleName)
         constraints.add(constraint)
 
@@ -325,10 +326,10 @@ class Rect : Pattern() {
 }
 
 /*
-* fun Canvas.line(line: Line){
+* fun Canvas.line(line: com.codecad.core.Line){
     line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
 }
-fun Canvas.circle(circle: Circle){
+fun Canvas.circle(circle: com.codecad.core.Circle){
     circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
 }
 * */

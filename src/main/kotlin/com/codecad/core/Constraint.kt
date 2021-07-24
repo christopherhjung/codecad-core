@@ -1,3 +1,5 @@
+package com.codecad.core
+
 abstract class Constraint {
 
     var lineNumber: Int = -1
@@ -18,12 +20,12 @@ abstract class Constraint {
     }
 }
 
-//class Arc(val center: Point, val rad: Value, val start: Value, val end: Value) : Element
+//class com.codecad.core.Arc(val center: com.codecad.core.Point, val rad: com.codecad.core.Value, val start: com.codecad.core.Value, val end: com.codecad.core.Value) : Element
 
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
 
 
-    override fun equationImpl() : Value{
+    override fun equationImpl() : Value {
         return ((a.x - b.x).pow(2) + (a.y - b.y).pow(2))
     }
 
@@ -39,7 +41,7 @@ class PointToPointDistance(val a: Point, val b: Point, val distance: Value) : Co
     }
 }
 /*
-class PointOnLine(val point: Point, val line: Line) : Constraint() {
+class com.codecad.core.PointOnLine(val point: com.codecad.core.Point, val line: com.codecad.core.Line) : com.codecad.core.Constraint() {
     /*override fun error(): Double {
         val dx = line.b.x.value - line.a.x.value
         val dy = line.b.y.value - line.a.y.value
@@ -50,15 +52,15 @@ class PointOnLine(val point: Point, val line: Line) : Constraint() {
         return if (m <= 1 && m >= -1) {
             //Calculate the expected y point given the x coordinate of the point
             val Ey = line.a.y.value + m * (point.x.value - line.a.x.value)
-            (Ey - point.y.value).pow(2)
+            (Ey - point.y.value).com.codecad.core.pow(2)
         } else {
             //Calculate the expected x point given the y coordinate of the point
             val Ex = line.a.x.value + n * (point.y.value - line.a.y.value)
-            (Ex - point.x.value).pow(2)
+            (Ex - point.x.value).com.codecad.core.pow(2)
         }
     }*/
 
-    override fun equationImpl(): Value {
+    override fun equationImpl(): com.codecad.core.Value {
         TODO("Not yet implemented")
     }
 }
@@ -137,7 +139,7 @@ class Perpendicular(val line1: Line, val line2: Line) : Constraint() {
     }
 }
 /*
-fun lineCross(line1: Line, line2: Line, cross: Boolean = true): Value {
+fun lineCross(line1: com.codecad.core.Line, line2: com.codecad.core.Line, cross: Boolean = true): com.codecad.core.Value {
     var dx = line1.p1.x - line1.p0.x
     var dy = line1.p1.y - line1.p0.y
     var dx2 = line2.p1.x - line2.p0.x
@@ -178,17 +180,17 @@ class Colinear(val line1: Line, val line2: Line) : Constraint() {
         if (m <= 1 && m > -1) {
             //Calculate the expected y point given the x coordinate of the point
             var Ey = line1.a.y.value + m * (line2.a.x.value - line1.a.x.value)
-            error += (Ey - line2.a.y.value).pow(2.0)
+            error += (Ey - line2.a.y.value).com.codecad.core.pow(2.0)
 
             Ey = line1.a.y.value + m * (line2.b.x.value - line1.a.x.value)
-            error += (Ey - line2.b.y.value).pow(2.0)
+            error += (Ey - line2.b.y.value).com.codecad.core.pow(2.0)
         } else {
             //Calculate the expected x point given the y coordinate of the point
             var Ex = line1.a.x.value + n * (line2.a.y.value - line1.a.y.value)
-            error += (Ex - line2.a.x.value).pow(2.0)
+            error += (Ex - line2.a.x.value).com.codecad.core.pow(2.0)
 
             Ex = line1.a.x.value + n * (line2.b.y.value - line1.a.y.value)
-            error += (Ex - line2.b.x.value).pow(2.0)
+            error += (Ex - line2.b.x.value).com.codecad.core.pow(2.0)
         }
 
         return error

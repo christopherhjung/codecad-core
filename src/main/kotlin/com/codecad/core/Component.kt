@@ -1,4 +1,6 @@
-import Value.Companion.modCounter
+package com.codecad.core
+
+import com.codecad.core.Value.Companion.modCounter
 import kotlin.math.*
 
 class CachedValue(val ref: Value) : RawValue(){
@@ -35,26 +37,26 @@ abstract class RawValue{
     }*/
 }
 
-operator fun Double.minus(right: Value) : Value{
+operator fun Double.minus(right: Value) : Value {
     return Value.const(this) - right
 }
 
-operator fun Double.times(right: Value) : Value{
+operator fun Double.times(right: Value) : Value {
     return Value.const(this) * right
 }
 
-operator fun Double.div(right: Value) : Value{
+operator fun Double.div(right: Value) : Value {
     return Value.const(this) / right
 }
 
-fun Double.pow(right: Value) : Value{
+fun Double.pow(right: Value) : Value {
     return Value.const(this).pow(right)
 }
 
 abstract class Value : RawValue(){
     abstract val proxyChildren: Set<ProxyValue>
 
-    fun detach() : Const{
+    fun detach() : Const {
         return const(value)
     }
 
@@ -62,7 +64,7 @@ abstract class Value : RawValue(){
         return value.toString()
     }
 
-    operator fun unaryMinus() : Value{
+    operator fun unaryMinus() : Value {
         return if(hasConstValue(this, 0.0)){
             Const.ZERO
         }else if(this is Const){
@@ -74,7 +76,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun minus(right: Value) : Value{
+    operator fun minus(right: Value) : Value {
         return if(hasConstValue(this, 0.0)){
             right.unaryMinus()
         }else if(hasConstValue(right, 0.0)){
@@ -92,7 +94,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun minus(right: Double) : Value{
+    operator fun minus(right: Double) : Value {
         return if(this is Const){
             const(value - right)
         }else{
@@ -102,11 +104,11 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun minus(right: Int) : Value{
+    operator fun minus(right: Int) : Value {
         return minus(right.toDouble())
     }
 
-    operator fun plus(right: Value) : Value{
+    operator fun plus(right: Value) : Value {
         return if(hasConstValue(this, 0.0)){
             right
         }else if(hasConstValue(right, 0.0)){
@@ -124,7 +126,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun plus(right: Double) : Value{
+    operator fun plus(right: Double) : Value {
         return if(this is Const){
             const(value + right)
         }else{
@@ -134,7 +136,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun plus(right: Int) : Value{
+    operator fun plus(right: Int) : Value {
         return plus(right.toDouble())
     }
 
@@ -142,7 +144,7 @@ abstract class Value : RawValue(){
         return value is Const && value.value == expect
     }
 
-    operator fun times(right: Value) : Value{
+    operator fun times(right: Value) : Value {
         return if(hasConstValue(this, 0.0) || hasConstValue(right, 0.0)){
             Const.ZERO
         }else if(hasConstValue(this, 1.0)){
@@ -162,7 +164,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun times(right: Double) : Value{
+    operator fun times(right: Double) : Value {
         return if(right == 0.0) {
             Const.ZERO
         }else if(right == 1.0) {
@@ -176,11 +178,11 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun times(right: Int) : Value{
+    operator fun times(right: Int) : Value {
         return times(right.toDouble())
     }
 
-    operator fun div(right: Value) : Value{
+    operator fun div(right: Value) : Value {
         return if(this is Const && value == 0.0){
             Const.ZERO
         }else if(right is Const && right.value == 1.0){
@@ -196,7 +198,7 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun div(right: Double) : Value{
+    operator fun div(right: Double) : Value {
         return if(right == 1.0){
             this
         }else if(this is Const){
@@ -208,11 +210,11 @@ abstract class Value : RawValue(){
         }
     }
 
-    operator fun div(right: Int) : Value{
+    operator fun div(right: Int) : Value {
         return div(right.toDouble())
     }
 
-    fun pow(right : Value) : Value{
+    fun pow(right : Value) : Value {
         return if(hasConstValue(right, 0.0)){
             Const.ONE
         }else if(hasConstValue(right, 1.0)){
@@ -222,12 +224,12 @@ abstract class Value : RawValue(){
         }else if(this is Const && right is Const){
             const(value.pow(right.value))
         }else{
-            cached{PowValue(this, right)}
+            cached{ PowValue(this, right) }
         }
 
     }
 
-    fun pow(right : Double) : Value{
+    fun pow(right : Double) : Value {
         return if(right == 0.0){
             Const.ONE
         }else if(right == 1.0){
@@ -241,15 +243,15 @@ abstract class Value : RawValue(){
         }
     }
 
-    fun pow(right : Int) : Value{
+    fun pow(right : Int) : Value {
         return pow(right.toDouble())
     }
 
-    fun sqrt() : Value{
+    fun sqrt() : Value {
         return pow(0.5)
     }
 
-    fun smaller(other: Value) : Value{
+    fun smaller(other: Value) : Value {
         val newVal =  SmallerValue(this, other)
         if(this is Const && other is Const){
             return const(newVal.value)
@@ -263,20 +265,20 @@ abstract class Value : RawValue(){
     companion object{
         private val repeatCache = HashMap<Value, Value>()
 
-        fun const(value: Double) : Const{
+        fun const(value: Double) : Const {
             return cached {
                 Const(value)
             }
         }
 
-        fun <T> cached(block: () -> T) : T where T : Value{
+        fun <T> cached(block: () -> T) : T where T : Value {
             val newVal = block()
             return repeatCache.computeIfAbsent(newVal) {
                 newVal
             } as T
         }
 
-        fun cos(value: Value) : Value{
+        fun cos(value: Value) : Value {
             return if(value is Const){
                 const(cos(value.value))
             }else{
@@ -286,7 +288,7 @@ abstract class Value : RawValue(){
             }
         }
 
-        fun sin(value: Value) : Value{
+        fun sin(value: Value) : Value {
             return if(value is Const){
                 const(sin(value.value))
             }else{
@@ -296,7 +298,7 @@ abstract class Value : RawValue(){
             }
         }
 
-        fun log(value: Value) : Value{
+        fun log(value: Value) : Value {
             return if(value is Const){
                 const(log(value.value, Math.E))
             }else{
@@ -306,7 +308,7 @@ abstract class Value : RawValue(){
             }
         }
 
-        fun conditional(condition: Value, left: Value, right: Value) : Value{
+        fun conditional(condition: Value, left: Value, right: Value) : Value {
             return if(condition is Const){
                 if(condition.value > 0.5){
                     left
@@ -322,15 +324,15 @@ abstract class Value : RawValue(){
             }
         }
 
-        fun min(left: Value, right: Value) : Value{
+        fun min(left: Value, right: Value) : Value {
             return conditional(left.smaller(right), left, right)
         }
 
-        fun max(left: Value, right: Value) : Value{
+        fun max(left: Value, right: Value) : Value {
             return conditional(left.smaller(right), right, left)
         }
 
-        fun abs(other: Value) : Value{
+        fun abs(other: Value) : Value {
             return if(other is Const){
                 const(abs(other.value))
             }else{
@@ -340,7 +342,7 @@ abstract class Value : RawValue(){
             }
         }
 
-        fun sign(other: Value) : Value{
+        fun sign(other: Value) : Value {
             return if(other is Const){
                 const(sign(other.value))
             }else{
@@ -573,7 +575,7 @@ class LogValue(left: Value) : UnaryValue(left){
     }
 }
 
-abstract class CommutativeValue( left: Value, right: Value): BinaryValue(left, right){
+abstract class CommutativeValue(left: Value, right: Value): BinaryValue(left, right){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CommutativeValue) return false
@@ -594,7 +596,7 @@ abstract class CommutativeValue( left: Value, right: Value): BinaryValue(left, r
     }
 }
 
-class AddValue( left: Value, right: Value) : CommutativeValue(left, right){
+class AddValue(left: Value, right: Value) : CommutativeValue(left, right){
     override fun calc(): Double = left.value + right.value
 
     override fun derivative(parameter: Parameter): Value {
@@ -618,7 +620,7 @@ class TimesValue(left: Value, right: Value) : CommutativeValue(left, right){
     }
 }
 
-class SmallerValue(left: Value,  right: Value) : BinaryValue(left, right){
+class SmallerValue(left: Value, right: Value) : BinaryValue(left, right){
     override fun calc(): Double = if(left.value < right.value) 1.0 else 0.0
 
     override fun derivative(parameter: Parameter): Value {
@@ -642,7 +644,7 @@ class DivValue(left: Value, right: Value) : BinaryValue(left, right){
     }
 }
 
-class MinusValue(left: Value,  right: Value) : BinaryValue(left, right){
+class MinusValue(left: Value, right: Value) : BinaryValue(left, right){
     override fun calc(): Double = left.value - right.value
 
     override fun derivative(parameter: Parameter): Value {

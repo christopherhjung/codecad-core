@@ -1,4 +1,5 @@
-import SketchScope.Companion.ORIGIN
+import com.codecad.core.*
+import com.codecad.core.SketchScope.Companion.ORIGIN
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
 import kotlin.test.assertEquals

@@ -1,13 +1,12 @@
-import java.util.function.BiConsumer
-import java.util.function.Consumer
-import kotlin.math.pow
+package com.codecad.core
+
 import kotlin.math.sqrt
 
 interface Optimizer {
     fun optimize(grad: DoubleArray)
 }
 
-class ConjugateGradientOptimizer(private val params: List<Parameter>): Optimizer{
+class ConjugateGradientOptimizer(private val params: List<Parameter>): Optimizer {
     private val values = DoubleArray(params.size)
     private val alpha = DoubleArray(params.size)
     private val residuum = DoubleArray(params.size)
@@ -28,7 +27,7 @@ class ConjugateGradientOptimizer(private val params: List<Parameter>): Optimizer
     }
 }
 
-class AdamOptimizer(private val params: List<Parameter>) : Optimizer{
+class AdamOptimizer(private val params: List<Parameter>) : Optimizer {
     private val alpha = 0.002
     private val beta1 = 0.9
     private val beta2 = 0.999

@@ -1,3 +1,5 @@
+package com.codecad.core
+
 class Tracker() {
     val entries = mutableListOf<MutableMap<Parameter, Double>>()
     val params = mutableListOf<Parameter>()

@@ -1,4 +1,4 @@
-
+import com.codecad.core.sketch
 
 sketch {
     val poly = polygon(
@@ -34,7 +34,7 @@ sketch {
     /*while(true){
         val toolPath =  Clipper().offsetPath(2.0,0.01, paths, -( shaftRadius + i * offset))
 
-        pathsToPoly(toolPath, LineType.ToolPath)
+        com.codecad.core.pathsToPoly(toolPath, com.codecad.core.LineType.ToolPath)
 
         val innerPath = Clipper().offsetPath(2.0,0.01, toolPath, -shaftRadius)
         val outerPath = Clipper().offsetPath(2.0,0.01, toolPath, shaftRadius)
@@ -49,8 +49,8 @@ sketch {
     }
 
     /*val innerResult = Clipper().intersectPath(innerPaths.toTypedArray())
-    pathsToPoly(innerResult, LineType.ToolContour)*/
+    com.codecad.core.pathsToPoly(innerResult, com.codecad.core.LineType.ToolContour)*/
 
     val outerResult = Clipper().unionPath(outerPaths.toTypedArray())
-    pathsToPoly(outerResult, LineType.ToolContour)*/
+    com.codecad.core.pathsToPoly(outerResult, com.codecad.core.LineType.ToolContour)*/
 }

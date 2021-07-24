@@ -1,7 +1,6 @@
+import com.codecad.core.project
+import com.codecad.core.sketch
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotSame
-import kotlin.test.assertSame
 
 class FigureTest {
 

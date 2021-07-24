@@ -1,3 +1,5 @@
+package com.codecad.core
+
 import kotlin.math.abs
 
 val minErrorChange = 1e-18

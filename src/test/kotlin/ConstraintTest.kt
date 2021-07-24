@@ -1,5 +1,5 @@
+import com.codecad.core.*
 import org.junit.jupiter.api.Test
-import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

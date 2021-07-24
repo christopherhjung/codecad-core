@@ -1,5 +1,8 @@
-import SketchScope.Companion.AXIS_X
-import SketchScope.Companion.ORIGIN
+import com.codecad.core.SketchScope.Companion.AXIS_X
+import com.codecad.core.SketchScope.Companion.ORIGIN
+import com.codecad.core.Value
+import com.codecad.core.project
+import com.codecad.core.sketch
 
 
 project {

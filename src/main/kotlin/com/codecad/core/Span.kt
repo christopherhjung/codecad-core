@@ -1,3 +1,5 @@
+package com.codecad.core
+
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -6,7 +8,7 @@ interface Span{
 }
 
 class LineSpan(val line: Line) : Span {
-    override fun getPoint(t: Double) : Point{
+    override fun getPoint(t: Double) : Point {
         return (line.difference * t + line.p0).copy()
     }
 }

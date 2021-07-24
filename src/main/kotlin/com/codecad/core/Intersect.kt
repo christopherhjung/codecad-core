@@ -1,3 +1,5 @@
+package com.codecad.core
+
 import org.poly2tri.Poly2Tri.triangulate
 import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.delaunay.DelaunayTriangle
@@ -187,8 +189,8 @@ fun findFaces(arr2: List<LineD>): List<Face> {
     val edges = HashSet<Edge>()
 
     for (line in ordered) {
-        val left = pointMap.computeIfAbsent(line.p0){Node(it)}
-        val right = pointMap.computeIfAbsent(line.p1){Node(it)}
+        val left = pointMap.computeIfAbsent(line.p0){ Node(it) }
+        val right = pointMap.computeIfAbsent(line.p1){ Node(it) }
 
         val a = Edge(left, right)
         val b = Edge(right, left)
@@ -249,7 +251,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
     }
 
 /*
-    val scanline = ArrayList<Edge>()
+    val scanline = ArrayList<com.codecad.core.Edge>()
 
     for(node in nodes){
 
@@ -261,10 +263,10 @@ fun findFaces(arr2: List<LineD>): List<Face> {
             }
         }
 
-        val pos = scanline.search(node.p)
+        val pos = scanline.com.codecad.core.search(node.p)
 
         if(leftLines == 0){
-            var outerFace: Face? = null
+            var outerFace: com.codecad.core.Face? = null
             for( edge in node.edges ){
                 if(edge.face!!.clockwise){
                     outerFace = edge.face
@@ -340,7 +342,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
     return outers
 }
 
-fun getLeftmostPoint(face: Face) : PointD{
+fun getLeftmostPoint(face: Face) : PointD {
     var leftMost: PointD? = null
     for( point in face.points ){
         if(leftMost == null || leftMost.x > point.x){
@@ -434,7 +436,8 @@ fun main() {
         LineD(g, k),
         LineD(f, k),
         LineD(e, k),
-    ), PointD(0.1,0.0))
+    ), PointD(0.1,0.0)
+    )
 
 }
 
@@ -467,7 +470,7 @@ fun test(){
 
 
 /*var minValue = 10.0
-var minEdge: Edge? = null
+var minEdge: com.codecad.core.Edge? = null
 for( edge in node.edges ){
     val aDirection = edge.target.p - edge.source.p
     val newValue = abs(atan2(-aDirection.y, -aDirection.x))

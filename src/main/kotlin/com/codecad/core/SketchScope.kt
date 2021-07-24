@@ -1,3 +1,5 @@
+package com.codecad.core
+
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
@@ -9,7 +11,7 @@ class PatternScope(project: Project, val count: Int, val center: Point) : Sketch
 
     var current = 0
 
-    private fun rotatePoint(point: Point, angle: Value) : Point{
+    private fun rotatePoint(point: Point, angle: Value) : Point {
         val array = pointLookup.computeIfAbsent(point){Array(count - 1){null} }
 
         if(array[current] == null){
@@ -97,7 +99,7 @@ open class SketchScope(val project: Project) {
 
         sketch.figures.addAll(builder.sketch.figures)
 
-        //builder.sketch.draw()
+        //builder.com.codecad.core.sketch.draw()
         return builder.sketch
     }
 
@@ -133,7 +135,7 @@ open class SketchScope(val project: Project) {
         return sketch.createArc(p0,p1,radius)
     }
 
-    fun func(block: (Value) -> Point): FunctionFigure{
+    fun func(block: (Value) -> Point): FunctionFigure {
         return sketch.createFunction(block)
     }
 
@@ -241,7 +243,7 @@ class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: 
     val volumes = mutableListOf<Volume>()
 }
 
-fun project(block: ProjectScope.() -> Unit) : Project{
+fun project(block: ProjectScope.() -> Unit) : Project {
     val project = Project()
     val projectScope = ProjectScope(project)
     try{
@@ -270,7 +272,7 @@ fun ProjectScope.extrude(sketch: Sketch, pointer: Point, height: Value) {
 
 class Point3D(val x: Double, val y: Double, val z: Double){
     override fun toString(): String {
-        return "Point3D(x=$x, y=$y)"
+        return "com.codecad.core.Point3D(x=$x, y=$y)"
     }
 
 
@@ -295,14 +297,14 @@ class Point3D(val x: Double, val y: Double, val z: Double){
 
 class PointD(val x: Double, val y: Double){
     override fun toString(): String {
-        return "PointD(x=$x, y=$y)"
+        return "com.codecad.core.PointD(x=$x, y=$y)"
     }
 
-    operator fun minus(other: PointD): PointD{
+    operator fun minus(other: PointD): PointD {
         return PointD(this.x - other.x, this.y - other.y)
     }
 
-    operator fun plus(other: PointD): PointD{
+    operator fun plus(other: PointD): PointD {
         return PointD(this.x + other.x, this.y + other.y)
     }
 
@@ -365,11 +367,11 @@ fun sketchToLines(sketch: Sketch) : List<LineD>{
 }
 
 /*
-fun Canvas.line(line: Line){
+fun Canvas.line(line: com.codecad.core.Line){
     line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
 }
 
-fun Canvas.circle(circle: Circle){
+fun Canvas.circle(circle: com.codecad.core.Circle){
     circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
 }*/
 
@@ -405,9 +407,9 @@ fun SketchScope.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
 
 
 /*
-fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {
+fun Builder.getAutocadFile(filePath: String?): ArrayList<com.codecad.core.Line> {
 
-    val lines = ArrayList<Line>()
+    val lines = ArrayList<com.codecad.core.Line>()
     val parser = ParserBuilder.createDefaultParser()
     parser.parse(filePath, DXFParser.DEFAULT_ENCODING)
     val doc: DXFDocument = parser.document
@@ -416,13 +418,13 @@ fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {
     for (index in lst.indices) {
         val bounds = lst[index].bounds
         val line = line(
-            Point(
-                Parameter(bounds.minimumX),
-                Parameter(bounds.minimumY)
+            com.codecad.core.Point(
+                com.codecad.core.Parameter(bounds.minimumX),
+                com.codecad.core.Parameter(bounds.minimumY)
             ),
-            Point(
-                Parameter( bounds.maximumX),
-                Parameter( bounds.maximumY)
+            com.codecad.core.Point(
+                com.codecad.core.Parameter( bounds.maximumX),
+                com.codecad.core.Parameter( bounds.maximumY)
             )
         )
         lines.add(line)
@@ -442,11 +444,11 @@ fun Builder.getAutocadFile(filePath: String?): ArrayList<Line> {
     for(spline in splines){
         spline as DXFSpline
 
-        var last: Point? = null
+        var last: com.codecad.core.Point? = null
         for(splinePoint in spline.splinePointIterator){
-            val point = Point(
-                Parameter(splinePoint.x),
-                Parameter(splinePoint.y)
+            val point = com.codecad.core.Point(
+                com.codecad.core.Parameter(splinePoint.x),
+                com.codecad.core.Parameter(splinePoint.y)
             )
 
             if(last != null){
