@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     //java
-    kotlin("jvm")// version "1.5.20"
+    kotlin("jvm") version "1.5.20"
 }
 
 group = "com.codecad.core"
@@ -26,6 +26,8 @@ dependencies {
     implementation(kotlin("script-runtime"))
     implementation(kotlin("compiler-embeddable"))
     implementation(kotlin("script-util"))
+    implementation("org.orbisgis:poly2tri:0.1.2")
+    implementation("org.orbisgis:poly2tri-core:0.1.2")
     runtimeOnly(kotlin("scripting-compiler-embeddable"))
     runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.20")
 

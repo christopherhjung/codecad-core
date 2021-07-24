@@ -1,8 +1,9 @@
+import org.poly2tri.Poly2Tri.triangulate
+import org.poly2tri.geometry.polygon.PolygonPoint
+import org.poly2tri.triangulation.delaunay.DelaunayTriangle
 import java.util.*
-import kotlin.Comparator
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
+import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.sign
 
 
@@ -90,6 +91,7 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
     for( line in ordered ){
         val splits = splittingPoints[line]
         if( splits != null ){
+            splits.sortBy { it.x }
             var left = line.p0
             for( split in splits ){
                 result.add(LineD(left, split))
@@ -118,6 +120,8 @@ data class Node(
 data class Edge(val source : Node, val target: Node){
     var connection: Edge? = null
     lateinit var twin: Edge
+    var face: Face? = null
+
     //var inner = false
     var index = -1
 }
@@ -138,27 +142,36 @@ fun rotateComparator() : Comparator<Edge>{
 
 fun ArrayList<Edge>.search(point: PointD) : Int{
     var left = 0
-    var right = size - 1
+    var right = size
 
     while(left < right){
-        val middlePos = (right - left) / 2
+        val middlePos = (right + left) / 2
         val middle = this[middlePos]
         val orientation = middle.orientationTo(point)
 
         if(orientation == 0){
             return middlePos
         }else if( orientation > 0 ){
-            left = middlePos
+            right = middlePos
         }else{
-            right = middlePos - 1
+            left = middlePos + 1
         }
     }
 
     return left
 }
 
-fun findFaces(arr: List<LineD>): List<LineD> {
-    removeIntersections(arr)
+class Face{
+    val points = mutableListOf<PointD>()
+    var parent: Face? = null
+    val children = mutableSetOf<Face>()
+    var clockwise: Boolean = false
+    var area : Double = 0.0
+    var leftmost: PointD? = null
+}
+
+fun findFaces(arr2: List<LineD>): List<Face> {
+    val arr = removeIntersections(arr2)
 
     val ordered = mutableListOf<LineD>()
     for(line in arr){
@@ -189,75 +202,211 @@ fun findFaces(arr: List<LineD>): List<LineD> {
         edges.add(b)
     }
 
-
-    val nodes = pointMap.values.filter { it.edges.size >= 2 }.sorted()
-
-    for (node in nodes) {
-        node.edges.sortWith { a, b ->
-            val aDirection = a.target.p - a.source.p
-            val bDirection = b.target.p - b.source.p
-
-            if( aDirection.y < 0 && bDirection.y < 0 ){
-                if(aDirection.x < 0 && bDirection.x > 0){
-                    return@sortWith -1
-                }else if(aDirection.x > 0 && bDirection.x < 0){
-                    return@sortWith 1
-                }
-            }
-
-            aDirection.cross(bDirection).sign.toInt()
+    for(node in pointMap.values){
+        node.edges.sortBy {
+            val aDirection = it.target.p - it.source.p
+            atan2(aDirection.x, aDirection.y)
         }
-    }
 
-    val scanline = ArrayList<Edge>()
-
-    for(node in nodes){
         for(i in node.edges.indices){
             val top = node.edges[i]
             val bottom = node.edges[(i+1)%node.edges.size]
-            bottom.twin.connection = top
+            top.twin.connection = bottom
         }
 
-        println(node)
+        val a = 9
     }
+
+
+    val faces = mutableListOf<Face>()
+
+    val queue = edges.toMutableList()
+    while(queue.isNotEmpty()){
+        val next = queue.first()
+        queue.remove(next)
+
+        val face = Face()
+
+        var area = 0.0
+        face.points.add(next.source.p)
+        var current = next
+        current.face = face
+        while(current.target !== next.source){
+            area += (current.target.p - current.source.p).cross(current.connection!!.target.p - current.connection!!.source.p)
+            face.points.add(current.target.p)
+            current = current.connection!!
+            current.face = face
+            queue.remove(current)
+        }
+
+        area /= 2
+
+        face.area = abs(area)
+        face.clockwise = area.sign < 0
+        face.leftmost = getLeftmostPoint(face)
+        println(area)
+        faces.add(face)
+    }
+
 /*
+    val scanline = ArrayList<Edge>()
+
     for(node in nodes){
-        for( edge in node.leftEdges ){
-            scanline.remove(edge.twin)
+
+        var leftLines = 0
+        for( edge in node.edges ){
+            if(edge.source.p.x >= edge.target.p.x){
+                scanline.remove(edge.twin)
+                leftLines++
+            }
         }
 
         val pos = scanline.search(node.p)
 
-        var outside = true
-        if(pos != 0){
-            val a = scanline[pos - 1]
-            val b = scanline[pos]
+        if(leftLines == 0){
+            var outerFace: Face? = null
+            for( edge in node.edges ){
+                if(edge.face!!.clockwise){
+                    outerFace = edge.face
+                    break
+                }
+            }
 
-            outside = a.index != b.index
+            if(pos != 0){
+                val a = scanline[pos - 1]
+                val b = scanline[pos]
+
+                if(a.twin.face === b.face){
+                    if(outerFace != null){
+                        b.face!!.children.add(outerFace)
+                        outerFace.parent = b.face
+                    }
+                }
+
+                println(a)
+                println(b)
+            }else{
+
+            }
         }
 
-        scanline.addAll(pos, node.rightEdges)
+        for( edge in node.edges.reversed() ){
+            if(edge.source.p.x < edge.target.p.x){
+                scanline.add(pos, edge)
+            }
+        }
     }*/
 
-    while(edges.isNotEmpty()){
-        val next = edges.first()
-        edges.remove(next)
+    val outers = mutableListOf<Face>()
+    val inners = mutableListOf<Face>()
 
-        val face = mutableListOf<PointD>()
-
-        face.add(next.source.p)
-        var current = next
-        while(current.target !== next.source){
-            face.add(current.target.p)
-            current = current.connection!!
-            edges.remove(current)
+    for( face in faces ){
+        if(!face.clockwise){
+            outers.add(face)
+        }else{
+            inners.add(face)
         }
-
-        println(face)
     }
 
+    outers.sortByDescending { it.leftmost!!.x }
 
-    return emptyList()
+    val receivers = edges.filter { it.source.p.y > it.target.p.y }.sortedBy { (it.source.p + it.target.p).x }
+
+
+    for( inner in inners ){
+        val leftmost = inner.leftmost!!
+
+        var minValue: Double? = null
+        var minEdge : Edge? = null
+        for(edge in receivers){
+            if(edge.source.p.y >= leftmost.y && edge.target.p.y <= leftmost.y){
+                val pos = leftmost.x - (edge.target.p.x - (edge.target.p.x - edge.source.p.x) * (leftmost.y - edge.target.p.y) / (edge.source.p.y - edge.target.p.y))
+
+                if( minValue == null || pos > 0 && pos < minValue ){
+                    minValue = pos
+                    minEdge = edge
+                }
+            }
+        }
+
+        val outer = minEdge?.face
+
+        if(outer != null){
+            inner.parent = outer
+            outer.children.add(inner)
+        }
+    }
+
+    return outers
+}
+
+fun getLeftmostPoint(face: Face) : PointD{
+    var leftMost: PointD? = null
+    for( point in face.points ){
+        if(leftMost == null || leftMost.x > point.x){
+            leftMost = point
+        }
+    }
+    return leftMost!!
+}
+
+fun findFace(segments: List<LineD>, point: PointD) : Face?{
+    val faces = findFaces(segments)
+
+    for( face in faces ){
+        val triangles = generateTriangles(face)
+
+        for( triangle in triangles ){
+            val points = triangle.points
+
+            var found = true
+            for( i in 0 until 3 ){
+                val a = points[i]
+                val b = points[(i + 1) % points.size]
+
+                val aP = PointD(a.x, a.y)
+                val bP = PointD(b.x, b.y)
+
+                if((point - aP).cross(bP - aP) > 0){
+                    found = false
+                    break
+                }
+            }
+
+            if( found ){
+                return face
+            }
+        }
+    }
+
+    return null
+}
+
+fun generateTriangles(face: Face) : List<DelaunayTriangle>{
+
+    fun pointsToPolygon(face: Face) : org.poly2tri.geometry.polygon.Polygon{
+        val list = mutableListOf<PolygonPoint>()
+        for( point in face.points ){
+            list.add(PolygonPoint(point.x, point.y, 0.0))
+        }
+        return org.poly2tri.geometry.polygon.Polygon(list)
+    }
+
+    val parent = pointsToPolygon(face)
+
+    fun searchChildren(face: Face){
+        for( child in face.children ){
+            parent.addHole(pointsToPolygon(child))
+            searchChildren(child)
+        }
+    }
+
+    searchChildren(face)
+
+    triangulate(parent)
+    // Gather triangles
+    // Gather triangles
+    return parent.triangles
 }
 
 fun main() {
@@ -271,8 +420,10 @@ fun main() {
     val g = PointD(0.7,-0.5)
 
 
+    val k = PointD(0.7,0.0)
 
-    findFaces(listOf(
+
+    findFace(listOf(
         LineD(a, d),
         LineD(a, b),
         LineD(b, c),
@@ -280,6 +431,55 @@ fun main() {
 
         LineD(e, f),
         LineD(e, g),
-        LineD(g, f),
-    ))
+        LineD(g, k),
+        LineD(f, k),
+        LineD(e, k),
+    ), PointD(0.1,0.0))
+
 }
+
+fun test(){
+    val polygon = org.poly2tri.geometry.polygon.Polygon(
+        listOf(
+            PolygonPoint(0.0,0.0, 0.0),
+            PolygonPoint(1.0,1.0, 0.0),
+            PolygonPoint(2.0,0.0, 0.0),
+            PolygonPoint(1.0,-1.0, 0.0)
+        )
+    )
+
+    val polygon2 = org.poly2tri.geometry.polygon.Polygon(
+        listOf(
+            PolygonPoint(0.2,0.0, 0.0),
+            PolygonPoint(0.7,0.5, 0.0),
+            PolygonPoint(0.7,-0.5, 0.0)
+        )
+    )
+
+    polygon.addHole(polygon2)
+
+    triangulate(polygon)
+    // Gather triangles
+    // Gather triangles
+    val triangles: List<DelaunayTriangle> = polygon.triangles
+
+}
+
+
+/*var minValue = 10.0
+var minEdge: Edge? = null
+for( edge in node.edges ){
+    val aDirection = edge.target.p - edge.source.p
+    val newValue = abs(atan2(-aDirection.y, -aDirection.x))
+    if(newValue < minValue){
+        minValue = newValue
+        minEdge = edge
+    }
+}
+
+if(!minEdge!!.face!!.clockwise){
+    minEdge = minEdge.twin
+}
+
+b.face!!.children.add(minEdge!!.face!!)
+minEdge.face!!.parent = b.face*/

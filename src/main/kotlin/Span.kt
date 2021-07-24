@@ -35,7 +35,10 @@ class FunctionSpan(func: FunctionFigure) : Span {
     private val formula: Point = func.function(t)
 
     override fun getPoint(t: Double): Point {
-        this.t.value = t
+
+        this.t.value = if(t == 1.0){
+            0.0
+        }else t
         return formula.copy()
     }
 }

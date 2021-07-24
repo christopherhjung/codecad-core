@@ -229,8 +229,16 @@ open class SketchScope(val project: Project) {
 }
 class ProjectScope(val project: Project)
 
-class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: Tracker = Tracker()){
+open class Volume{
 
+}
+
+class Extrude(val face: Face, val height: Value) : Volume(){
+
+}
+
+class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: Tracker = Tracker()){
+    val volumes = mutableListOf<Volume>()
 }
 
 fun project(block: ProjectScope.() -> Unit) : Project{
@@ -249,13 +257,40 @@ fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
     builder.init()
     project.sketches.add(builder.sketch)
     builder.sketch.solve(1e-8)
-
-    val segments = sketchToLines(builder.sketch)
-
-    removeIntersections(segments)
-
-    //builder.sketch.draw()
     return builder.sketch
+}
+
+fun ProjectScope.extrude(sketch: Sketch, pointer: Point, height: Value) {
+    val face = findFace(sketchToLines(sketch), pointer.fixed())
+
+    if(face != null){
+        project.volumes.add(Extrude(face, height))
+    }
+}
+
+class Point3D(val x: Double, val y: Double, val z: Double){
+    override fun toString(): String {
+        return "Point3D(x=$x, y=$y)"
+    }
+
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Point3D) return false
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+        if (z != other.z) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        result = 31 * result + z.hashCode()
+        return result
+    }
 }
 
 class PointD(val x: Double, val y: Double){
@@ -291,7 +326,7 @@ class PointD(val x: Double, val y: Double){
         return result
     }
 }
-class LineD(val p0: PointD, val p1: PointD){
+data class LineD(val p0: PointD, val p1: PointD){
 
 }
 
