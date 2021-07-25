@@ -229,52 +229,15 @@ open class SketchScope(val project: Project) {
         pattern.build(this)
     }
 }
-class ProjectScope(val project: Project)
 
-open class Volume{
 
-}
 
-class Extrude(val face: Face, val height: Value) : Volume(){
 
-}
-
-class Project(val sketches: MutableList<Sketch> = mutableListOf(), val tracker: Tracker = Tracker()){
-    val volumes = mutableListOf<Volume>()
-}
-
-fun project(block: ProjectScope.() -> Unit) : Project {
-    val project = Project()
-    val projectScope = ProjectScope(project)
-    try{
-        block(projectScope)
-    }catch (e: StackOverflowError){
-        e.printStackTrace()
-    }
-    return project
-}
-
-fun ProjectScope.sketch(init: SketchScope.() -> Unit): Sketch {
-    val builder = SketchScope(project)
-    builder.init()
-    project.sketches.add(builder.sketch)
-    builder.sketch.solve(1e-8)
-    return builder.sketch
-}
-
-fun ProjectScope.extrude(sketch: Sketch, pointer: Point, height: Value) {
-    val face = findFace(sketchToLines(sketch), pointer.fixed())
-
-    if(face != null){
-        project.volumes.add(Extrude(face, height))
-    }
-}
 
 class Point3D(val x: Double, val y: Double, val z: Double){
     override fun toString(): String {
-        return "com.codecad.core.Point3D(x=$x, y=$y)"
+        return "Point3D(x=$x, y=$y)"
     }
-
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

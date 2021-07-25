@@ -314,6 +314,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
 
     val receivers = edges.filter { it.source.p.y > it.target.p.y }.sortedBy { (it.source.p + it.target.p).x }
 
+    inners.sortBy { it.leftmost!!.x }
 
     for( inner in inners ){
         val leftmost = inner.leftmost!!
@@ -322,7 +323,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
         var minEdge : Edge? = null
         for(edge in receivers){
             if(edge.source.p.y >= leftmost.y && edge.target.p.y <= leftmost.y){
-                val pos = leftmost.x - (edge.target.p.x - (edge.target.p.x - edge.source.p.x) * (leftmost.y - edge.target.p.y) / (edge.source.p.y - edge.target.p.y))
+                val pos = leftmost.x - (edge.target.p.x - (leftmost.y - edge.target.p.y) * (edge.target.p.x - edge.source.p.x) / (edge.source.p.y - edge.target.p.y))
 
                 if( minValue == null || pos > 0 && pos < minValue ){
                     minValue = pos
@@ -334,8 +335,9 @@ fun findFaces(arr2: List<LineD>): List<Face> {
         val outer = minEdge?.face
 
         if(outer != null){
-            inner.parent = outer
-            outer.children.add(inner)
+            val target = outer.parent ?: outer
+            inner.parent = target
+            target.children.add(inner)
         }
     }
 
@@ -409,63 +411,6 @@ fun generateTriangles(face: Face) : List<DelaunayTriangle>{
     // Gather triangles
     // Gather triangles
     return parent.triangles
-}
-
-fun main() {
-    val a = PointD(0.0,0.0)
-    val b = PointD(1.0,1.0)
-    val c = PointD(2.0,0.0)
-    val d = PointD(1.0,-1.0)
-
-    val e = PointD(0.2,0.0)
-    val f = PointD(0.7,0.5)
-    val g = PointD(0.7,-0.5)
-
-
-    val k = PointD(0.7,0.0)
-
-
-    findFace(listOf(
-        LineD(a, d),
-        LineD(a, b),
-        LineD(b, c),
-        LineD(d, c),
-
-        LineD(e, f),
-        LineD(e, g),
-        LineD(g, k),
-        LineD(f, k),
-        LineD(e, k),
-    ), PointD(0.1,0.0)
-    )
-
-}
-
-fun test(){
-    val polygon = org.poly2tri.geometry.polygon.Polygon(
-        listOf(
-            PolygonPoint(0.0,0.0, 0.0),
-            PolygonPoint(1.0,1.0, 0.0),
-            PolygonPoint(2.0,0.0, 0.0),
-            PolygonPoint(1.0,-1.0, 0.0)
-        )
-    )
-
-    val polygon2 = org.poly2tri.geometry.polygon.Polygon(
-        listOf(
-            PolygonPoint(0.2,0.0, 0.0),
-            PolygonPoint(0.7,0.5, 0.0),
-            PolygonPoint(0.7,-0.5, 0.0)
-        )
-    )
-
-    polygon.addHole(polygon2)
-
-    triangulate(polygon)
-    // Gather triangles
-    // Gather triangles
-    val triangles: List<DelaunayTriangle> = polygon.triangles
-
 }
 
 

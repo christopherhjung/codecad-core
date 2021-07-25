@@ -146,7 +146,7 @@ class Sketch(val project: Project) {
             }else{
                 solve(10e-4, stages)
             }
-            constraint.prune(this)
+            //constraint.prune(this)
         }catch (e: Exception){
             throw e
         }
