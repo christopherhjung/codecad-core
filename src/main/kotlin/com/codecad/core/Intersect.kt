@@ -2,6 +2,7 @@ package com.codecad.core
 
 import org.poly2tri.Poly2Tri.triangulate
 import org.poly2tri.geometry.polygon.PolygonPoint
+import org.poly2tri.triangulation.TriangulationPoint
 import org.poly2tri.triangulation.delaunay.DelaunayTriangle
 import java.util.*
 import kotlin.math.abs
@@ -164,20 +165,71 @@ fun ArrayList<Edge>.search(point: PointD) : Int{
     return left
 }
 
-open class Face(){
+abstract class Face(){
+    abstract fun generateTriangles() : List<TriangleFace>
+}
 
+class TriangleFace(vararg val points: PointD) : Face(){
+
+    override fun generateTriangles()  : List<TriangleFace>{
+        return listOf(this)
+    }
 }
 
 class ConvexFace(val points: List<PointD>) : Face(){
+    override fun generateTriangles()  : List<TriangleFace>{
+        val result = mutableListOf<TriangleFace>()
+        for( i in 0 until points.size - 1 step 2 ){
+            result.add(TriangleFace(points[i], points[i + 1], points[(i + 2) % points.size]))
+        }
 
+        return result
+    }
 }
 
-class PolygonFace(val points: List<PointD>) : Face(){
+class PolygonFace(val points: List<PointD>, val inverted: Boolean = false) : Face(){
     var parent: PolygonFace? = null
     val children = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area : Double = 0.0
     var leftmost: PointD? = null
+
+
+    override fun generateTriangles()  : List<TriangleFace>{
+        fun pointsToPolygon(polygonFace: PolygonFace) : org.poly2tri.geometry.polygon.Polygon{
+            val list = mutableListOf<PolygonPoint>()
+            for( point in polygonFace.points ){
+                list.add(PolygonPoint(point.x, point.y, point.z))
+            }
+            return org.poly2tri.geometry.polygon.Polygon(list)
+        }
+
+        val parent = pointsToPolygon(this)
+
+        for( child in this.children ){
+            parent.addHole(pointsToPolygon(child))
+        }
+
+        triangulate(parent)
+
+        val triangles = mutableListOf<TriangleFace>()
+
+        fun createPoint(trianglePoint: TriangulationPoint) : PointD{
+            return PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z)
+        }
+
+        val offset = if(inverted) 0 else 1
+
+        for( triangle in parent.triangles ){
+            val points = triangle.points
+            triangles.add(TriangleFace(
+                createPoint(points[0]),
+                createPoint(points[1 + offset]),
+                createPoint(points[2 - offset])))
+        }
+
+        return triangles
+    }
 }
 
 fun findFaces(arr2: List<LineD>): List<PolygonFace> {

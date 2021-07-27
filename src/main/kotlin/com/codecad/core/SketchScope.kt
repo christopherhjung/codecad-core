@@ -260,7 +260,7 @@ class Point3D(val x: Double, val y: Double, val z: Double){
 
 class PointD(val x: Double, val y: Double, val z: Double = 0.0){
     override fun toString(): String {
-        return "com.codecad.core.PointD(x=$x, y=$y)"
+        return "com.codecad.core.PointD(x=$x, y=$y, z=$z)"
     }
 
     operator fun minus(other: PointD): PointD {
