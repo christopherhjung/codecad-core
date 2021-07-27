@@ -4,6 +4,6 @@ open class Volume{
 
 }
 
-class Extrude(val face: Face, val height: Value) : Volume(){
+class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
 
 }

@@ -233,7 +233,7 @@ open class SketchScope(val project: Project) {
 
 
 
-
+/*
 class Point3D(val x: Double, val y: Double, val z: Double){
     override fun toString(): String {
         return "Point3D(x=$x, y=$y)"
@@ -256,19 +256,19 @@ class Point3D(val x: Double, val y: Double, val z: Double){
         result = 31 * result + z.hashCode()
         return result
     }
-}
+}*/
 
-class PointD(val x: Double, val y: Double){
+class PointD(val x: Double, val y: Double, val z: Double = 0.0){
     override fun toString(): String {
         return "com.codecad.core.PointD(x=$x, y=$y)"
     }
 
     operator fun minus(other: PointD): PointD {
-        return PointD(this.x - other.x, this.y - other.y)
+        return PointD(this.x - other.x, this.y - other.y, this.z - other.z)
     }
 
     operator fun plus(other: PointD): PointD {
-        return PointD(this.x + other.x, this.y + other.y)
+        return PointD(this.x + other.x, this.y + other.y, this.z + other.z)
     }
 
     fun cross(other: PointD): Double{
@@ -281,6 +281,7 @@ class PointD(val x: Double, val y: Double){
 
         if (x != other.x) return false
         if (y != other.y) return false
+        if (z != other.z) return false
 
         return true
     }
@@ -288,6 +289,7 @@ class PointD(val x: Double, val y: Double){
     override fun hashCode(): Int {
         var result = x.hashCode()
         result = 31 * result + y.hashCode()
+        result = 31 * result + z.hashCode()
         return result
     }
 }

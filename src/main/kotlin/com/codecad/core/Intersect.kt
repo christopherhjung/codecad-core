@@ -123,7 +123,7 @@ data class Node(
 data class Edge(val source : Node, val target: Node){
     var connection: Edge? = null
     lateinit var twin: Edge
-    var face: Face? = null
+    var polygonFace: PolygonFace? = null
 
     //var inner = false
     var index = -1
@@ -164,16 +164,23 @@ fun ArrayList<Edge>.search(point: PointD) : Int{
     return left
 }
 
-class Face{
-    val points = mutableListOf<PointD>()
-    var parent: Face? = null
-    val children = mutableSetOf<Face>()
+open class Face(){
+
+}
+
+class ConvexFace(val points: List<PointD>) : Face(){
+
+}
+
+class PolygonFace(val points: List<PointD>) : Face(){
+    var parent: PolygonFace? = null
+    val children = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area : Double = 0.0
     var leftmost: PointD? = null
 }
 
-fun findFaces(arr2: List<LineD>): List<Face> {
+fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     val arr = removeIntersections(arr2)
 
     val ordered = mutableListOf<LineD>()
@@ -221,24 +228,24 @@ fun findFaces(arr2: List<LineD>): List<Face> {
     }
 
 
-    val faces = mutableListOf<Face>()
+    val faces = mutableListOf<PolygonFace>()
 
     val queue = edges.toMutableList()
     while(queue.isNotEmpty()){
         val next = queue.first()
         queue.remove(next)
 
-        val face = Face()
-
         var area = 0.0
-        face.points.add(next.source.p)
+        val points = mutableListOf<PointD>()
+        points.add(next.source.p)
         var current = next
-        current.face = face
+        val face = PolygonFace(points)
+        current.polygonFace = face
         while(current.target !== next.source){
             area += (current.target.p - current.source.p).cross(current.connection!!.target.p - current.connection!!.source.p)
-            face.points.add(current.target.p)
+            points.add(current.target.p)
             current = current.connection!!
-            current.face = face
+            current.polygonFace = face
             queue.remove(current)
         }
 
@@ -300,8 +307,8 @@ fun findFaces(arr2: List<LineD>): List<Face> {
         }
     }*/
 
-    val outers = mutableListOf<Face>()
-    val inners = mutableListOf<Face>()
+    val outers = mutableListOf<PolygonFace>()
+    val inners = mutableListOf<PolygonFace>()
 
     for( face in faces ){
         if(!face.clockwise){
@@ -333,7 +340,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
             }
         }
 
-        val outer = minEdge?.face
+        val outer = minEdge?.polygonFace
 
         if(outer != null){
             val target = outer.parent ?: outer
@@ -345,9 +352,9 @@ fun findFaces(arr2: List<LineD>): List<Face> {
     return outers
 }
 
-fun getLeftmostPoint(face: Face) : PointD {
+fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
     var leftMost: PointD? = null
-    for( point in face.points ){
+    for( point in polygonFace.points ){
         if(leftMost == null || leftMost.x > point.x){
             leftMost = point
         }
@@ -355,7 +362,7 @@ fun getLeftmostPoint(face: Face) : PointD {
     return leftMost!!
 }
 
-fun findFace(segments: List<LineD>, point: PointD) : Face?{
+fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     val faces = findFaces(segments)
 
     for( face in faces ){
@@ -387,19 +394,19 @@ fun findFace(segments: List<LineD>, point: PointD) : Face?{
     return null
 }
 
-fun generateTriangles(face: Face) : List<DelaunayTriangle>{
+fun generateTriangles(polygonFace: PolygonFace) : List<DelaunayTriangle>{
 
-    fun pointsToPolygon(face: Face) : org.poly2tri.geometry.polygon.Polygon{
+    fun pointsToPolygon(polygonFace: PolygonFace) : org.poly2tri.geometry.polygon.Polygon{
         val list = mutableListOf<PolygonPoint>()
-        for( point in face.points ){
+        for( point in polygonFace.points ){
             list.add(PolygonPoint(point.x, point.y, 0.0))
         }
         return org.poly2tri.geometry.polygon.Polygon(list)
     }
 
-    val parent = pointsToPolygon(face)
+    val parent = pointsToPolygon(polygonFace)
 
-    for( child in face.children ){
+    for( child in polygonFace.children ){
         parent.addHole(pointsToPolygon(child))
     }
 
