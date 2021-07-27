@@ -179,8 +179,8 @@ class TriangleFace(vararg val points: PointD) : Face(){
 class ConvexFace(val points: List<PointD>) : Face(){
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
-        for( i in 0 until points.size - 1 step 2 ){
-            result.add(TriangleFace(points[i], points[i + 1], points[(i + 2) % points.size]))
+        for( i in 0 until points.size - 2 ){
+            result.add(TriangleFace(points[0], points[i + 1], points[i + 2]))
         }
 
         return result
