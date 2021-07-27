@@ -25,6 +25,12 @@ class ArcSpan(val arc: Arc) : Span {
         diff = end - start
     }
     override fun getPoint(t: Double): Point {
+        if(t == 0.0){
+            return arc.p0
+        }else if(t==1.0) {
+            return arc.p1
+        }
+
         val currentAngle = start + diff * t
         val x = (arc.center.x.value + arc.radius.value * cos(currentAngle))
         val y = (arc.center.y.value + arc.radius.value * sin(currentAngle))

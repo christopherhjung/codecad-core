@@ -142,11 +142,11 @@ class Sketch(val project: Project) {
             }
 
             if(tryBest){
-                solveImpl(10e-4, stages)
+                solveImpl(10e-8, stages)
             }else{
-                solve(10e-4, stages)
+                solve(10e-8, stages)
             }
-            //constraint.prune(this)
+            constraint.prune(this)
         }catch (e: Exception){
             throw e
         }

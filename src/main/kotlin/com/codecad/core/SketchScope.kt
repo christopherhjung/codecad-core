@@ -103,24 +103,24 @@ open class SketchScope(val project: Project) {
         return builder.sketch
     }
 
-    fun param(value: Double = 0.0): ProxyValue {
-        return sketch.createParameter(value)
+    fun param(value: Number = 0.0): ProxyValue {
+        return sketch.createParameter(value.toDouble())
     }
 
     fun <T> list() : MutableList<T>{
         return mutableListOf()
     }
 
-    fun const(value: Double = 0.0): Const {
-        return sketch.createConst(value)
+    fun const(value: Number = 0.0): Const {
+        return sketch.createConst(value.toDouble())
     }
 
-    fun constPoint(x: Double = 0.0, y: Double = 0.0): Point {
-        return sketch.createConstPoint(x, y)
+    fun constPoint(x: Number = 0.0, y: Number = 0.0): Point {
+        return sketch.createConstPoint(x.toDouble(), y.toDouble())
     }
 
-    fun point(x: Double = 0.0, y: Double = 0.0): Point {
-        return sketch.createPoint(x, y)
+    fun point(x: Number = 0.0, y: Number = 0.0): Point {
+        return sketch.createPoint(x.toDouble(), y.toDouble())
     }
 
     fun line(a: Point, b: Point, type: LineType = LineType.Normal): Line {
@@ -152,8 +152,8 @@ open class SketchScope(val project: Project) {
         return lines
     }
 
-    fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line {
-        return sketch.createLine(x, y, x2, y2)
+    fun line(x: Number = 0.0, y: Number = 0.0, x2: Number = 0.0, y2: Number = 0.0): Line {
+        return sketch.createLine(x.toDouble(), y.toDouble(), x2.toDouble(), y2.toDouble())
     }
 
     fun tangent(circle: Circle, line: Line) {
@@ -296,6 +296,23 @@ data class LineD(val p0: PointD, val p1: PointD){
 }
 
 fun sketchToLines(sketch: Sketch) : List<LineD>{
+
+
+
+    val split = HashMap<Figure, MutableList<Point>>()
+
+    for( constraint in sketch.constraints ){
+        if( constraint is PointOnCircle ){
+            split.computeIfAbsent(constraint.circle){ mutableListOf()}
+        }else if(constraint is PointOnPoint){
+
+        }
+    }
+
+
+
+
+
     val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
         if(figure is Line){
@@ -303,8 +320,8 @@ fun sketchToLines(sketch: Sketch) : List<LineD>{
         }else if(figure is Arc){
             val span = ArcSpan(figure)
             var last: Point? = null
-            for( i in 0 .. 500){
-                val t = i / 500.0
+            for( i in 0 .. 10){
+                val t = i / 10.0
 
                 val point = span.getPoint(t)
                 if(last != null){

@@ -6,6 +6,7 @@ import org.poly2tri.triangulation.delaunay.DelaunayTriangle
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.min
 import kotlin.math.sign
 
 
@@ -312,7 +313,7 @@ fun findFaces(arr2: List<LineD>): List<Face> {
 
     outers.sortByDescending { it.leftmost!!.x }
 
-    val receivers = edges.filter { it.source.p.y > it.target.p.y }.sortedBy { (it.source.p + it.target.p).x }
+    val receivers = edges.filter { it.source.p.y > it.target.p.y }.sortedBy { min(it.source.p.x, it.target.p.x) }
 
     inners.sortBy { it.leftmost!!.x }
 
@@ -398,18 +399,11 @@ fun generateTriangles(face: Face) : List<DelaunayTriangle>{
 
     val parent = pointsToPolygon(face)
 
-    fun searchChildren(face: Face){
-        for( child in face.children ){
-            parent.addHole(pointsToPolygon(child))
-            searchChildren(child)
-        }
+    for( child in face.children ){
+        parent.addHole(pointsToPolygon(child))
     }
 
-    searchChildren(face)
-
     triangulate(parent)
-    // Gather triangles
-    // Gather triangles
     return parent.triangles
 }
 
