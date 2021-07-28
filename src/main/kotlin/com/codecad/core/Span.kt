@@ -13,6 +13,19 @@ class LineSpan(val line: Line) : Span {
     }
 }
 
+class CircleSpan(val circle: Circle) : Span {
+    override fun getPoint(t: Double): Point {
+        if(t == 0.0 || t==1.0){
+            return circle.center + Point(circle.radius, Const.ZERO)
+        }
+
+        val currentAngle = 2 * Math.PI * t
+        val x = (circle.center.x.value + circle.radius.value * cos(currentAngle))
+        val y = (circle.center.y.value + circle.radius.value * sin(currentAngle))
+        return Point(Const(x), Const(y))
+    }
+}
+
 class ArcSpan(val arc: Arc) : Span {
     val start = arc.center.absoluteAngle(arc.p0)
     var end = arc.center.absoluteAngle(arc.p1)

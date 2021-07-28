@@ -3,7 +3,6 @@ package com.codecad.core
 import org.poly2tri.Poly2Tri.triangulate
 import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint
-import org.poly2tri.triangulation.delaunay.DelaunayTriangle
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -122,7 +121,7 @@ data class Node(
 }
 
 data class Edge(val source : Node, val target: Node){
-    var connection: Edge? = null
+    var next: Edge? = null
     lateinit var twin: Edge
     var polygonFace: PolygonFace? = null
 
@@ -218,7 +217,7 @@ class PolygonFace(val points: List<PointD>, val inverted: Boolean = false) : Fac
             return PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z)
         }
 
-        val offset = if(inverted) 0 else 1
+        val offset = if(inverted) 1 else 0
 
         for( triangle in parent.triangles ){
             val points = triangle.points
@@ -237,11 +236,11 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
 
     val ordered = mutableListOf<LineD>()
     for(line in arr){
-        if (line.p0.x > line.p1.x) {
-            ordered.add(LineD(line.p1, line.p0))
+        ordered.add(if (line.p0.x > line.p1.x) {
+            LineD(line.p1, line.p0)
         }else{
-            ordered.add(line)
-        }
+            line
+        })
     }
 
     val pointMap = HashMap<PointD, Node>()
@@ -273,10 +272,8 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         for(i in node.edges.indices){
             val top = node.edges[i]
             val bottom = node.edges[(i+1)%node.edges.size]
-            top.twin.connection = bottom
+            top.twin.next = bottom
         }
-
-        val a = 9
     }
 
 
@@ -289,15 +286,18 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
 
         var area = 0.0
         val points = mutableListOf<PointD>()
-        points.add(next.source.p)
         var current = next
         val face = PolygonFace(points)
-        current.polygonFace = face
-        while(current.target !== next.source){
-            area += (current.target.p - current.source.p).cross(current.connection!!.target.p - current.connection!!.source.p)
+        while(true){
+            //area += (current.target.p - current.source.p).cross(current.connection!!.target.p - current.connection!!.source.p)
             points.add(current.target.p)
-            current = current.connection!!
             current.polygonFace = face
+            area += current.source.p.x * current.target.p.y -  current.target.p.x * current.source.p.y
+            if(current.target === next.source){
+                break
+            }
+
+            current = current.next!!
             queue.remove(current)
         }
 
@@ -385,7 +385,7 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
             if(edge.source.p.y >= leftmost.y && edge.target.p.y <= leftmost.y){
                 val pos = leftmost.x - (edge.target.p.x - (leftmost.y - edge.target.p.y) * (edge.target.p.x - edge.source.p.x) / (edge.source.p.y - edge.target.p.y))
 
-                if( minValue == null || pos > 0 && pos < minValue ){
+                if( ( minValue == null || pos < minValue ) && pos > 0 ){
                     minValue = pos
                     minEdge = edge
                 }
@@ -418,7 +418,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     val faces = findFaces(segments)
 
     for( face in faces ){
-        val triangles = generateTriangles(face)
+        val triangles = face.generateTriangles()
 
         for( triangle in triangles ){
             val points = triangle.points
@@ -428,10 +428,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
                 val a = points[i]
                 val b = points[(i + 1) % points.size]
 
-                val aP = PointD(a.x, a.y)
-                val bP = PointD(b.x, b.y)
-
-                if((point - aP).cross(bP - aP) > 0){
+                if((point - a).cross(b - a) > 0){
                     found = false
                     break
                 }
@@ -446,25 +443,6 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     return null
 }
 
-fun generateTriangles(polygonFace: PolygonFace) : List<DelaunayTriangle>{
-
-    fun pointsToPolygon(polygonFace: PolygonFace) : org.poly2tri.geometry.polygon.Polygon{
-        val list = mutableListOf<PolygonPoint>()
-        for( point in polygonFace.points ){
-            list.add(PolygonPoint(point.x, point.y, 0.0))
-        }
-        return org.poly2tri.geometry.polygon.Polygon(list)
-    }
-
-    val parent = pointsToPolygon(polygonFace)
-
-    for( child in polygonFace.children ){
-        parent.addHole(pointsToPolygon(child))
-    }
-
-    triangulate(parent)
-    return parent.triangles
-}
 
 
 /*var minValue = 10.0

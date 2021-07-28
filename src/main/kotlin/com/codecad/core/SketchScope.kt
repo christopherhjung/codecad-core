@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.angusj.clipper.Clipper
+
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
     val allCrawler = mutableMapOf<Point, MutableList<MutableList<Point>>>()
@@ -96,11 +98,41 @@ open class SketchScope(val project: Project) {
         val builder = PatternScope(project, repeat, point)
         builder.init(point)
         builder.finish()
-
         sketch.figures.addAll(builder.sketch.figures)
-
-        //builder.com.codecad.core.sketch.draw()
         return builder.sketch
+    }
+
+    fun offset(pointer: Point, offsetValue: Number, block: SketchScope.() -> Unit){
+        val sketchScope = SketchScope(project)
+        sketchScope.block()
+
+        val face = findFace(sketchToLines(sketchScope.sketch), pointer.fixed())
+        val paths = mutableListOf<DoubleArray>()
+
+        if(face != null){
+            val arr = DoubleArray(face.points.size * 2)
+            paths.add(arr)
+            var i = 0
+            for( point in face.points){
+                arr[i++] = point.x
+                arr[i++] = point.y
+            }
+        }
+
+        val offset = Clipper()
+
+        val result = offset.offsetPath(2.0,0.25, paths.toTypedArray(), offsetValue.toDouble())
+
+        val points = mutableListOf<Point>()
+        for( path in result ){
+            for( i in path.indices step 2 ){
+                points.add(Point(Const(path[i]), Const(path[i + 1])))
+            }
+        }
+
+        if(points.size != 0){
+            polygon(*points.toTypedArray())
+        }
     }
 
     fun param(value: Number = 0.0): ProxyValue {
@@ -322,8 +354,20 @@ fun sketchToLines(sketch: Sketch) : List<LineD>{
         }else if(figure is Arc){
             val span = ArcSpan(figure)
             var last: Point? = null
-            for( i in 0 .. 10){
-                val t = i / 10.0
+            for( i in 0 .. 200){
+                val t = i / 200.0
+
+                val point = span.getPoint(t)
+                if(last != null){
+                    list.add(LineD(last.fixed(), point.fixed()))
+                }
+                last = point
+            }
+        }else if(figure is Circle){
+            val span = CircleSpan(figure)
+            var last: Point? = null
+            for( i in 0 .. 500){
+                val t = i / 500.0
 
                 val point = span.getPoint(t)
                 if(last != null){

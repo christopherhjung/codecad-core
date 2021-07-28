@@ -31,11 +31,9 @@ dependencies {
     runtimeOnly(kotlin("scripting-compiler-embeddable"))
     runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.20")
 
+    //implementation("de.lighti:Clipper:6.4.2")
 
-
-
-
-    //implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
+    implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
     //implementation("org.kabeja:kabeja:0.5.0")
     implementation(files("/usr/local/Cellar/opencv/4.5.2_4/share/java/opencv4/opencv-452.jar"))
 }
