@@ -1,5 +1,4 @@
 import com.codecad.core.project
-import com.codecad.core.sketch
 import org.junit.jupiter.api.Test
 
 class FigureTest {

@@ -25,8 +25,9 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     val s2_x = p3_x - p2_x
     val s2_y = p3_y - p2_y
 
-    val s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
-    val t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
+    val a = 1 / (-s2_x * s1_y + s1_x * s2_y)
+    val s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) * a
+    val t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) * a
 
     val epsilon = 1e-5
     if (s - epsilon > 0 && s + epsilon < 1 && t - epsilon > 0 && t + epsilon < 1) {
@@ -310,55 +311,6 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         faces.add(face)
     }
 
-/*
-    val scanline = ArrayList<com.codecad.core.Edge>()
-
-    for(node in nodes){
-
-        var leftLines = 0
-        for( edge in node.edges ){
-            if(edge.source.p.x >= edge.target.p.x){
-                scanline.remove(edge.twin)
-                leftLines++
-            }
-        }
-
-        val pos = scanline.com.codecad.core.search(node.p)
-
-        if(leftLines == 0){
-            var outerFace: com.codecad.core.Face? = null
-            for( edge in node.edges ){
-                if(edge.face!!.clockwise){
-                    outerFace = edge.face
-                    break
-                }
-            }
-
-            if(pos != 0){
-                val a = scanline[pos - 1]
-                val b = scanline[pos]
-
-                if(a.twin.face === b.face){
-                    if(outerFace != null){
-                        b.face!!.children.add(outerFace)
-                        outerFace.parent = b.face
-                    }
-                }
-
-                println(a)
-                println(b)
-            }else{
-
-            }
-        }
-
-        for( edge in node.edges.reversed() ){
-            if(edge.source.p.x < edge.target.p.x){
-                scanline.add(pos, edge)
-            }
-        }
-    }*/
-
     val outers = mutableListOf<PolygonFace>()
     val inners = mutableListOf<PolygonFace>()
 
@@ -443,22 +395,3 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     return null
 }
 
-
-
-/*var minValue = 10.0
-var minEdge: com.codecad.core.Edge? = null
-for( edge in node.edges ){
-    val aDirection = edge.target.p - edge.source.p
-    val newValue = abs(atan2(-aDirection.y, -aDirection.x))
-    if(newValue < minValue){
-        minValue = newValue
-        minEdge = edge
-    }
-}
-
-if(!minEdge!!.face!!.clockwise){
-    minEdge = minEdge.twin
-}
-
-b.face!!.children.add(minEdge!!.face!!)
-minEdge.face!!.parent = b.face*/

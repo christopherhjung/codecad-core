@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import org.mozilla.javascript.ClassShutter
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
@@ -10,6 +11,7 @@ class ExecutionResult(val output: String, val project: Project)
 class Executor{
     companion object{
         fun execute(code: String) : ExecutionResult {
+
             with(ScriptEngineManager().getEngineByExtension("kts")) {
                 return Executor().execute(this, code)
             }
@@ -32,7 +34,10 @@ class Executor{
         try{
             val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as Project
             return ExecutionResult(output.toString(), project)
-        }catch (e: ScriptException){
+        }catch (e: AccessDeniedException){
+            println("Sicherheitsangriff")
+            throw RuntimeException(e)
+        } catch (e: ScriptException){
             val cause = e.cause
             if(cause is LineException){
                 throw cause
