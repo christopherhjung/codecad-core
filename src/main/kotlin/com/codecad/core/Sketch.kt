@@ -48,7 +48,7 @@ class Sketch(val project: Project) {
         return createPoint(a,b)
     }
 
-    fun createLine(a: Point, b: Point, type: LineType = LineType.ToolPath): Line {
+    fun createLine(a: Point, b: Point, type: LineType = LineType.Normal): Line {
         val line = Line(a, b, type)
         figures.add(line)
         return line

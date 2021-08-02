@@ -155,8 +155,12 @@ open class SketchScope(val project: Project) {
         return sketch.createPoint(x.toDouble(), y.toDouble())
     }
 
-    fun line(a: Point, b: Point, type: LineType = LineType.Normal): Line {
-        return sketch.createLine(a, b, type)
+    fun line(a: Point, b: Point): Line {
+        return sketch.createLine(a, b, LineType.Normal)
+    }
+
+    fun cline(a: Point, b: Point): Line {
+        return sketch.createLine(a, b, LineType.Construction)
     }
 
     fun circle(center: Point, radius: Value): Circle {
@@ -329,10 +333,8 @@ data class LineD(val p0: PointD, val p1: PointD){
 
 }
 
-fun sketchToLines(sketch: Sketch) : List<LineD>{
-
-
-
+fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
+/*
     val split = HashMap<Figure, MutableList<Point>>()
 
     for( constraint in sketch.constraints ){
@@ -341,14 +343,14 @@ fun sketchToLines(sketch: Sketch) : List<LineD>{
         }else if(constraint is PointOnPoint){
 
         }
-    }
-
-
-
-
+    }*/
 
     val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
+        if(ignoreConstruction && figure.type == LineType.Construction){
+            continue
+        }
+
         if(figure is Line){
             list.add(LineD(figure.p0.fixed(), figure.p1.fixed()))
         }else if(figure is Arc){
@@ -400,35 +402,6 @@ fun Canvas.line(line: com.codecad.core.Line){
 fun Canvas.circle(circle: com.codecad.core.Circle){
     circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
 }*/
-
-
-
-
-fun SketchScope.pathsToPoly(input : Array<DoubleArray>, lineType: LineType){
-    for (path in input) {
-        var last: Point? = null
-        var first: Point? = null
-        for (i in path.indices step 2) {
-            val x = path[i]
-            val y = path[i + 1]
-
-            val thePoint = Point(const(x), const(y))
-
-            if (last != null) {
-                line(last, thePoint,  lineType)
-            } else {
-                first = thePoint
-            }
-
-            last = thePoint
-        }
-
-
-        if (last != null && first != null) {
-            line(last, first,  lineType)
-        }
-    }
-}
 
 
 

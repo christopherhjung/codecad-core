@@ -4,7 +4,7 @@ import com.codecad.core.SketchScope.Companion.AXIS_X
 import java.lang.Math.atan2
 
 enum class LineType(val prio: Int){
-    Normal(2), ToolPath(3), ToolContour(1)
+    Normal(2), Construction(3)
 }
 
 abstract class Figure(var type: LineType = LineType.Normal){
