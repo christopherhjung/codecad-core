@@ -1,6 +1,6 @@
 package com.codecad.core
 
-import org.mozilla.javascript.ClassShutter
+import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmDaemonLocalEvalScriptEngineFactory
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
@@ -12,6 +12,11 @@ class Executor{
     companion object{
         fun execute(code: String) : ExecutionResult {
 
+            /*
+            *
+            val factory = KotlinJsr223JvmDaemonLocalEvalScriptEngineFactory()
+            return Executor().execute(factory.scriptEngine, code)
+            * */
             with(ScriptEngineManager().getEngineByExtension("kts")) {
                 return Executor().execute(this, code)
             }
@@ -29,11 +34,13 @@ class Executor{
         val stream = PrintStream(output)
 
 
+
+
         System.setOut(stream)
         System.setErr(stream)
         try{
-            val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as Project
-            return ExecutionResult(output.toString(), project)
+            val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as? Project
+            return ExecutionResult(output.toString(), project ?: Project())
         }catch (e: AccessDeniedException){
             println("Sicherheitsangriff")
             throw RuntimeException(e)
@@ -51,7 +58,7 @@ class Executor{
                     }
                 }
 
-                throw LineException(locations, output.toString())
+                throw LineException(locations, output.toString() + " " + e.message)
             }
         }finally {
             System.setOut(reset)

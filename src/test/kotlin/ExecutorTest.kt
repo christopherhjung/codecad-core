@@ -1,4 +1,5 @@
 import com.codecad.core.Executor
+import com.codecad.core.Util
 import org.junit.jupiter.api.Test
 
 
@@ -6,12 +7,11 @@ class ExecutorTest {
 
     @Test
     fun executorTest(){
-        System.setSecurityManager(SecurityManager())
-        try{
-            Executor.execute("System.exit(-1)")
-        }catch (e: Throwable){
-            e.printStackTrace()
-        }
+        val result = Executor.execute(Util.load("offset.kts"))
+
+
+
+        println(result)
     }
 
 }

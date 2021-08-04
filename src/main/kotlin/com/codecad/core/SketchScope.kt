@@ -1,6 +1,9 @@
 package com.codecad.core
 
-import com.angusj.clipper.Clipper
+import de.lighti.clipper.Clipper
+import de.lighti.clipper.ClipperOffset
+import de.lighti.clipper.Path
+import de.lighti.clipper.Paths
 
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
@@ -109,6 +112,10 @@ open class SketchScope(val project: Project) {
         val face = findFace(sketchToLines(sketchScope.sketch), pointer.fixed())
         val paths = mutableListOf<DoubleArray>()
 
+
+        val offset = ClipperOffset()
+        val path = Path()
+
         if(face != null){
             val arr = DoubleArray(face.points.size * 2)
             paths.add(arr)
@@ -116,17 +123,20 @@ open class SketchScope(val project: Project) {
             for( point in face.points){
                 arr[i++] = point.x
                 arr[i++] = point.y
+
+                path.add(de.lighti.clipper.Point.LongPoint((point.x * 1000).toLong(), (point.y * 1000).toLong()))
             }
         }
 
-        val offset = Clipper()
+        offset.addPath(path, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON );
 
-        val result = offset.offsetPath(2.0,0.25, paths.toTypedArray(), offsetValue.toDouble())
+        val result = Paths()
+        offset.execute(result, offsetValue.toDouble() * 1000L)
 
         val points = mutableListOf<Point>()
-        for( path in result ){
-            for( i in path.indices step 2 ){
-                points.add(Point(Const(path[i]), Const(path[i + 1])))
+        for( resultPath in result ){
+            for( i in resultPath.indices step 2 ){
+                points.add(Point(Const(resultPath[i].x / 1000.0), Const(resultPath[i].y / 1000.0)))
             }
         }
 
@@ -391,6 +401,42 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
             }
         }
     }
+    return list
+}
+fun figureToPoints(figure: Figure) : List<PointD>{
+    val list = mutableListOf<PointD>()
+
+    if(figure is Line){
+        list.add(figure.p0.fixed())
+        list.add(figure.p1.fixed())
+    }else if(figure is Arc){
+        val span = ArcSpan(figure)
+        for( i in 0 .. 200){
+            val t = i / 200.0
+
+            val point = span.getPoint(t)
+            list.add(point.fixed())
+        }
+    }else if(figure is Circle){
+        val span = CircleSpan(figure)
+        var last: Point? = null
+        for( i in 0 .. 500){
+            val t = i / 500.0
+
+            val point = span.getPoint(t)
+            list.add(point.fixed())
+        }
+    }else if(figure is FunctionFigure){
+        val span = FunctionSpan(figure)
+        var last: Point? = null
+        for( i in 0 .. 500){
+            val t = i / 500.0
+
+            val point = span.getPoint(t)
+            list.add(point.fixed())
+        }
+    }
+
     return list
 }
 

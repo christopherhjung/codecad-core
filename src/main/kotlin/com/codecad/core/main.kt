@@ -1,8 +1,8 @@
 package com.codecad.core
-import kotlin.math.hypot
-import kotlin.math.pow
-import kotlin.math.sqrt
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.File
+import java.util.*
 
 class Util{
     companion object{
@@ -13,9 +13,42 @@ class Util{
 }
 
 fun main(args: Array<String>) {
+    println(args.contentToString())
+    val code = String(System.`in`.readAllBytes())
+    println(code)
+    val result = Executor.execute(code)
+    val project = result.project
 
-    val value = 1e-200
-    println((hypot(value, value) - sqrt(value.pow(2) + value.pow(2))) / value)
+    val output = ModelCollection()
+    val model = Model()
+
+    val meshGenerator = MeshGenerator()
+
+    for(sketch in project.sketches){
+        for(figure in sketch.figures){
+            if(figure is Point){
+                model.points.add(figure.fixed())
+            }else{
+                val points = figureToPoints(figure)
+
+                val path = Path()
+
+                for(point in points){
+                    path.points.add(point)
+                }
+
+                model.faces.add(path)
+            }
+        }
+    }
+
+    for(volume in project.volumes){
+        if(volume is Extrude){
+            model.volumes.add(meshGenerator.generate(volume))
+        }
+    }
+
+    val mapper = ObjectMapper()
+    val jsonModel = mapper.writeValueAsString(model)
+    println(jsonModel)
 }
-
-
