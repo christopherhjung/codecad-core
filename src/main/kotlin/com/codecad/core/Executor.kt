@@ -10,9 +10,14 @@ class ExecutionResult(val output: String, val project: Project)
 
 class Executor{
     companion object{
+        var engine: ScriptEngine? = null
+
         fun execute(code: String) : ExecutionResult {
-            val engine = ScriptEngineManager().getEngineByExtension("kts")
-            return Executor().execute(engine, code)
+            if(engine == null){
+                engine = ScriptEngineManager().getEngineByExtension("kts")
+            }
+
+            return Executor().execute(engine!!, code)
         }
     }
 
