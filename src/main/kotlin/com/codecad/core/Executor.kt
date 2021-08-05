@@ -11,15 +11,8 @@ class ExecutionResult(val output: String, val project: Project)
 class Executor{
     companion object{
         fun execute(code: String) : ExecutionResult {
-
-            /*
-            *
-            val factory = KotlinJsr223JvmDaemonLocalEvalScriptEngineFactory()
-            return Executor().execute(factory.scriptEngine, code)
-            * */
-            with(ScriptEngineManager().getEngineByExtension("kts")) {
-                return Executor().execute(this, code)
-            }
+            val engine = ScriptEngineManager().getEngineByExtension("kts")
+            return Executor().execute(engine, code)
         }
     }
 

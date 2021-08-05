@@ -10,6 +10,7 @@ plugins {
     //id("com.palantir.docker-run") version "0.27.0"
 
     id("org.springframework.boot") version "2.5.3"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
 
 group = "com.codecad.core"
@@ -37,7 +38,7 @@ publishing {
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     requiresUnpack("**/kotlin-compiler-*.jar")
-    requiresUnpack("**/clipper-native-*.jar")
+    requiresUnpack("**/kotlin-daemon-*.jar")
     //requiresUnpack("**/kotlin-*.jar")
     //requiresUnpack("**/kotlinx-*.jar")
 }
@@ -48,13 +49,11 @@ repositories {
 }
 
 dependencies {
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
-    //implementation("org.openpnp:opencv:4.5.1-2")
-    //implementation("de.lighti:Clipper:6.4.2")
-
-
     implementation("com.codecad:codecad-common:1.0-SNAPSHOT")
     implementation("de.lighti:Clipper:6.4.2")
     implementation(kotlin("stdlib"))
@@ -72,12 +71,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.4")
     implementation("org.orbisgis:poly2tri:0.1.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
-
-    //implementation("de.lighti:Clipper:6.4.2")
-
-    //implementation("com.angusj.clipper:clipper-native:0.1.0-SNAPSHOT")
-    //implementation("org.kabeja:kabeja:0.5.0")
-    //implementation(files("/usr/local/Cellar/opencv/4.5.2_4/share/java/opencv4/opencv-452.jar"))
 }
 
 tasks.test {

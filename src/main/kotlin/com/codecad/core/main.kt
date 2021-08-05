@@ -4,6 +4,7 @@ import com.codecad.common.Model
 import com.codecad.common.ModelCollection
 import com.codecad.common.Path
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.boot.runApplication
 import java.io.File
 import java.util.*
 import java.io.IOException
@@ -36,6 +37,9 @@ fun readInputStreamWithTimeout(`is`: InputStream, b: ByteArray, timeoutMillis: I
 }
 
 fun main(args: Array<String>) {
+    runApplication<Application>()
+
+    /*
     //val code = String(System.`in`.readAllBytes())
     val code = Util.load("offset.kts")
     val result = Executor.execute(code)
@@ -72,5 +76,5 @@ fun main(args: Array<String>) {
 
     val mapper = ObjectMapper()
     val jsonModel = mapper.writeValueAsString(model)
-    println(jsonModel)
+    println(jsonModel)*/
 }
