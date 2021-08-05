@@ -55,6 +55,7 @@ dependencies {
     //implementation("de.lighti:Clipper:6.4.2")
 
 
+    implementation("com.codecad:codecad-common:1.0-SNAPSHOT")
     implementation("de.lighti:Clipper:6.4.2")
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))

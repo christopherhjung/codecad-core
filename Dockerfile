@@ -11,3 +11,4 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk install kotlin
 
 COPY mil-1.0-SNAPSHOT.jar mil-1.0-SNAPSHOT.jar
 ENTRYPOINT ["java","-jar","mil-1.0-SNAPSHOT.jar"]
+

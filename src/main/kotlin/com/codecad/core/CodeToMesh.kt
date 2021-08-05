@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.codecad.common.Mesh
+
 class CodeToMesh {
     fun transform(code : String) : List<Mesh>{
         var executionResult = Executor.execute(code)

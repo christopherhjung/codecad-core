@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.codecad.common.LineD
+import com.codecad.common.PointD
 import de.lighti.clipper.Clipper
 import de.lighti.clipper.ClipperOffset
 import de.lighti.clipper.Path
@@ -112,6 +114,7 @@ open class SketchScope(val project: Project) {
         val face = findFace(sketchToLines(sketchScope.sketch), pointer.fixed())
         val paths = mutableListOf<DoubleArray>()
 
+        val factor = 1000000
 
         val offset = ClipperOffset()
         val path = Path()
@@ -124,19 +127,19 @@ open class SketchScope(val project: Project) {
                 arr[i++] = point.x
                 arr[i++] = point.y
 
-                path.add(de.lighti.clipper.Point.LongPoint((point.x * 1000).toLong(), (point.y * 1000).toLong()))
+                path.add(de.lighti.clipper.Point.LongPoint((point.x * factor).toLong(), (point.y * factor).toLong()))
             }
         }
 
         offset.addPath(path, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON );
 
         val result = Paths()
-        offset.execute(result, offsetValue.toDouble() * 1000L)
+        offset.execute(result, offsetValue.toDouble() * factor)
 
         val points = mutableListOf<Point>()
         for( resultPath in result ){
             for( i in resultPath.indices step 2 ){
-                points.add(Point(Const(resultPath[i].x / 1000.0), Const(resultPath[i].y / 1000.0)))
+                points.add(Point(Const(resultPath[i].x.toDouble() / factor), Const(resultPath[i].y.toDouble() / factor)))
             }
         }
 
@@ -304,44 +307,6 @@ class Point3D(val x: Double, val y: Double, val z: Double){
     }
 }*/
 
-class PointD(val x: Double, val y: Double, val z: Double = 0.0){
-    override fun toString(): String {
-        return "com.codecad.core.PointD(x=$x, y=$y, z=$z)"
-    }
-
-    operator fun minus(other: PointD): PointD {
-        return PointD(this.x - other.x, this.y - other.y, this.z - other.z)
-    }
-
-    operator fun plus(other: PointD): PointD {
-        return PointD(this.x + other.x, this.y + other.y, this.z + other.z)
-    }
-
-    fun cross(other: PointD): Double{
-        return this.x * other.y - this.y * other.x
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is PointD) return false
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-        if (z != other.z) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x.hashCode()
-        result = 31 * result + y.hashCode()
-        result = 31 * result + z.hashCode()
-        return result
-    }
-}
-data class LineD(val p0: PointD, val p1: PointD){
-
-}
 
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
 /*

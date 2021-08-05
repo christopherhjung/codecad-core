@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.common.Mesh
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

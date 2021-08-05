@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.codecad.common.LineD
+import com.codecad.common.PointD
 import org.poly2tri.Poly2Tri.triangulate
 import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint

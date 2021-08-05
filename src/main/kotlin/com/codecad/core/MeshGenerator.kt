@@ -1,5 +1,8 @@
 package com.codecad.core
 
+import com.codecad.common.Mesh
+import com.codecad.common.PointD
+
 class MeshGenerator {
 
     fun invertFace(polygonFace : PolygonFace) : PolygonFace{
@@ -74,7 +77,7 @@ class MeshGenerator {
         return faces
     }
 
-    fun generate(extrude: Extrude) : Mesh{
+    fun generate(extrude: Extrude) : Mesh {
         val testFaces = generateFaces(extrude)
 
         val map = HashMap<PointD, Int>()

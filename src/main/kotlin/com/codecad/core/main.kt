@@ -1,8 +1,17 @@
 package com.codecad.core
 
+import com.codecad.common.Model
+import com.codecad.common.ModelCollection
+import com.codecad.common.Path
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.File
 import java.util.*
+import java.io.IOException
+
+import java.io.InputStream
+
+
+
 
 class Util{
     companion object{
@@ -12,10 +21,23 @@ class Util{
     }
 }
 
+@Throws(IOException::class)
+fun readInputStreamWithTimeout(`is`: InputStream, b: ByteArray, timeoutMillis: Int): Int {
+    var bufferOffset = 0
+    val maxTimeMillis = System.currentTimeMillis() + timeoutMillis
+    while (System.currentTimeMillis() < maxTimeMillis && bufferOffset < b.size) {
+        val readLength = Math.min(`is`.available(), b.size - bufferOffset)
+        // can alternatively use bufferedReader, guarded by isReady():
+        val readResult = `is`.read(b, bufferOffset, readLength)
+        if (readResult == -1) break
+        bufferOffset += readResult
+    }
+    return bufferOffset
+}
+
 fun main(args: Array<String>) {
-    println(args.contentToString())
-    val code = String(System.`in`.readAllBytes())
-    println(code)
+    //val code = String(System.`in`.readAllBytes())
+    val code = Util.load("offset.kts")
     val result = Executor.execute(code)
     val project = result.project
 
