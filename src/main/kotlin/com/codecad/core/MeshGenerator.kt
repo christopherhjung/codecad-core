@@ -32,14 +32,14 @@ class MeshGenerator {
 
         val faces = mutableListOf<Face>()
         val map = HashMap<PointD, PointD>()
-        val inverted = height < 0
+        val inverted = height > 0
 
         if(inverted){
             faces.add(invertFace(face))
-            faces.add(offsetFace(face, -height))
+            faces.add(offsetFace(face, height))
         }else{
             faces.add(face)
-            faces.add(invertFace(offsetFace(face, -height)))
+            faces.add(invertFace(offsetFace(face, height)))
         }
 
         fun getOrAdd(x: Double, y: Double, z: Double) : PointD{
@@ -54,8 +54,8 @@ class MeshGenerator {
 
                 val list = mutableListOf(
                     getOrAdd(left.x, left.y, 0.0),
-                    getOrAdd(left.x, left.y, -height),
-                    getOrAdd(right.x, right.y, -height),
+                    getOrAdd(left.x, left.y, height),
+                    getOrAdd(right.x, right.y, height),
                     getOrAdd(right.x, right.y, 0.0)
                 )
 
