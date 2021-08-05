@@ -7,8 +7,8 @@ class ExecutorTest {
 
     @Test
     fun executorTest(){
-        val result = Executor.execute(Util.load("offset.kts"))
-        println(result)
+        /*val result = Executor.execute("xxx")
+        println(result)*/
     }
 
 }

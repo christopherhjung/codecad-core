@@ -1,12 +1,6 @@
 package com.codecad.core
 
-import com.codecad.common.Model
-import com.codecad.common.ModelCollection
-import com.codecad.common.Path
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.boot.runApplication
-import java.io.File
-import java.util.*
 import java.io.IOException
 
 import java.io.InputStream

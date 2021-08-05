@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.common.LineError
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -248,13 +249,13 @@ class Sketch(val project: Project) {
 
         if(!result){
             var error = 0.0
-            val locations = mutableListOf<Location>()
+            val locations = mutableListOf<LineError>()
             for(constraint in constraints){
                 val constraintError = constraint.equation
                 val value = constraintError.value
                 error += value
                 if(value > accuracy){
-                    locations.add(Location(constraint.lineNumber, 0))
+                    locations.add(LineError("constraint could not be resolved", constraint.lineNumber, 0))
                     println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
                 }
             }

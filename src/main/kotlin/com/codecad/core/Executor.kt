@@ -1,6 +1,6 @@
 package com.codecad.core
 
-import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmDaemonLocalEvalScriptEngineFactory
+import com.codecad.common.LineError
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
@@ -47,16 +47,22 @@ class Executor{
             if(cause is LineException){
                 throw cause
             }else{
-                val locations = mutableListOf<Location>()
+                val lineErrors = mutableListOf<LineError>()
                 val pattern = "^(?<msg>.+) \\((?<file>.+?):(?<line>\\d+):(?<column>\\d+)\\)$".toRegex()
                 for(line in e.message?.lines() ?: emptyList()){
                     val result = pattern.matchEntire(line)
                     if(result != null){
-                        locations.add(Location(result.groups[3]!!.value.toInt(), 0))
+
+                        val msg = result.groups[1]!!.value
+                        val file = result.groups[2]!!.value
+                        val line = result.groups[3]!!.value.toInt()
+                        val column = result.groups[4]!!.value.toInt()
+
+                        lineErrors.add(LineError(msg, line, column))
                     }
                 }
 
-                throw LineException(locations, output.toString() + " " + e.message)
+                throw LineException(lineErrors, output.toString() + " " + e.message)
             }
         }finally {
             System.setOut(reset)

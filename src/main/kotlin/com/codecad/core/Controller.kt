@@ -1,11 +1,17 @@
 package com.codecad.core
 
+import com.codecad.common.ExecutionResult
+import com.codecad.common.LineError
 import com.codecad.common.Model
-import com.codecad.common.ModelCollection
 import com.codecad.common.Path
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+
+class Wrapper(val errors: List<LineError> = mutableListOf()){
+
+}
 
 @RestController
 @RequestMapping("api")
@@ -15,43 +21,49 @@ class Controller {
     }
 
     @PostMapping("eval")
-    fun eval(@RequestBody code: String) : Model{
-        val result = Executor.execute(code)
-        val project = result.project
+    fun eval(@RequestBody code: String) : ResponseEntity<Any>{
+        try{
+            val result = Executor.execute(code)
 
-        val output = ModelCollection()
-        val model = Model()
+            val project = result.project
 
-        val meshGenerator = MeshGenerator()
+            val output = ExecutionResult()
+            val model = Model()
 
-        for(sketch in project.sketches){
-            for(figure in sketch.figures){
-                if(figure is Point){
-                    model.points.add(figure.fixed())
-                }else{
-                    val points = figureToPoints(figure)
+            val meshGenerator = MeshGenerator()
 
-                    val path = Path()
+            for(sketch in project.sketches){
+                for(figure in sketch.figures){
+                    if(figure is Point){
+                        model.points.add(figure.fixed())
+                    }else{
+                        val points = figureToPoints(figure)
 
-                    for(point in points){
-                        path.points.add(point)
+                        val path = Path()
+
+                        for(point in points){
+                            path.points.add(point)
+                        }
+
+                        model.faces.add(path)
                     }
-
-                    model.faces.add(path)
                 }
             }
-        }
 
-        for(volume in project.volumes){
-            if(volume is Extrude){
-                model.volumes.add(meshGenerator.generate(volume))
+            for(volume in project.volumes){
+                if(volume is Extrude){
+                    model.volumes.add(meshGenerator.generate(volume))
+                }
             }
+
+            /*
+            val mapper = ObjectMapper()
+            val jsonModel = mapper.writeValueAsString(model)*/
+            return ResponseEntity(model, HttpStatus.OK)
+        }catch (e: LineException){
+            return ResponseEntity(Wrapper(e.locations), HttpStatus.INTERNAL_SERVER_ERROR)
         }
 
-        /*
-        val mapper = ObjectMapper()
-        val jsonModel = mapper.writeValueAsString(model)*/
-        return model
     }
 
 }
