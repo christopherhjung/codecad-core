@@ -1,3 +1,3 @@
 
-rootProject.name = "mil"
+rootProject.name = "codecad-core"
 

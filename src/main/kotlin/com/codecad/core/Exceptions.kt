@@ -8,5 +8,4 @@ class Location(val line: Int, val column: Int){
     }
 }
 
-class LineException(val locations : List<Location>, message: String = "") : RuntimeException(message + " " + locations) {
-}
+

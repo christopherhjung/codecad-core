@@ -13,14 +13,14 @@ plugins {
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
 
-group = "com.codecad.core"
+group = "com.codecad"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_16
 
 docker {
     dependsOn(tasks.findByName("build"))
     name = "${project.name}:${project.version}"
-    files( "build/libs/mil-1.0-SNAPSHOT.jar")
+    files( "build/libs/codecad-core-1.0-SNAPSHOT.jar")
 }
 
 
