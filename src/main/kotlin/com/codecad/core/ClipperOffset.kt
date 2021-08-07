@@ -290,7 +290,7 @@ class ClipperOffset @JvmOverloads constructor(
     }
 
     //------------------------------------------------------------------------------
-    fun execute(delta: Double) {
+    fun execute(delta: Double) : List<List<PointD>> {
         fixOrientations()
         doOffset(delta)
         //now clean up 'corners' ...
@@ -311,6 +311,8 @@ class ClipperOffset @JvmOverloads constructor(
                 solution.removeAt(0)
             }*/
         }
+
+        return destPolys!!
     }
 
 

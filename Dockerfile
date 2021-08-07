@@ -1,4 +1,7 @@
-FROM adoptopenjdk/openjdk16
+FROM ubuntu:20.04
+RUN apt-get update
+RUN apt-get install -y openjdk-16-jre-headless
+
 #FROM zenika/kotlin
 #RUN apt-get update
 #RUN rm /bin/sh && ln -s /bin/bash /bin/sh
