@@ -16,6 +16,14 @@ class ProjectScope(val project: Project){
             project.volumes.add(Extrude(face, height))
         }
     }
+
+    fun extrude(sketch: Sketch, height: Value) {
+        val faces = findFaces(sketchToLines(sketch, ignoreConstruction = true))
+
+        for(face in faces){
+            project.volumes.add(Extrude(face, height))
+        }
+    }
 }
 
 fun project(block: ProjectScope.() -> Unit) : Project {

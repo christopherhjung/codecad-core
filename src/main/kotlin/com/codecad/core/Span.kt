@@ -7,7 +7,7 @@ interface Span{
     fun getPoint(t: Double): Point
 }
 
-class LineSpan(val line: Line) : Span {
+class LineSpan(val line: LineSegment) : Span {
     override fun getPoint(t: Double) : Point {
         return (line.difference * t + line.p0).copy()
     }

@@ -49,8 +49,8 @@ class Sketch(val project: Project) {
         return createPoint(a,b)
     }
 
-    fun createLine(a: Point, b: Point, type: LineType = LineType.Normal): Line {
-        val line = Line(a, b, type)
+    fun createLine(a: Point, b: Point, type: LineType = LineType.Normal): LineSegment {
+        val line = LineSegment(a, b, type)
         figures.add(line)
         return line
     }
@@ -77,11 +77,11 @@ class Sketch(val project: Project) {
         return createCircle(createPoint(), createParameter(1.0))
     }
 
-    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line {
+    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): LineSegment {
         return createLine(createPoint(x, y), createPoint(x2, y2))
     }
 
-    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line {
+    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): LineSegment {
         return createLine(createConstPoint(x, y), createConstPoint(x2, y2))
     }
 
@@ -291,10 +291,10 @@ class Rect : Pattern() {
 
     lateinit var center: Point
 
-    lateinit var top: Line
-    lateinit var right: Line
-    lateinit var bottom: Line
-    lateinit var left: Line
+    lateinit var top: LineSegment
+    lateinit var right: LineSegment
+    lateinit var bottom: LineSegment
+    lateinit var left: LineSegment
 
     lateinit var width: Value
     lateinit var height: Value

@@ -133,11 +133,11 @@ data class Edge(val source : Node, val target: Node){
 }
 
 fun Edge.orientationTo(other: Edge) : Int{
-    return (target.p - source.p).cross(other.target.p - other.source.p).sign.toInt()
+    return (target.p - source.p).crossZ(other.target.p - other.source.p).sign.toInt()
 }
 
 fun Edge.orientationTo(other: PointD) : Int{
-    return (target.p - source.p).cross(other - source.p).sign.toInt()
+    return (target.p - source.p).crossZ(other - source.p).sign.toInt()
 }
 
 fun rotateComparator() : Comparator<Edge>{
@@ -167,72 +167,6 @@ fun ArrayList<Edge>.search(point: PointD) : Int{
     return left
 }
 
-abstract class Face(){
-    abstract fun generateTriangles() : List<TriangleFace>
-}
-
-class TriangleFace(vararg val points: PointD) : Face(){
-
-    override fun generateTriangles()  : List<TriangleFace>{
-        return listOf(this)
-    }
-}
-
-class ConvexFace(val points: List<PointD>) : Face(){
-    override fun generateTriangles()  : List<TriangleFace>{
-        val result = mutableListOf<TriangleFace>()
-        for( i in 0 until points.size - 2 ){
-            result.add(TriangleFace(points[0], points[i + 1], points[i + 2]))
-        }
-
-        return result
-    }
-}
-
-class PolygonFace(val points: List<PointD>, val inverted: Boolean = false) : Face(){
-    var parent: PolygonFace? = null
-    val children = mutableSetOf<PolygonFace>()
-    var clockwise: Boolean = false
-    var area : Double = 0.0
-    var leftmost: PointD? = null
-
-
-    override fun generateTriangles()  : List<TriangleFace>{
-        fun pointsToPolygon(polygonFace: PolygonFace) : org.poly2tri.geometry.polygon.Polygon{
-            val list = mutableListOf<PolygonPoint>()
-            for( point in polygonFace.points ){
-                list.add(PolygonPoint(point.x, point.y, point.z))
-            }
-            return org.poly2tri.geometry.polygon.Polygon(list)
-        }
-
-        val parent = pointsToPolygon(this)
-
-        for( child in this.children ){
-            parent.addHole(pointsToPolygon(child))
-        }
-
-        triangulate(parent)
-
-        val triangles = mutableListOf<TriangleFace>()
-
-        fun createPoint(trianglePoint: TriangulationPoint) : PointD{
-            return PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z)
-        }
-
-        val offset = if(inverted) 1 else 0
-
-        for( triangle in parent.triangles ){
-            val points = triangle.points
-            triangles.add(TriangleFace(
-                createPoint(points[0]),
-                createPoint(points[1 + offset]),
-                createPoint(points[2 - offset])))
-        }
-
-        return triangles
-    }
-}
 
 fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     val arr = removeIntersections(arr2)
@@ -279,7 +213,6 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         }
     }
 
-
     val faces = mutableListOf<PolygonFace>()
 
     val queue = edges.toMutableList()
@@ -292,7 +225,6 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         var current = next
         val face = PolygonFace(points)
         while(true){
-            //area += (current.target.p - current.source.p).cross(current.connection!!.target.p - current.connection!!.source.p)
             points.add(current.target.p)
             current.polygonFace = face
             area += current.source.p.x * current.target.p.y -  current.target.p.x * current.source.p.y
@@ -382,7 +314,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
                 val a = points[i]
                 val b = points[(i + 1) % points.size]
 
-                if((point - a).cross(b - a) > 0){
+                if((point - a).crossZ(b - a) > 0){
                     found = false
                     break
                 }

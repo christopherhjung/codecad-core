@@ -11,7 +11,7 @@ enum class LineType(val prio: Int){
 abstract class Figure(var type: LineType = LineType.Normal){
 }
 
-class Line(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
+class LineSegment(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
 
     val squaredLength : Value
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
