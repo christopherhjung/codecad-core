@@ -6,7 +6,6 @@ import com.codecad.common.PointD
 import com.codecad.core.*
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.math.abs
 
 
 class Node(val p : PointD){
@@ -26,21 +25,40 @@ class Volume(val faces: List<VolumeFace>){
 
 }
 
-class VolumeFace(val init : Edge) : Iterable<PointD>{
-    override fun iterator(): Iterator<PointD> {
+class VolumeFace(val init : Edge) : Iterable<Edge>{
+    override fun iterator(): Iterator<Edge> {
         var current : Edge = init
         var first = true
 
-        return object : Iterator<PointD>{
+        return object : Iterator<Edge>{
             override fun hasNext(): Boolean {
                 return first || current != init
             }
 
-            override fun next(): PointD {
+            override fun next(): Edge {
                 first = false
-                val result =  current.source!!.node.p
+                val result =  current//.source!!//.node.p
                 current = current.next!!
                 return result
+            }
+        }
+    }
+
+    fun points() : Iterable<PointD>{
+        return Iterable {
+            var current : Edge = init
+            var first = true
+            object : Iterator<PointD>{
+                override fun hasNext(): Boolean {
+                    return first || current != init
+                }
+
+                override fun next(): PointD {
+                    first = false
+                    val result =  current.source!!.node.p
+                    current = current.next!!
+                    return result
+                }
             }
         }
     }
@@ -72,6 +90,7 @@ fun main() {
         PointD(0.2,0.2,0.0),
         PointD(-0.2,0.2,0.0)
     )
+
 
     val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
     val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
@@ -133,24 +152,23 @@ fun generateFaces(extrude: Extrude) : Volume{
     }
 
     iterate(face)
-/*
-    for( a in faces.first() ){
-        println(a)
-    }*/
 
     return Volume(faces)
 }
 
+class Intersection(val edge : Edge, val point: PointD)
 
-fun findIntersections(face: VolumeFace, plane: Plane) : List<PointD>{
-    val result = mutableListOf<PointD>()
-    for((start, end) in face.rollover()){
+fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
+    val result = mutableListOf<Intersection>()
+    for(edge in face){
+        val start = edge.source!!.node.p
+        val end = edge.target!!.node.p
         val startDistance = plane.distanceTo(start)
         val endDistance = plane.distanceTo(end)
-        if( startDistance * endDistance <= 0 && abs(startDistance - endDistance) > 0){
+        if( startDistance * endDistance <= 0 && startDistance != endDistance){
             val k = startDistance / ( startDistance - endDistance )
             val intersection = start + ( end - start ) * k
-            result.add(intersection)
+            result.add(Intersection(edge, intersection))
         }
     }
     return result
@@ -171,28 +189,6 @@ fun test(){
         PointD(0.0,0.7,0.5),
         PointD(0.0,-0.3,0.5)
     ))
-/*
-    val aPlane = a.toPlane()
-    val bPlane = b.toPlane()
-
-    var aIntersections = findIntersections(a, bPlane)
-    var bIntersections = findIntersections(b, aPlane)
-
-    val line = Line.fromPlanes(aPlane, bPlane)
-
-
-    aIntersections = aIntersections.sortedBy { line.direction.dot(it) }
-    bIntersections = bIntersections.sortedBy { line.direction.dot(it) }
-
-    for(p in aIntersections){
-        println(line.direction.dot(p))
-    }
-
-    for(p in bIntersections){
-        println(line.direction.dot(p))
-    }*/
-
-    //sweepingPlane(listOf(a,b))
 }
 
 fun sweepingPlane( base : Volume, tool : Volume ){
@@ -251,8 +247,9 @@ fun sweepingPlane( base : Volume, tool : Volume ){
     fun buildEventQueue(volume: Volume) : TreeSet<PlaneEvent>{
         val events = TreeSet(planeComparator)
         for(face in volume.faces){
-            val min = face.minWithOrNull(pointListComparator)!!
-            val max = face.maxWithOrNull(pointListComparator)!!
+            val points = face.points().toList()
+            val min = points.minWithOrNull(pointListComparator)!!
+            val max = points.maxWithOrNull(pointListComparator)!!
             events.add(PlaneEvent(volume, face, min, true))
             events.add(PlaneEvent(volume, face, max, false))
         }
@@ -267,36 +264,14 @@ fun sweepingPlane( base : Volume, tool : Volume ){
 
     val active = HashMap<VolumeFace, PlaneEvent>()
 
-/*
-    while (baseEventQueue.isNotEmpty()) {
-        val baseEvent = baseEventQueue.first()
-        val toolEvent = toolEventQueue.first()
 
-        val order = planeComparator.compare(baseEvent, toolEvent)
-
-        if(order < 0){
-            val event = baseEventQueue.pollFirst()
-
-            if (event.start) {
-                val leftPlane = faceToPlane(event.face)
-                for (other in active.values) {
-                    val rightPlane = faceToPlane(other.face)
-                    val line = Line.fromPlanes(leftPlane, rightPlane)
-                }
-            }
-
-        }else{
-            toolEventQueue.pollFirst()
-        }
-
-    }*/
-
-    data class Event(val point : PointD, val offset: Double, val start: Boolean, val index: Int)
+    data class Event(val intersection : Intersection, val offset: Double, val start: Boolean, val index: Int)
 
     val testComparator = ChainComparator.Builder<Event>()
         .withComparable { it.offset }
         .withComparable { it.index }
-        .withComparator{ a,b ->
+        .withComparable { it.start }
+        /*.withComparator{ a,b ->
             if(a.start && b.start){
                 if(a.index == 1 && b.index == 0){
                     1
@@ -316,7 +291,7 @@ fun sweepingPlane( base : Volume, tool : Volume ){
             }else{
                 b.start.compareTo(a.start)
             }
-        }
+        }*/
         .build()
 
 
@@ -342,36 +317,36 @@ fun sweepingPlane( base : Volume, tool : Volume ){
                     continue
                 }
 
-                val rightIntersections = findIntersections(event.face, rightPlane).sortedBy { line.direction.dot(it) }
-                val leftIntersections = findIntersections(other.face, leftPlane).sortedBy { line.direction.dot(it) }
+                val rightIntersections = findIntersections(event.face, rightPlane).sortedBy { line.direction.dot(it.point) }
+                val leftIntersections = findIntersections(other.face, leftPlane).sortedBy { line.direction.dot(it.point) }
 
                 if(leftIntersections.isEmpty() || rightIntersections.isEmpty()){
                     continue
                 }
 
-                val events = TreeSet(testComparator)
+                val intersectionEvents = TreeSet(testComparator)
 
                 var start = true
                 for(intersection in leftIntersections){
-                    events.add(Event(intersection, line.direction.dot(intersection), start, 0))
+                    intersectionEvents.add(Event(intersection, line.direction.dot(intersection.point), start, 0))
                     start = !start
                 }
                 start = true
                 for(intersection in rightIntersections){
-                    events.add(Event(intersection, line.direction.dot(intersection), start, 1))
+                    intersectionEvents.add(Event(intersection, line.direction.dot(intersection.point), start, 1))
                     start = !start
                 }
 
                 val last = BooleanArray(2){false}
 
-                var started: PointD? = null
-                for(event in events){
-                    last[event.index] = event.start
+                var started: Intersection? = null
+                for(intersectionEvent in intersectionEvents){
+                    last[intersectionEvent.index] = intersectionEvent.start
 
-                    if(event.start && last[ 1 - event.index ] ){
-                        started = event.point
-                    }else if(!event.start && started != null){
-                        println("${started} to ${event.point}")
+                    if(intersectionEvent.start && last[ 1 - intersectionEvent.index ] ){
+                        started = intersectionEvent.intersection
+                    }else if(!intersectionEvent.start && started != null){
+                        println("${started.point} to ${intersectionEvent.intersection.point}")
                         started = null
                     }
                 }
