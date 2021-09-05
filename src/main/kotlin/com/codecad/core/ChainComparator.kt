@@ -1,20 +1,26 @@
 package com.codecad.core
 
-class ChainComparator<T>(val comparators: List<(T, T) -> Int>) : Comparator<T> {
+class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int) : Comparator<T> {
     override fun compare(o1: T, o2: T): Int {
         for(comparator in comparators){
-            val comparison = comparator(o1,o2)
+            val comparison = comparator.compare(o1,o2)
 
             if(comparison != 0){
                 return comparison
             }
         }
 
-        return 0
+        return default
     }
 
     class Builder<T>{
-        val comparators: MutableList<(T, T) -> Int> = mutableListOf()
+        val comparators: MutableList<Comparator<T>> = mutableListOf()
+        var default : Int = 0
+
+        fun withComparator(comp : Comparator<T>) : Builder<T>{
+            comparators.add(comp)
+            return this
+        }
 
         fun withComparable(invert: Boolean = false, supplier: (T) -> Comparable<*>) : Builder<T>{
             val supplier = supplier as (T) -> Comparable<Any?>
@@ -31,8 +37,13 @@ class ChainComparator<T>(val comparators: List<(T, T) -> Int>) : Comparator<T> {
             return this
         }
 
+        fun withDefault( default: Int) : Builder<T>{
+            this.default = default
+            return this
+        }
+
         fun build() : ChainComparator<T>{
-            return ChainComparator(comparators)
+            return ChainComparator(comparators, default)
         }
     }
 }
