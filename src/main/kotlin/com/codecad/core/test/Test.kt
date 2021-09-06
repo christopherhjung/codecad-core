@@ -6,18 +6,20 @@ import com.codecad.common.PointD
 import com.codecad.core.*
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.math.abs
 
 data class Node(val point : PointD){
 
 }
 
 class Corner(val node: Node){
-
+    val edges = mutableListOf<Edge>()
 }
 
 class Edge(val source: Corner? = null,
            val target : Corner? = null){
     var next: Edge? = null
+    lateinit var twin : Edge
 }
 
 class Volume(val faces: List<VolumeFace>){
@@ -61,6 +63,25 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
             }
         }
     }
+
+    fun nodes() : Iterable<Node>{
+        return Iterable {
+            var current : Edge = init
+            var first = true
+            object : Iterator<Node>{
+                override fun hasNext(): Boolean {
+                    return first || current != init
+                }
+
+                override fun next(): Node {
+                    first = false
+                    val result =  current.source!!.node
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
 }
 
 
@@ -74,7 +95,7 @@ class PlaneEdge(val origin: PointD, val target: PointD){
     val next: PlaneEdge? = null
 }
 
-class PlaneSlice(val face: VolumeFace, var start: Edge? = null, var end: Edge? = null, var startPoint : PointD? = null, var endPoint: PointD? = null)
+class PlaneSlice(val face: VolumeFace, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
 
 
 
@@ -120,7 +141,8 @@ fun main() {
     val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
     val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
 
-    sweepingPlane(base, tool)
+    val slices = findPlaneSlices(base, tool)
+    computePlaneSlices(slices)
 }
 
 fun generateFaces(extrude: Extrude) : Volume{
@@ -133,23 +155,26 @@ fun generateFaces(extrude: Extrude) : Volume{
 
     val offsetVector = PointD(0.0,0.0, height)
 
+    /*
     fun getOrAdd(x: Double, y: Double, z: Double) : Node{
         val new = PointD(x,y,z)
         return map.computeIfAbsent(new){Node(new)}
-    }
+    }*/
 
     fun getOrAdd(new : PointD) : Node{
         return map.computeIfAbsent(new){Node(new)}
     }
 
     fun generateEdges(points : List<PointD>, invert: Boolean = false) : List<Edge>{
-        val edges = points.map { Corner(getOrAdd(it)) }.rollover().map { (a,b) -> if(invert) Edge(a,b) else Edge(b,a) }
+
+        val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (a,b) ->
+            val forward = Edge(a,b)
+            forward.twin = Edge(b,a)
+            forward
+         }
         edges.rollover().forEach{ (left, right) ->
-            if(invert){
-                right.next = left
-            }else{
-                left.next = right
-            }
+            left.next = right
+            right.twin.next = left
         }
 
         faces.add(VolumeFace(edges.first()))
@@ -201,8 +226,8 @@ fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
             val endDistance = plane.distanceTo(end.point)
             if( startDistance * endDistance <= 0 && startDistance != endDistance){
                 val intersection = when {
-                    startDistance < 1e-8 -> start
-                    endDistance < 1e-8 -> end
+                    abs(startDistance) < 1e-8 -> start
+                    abs(endDistance) < 1e-8 -> end
                     else -> Node(start.point + ( end.point - start.point ) *
                             startDistance / ( startDistance - endDistance ))
                 }
@@ -232,7 +257,7 @@ fun test(){
     ))
 }
 
-fun sweepingPlane( base : Volume, tool : Volume ){
+fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
     val planeComparator = ChainComparator.Builder<PlaneEvent>()
         .withComparable { it.point.x }
@@ -311,30 +336,7 @@ fun sweepingPlane( base : Volume, tool : Volume ){
     val testComparator = ChainComparator.Builder<Event>()
         .withComparable { it.offset }
         .withComparable { it.index }
-        //.withComparable { it.start }
-        /*.withComparator{ a,b ->
-            if(a.start && b.start){
-                if(a.index == 1 && b.index == 0){
-                    1
-                }else if(a.index == b.index){
-                    1
-                }else{
-                    -1
-                }
-            }else if(!a.start && !b.start){
-                if(a.index == 0 && b.index == 1){
-                    1
-                }else if(a.index == b.index){
-                    1
-                }else{
-                    -1
-                }
-            }else{
-                b.start.compareTo(a.start)
-            }
-        }*/
         .build()
-
 
 
     val resultSlices = mutableListOf<PlaneSlice>()
@@ -405,20 +407,20 @@ fun sweepingPlane( base : Volume, tool : Volume ){
 
                     if(inside[currentIndex] && inside[ otherIndex ] ){
                         currentSlice.start = intersectionEvent.intersection.edge
-                        currentSlice.startPoint = intersectionEvent.intersection.position.point
+                        currentSlice.startPosition = intersectionEvent.intersection.position
 
                         if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
                             otherSlice.start = last[otherIndex]!!.edge
                         }
 
-                        otherSlice.startPoint = last[otherIndex]!!.position.point
+                        otherSlice.startPosition = last[otherIndex]!!.position
                         started = intersectionEvent.intersection
                     }else if(!inside[intersectionEvent.index] ){
                         if(started != null){
                             println("${started.position} to ${intersectionEvent.intersection.position}")
 
                             currentSlice.end = intersectionEvent.intersection.edge
-                            currentSlice.endPoint = intersectionEvent.intersection.position.point
+                            currentSlice.endPosition = intersectionEvent.intersection.position
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
@@ -431,7 +433,7 @@ fun sweepingPlane( base : Volume, tool : Volume ){
                                 currentSlice.end = last[otherIndex]!!.edge
                             }
 
-                            currentSlice.endPoint = intersectionEvent.intersection.position.point
+                            currentSlice.endPosition = intersectionEvent.intersection.position
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
@@ -445,11 +447,89 @@ fun sweepingPlane( base : Volume, tool : Volume ){
         }
     }
 
+    return resultSlices
+}
+
+fun computePlaneSlices(slices : List<PlaneSlice>){
+
     val map = HashMap<VolumeFace, MutableList<PlaneSlice>>()
 
-    for(planeSlice in resultSlices){
+    for(planeSlice in slices){
+
+
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
     }
+
+    for((face, slices) in map.entries){
+
+
+        for(planeSlice in slices){
+            //cut
+            //add face
+
+            if(planeSlice.start?.source?.node === planeSlice.startPosition ){
+                if(planeSlice.end?.target?.node === planeSlice.endPosition){
+                    println("nocut")
+                    continue
+                }
+            }else if(planeSlice.start?.target?.node === planeSlice.startPosition){
+                if(planeSlice.end?.source?.node === planeSlice.endPosition){
+                    println("nocut")
+                    continue
+                }
+            }
+
+            if(planeSlice.start != null && planeSlice.end != null){
+                val a = Corner(planeSlice.startPosition!!)
+                val b = Corner(planeSlice.endPosition!!)
+
+                val start = planeSlice.start!!
+                val end = planeSlice.end!!
+
+                val left = Edge(start.source, a)
+                val bridge = Edge(a, b)
+                val right = Edge(b, end.target)
+
+                var current = end
+                var prev = end
+                while(current !== start){
+                    prev = current
+                    current = current.next!!
+                }
+
+                prev.next = left
+                left.next = bridge
+                bridge.next = right
+                right.next = end.next
+
+                // val temp = start.next
+
+                current = start
+                var prev2 = start
+                while(current !== end){
+                    prev2 = current
+                    current = current.next!!
+                }
+
+                val c = Corner(planeSlice.endPosition!!)
+                val d = Corner(planeSlice.startPosition!!)
+                val left2 = Edge(end.source, c)
+                val bridge2 = Edge(c, d)
+                val right2 = Edge(d, start.target)
+
+                prev2.next = left2
+                left2.next = bridge2
+                bridge2.next = right2
+                right2.next = start.next
+
+                println(VolumeFace(prev).points().toList())
+                println(VolumeFace(prev2).points().toList())
+                println("finish")
+            }
+
+        }
+    }
+
 
     println("hello")
 }
