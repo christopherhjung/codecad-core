@@ -200,8 +200,13 @@ fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
             val startDistance = plane.distanceTo(start.point)
             val endDistance = plane.distanceTo(end.point)
             if( startDistance * endDistance <= 0 && startDistance != endDistance){
-                val k = startDistance / ( startDistance - endDistance )
-                val intersection = Node(start.point + ( end.point - start.point ) * k)
+                val intersection = when {
+                    startDistance < 1e-8 -> start
+                    endDistance < 1e-8 -> end
+                    else -> Node(start.point + ( end.point - start.point ) *
+                            startDistance / ( startDistance - endDistance ))
+                }
+
                 edgeSlices[edgeSlice] = intersection
                 result.add(Intersection(edge, intersection))
             }
@@ -440,6 +445,11 @@ fun sweepingPlane( base : Volume, tool : Volume ){
         }
     }
 
+    val map = HashMap<VolumeFace, MutableList<PlaneSlice>>()
+
+    for(planeSlice in resultSlices){
+        map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
+    }
 
     println("hello")
 }
