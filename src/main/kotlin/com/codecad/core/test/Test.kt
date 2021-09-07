@@ -9,7 +9,6 @@ import com.codecad.core.*
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
-import kotlin.math.atan2
 
 class PolygonFace(val positions: List<Node>) {
     var parent: com.codecad.core.PolygonFace? = null
@@ -19,9 +18,7 @@ class PolygonFace(val positions: List<Node>) {
     var leftmost: PointD? = null
 }
 
-data class Node(val point : PointD){
-
-}
+data class Node(val point : PointD)
 
 data class Corner(val node: Node){
     val edges = mutableListOf<Edge>()
@@ -41,9 +38,7 @@ data class Edge(val source: Corner,
     lateinit var twin : Edge
 }
 
-class Volume(val faces: List<VolumeFace>){
-
-}
+class Volume(val faces: List<VolumeFace>)
 
 class VolumeFace(val init : Edge) : Iterable<Edge>{
     override fun iterator(): Iterator<Edge> {
@@ -144,9 +139,7 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
 
 
 
-class PlaneEvent(val volume : Volume, val face: VolumeFace, val point: PointD, val start : Boolean){
-
-}
+class PlaneEvent(val volume : Volume, val face: VolumeFace, val point: PointD, val start : Boolean)
 
 class PlaneEdge(val origin: PointD, val target: PointD){
     val next: PlaneEdge? = null
@@ -208,9 +201,6 @@ fun main() {
     computePlaneSlices(slices)
 }
 
-class DirectedPlane(val plane: Plane, val first: PointD, val second: PointD){
-
-}
 
 fun generateFaces(extrude: Extrude) : Volume{
     val face = extrude.polygonFace
@@ -417,8 +407,8 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
                     continue
                 }
 
-                val leftIntersections = findIntersections(event.face, rightPlane).sortedBy { line.direction.dot(it.position.point) }
-                val rightIntersections = findIntersections(other.face, leftPlane).sortedBy { line.direction.dot(it.position.point) }
+                val leftIntersections = findIntersections(event.face, rightPlane)//.sortedBy { line.direction.dot(it.position.point) }
+                val rightIntersections = findIntersections(other.face, leftPlane)//.sortedBy { line.direction.dot(it.position.point) }
 
                 if(leftIntersections.isEmpty() || rightIntersections.isEmpty()){
                     continue
@@ -444,7 +434,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
                     }
                 }
 
-                val slices = Array<PlaneSlice>(2){ createSlice(it) }
+                val slices = Array(2){ createSlice(it) }
 
                 var started: Intersection? = null
                 var finishSegment : Intersection? = null
@@ -622,8 +612,8 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
         }
 
         edgeList.removeAll(ignoreEdges)
-
         val faces = generateFaces(plane, edgeList)
+        combineFaces(plane, faces)
 
         println("ss")
     }
@@ -639,15 +629,19 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core
         val next = queue.first()
         queue.remove(next)
 
-        var area = PointD.ZERO
+        val area = PointD.ZERO
         val points = mutableListOf<Node>()
         var current = next
         val face = com.codecad.core.test.PolygonFace(points)
 
+        val areaTemp = PointD()
+
         while(true){
             points.add(current.target.node)
             //current.polygonFace = face
-            area += current.source.node.point.cross(current.target.node.point)
+
+            current.source.node.point.cross(current.target.node.point, areaTemp)
+            area += areaTemp
             if(current.target === next.source){
                 break
             }
@@ -656,13 +650,12 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core
             queue.remove(current)
         }
 
-        //area /= 2
-
         val areaVolume = area.length() / 2
-        val direction = area.dot(plane.normal)
+        val clockwise = area.dot(plane.normal) < 0
 
-        face.area = abs(areaVolume)
-        face.clockwise = direction < 0
+        face.area = areaVolume
+        face.clockwise = clockwise
+
         //face.leftmost = getLeftmostPoint(face)
         faces.add(face)
     }
@@ -670,26 +663,10 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core
     return faces
 }
 
-class RotaryComparator(plane: Plane) : (Edge) -> Double{
-    private val directionX: PointD
-    private val directionY: PointD
-    init{
-        val normal = plane.normal
-        directionX = if(normal.y != 0.0 || normal.x != 0.0){
-            PointD(-normal.y, normal.x, 0.0)
-        }else if(normal.z != 0.0){
-            PointD(0.0, -normal.z, normal.y)
-        }else{
-            throw RuntimeException("normal vector has size 0")
-        }
+fun combineFaces(plane: Plane, faces: List<PolygonFace>){
+    val directedPlane = DirectedPlane.from(plane)
 
-        directionY = normal.cross(directionX)
-    }
-
-    override fun invoke(p1: Edge): Double {
-        val aDirection = (p1.target.node.point - p1.source.node.point)//.normalized()
-        val result = atan2(aDirection.dot(directionX), aDirection.dot(directionY))
-        return result
-    }
 }
+
+
 
