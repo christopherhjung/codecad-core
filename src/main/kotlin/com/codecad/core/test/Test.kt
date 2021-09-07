@@ -8,6 +8,7 @@ import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.sign
 
 data class Node(val point : PointD){
 
@@ -85,6 +86,44 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
                 override fun next(): Node {
                     first = false
                     val result =  current.source!!.node
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
+
+    fun corners() : Iterable<Corner>{
+        return Iterable {
+            var current : Edge = init
+            var first = true
+            object : Iterator<Corner>{
+                override fun hasNext(): Boolean {
+                    return first || current != init
+                }
+
+                override fun next(): Corner {
+                    first = false
+                    val result =  current.source!!
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
+
+    fun edges() : Iterable<Edge>{
+        return Iterable {
+            var current : Edge = init
+            var first = true
+            object : Iterator<Edge>{
+                override fun hasNext(): Boolean {
+                    return first || current != init
+                }
+
+                override fun next(): Edge {
+                    first = false
+                    val result =  current
                     current = current.next!!
                     return result
                 }
@@ -481,11 +520,30 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
     for((face, slices) in map.entries){
         val nodeMap = mutableMapOf<Node, Corner>()
 
-        val cornerList = mutableListOf<Corner>()
+        val edgeList = mutableSetOf<Edge>()
+        val ignoreEdges = mutableSetOf<Edge>()
 
+        edgeList.addAll(face.edges())
+
+        val corners = mutableSetOf<Corner>()
+        corners.addAll(face.corners())
+
+        for( corner in face.corners() ){
+            nodeMap[corner.node] = corner
+        }
 
         fun getOrCreateCorner(node: Node) : Corner{
-            return nodeMap.computeIfAbsent(node){Corner(node)}
+            return nodeMap.computeIfAbsent(node){
+                val corner = Corner(node)
+                corners.add(corner)
+                corner
+            }
+        }
+
+        fun createEdge(source: Corner, target: Corner) : Edge{
+            val edge = Edge(source, target)
+            edgeList.add(edge)
+            return edge
         }
 
         val edgeMap = mutableMapOf<Edge, MutableList<Corner>>()
@@ -494,8 +552,20 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             val startCorner = getOrCreateCorner(slice.startPosition!!)
             val endCorner = getOrCreateCorner(slice.endPosition!!)
 
-            val edge = Edge(startCorner, endCorner)
-            edge.twin = Edge(endCorner, startCorner)
+            if(slice.start?.source?.node === slice.startPosition ){
+                if(slice.end?.target?.node === slice.endPosition){
+                    println("nocut")
+                    continue
+                }
+            }else if(slice.start?.target?.node === slice.startPosition){
+                if(slice.end?.source?.node === slice.endPosition){
+                    println("nocut")
+                    continue
+                }
+            }
+
+            val edge = createEdge(startCorner, endCorner)
+            edge.twin = createEdge(endCorner, startCorner)
             edge.twin.twin = edge
 
             startCorner.addEdge(edge)
@@ -515,10 +585,13 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             val sortedCorners = corners.sortedBy { it.node.point.dot(direction) }.toMutableList()
             sortedCorners.add(edge.target)
 
+            nodeMap[edge.source.node] = edge.source
+            nodeMap[edge.target.node] = edge.target
+
             var current = edge.source!!
             for(corner in sortedCorners){
-                val newEdge = Edge(current, corner)
-                newEdge.twin = Edge(corner, current)
+                val newEdge = createEdge(current, corner)
+                newEdge.twin = createEdge(corner, current)
                 newEdge.twin.twin = newEdge
                 current.addEdge(newEdge)
                 corner.addEdge(newEdge.twin)
@@ -527,19 +600,36 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
 
             edge.source.edges.remove(edge)
             edge.target.edges.remove(edge.twin)
+            ignoreEdges.add(edge)
+            ignoreEdges.add(edge.twin)
         }
 
         val plane = Plane.fromPoints(face.points().toList())
         val normal = plane.normal
 
-        val directionX = PointD(normal.x, -normal.z, normal.y)
-        val directionY = PointD(normal.z, normal.y, -normal.x)
+        val units = mutableListOf<PointD>()
+        if(normal.y != 0.0 || normal.x != 0.0){
+            units.add(PointD(-normal.y, normal.x, 0.0))
+        }
 
+        if(normal.z != 0.0 || normal.y != 0.0){
+            units.add(PointD(0.0, -normal.z, normal.y))
+        }
 
-        for(corner in nodeMap.values){
-            corner.edges.sortBy {
-                val aDirection = (it.target!!.node.point - it.source!!.node.point).normalized()
-                atan2(aDirection.dot(directionX), aDirection.dot(directionY))
+        if(normal.z != 0.0 || normal.x != 0.0){
+            units.add(PointD( -normal.z,0.0, normal.x))
+        }
+
+        val directionX = units[0]
+        val directionY = units[1]
+
+        for(corner in corners){
+            if(corner.edges.size > 2){
+                corner.edges.sortBy {
+                    val aDirection = (it.target!!.node.point - it.source!!.node.point).normalized()
+                    val result = atan2(aDirection.dot(directionX), aDirection.dot(directionY))
+                    result
+                }
             }
 
             for(i in corner.edges.indices){
@@ -549,69 +639,48 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             }
         }
 
+        edgeList.removeAll(ignoreEdges)
+
+        val faces = generateFaces(edgeList)
 
         println("ss")
-        /*
-        for(planeSlice in slices){
-            //cut
-            //add face
-
-            if(planeSlice.start?.source?.node === planeSlice.startPosition ){
-                if(planeSlice.end?.target?.node === planeSlice.endPosition){
-                    println("nocut")
-                    continue
-                }
-            }else if(planeSlice.start?.target?.node === planeSlice.startPosition){
-                if(planeSlice.end?.source?.node === planeSlice.endPosition){
-                    println("nocut")
-                    continue
-                }
-            }
-
-            if(planeSlice.start != null && planeSlice.end != null){
-
-
-                val start = planeSlice.start!!
-                val end = planeSlice.end!!
-
-                val a = Corner(planeSlice.startPosition!!)
-                val b = Corner(planeSlice.endPosition!!)
-
-                val prev = end.twin.next!!.twin
-                val prev2 = start.twin.next!!.twin
-
-                val left = Edge(start.source, a)
-                val bridge = Edge(a, b)
-                val right = Edge(b, end.target)
-
-
-                prev.next = left
-                left.next = bridge
-                bridge.next = right
-                right.next = end.next
-
-
-                val c = Corner(planeSlice.endPosition!!)
-                val d = Corner(planeSlice.startPosition!!)
-
-                val left2 = Edge(end.source, c)
-                val bridge2 = Edge(c, d)
-                val right2 = Edge(d, start.target)
-
-                prev2.next = left2
-                left2.next = bridge2
-                bridge2.next = right2
-                right2.next = start.next
-
-                println(VolumeFace(prev).points().toList())
-                println(VolumeFace(prev2).points().toList())
-                println("finish")
-            }
-
-        }*/
     }
 
 
     println("hello")
+}
+
+fun generateFaces(edges: Collection<Edge>) : List<Face>{
+    val faces = mutableListOf<Face>()
+    val queue = edges.toMutableSet()
+    while(queue.isNotEmpty()){
+        val next = queue.first()
+        queue.remove(next)
+
+        var area = 0.0
+        val points = mutableListOf<PointD>()
+        var current = next
+        val face = PolygonFace(points)
+        while(true){
+            points.add(current.target!!.node.point)
+            //current.polygonFace = face
+            if(current.target === next.source){
+                break
+            }
+
+            current = current.next!!
+            queue.remove(current)
+        }
+
+        area /= 2
+
+        face.area = abs(area)
+        face.clockwise = area.sign < 0
+        face.leftmost = getLeftmostPoint(face)
+        println(area)
+        faces.add(face)
+    }
+
+    return faces
 }
 
