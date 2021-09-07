@@ -7,16 +7,25 @@ import com.codecad.core.*
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
+import kotlin.math.atan2
 
 data class Node(val point : PointD){
 
 }
 
-class Corner(val node: Node){
+data class Corner(val node: Node){
     val edges = mutableListOf<Edge>()
+
+    fun addEdge(edge: Edge){
+        if(edge.source?.node !== node){
+            throw RuntimeException("ss")
+        }
+
+        edges.add(edge)
+    }
 }
 
-class Edge(val source: Corner? = null,
+data class Edge(val source: Corner? = null,
            val target : Corner? = null){
     var next: Edge? = null
     lateinit var twin : Edge
@@ -137,6 +146,12 @@ fun main() {
         PointD(-0.2,0.2,0.0)
     )
 
+    val directionX = PointD(1.0,0.0,0.0)
+    val directionY = PointD(0.0,1.0,0.0)
+    val other = PointD(0.0,-1.0,0.0).normalized()
+/*
+    println(atan2(other.dot(directionX), other.dot(directionY)))
+*/
 
     val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
     val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
@@ -170,6 +185,9 @@ fun generateFaces(extrude: Extrude) : Volume{
         val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (a,b) ->
             val forward = Edge(a,b)
             forward.twin = Edge(b,a)
+            forward.twin.twin = forward
+            a.addEdge(forward)
+            b.addEdge(forward.twin)
             forward
          }
         edges.rollover().forEach{ (left, right) ->
@@ -413,7 +431,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
                             otherSlice.start = last[otherIndex]!!.edge
                         }
 
-                        otherSlice.startPosition = last[otherIndex]!!.position
+                        otherSlice.startPosition = currentSlice.startPosition
                         started = intersectionEvent.intersection
                     }else if(!inside[intersectionEvent.index] ){
                         if(started != null){
@@ -425,7 +443,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
 
-                            finishSegment = started
+                            finishSegment = intersectionEvent.intersection
                             started = null
                             continue
                         }else if(finishSegment != null){
@@ -433,7 +451,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
                                 currentSlice.end = last[otherIndex]!!.edge
                             }
 
-                            currentSlice.endPosition = intersectionEvent.intersection.position
+                            currentSlice.endPosition = finishSegment.position
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
@@ -461,8 +479,79 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
     }
 
     for((face, slices) in map.entries){
+        val nodeMap = mutableMapOf<Node, Corner>()
+
+        val cornerList = mutableListOf<Corner>()
 
 
+        fun getOrCreateCorner(node: Node) : Corner{
+            return nodeMap.computeIfAbsent(node){Corner(node)}
+        }
+
+        val edgeMap = mutableMapOf<Edge, MutableList<Corner>>()
+
+        for( slice in slices ){
+            val startCorner = getOrCreateCorner(slice.startPosition!!)
+            val endCorner = getOrCreateCorner(slice.endPosition!!)
+
+            val edge = Edge(startCorner, endCorner)
+            edge.twin = Edge(endCorner, startCorner)
+            edge.twin.twin = edge
+
+            startCorner.addEdge(edge)
+            endCorner.addEdge(edge.twin)
+
+            if(slice.start != null){
+                edgeMap.computeIfAbsent(slice.start!!) { mutableListOf()}.add(startCorner)
+            }
+
+            if(slice.end != null) {
+                edgeMap.computeIfAbsent(slice.end!!) { mutableListOf() }.add(endCorner)
+            }
+        }
+
+        for((edge, corners) in edgeMap.entries){
+            val direction = (edge.target!!.node.point - edge.source!!.node.point).normalized()
+            val sortedCorners = corners.sortedBy { it.node.point.dot(direction) }.toMutableList()
+            sortedCorners.add(edge.target)
+
+            var current = edge.source!!
+            for(corner in sortedCorners){
+                val newEdge = Edge(current, corner)
+                newEdge.twin = Edge(corner, current)
+                newEdge.twin.twin = newEdge
+                current.addEdge(newEdge)
+                corner.addEdge(newEdge.twin)
+                current = corner
+            }
+
+            edge.source.edges.remove(edge)
+            edge.target.edges.remove(edge.twin)
+        }
+
+        val plane = Plane.fromPoints(face.points().toList())
+        val normal = plane.normal
+
+        val directionX = PointD(normal.x, -normal.z, normal.y)
+        val directionY = PointD(normal.z, normal.y, -normal.x)
+
+
+        for(corner in nodeMap.values){
+            corner.edges.sortBy {
+                val aDirection = (it.target!!.node.point - it.source!!.node.point).normalized()
+                atan2(aDirection.dot(directionX), aDirection.dot(directionY))
+            }
+
+            for(i in corner.edges.indices){
+                val top = corner.edges[i]
+                val bottom = corner.edges[(i+1)%corner.edges.size]
+                top.twin.next = bottom
+            }
+        }
+
+
+        println("ss")
+        /*
         for(planeSlice in slices){
             //cut
             //add face
@@ -480,39 +569,31 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             }
 
             if(planeSlice.start != null && planeSlice.end != null){
-                val a = Corner(planeSlice.startPosition!!)
-                val b = Corner(planeSlice.endPosition!!)
+
 
                 val start = planeSlice.start!!
                 val end = planeSlice.end!!
+
+                val a = Corner(planeSlice.startPosition!!)
+                val b = Corner(planeSlice.endPosition!!)
+
+                val prev = end.twin.next!!.twin
+                val prev2 = start.twin.next!!.twin
 
                 val left = Edge(start.source, a)
                 val bridge = Edge(a, b)
                 val right = Edge(b, end.target)
 
-                var current = end
-                var prev = end
-                while(current !== start){
-                    prev = current
-                    current = current.next!!
-                }
 
                 prev.next = left
                 left.next = bridge
                 bridge.next = right
                 right.next = end.next
 
-                // val temp = start.next
-
-                current = start
-                var prev2 = start
-                while(current !== end){
-                    prev2 = current
-                    current = current.next!!
-                }
 
                 val c = Corner(planeSlice.endPosition!!)
                 val d = Corner(planeSlice.startPosition!!)
+
                 val left2 = Edge(end.source, c)
                 val bridge2 = Edge(c, d)
                 val right2 = Edge(d, start.target)
@@ -527,7 +608,7 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
                 println("finish")
             }
 
-        }
+        }*/
     }
 
 
