@@ -1,3 +1,5 @@
+@file:Suppress("KotlinDeprecation")
+
 package com.codecad.core.test
 
 import com.codecad.common.Line
@@ -33,8 +35,8 @@ data class Corner(val node: Node){
     }
 }
 
-data class Edge(val source: Corner? = null,
-           val target : Corner? = null){
+data class Edge(val source: Corner,
+           val target : Corner){
     var next: Edge? = null
     lateinit var twin : Edge
 }
@@ -73,7 +75,7 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
 
                 override fun next(): PointD {
                     first = false
-                    val result =  current.source!!.node.point
+                    val result =  current.source.node.point
                     current = current.next!!
                     return result
                 }
@@ -92,7 +94,7 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
 
                 override fun next(): Node {
                     first = false
-                    val result =  current.source!!.node
+                    val result =  current.source.node
                     current = current.next!!
                     return result
                 }
@@ -111,7 +113,7 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
 
                 override fun next(): Corner {
                     first = false
-                    val result =  current.source!!
+                    val result = current.source
                     current = current.next!!
                     return result
                 }
@@ -206,6 +208,10 @@ fun main() {
     computePlaneSlices(slices)
 }
 
+class DirectedPlane(val plane: Plane, val first: PointD, val second: PointD){
+
+}
+
 fun generateFaces(extrude: Extrude) : Volume{
     val face = extrude.polygonFace
     val height = extrude.height.value
@@ -277,8 +283,8 @@ val edgeSlices = HashMap<EdgeSlice, Node>()
 fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
     val result = mutableListOf<Intersection>()
     for(edge in face){
-        val start = edge.source!!.node
-        val end = edge.target!!.node
+        val start = edge.source.node
+        val end = edge.target.node
 
         val edgeSlice = EdgeSlice(start, end, plane)
 
@@ -304,22 +310,6 @@ fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
     return result
 }
 
-
-fun test(){
-    val a = PolygonFace(listOf(
-        PointD(-0.5,-0.5,0.0),
-        PointD(0.5,-0.5,0.0),
-        PointD(0.5,0.5,0.0),
-        PointD(-0.5,0.5,0.0)
-    ))
-
-    val b = PolygonFace(listOf(
-        PointD(0.0,-0.3,-0.5),
-        PointD(0.0,0.7,-0.5),
-        PointD(0.0,0.7,0.5),
-        PointD(0.0,-0.3,0.5)
-    ))
-}
 
 fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
@@ -369,7 +359,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
         val a = face.init
         val b = a.next
         val c = b?.next
-        val plane = Plane.fromPoints(a.source!!.node.point, b!!.source!!.node.point, c!!.source!!.node.point)
+        val plane = Plane.fromPoints(a.source.node.point, b!!.source.node.point, c!!.source.node.point)
         planes[face] = plane
         return plane
     }
@@ -530,7 +520,10 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
         val edgeList = mutableSetOf<Edge>()
         val ignoreEdges = mutableSetOf<Edge>()
 
-        edgeList.addAll(face.edges())
+        for(edge in face.edges()){
+            edgeList.add(edge)
+            edgeList.add(edge.twin)
+        }
 
         val corners = mutableSetOf<Corner>()
         corners.addAll(face.corners())
@@ -588,14 +581,14 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
         }
 
         for((edge, corners) in edgeMap.entries){
-            val direction = (edge.target!!.node.point - edge.source!!.node.point).normalized()
+            val direction = (edge.target.node.point - edge.source.node.point).normalized()
             val sortedCorners = corners.sortedBy { it.node.point.dot(direction) }.toMutableList()
             sortedCorners.add(edge.target)
 
             nodeMap[edge.source.node] = edge.source
             nodeMap[edge.target.node] = edge.target
 
-            var current = edge.source!!
+            var current = edge.source
             for(corner in sortedCorners){
                 val newEdge = createEdge(current, corner)
                 newEdge.twin = createEdge(corner, current)
@@ -652,9 +645,9 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core
         val face = com.codecad.core.test.PolygonFace(points)
 
         while(true){
-            points.add(current.target!!.node)
+            points.add(current.target.node)
             //current.polygonFace = face
-            area += current.source!!.node.point.cross(current.target!!.node.point)
+            area += current.source.node.point.cross(current.target.node.point)
             if(current.target === next.source){
                 break
             }
@@ -691,12 +684,10 @@ class RotaryComparator(plane: Plane) : (Edge) -> Double{
         }
 
         directionY = normal.cross(directionX)
-
-        println(normal.distanceTo(directionX.cross(directionY)))
     }
 
     override fun invoke(p1: Edge): Double {
-        val aDirection = (p1.target!!.node.point - p1.source!!.node.point).normalized()
+        val aDirection = (p1.target.node.point - p1.source.node.point)//.normalized()
         val result = atan2(aDirection.dot(directionX), aDirection.dot(directionY))
         return result
     }
