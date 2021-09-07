@@ -8,7 +8,14 @@ import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.math.atan2
-import kotlin.math.sign
+
+class PolygonFace(val positions: List<Node>) {
+    var parent: com.codecad.core.PolygonFace? = null
+    val children = mutableSetOf<com.codecad.core.PolygonFace>()
+    var clockwise: Boolean = false
+    var area: Double = 0.0
+    var leftmost: PointD? = null
+}
 
 data class Node(val point : PointD){
 
@@ -241,7 +248,7 @@ fun generateFaces(extrude: Extrude) : Volume{
     generateEdges(face.points, inverted)
     generateEdges(face.points.map { it + offsetVector }, !inverted)
 
-    fun iterate(parent: PolygonFace){
+    fun iterate(parent: com.codecad.core.PolygonFace){
         for( (left, right) in parent.points.rollover() ){
             val list = mutableListOf(
                 PointD(left.x, left.y, 0.0),
@@ -512,12 +519,12 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
     val map = HashMap<VolumeFace, MutableList<PlaneSlice>>()
 
     for(planeSlice in slices){
-
-
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
     }
 
     for((face, slices) in map.entries){
+        val plane = Plane.fromPoints(face.points().toList())
+
         val nodeMap = mutableMapOf<Node, Corner>()
 
         val edgeList = mutableSetOf<Edge>()
@@ -604,32 +611,14 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             ignoreEdges.add(edge.twin)
         }
 
-        val plane = Plane.fromPoints(face.points().toList())
-        val normal = plane.normal
-
-        val units = mutableListOf<PointD>()
-        if(normal.y != 0.0 || normal.x != 0.0){
-            units.add(PointD(-normal.y, normal.x, 0.0))
-        }
-
-        if(normal.z != 0.0 || normal.y != 0.0){
-            units.add(PointD(0.0, -normal.z, normal.y))
-        }
-
-        if(normal.z != 0.0 || normal.x != 0.0){
-            units.add(PointD( -normal.z,0.0, normal.x))
-        }
-
-        val directionX = units[0]
-        val directionY = units[1]
+        var comparator: RotaryComparator? = null
 
         for(corner in corners){
             if(corner.edges.size > 2){
-                corner.edges.sortBy {
-                    val aDirection = (it.target!!.node.point - it.source!!.node.point).normalized()
-                    val result = atan2(aDirection.dot(directionX), aDirection.dot(directionY))
-                    result
+                if(comparator == null){
+                    comparator = RotaryComparator(plane)
                 }
+                corner.edges.sortBy(comparator)
             }
 
             for(i in corner.edges.indices){
@@ -641,7 +630,7 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
 
         edgeList.removeAll(ignoreEdges)
 
-        val faces = generateFaces(edgeList)
+        val faces = generateFaces(plane, edgeList)
 
         println("ss")
     }
@@ -650,20 +639,22 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
     println("hello")
 }
 
-fun generateFaces(edges: Collection<Edge>) : List<Face>{
-    val faces = mutableListOf<Face>()
+fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core.test.PolygonFace>{
+    val faces = mutableListOf<com.codecad.core.test.PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
         val next = queue.first()
         queue.remove(next)
 
-        var area = 0.0
-        val points = mutableListOf<PointD>()
+        var area = PointD.ZERO
+        val points = mutableListOf<Node>()
         var current = next
-        val face = PolygonFace(points)
+        val face = com.codecad.core.test.PolygonFace(points)
+
         while(true){
-            points.add(current.target!!.node.point)
+            points.add(current.target!!.node)
             //current.polygonFace = face
+            area += current.source!!.node.point.cross(current.target!!.node.point)
             if(current.target === next.source){
                 break
             }
@@ -672,15 +663,42 @@ fun generateFaces(edges: Collection<Edge>) : List<Face>{
             queue.remove(current)
         }
 
-        area /= 2
+        //area /= 2
 
-        face.area = abs(area)
-        face.clockwise = area.sign < 0
-        face.leftmost = getLeftmostPoint(face)
-        println(area)
+        val areaVolume = area.length() / 2
+        val direction = area.dot(plane.normal)
+
+        face.area = abs(areaVolume)
+        face.clockwise = direction < 0
+        //face.leftmost = getLeftmostPoint(face)
         faces.add(face)
     }
 
     return faces
+}
+
+class RotaryComparator(plane: Plane) : (Edge) -> Double{
+    private val directionX: PointD
+    private val directionY: PointD
+    init{
+        val normal = plane.normal
+        directionX = if(normal.y != 0.0 || normal.x != 0.0){
+            PointD(-normal.y, normal.x, 0.0)
+        }else if(normal.z != 0.0){
+            PointD(0.0, -normal.z, normal.y)
+        }else{
+            throw RuntimeException("normal vector has size 0")
+        }
+
+        directionY = normal.cross(directionX)
+
+        println(normal.distanceTo(directionX.cross(directionY)))
+    }
+
+    override fun invoke(p1: Edge): Double {
+        val aDirection = (p1.target!!.node.point - p1.source!!.node.point).normalized()
+        val result = atan2(aDirection.dot(directionX), aDirection.dot(directionY))
+        return result
+    }
 }
 
