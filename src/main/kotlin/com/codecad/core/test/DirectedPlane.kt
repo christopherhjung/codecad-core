@@ -15,7 +15,7 @@ class DirectedPlane(val plane: Plane, val first: PointD, val second: PointD){
                 throw RuntimeException("normal vector has size 0")
             }
 
-            return from(plane, first)
+            return from(plane, first.normalized())
         }
 
         fun from(plane: Plane, first: PointD) : DirectedPlane{

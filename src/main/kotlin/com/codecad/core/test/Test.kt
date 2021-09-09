@@ -9,10 +9,12 @@ import com.codecad.core.*
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class PolygonFace(val positions: List<Node>) {
     var parent: com.codecad.core.PolygonFace? = null
-    val children = mutableSetOf<com.codecad.core.PolygonFace>()
+    val children = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area: Double = 0.0
     var leftmost: PointD? = null
@@ -167,39 +169,6 @@ class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     }
 }
 
-
-fun main() {
-
-    val plane = Plane.fromPoints(PointD(0.0,0.0,1.0),PointD(1.0,0.0,1.0),PointD(1.0,1.0,1.0))
-    println(plane.normal)
-    println(plane.distance)
-    val list = listOf(
-        PointD(-0.5,-0.5,0.0),
-        PointD(0.5,-0.5,0.0),
-        PointD(0.5,0.5,0.0),
-        PointD(-0.5,0.5,0.0)
-    )
-
-    val list2 = listOf(
-        PointD(-0.2,-0.2,0.0),
-        PointD(0.2,-0.2,0.0),
-        PointD(0.2,0.2,0.0),
-        PointD(-0.2,0.2,0.0)
-    )
-
-    val directionX = PointD(1.0,0.0,0.0)
-    val directionY = PointD(0.0,1.0,0.0)
-    val other = PointD(0.0,-1.0,0.0).normalized()
-/*
-    println(atan2(other.dot(directionX), other.dot(directionY)))
-*/
-
-    val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
-    val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
-
-    val slices = findPlaneSlices(base, tool)
-    computePlaneSlices(slices)
-}
 
 
 fun generateFaces(extrude: Extrude) : Volume{
@@ -502,6 +471,8 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
     }
 
+    val outers = mutableListOf<PolygonFace>()
+
     for((face, slices) in map.entries){
         val plane = Plane.fromPoints(face.points().toList())
 
@@ -613,35 +584,32 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
 
         edgeList.removeAll(ignoreEdges)
         val faces = generateFaces(plane, edgeList)
-        combineFaces(plane, faces)
+        val outer = combineFaces(plane, faces)
 
-        println("ss")
+        outers.addAll(outer)
     }
 
 
     println("hello")
 }
 
-fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core.test.PolygonFace>{
-    val faces = mutableListOf<com.codecad.core.test.PolygonFace>()
+fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
+    val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
         val next = queue.first()
         queue.remove(next)
 
-        val area = PointD.ZERO
+        var area = PointD.ZERO
         val points = mutableListOf<Node>()
         var current = next
-        val face = com.codecad.core.test.PolygonFace(points)
-
-        val areaTemp = PointD()
+        val face = PolygonFace(points)
 
         while(true){
             points.add(current.target.node)
-            //current.polygonFace = face
 
-            current.source.node.point.cross(current.target.node.point, areaTemp)
-            area += areaTemp
+            area = area + current.source.node.point.cross(current.target.node.point)
+
             if(current.target === next.source){
                 break
             }
@@ -656,16 +624,138 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<com.codecad.core
         face.area = areaVolume
         face.clockwise = clockwise
 
-        //face.leftmost = getLeftmostPoint(face)
         faces.add(face)
     }
 
     return faces
 }
 
-fun combineFaces(plane: Plane, faces: List<PolygonFace>){
+fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : PointD {
+    var leftMostOffset: Double = Double.MAX_VALUE
+    var leftMost: PointD? = null
+    for( point in polygonFace.positions ){
+        val leftOffset = point.point.dot(direction)
+        if(leftMostOffset > leftOffset){
+            leftMostOffset = leftOffset
+            leftMost = point.point
+        }
+    }
+    return leftMost!!
+}
+
+
+
+fun main() {
+    val plane = Plane.fromPoints(PointD(0.0,0.0,1.0),PointD(1.0,0.0,1.0),PointD(1.0,1.0,1.0))
+    println(plane.normal)
+    println(plane.distance)
+    val list = listOf(
+        PointD(-0.5,-0.5,0.0),
+        PointD(0.5,-0.5,0.0),
+        PointD(0.5,0.5,0.0),
+        PointD(-0.5,0.5,0.0)
+    )
+
+    val list2 = listOf(
+        PointD(-0.2,-0.2,0.0),
+        PointD(0.2,-0.2,0.0),
+        PointD(0.2,0.2,0.0),
+        PointD(-0.2,0.2,0.0)
+    )
+
+    val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
+    val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
+
+    val slices = findPlaneSlices(base, tool)
+    computePlaneSlices(slices)
+/*
+    val points = listOf(
+        PointD(0.0,0.0,0.0),
+        PointD(1.0,0.0,0.0),
+        PointD(1.0,1.0,0.0),
+        PointD(0.0,1.0,0.0),
+    )
+
+    val plane = Plane.fromPoints(points)
+    val face = PolygonFace(points.map { Node(it) })
+
+    combineFaces(plane, listOf(face))*/
+}
+
+fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)
 
+    /*val outers = mutableListOf<PolygonFace>()
+    val inners = mutableListOf<PolygonFace>()
+
+    for( face in faces ){
+        if(!face.clockwise){
+            outers.add(face)
+        }else{
+            inners.add(face)
+        }
+    }*/
+
+    //val removeThisShit = inners.maxByOrNull { it.area }
+    //inners.remove(removeThisShit)
+
+    val leftMostMap = mutableMapOf<PolygonFace, PointD>()
+    fun getLeftmost(face: PolygonFace) : PointD{
+        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(directedPlane.first, face)}
+    }
+
+    val orderedFaces = faces.sortedBy { getLeftmost(it).dot(directedPlane.first) }
+    val outers = orderedFaces.filter { !it.clockwise }
+    val inners = orderedFaces.filter { it.clockwise }
+
+    for(innerFace in inners) {
+        var maxUnitOffset: Double = -Double.MAX_VALUE
+        var closestFace: PolygonFace? = null
+
+        val leftmost = getLeftmost(innerFace)
+        val pointUnitOffset = leftmost.dot(directedPlane.first)
+
+        for (outerFace in orderedFaces) {
+            if(outerFace === innerFace){
+                break
+            }
+
+            for ((source, target) in outerFace.positions.rollover()) {
+                val toSource = leftmost - source.point
+                val toTarget = leftmost - target.point
+
+                val c = directedPlane.first.cross(toSource).dot(directedPlane.plane.normal)
+                val d = directedPlane.first.cross(toTarget).dot(directedPlane.plane.normal)
+
+                if (c * d > 0) {
+                    continue
+                }
+
+                val sourceUnitOffset = source.point.dot(directedPlane.first)
+                val targetUnitOffset = target.point.dot(directedPlane.first)
+
+                val minCurrentUnitOffset = min(sourceUnitOffset, targetUnitOffset)
+
+                if (minCurrentUnitOffset + 1e-8 >= pointUnitOffset) {
+                    continue
+                }
+
+                val maxCurrentUnitOffset = max(sourceUnitOffset, targetUnitOffset)
+
+                if (maxCurrentUnitOffset > maxUnitOffset) {
+                    closestFace = outerFace
+                    maxUnitOffset = maxCurrentUnitOffset
+                }
+
+            }
+        }
+
+        if(closestFace != null){
+            closestFace.children.add(innerFace)
+        }
+    }
+
+    return outers
 }
 
 
