@@ -120,10 +120,10 @@ open class SketchScope(val project: Project) {
         val path = Path()
 
         if(face != null){
-            val arr = DoubleArray(face.points.size * 2)
+            val arr = DoubleArray(face.positions.size * 2)
             paths.add(arr)
             var i = 0
-            for( point in face.points){
+            for( point in face.positions.map { it.point }){
                 arr[i++] = point.x
                 arr[i++] = point.y
 

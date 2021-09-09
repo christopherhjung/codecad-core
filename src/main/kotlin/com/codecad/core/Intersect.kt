@@ -1,15 +1,13 @@
 package com.codecad.core
 
 import com.codecad.common.LineD
+import com.codecad.common.Plane
 import com.codecad.common.PointD
-import org.poly2tri.Poly2Tri.triangulate
-import org.poly2tri.geometry.polygon.PolygonPoint
-import org.poly2tri.triangulation.TriangulationPoint
+import com.codecad.core.test.Corner
+import com.codecad.core.test.Edge
+import com.codecad.core.test.Node
+import com.codecad.core.test.generateFaces
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.min
-import kotlin.math.sign
 
 
 fun findIntersection(line1: LineD, line2: LineD): PointD? {
@@ -112,6 +110,43 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
     return result
 }
 
+fun findFaces(arr2: List<LineD>): List<PolygonFace> {
+    val arr = removeIntersections(arr2)
+
+    val ordered = mutableListOf<LineD>()
+    for (line in arr) {
+        ordered.add(
+            if (line.p0.x > line.p1.x) {
+                LineD(line.p1, line.p0)
+            } else {
+                line
+            }
+        )
+    }
+
+    val pointMap = HashMap<PointD, Corner>()
+    val edges = HashSet<Edge>()
+
+    for (line in ordered) {
+        val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
+        val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
+
+        val a = Edge(left, right)
+        val b = Edge(right, left)
+
+        a.twin = b
+        b.twin = a
+
+        left.edges.add(a)
+        right.edges.add(b)
+        edges.add(a)
+        edges.add(b)
+    }
+
+    return generateFaces(Plane.XY, edges)
+}
+
+/*
 data class Node(
     val p: PointD
 ) : Comparable<Node> {
@@ -121,8 +156,9 @@ data class Node(
         if (p.x == other.p.x) return p.y.compareTo(other.p.y)
         return p.x.compareTo(other.p.x)
     }
-}
+}*/
 
+/*
 data class Edge(val source : Node, val target: Node){
     var next: Edge? = null
     lateinit var twin: Edge
@@ -130,8 +166,9 @@ data class Edge(val source : Node, val target: Node){
 
     //var inner = false
     var index = -1
-}
+}*/
 
+/*
 fun Edge.orientationTo(other: Edge) : Int{
     return (target.p - source.p).crossZ(other.target.p - other.source.p).sign.toInt()
 }
@@ -144,8 +181,9 @@ fun rotateComparator() : Comparator<Edge>{
     return Comparator{
         a,b -> a.orientationTo(b)
     }
-}
+}*/
 
+/*
 fun ArrayList<Edge>.search(point: PointD) : Int{
     var left = 0
     var right = size
@@ -166,8 +204,9 @@ fun ArrayList<Edge>.search(point: PointD) : Int{
 
     return left
 }
+*/
 
-
+/*
 fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     val arr = removeIntersections(arr2)
 
@@ -180,13 +219,12 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         })
     }
 
-    val pointMap = HashMap<PointD, Node>()
-
+    val pointMap = HashMap<PointD, Corner>()
     val edges = HashSet<Edge>()
 
     for (line in ordered) {
-        val left = pointMap.computeIfAbsent(line.p0){ Node(it) }
-        val right = pointMap.computeIfAbsent(line.p1){ Node(it) }
+        val left = pointMap.computeIfAbsent(line.p0){ Corner(Node(it)) }
+        val right = pointMap.computeIfAbsent(line.p1){ Corner(Node(it)) }
 
         val a = Edge(left, right)
         val b = Edge(right, left)
@@ -300,6 +338,7 @@ fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
     return leftMost!!
 }
 
+*/
 fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     val faces = findFaces(segments)
 
@@ -314,7 +353,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
                 val a = points[i]
                 val b = points[(i + 1) % points.size]
 
-                if((point - a).crossZ(b - a) > 0){
+                if((point - a.point).crossZ(b.point - a.point) > 0){
                     found = false
                     break
                 }
@@ -328,4 +367,3 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
 
     return null
 }
-

@@ -5,18 +5,17 @@ import com.codecad.core.test.*
 import com.codecad.core.test.Edge
 import com.codecad.core.test.Node
 
-abstract class Volume{
-    abstract val faces: List<VolumeFace>
-}
+abstract class Volume
+
+class ConnectedFaces(val faces: List<EdgedFace>) : Volume()
 
 class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
-    override val faces: List<VolumeFace>
-        get(){
+    fun extrude() : ConnectedFaces{
             val face = polygonFace
             val height = height.value
 
             val map = HashMap<PointD, Node>()
-            val faces = mutableListOf<VolumeFace>()
+            val faces = mutableListOf<EdgedFace>()
             val inverted = height > 0
 
             val offsetVector = PointD(0.0,0.0, height)
@@ -42,15 +41,17 @@ class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
                     right.twin.next = left
                 }
 
-                faces.add(VolumeFace(edges.first()))
+                faces.add(EdgedFace(edges.first()))
                 return edges
             }
 
-            generateEdges(face.points, inverted)
-            generateEdges(face.points.map { it + offsetVector }, !inverted)
+            val points = face.positions.map { it.point }
 
-            fun iterate(parent: com.codecad.core.PolygonFace){
-                for( (left, right) in parent.points.rollover() ){
+            generateEdges(points, inverted)
+            generateEdges(points.map { it + offsetVector }, !inverted)
+
+            fun iterate(parent: PolygonFace){
+                for( (left, right) in parent.positions.map { it.point }.rollover() ){
                     val list = mutableListOf(
                         PointD(left.x, left.y, 0.0),
                         PointD(left.x, left.y, height),
@@ -68,7 +69,7 @@ class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
 
             iterate(face)
 
-            return faces
+            return ConnectedFaces(faces)
         }
 
 }

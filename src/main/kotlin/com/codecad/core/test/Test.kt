@@ -12,16 +12,6 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class PolygonFace(val positions: List<Node>) {
-    var parent: PolygonFace? = null
-    val children = mutableSetOf<PolygonFace>()
-    var clockwise: Boolean = false
-    var area: Double = 0.0
-    var side: Side = Side.Unknown
-
-    val type: FaceType
-        get() = if(!clockwise) FaceType.Surface else FaceType.Hole
-}
 
 data class Node(val point : PointD)
 
@@ -52,106 +42,11 @@ data class Edge(val source: Corner,
     var side : Side = Side.Unknown
 }
 
-class Volume(val faces: List<VolumeFace>)
 
-class VolumeFace(val init : Edge) : Iterable<Edge>{
-    override fun iterator(): Iterator<Edge> {
-        var current : Edge = init
-        var first = true
 
-        return object : Iterator<Edge>{
-            override fun hasNext(): Boolean {
-                return first || current != init
-            }
 
-            override fun next(): Edge {
-                first = false
-                val result =  current//.source!!//.node.p
-                current = current.next!!
-                return result
-            }
-        }
-    }
-
-    fun points() : Iterable<PointD>{
-        return Iterable {
-            var current : Edge = init
-            var first = true
-            object : Iterator<PointD>{
-                override fun hasNext(): Boolean {
-                    return first || current != init
-                }
-
-                override fun next(): PointD {
-                    first = false
-                    val result =  current.source.node.point
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
-    fun nodes() : Iterable<Node>{
-        return Iterable {
-            var current : Edge = init
-            var first = true
-            object : Iterator<Node>{
-                override fun hasNext(): Boolean {
-                    return first || current != init
-                }
-
-                override fun next(): Node {
-                    first = false
-                    val result =  current.source.node
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
-    fun corners() : Iterable<Corner>{
-        return Iterable {
-            var current : Edge = init
-            var first = true
-            object : Iterator<Corner>{
-                override fun hasNext(): Boolean {
-                    return first || current != init
-                }
-
-                override fun next(): Corner {
-                    first = false
-                    val result = current.source
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
-    fun edges() : Iterable<Edge>{
-        return Iterable {
-            var current : Edge = init
-            var first = true
-            object : Iterator<Edge>{
-                override fun hasNext(): Boolean {
-                    return first || current != init
-                }
-
-                override fun next(): Edge {
-                    first = false
-                    val result =  current
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-}
-
-class PlaneEvent(val volume : Volume, val face: VolumeFace, val point: PointD, val start : Boolean)
-class PlaneSlice(val face: VolumeFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
+class PlaneEvent(val volume : Volume, val face: EdgedFace, val point: PointD, val start : Boolean)
+class PlaneSlice(val face: EdgedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
 
 class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     override fun equals(other: Any?): Boolean {
@@ -171,71 +66,11 @@ class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     }
 }
 
-fun generateFaces(extrude: Extrude) : Volume{
-    val face = extrude.polygonFace
-    val height = extrude.height.value
-
-    val map = HashMap<PointD, Node>()
-    val faces = mutableListOf<VolumeFace>()
-    val inverted = height > 0
-
-    val offsetVector = PointD(0.0,0.0, height)
-
-    fun getOrAdd(new : PointD) : Node{
-        return map.computeIfAbsent(new){Node(new)}
-    }
-
-    fun generateEdges(points : List<PointD>, invert: Boolean = false) : List<Edge>{
-
-        val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (left,right) ->
-            val forward = Edge(left,right)
-            forward.twin = Edge(right,left)
-            forward.twin.twin = forward
-            forward.side = Side.Outside
-            forward.twin.side = Side.Outside
-            left.addEdge(forward)
-            right.addEdge(forward.twin)
-            forward
-         }
-        edges.rollover().forEach{ (left, right) ->
-            left.next = right
-            right.twin.next = left
-        }
-
-        faces.add(VolumeFace(edges.first()))
-        return edges
-    }
-
-    generateEdges(face.points, inverted)
-    generateEdges(face.points.map { it + offsetVector }, !inverted)
-
-    fun iterate(parent: com.codecad.core.PolygonFace){
-        for( (left, right) in parent.points.rollover() ){
-            val list = mutableListOf(
-                PointD(left.x, left.y, 0.0),
-                PointD(left.x, left.y, height),
-                PointD(right.x, right.y, height),
-                PointD(right.x, right.y, 0.0)
-            )
-
-            generateEdges(list, inverted)
-        }
-
-        for( child in parent.children){
-            iterate(child)
-        }
-    }
-
-    iterate(face)
-
-    return Volume(faces)
-}
-
 class Intersection(val edge : Edge, val position: Node)
 
 val edgeSlices = HashMap<EdgeSlice, Node>()
 
-fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
+fun findIntersections(face: EdgedFace, plane: Plane) : List<Intersection>{
     val result = mutableListOf<Intersection>()
     for(edge in face){
         val start = edge.source.node
@@ -266,7 +101,7 @@ fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
 }
 
 
-fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
+fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<PlaneSlice>{
 
     val planeComparator = ChainComparator.Builder<PlaneEvent>()
         .withComparable { it.point.x }
@@ -304,22 +139,19 @@ fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
         .build()
 
 
-    val planes = HashMap<VolumeFace, Plane>()
+    val planes = HashMap<EdgedFace, Plane>()
 
-    fun faceToPlane(face: VolumeFace) : Plane{
+    fun faceToPlane(face: EdgedFace) : Plane{
         if(planes.containsKey(face)){
             return planes[face]!!
         }
 
-        val a = face.init
-        val b = a.next
-        val c = b?.next
-        val plane = Plane.fromPoints(a.source.node.point, b!!.source.node.point, c!!.source.node.point)
+        val plane = face.toPlane()
         planes[face] = plane
         return plane
     }
 
-    fun buildEventQueue(volume: Volume) : TreeSet<PlaneEvent>{
+    fun buildEventQueue(volume: ConnectedFaces) : TreeSet<PlaneEvent>{
         val events = TreeSet(planeComparator)
         for(face in volume.faces){
             val points = face.points().toList()
@@ -336,7 +168,7 @@ fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
     baseEventQueue.addAll(toolEventQueue)
 
-    val active = HashMap<VolumeFace, PlaneEvent>()
+    val active = HashMap<EdgedFace, PlaneEvent>()
 
     data class Event(val intersection : Intersection, val offset: Double, val index: Int)
 
@@ -344,7 +176,6 @@ fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
         .withComparable { it.offset }
         .withComparable { it.index }
         .build()
-
 
     val resultSlices = mutableListOf<PlaneSlice>()
 
@@ -459,7 +290,7 @@ fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
 fun applyPlaneSlices(slices : List<PlaneSlice>){
 
-    val map = HashMap<VolumeFace, MutableList<PlaneSlice>>()
+    val map = HashMap<EdgedFace, MutableList<PlaneSlice>>()
 
     for(planeSlice in slices){
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
@@ -677,8 +508,8 @@ fun main() {
         PointD(-0.2,0.2)
     )
 
-    val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
-    val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
+    val base = Extrude(PolygonFace(list.map { Node(it) }), Const(1.0)).extrude()
+    val tool = Extrude(PolygonFace(list2.map { Node(it) }), Const(2.0)).extrude()
 
     val slices = computePlaneSlices(base, tool)
     applyPlaneSlices(slices)
