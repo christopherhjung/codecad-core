@@ -13,7 +13,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PolygonFace(val positions: List<Node>) {
-    var parent: com.codecad.core.PolygonFace? = null
+    var parent: PolygonFace? = null
     val children = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area: Double = 0.0
@@ -668,36 +668,10 @@ fun main() {
 
     val slices = findPlaneSlices(base, tool)
     computePlaneSlices(slices)
-/*
-    val points = listOf(
-        PointD(0.0,0.0,0.0),
-        PointD(1.0,0.0,0.0),
-        PointD(1.0,1.0,0.0),
-        PointD(0.0,1.0,0.0),
-    )
-
-    val plane = Plane.fromPoints(points)
-    val face = PolygonFace(points.map { Node(it) })
-
-    combineFaces(plane, listOf(face))*/
 }
 
 fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)
-
-    /*val outers = mutableListOf<PolygonFace>()
-    val inners = mutableListOf<PolygonFace>()
-
-    for( face in faces ){
-        if(!face.clockwise){
-            outers.add(face)
-        }else{
-            inners.add(face)
-        }
-    }*/
-
-    //val removeThisShit = inners.maxByOrNull { it.area }
-    //inners.remove(removeThisShit)
 
     val leftMostMap = mutableMapOf<PolygonFace, PointD>()
     fun getLeftmost(face: PolygonFace) : PointD{
@@ -716,7 +690,7 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
         val pointUnitOffset = leftmost.dot(directedPlane.first)
 
         for (outerFace in orderedFaces) {
-            if(outerFace === innerFace){
+            if (outerFace === innerFace) {
                 break
             }
 
@@ -750,8 +724,14 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
             }
         }
 
-        if(closestFace != null){
-            closestFace.children.add(innerFace)
+        if (closestFace != null){
+            if (closestFace.parent != null) {
+                closestFace.parent!!.children.add(innerFace)
+                innerFace.parent = closestFace.parent!!
+            } else {
+                closestFace.children.add(innerFace)
+                innerFace.parent = closestFace
+            }
         }
     }
 
