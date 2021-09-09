@@ -17,7 +17,10 @@ class PolygonFace(val positions: List<Node>) {
     val children = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area: Double = 0.0
-    var leftmost: PointD? = null
+    var side: Side = Side.Unknown
+
+    val type: FaceType
+        get() = if(!clockwise) FaceType.Surface else FaceType.Hole
 }
 
 data class Node(val point : PointD)
@@ -26,7 +29,7 @@ data class Corner(val node: Node){
     val edges = mutableListOf<Edge>()
 
     fun addEdge(edge: Edge){
-        if(edge.source?.node !== node){
+        if(edge.source.node !== node){
             throw RuntimeException("ss")
         }
 
@@ -34,10 +37,19 @@ data class Corner(val node: Node){
     }
 }
 
+enum class FaceType{
+    Surface, Hole
+}
+
+enum class Side{
+    Unknown, Outside, Inside
+}
+
 data class Edge(val source: Corner,
            val target : Corner){
     var next: Edge? = null
     lateinit var twin : Edge
+    var side : Side = Side.Unknown
 }
 
 class Volume(val faces: List<VolumeFace>)
@@ -138,18 +150,8 @@ class VolumeFace(val init : Edge) : Iterable<Edge>{
     }
 }
 
-
-
-
 class PlaneEvent(val volume : Volume, val face: VolumeFace, val point: PointD, val start : Boolean)
-
-class PlaneEdge(val origin: PointD, val target: PointD){
-    val next: PlaneEdge? = null
-}
-
-class PlaneSlice(val face: VolumeFace, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
-
-
+class PlaneSlice(val face: VolumeFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
 
 class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     override fun equals(other: Any?): Boolean {
@@ -169,8 +171,6 @@ class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     }
 }
 
-
-
 fun generateFaces(extrude: Extrude) : Volume{
     val face = extrude.polygonFace
     val height = extrude.height.value
@@ -181,24 +181,20 @@ fun generateFaces(extrude: Extrude) : Volume{
 
     val offsetVector = PointD(0.0,0.0, height)
 
-    /*
-    fun getOrAdd(x: Double, y: Double, z: Double) : Node{
-        val new = PointD(x,y,z)
-        return map.computeIfAbsent(new){Node(new)}
-    }*/
-
     fun getOrAdd(new : PointD) : Node{
         return map.computeIfAbsent(new){Node(new)}
     }
 
     fun generateEdges(points : List<PointD>, invert: Boolean = false) : List<Edge>{
 
-        val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (a,b) ->
-            val forward = Edge(a,b)
-            forward.twin = Edge(b,a)
+        val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (left,right) ->
+            val forward = Edge(left,right)
+            forward.twin = Edge(right,left)
             forward.twin.twin = forward
-            a.addEdge(forward)
-            b.addEdge(forward.twin)
+            forward.side = Side.Outside
+            forward.twin.side = Side.Outside
+            left.addEdge(forward)
+            right.addEdge(forward.twin)
             forward
          }
         edges.rollover().forEach{ (left, right) ->
@@ -270,7 +266,7 @@ fun findIntersections(face: VolumeFace, plane: Plane) : List<Intersection>{
 }
 
 
-fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
+fun computePlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
     val planeComparator = ChainComparator.Builder<PlaneEvent>()
         .withComparable { it.point.x }
@@ -340,9 +336,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
     baseEventQueue.addAll(toolEventQueue)
 
-
     val active = HashMap<VolumeFace, PlaneEvent>()
-
 
     data class Event(val intersection : Intersection, val offset: Double, val index: Int)
 
@@ -397,8 +391,8 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
 
                 fun createSlice(i : Int) : PlaneSlice{
                     return when(i){
-                        0 -> PlaneSlice(event.face)
-                        1 -> PlaneSlice(other.face)
+                        0 -> PlaneSlice(event.face, rightPlane)
+                        1 -> PlaneSlice(other.face, leftPlane)
                         else -> throw RuntimeException("")
                     }
                 }
@@ -463,7 +457,7 @@ fun findPlaneSlices(base : Volume, tool : Volume ) :  List<PlaneSlice>{
     return resultSlices
 }
 
-fun computePlaneSlices(slices : List<PlaneSlice>){
+fun applyPlaneSlices(slices : List<PlaneSlice>){
 
     val map = HashMap<VolumeFace, MutableList<PlaneSlice>>()
 
@@ -528,6 +522,18 @@ fun computePlaneSlices(slices : List<PlaneSlice>){
             val edge = createEdge(startCorner, endCorner)
             edge.twin = createEdge(endCorner, startCorner)
             edge.twin.twin = edge
+
+            val direction = endCorner.node.point - startCorner.node.point
+
+            val test = slice.plane.normal.cross(direction).dot(plane.normal)
+
+            if(test > 0){
+                edge.side = Side.Outside
+                edge.twin.side = Side.Inside
+            }else{
+                edge.side = Side.Inside
+                edge.twin.side = Side.Outside
+            }
 
             startCorner.addEdge(edge)
             endCorner.addEdge(edge.twin)
@@ -605,6 +611,7 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
         var current = next
         val face = PolygonFace(points)
 
+        var side = Side.Unknown
         while(true){
             points.add(current.target.node)
 
@@ -612,6 +619,12 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
 
             if(current.target === next.source){
                 break
+            }
+
+            if(current.side != Side.Unknown){
+                if(side != Side.Outside){
+                    side = current.side
+                }
             }
 
             current = current.next!!
@@ -623,6 +636,7 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
 
         face.area = areaVolume
         face.clockwise = clockwise
+        face.side = side
 
         faces.add(face)
     }
@@ -650,24 +664,24 @@ fun main() {
     println(plane.normal)
     println(plane.distance)
     val list = listOf(
-        PointD(-0.5,-0.5,0.0),
-        PointD(0.5,-0.5,0.0),
-        PointD(0.5,0.5,0.0),
-        PointD(-0.5,0.5,0.0)
+        PointD(-0.5,-0.5),
+        PointD(0.5,-0.5),
+        PointD(0.5,0.5),
+        PointD(-0.5,0.5)
     )
 
     val list2 = listOf(
-        PointD(-0.2,-0.2,0.0),
-        PointD(0.2,-0.2,0.0),
-        PointD(0.2,0.2,0.0),
-        PointD(-0.2,0.2,0.0)
+        PointD(-0.2,-0.2),
+        PointD(0.2,-0.2),
+        PointD(0.2,0.2),
+        PointD(-0.2,0.2)
     )
 
     val base = generateFaces(Extrude(PolygonFace(list), Const(1.0)))
     val tool = generateFaces(Extrude(PolygonFace(list2), Const(2.0)))
 
-    val slices = findPlaneSlices(base, tool)
-    computePlaneSlices(slices)
+    val slices = computePlaneSlices(base, tool)
+    applyPlaneSlices(slices)
 }
 
 fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
@@ -679,7 +693,6 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
     }
 
     val orderedFaces = faces.sortedBy { getLeftmost(it).dot(directedPlane.first) }
-    val outers = orderedFaces.filter { !it.clockwise }
     val inners = orderedFaces.filter { it.clockwise }
 
     for(innerFace in inners) {
@@ -735,7 +748,7 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
         }
     }
 
-    return outers
+    return orderedFaces.filter { !it.clockwise }
 }
 
 
