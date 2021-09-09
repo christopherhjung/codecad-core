@@ -2,31 +2,17 @@ package com.codecad.core
 
 import com.codecad.common.PointD
 import com.codecad.core.test.*
-import com.codecad.core.test.Edge
-import com.codecad.core.test.Node
 
 abstract class Volume
 
-class ConnectedFaces(val faces: List<EdgedFace>) : Volume()
+class PolygonVolume(val faces: List<PolygonFace>) : Volume()
 
-class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
-    fun extrude() : ConnectedFaces{
-            val face = polygonFace
-            val height = height.value
-
-            val map = HashMap<PointD, Node>()
-            val faces = mutableListOf<EdgedFace>()
-            val inverted = height > 0
-
-            val offsetVector = PointD(0.0,0.0, height)
-
-            fun getOrAdd(new : PointD) : Node {
-                return map.computeIfAbsent(new){ Node(new) }
-            }
-
-            fun generateEdges(points : List<PointD>, invert: Boolean = false) : List<Edge>{
-
-                val edges = (if(invert) points.reversed() else points).map { Corner(getOrAdd(it)) }.rollover().map { (left,right) ->
+class RoutedVolume(val faces: List<RoutedFace>){
+    companion object{
+        fun from(polygonVolume: PolygonVolume) : RoutedVolume{
+            val faces = mutableListOf<RoutedFace>()
+            fun generateEdges(points : List<Node>) : Edge{
+                val edges = points.map { Corner(it) }.rollover().map { (left,right) ->
                     val forward = Edge(left,right)
                     forward.twin = Edge(right,left)
                     forward.twin.twin = forward
@@ -41,35 +27,76 @@ class Extrude(val polygonFace: PolygonFace, val height: Value) : Volume(){
                     right.twin.next = left
                 }
 
-                faces.add(EdgedFace(edges.first()))
-                return edges
+                return edges.first()
             }
 
-            val points = face.positions.map { it.point }
-
-            generateEdges(points, inverted)
-            generateEdges(points.map { it + offsetVector }, !inverted)
-
-            fun iterate(parent: PolygonFace){
-                for( (left, right) in parent.positions.map { it.point }.rollover() ){
-                    val list = mutableListOf(
-                        PointD(left.x, left.y, 0.0),
-                        PointD(left.x, left.y, height),
-                        PointD(right.x, right.y, height),
-                        PointD(right.x, right.y, 0.0)
-                    )
-
-                    generateEdges(list, inverted)
-                }
-
-                for( child in parent.children){
-                    iterate(child)
-                }
+            for(face in polygonVolume.faces){
+                val root = generateEdges(face.positions)
+                val holeEdges = face.holes.map { generateEdges(it.positions) }
+                faces.add(RoutedFace(root, holeEdges))
             }
 
-            iterate(face)
+            return RoutedVolume(faces)
+        }
+    }
+}
 
-            return ConnectedFaces(faces)
+class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Value) : Volume() {
+    fun extrude(): PolygonVolume {
+        val height = height.value
+
+        val map = HashMap<PointD, Node>()
+        val polygons = mutableListOf<PolygonFace>()
+        val inverted = height > 0
+
+        val offsetVector = directedPlane.root.normal * height
+
+        fun getOrAdd(new: PointD): Node {
+            return map.computeIfAbsent(new) { Node(new) }
         }
 
+        fun test(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
+            var basePoints =
+                face.positions.map { Node(directedPlane.first * it.point.x + directedPlane.second * it.point.y) }
+            var topPoints = basePoints.map { getOrAdd(it.point + offsetVector) }
+
+            for ((base, top) in basePoints.zip(topPoints).rollover()) {
+                val list = mutableListOf(
+                    base.first,
+                    top.first,
+                    top.second,
+                    base.second
+                )
+
+                if (inverted) {
+                    list.reverse()
+                }
+
+                polygons.add(PolygonFace(list))
+            }
+
+            if (inverted) {
+                basePoints = basePoints.reversed()
+            } else {
+                topPoints = topPoints.reversed()
+            }
+
+            val basePolygon = PolygonFace(basePoints)
+            val topPolygon = PolygonFace(topPoints)
+
+            return Pair(basePolygon, topPolygon)
+        }
+
+
+        val (basePolygon, topPolygon) = test(polygonFace)
+
+        for (child in polygonFace.holes) {
+            val (baseHole, topHole) = test(child)
+
+            basePolygon.holes.add(baseHole)
+            topPolygon.holes.add(topHole)
+        }
+
+        return PolygonVolume(polygons)
+    }
 }

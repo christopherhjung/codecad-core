@@ -3,7 +3,7 @@ package com.codecad.core.test
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 
-class DirectedPlane(val plane: Plane, val first: PointD, val second: PointD){
+class DirectedPlane(val root: Plane, val first: PointD, val second: PointD){
     companion object{
         fun from(plane: Plane) : DirectedPlane{
             val normal = plane.normal
@@ -22,5 +22,7 @@ class DirectedPlane(val plane: Plane, val first: PointD, val second: PointD){
             val second = plane.normal.cross(first)
             return DirectedPlane(plane, first, second)
         }
+
+        val XY = from(Plane.XY, PointD(1.0))
     }
 }

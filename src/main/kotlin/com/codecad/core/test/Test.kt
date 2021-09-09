@@ -45,8 +45,8 @@ data class Edge(val source: Corner,
 
 
 
-class PlaneEvent(val volume : Volume, val face: EdgedFace, val point: PointD, val start : Boolean)
-class PlaneSlice(val face: EdgedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
+class PlaneEvent(val volume : RoutedVolume, val face: RoutedFace, val point: PointD, val start : Boolean)
+class PlaneSlice(val face: RoutedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
 
 class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     override fun equals(other: Any?): Boolean {
@@ -70,7 +70,7 @@ class Intersection(val edge : Edge, val position: Node)
 
 val edgeSlices = HashMap<EdgeSlice, Node>()
 
-fun findIntersections(face: EdgedFace, plane: Plane) : List<Intersection>{
+fun findIntersections(face: RoutedFace, plane: Plane) : List<Intersection>{
     val result = mutableListOf<Intersection>()
     for(edge in face){
         val start = edge.source.node
@@ -101,7 +101,7 @@ fun findIntersections(face: EdgedFace, plane: Plane) : List<Intersection>{
 }
 
 
-fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<PlaneSlice>{
+fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneSlice>{
 
     val planeComparator = ChainComparator.Builder<PlaneEvent>()
         .withComparable { it.point.x }
@@ -139,9 +139,9 @@ fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<Pl
         .build()
 
 
-    val planes = HashMap<EdgedFace, Plane>()
+    val planes = HashMap<RoutedFace, Plane>()
 
-    fun faceToPlane(face: EdgedFace) : Plane{
+    fun faceToPlane(face: RoutedFace) : Plane{
         if(planes.containsKey(face)){
             return planes[face]!!
         }
@@ -151,7 +151,7 @@ fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<Pl
         return plane
     }
 
-    fun buildEventQueue(volume: ConnectedFaces) : TreeSet<PlaneEvent>{
+    fun buildEventQueue(volume: RoutedVolume) : TreeSet<PlaneEvent>{
         val events = TreeSet(planeComparator)
         for(face in volume.faces){
             val points = face.points().toList()
@@ -168,7 +168,7 @@ fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<Pl
 
     baseEventQueue.addAll(toolEventQueue)
 
-    val active = HashMap<EdgedFace, PlaneEvent>()
+    val active = HashMap<RoutedFace, PlaneEvent>()
 
     data class Event(val intersection : Intersection, val offset: Double, val index: Int)
 
@@ -290,7 +290,7 @@ fun computePlaneSlices(base : ConnectedFaces, tool : ConnectedFaces ) :  List<Pl
 
 fun applyPlaneSlices(slices : List<PlaneSlice>){
 
-    val map = HashMap<EdgedFace, MutableList<PlaneSlice>>()
+    val map = HashMap<RoutedFace, MutableList<PlaneSlice>>()
 
     for(planeSlice in slices){
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
@@ -299,7 +299,7 @@ fun applyPlaneSlices(slices : List<PlaneSlice>){
     val outers = mutableListOf<PolygonFace>()
 
     for((face, slices) in map.entries){
-        val plane = Plane.fromPoints(face.points().toList())
+        val plane = face.toPlane()
 
         val nodeMap = mutableMapOf<Node, Corner>()
 
@@ -508,10 +508,10 @@ fun main() {
         PointD(-0.2,0.2)
     )
 
-    val base = Extrude(PolygonFace(list.map { Node(it) }), Const(1.0)).extrude()
-    val tool = Extrude(PolygonFace(list2.map { Node(it) }), Const(2.0)).extrude()
+    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0)).extrude()
+    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0)).extrude()
 
-    val slices = computePlaneSlices(base, tool)
+    val slices = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
     applyPlaneSlices(slices)
 }
 
@@ -542,8 +542,8 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
                 val toSource = leftmost - source.point
                 val toTarget = leftmost - target.point
 
-                val c = directedPlane.first.cross(toSource).dot(directedPlane.plane.normal)
-                val d = directedPlane.first.cross(toTarget).dot(directedPlane.plane.normal)
+                val c = directedPlane.first.cross(toSource).dot(directedPlane.root.normal)
+                val d = directedPlane.first.cross(toTarget).dot(directedPlane.root.normal)
 
                 if (c * d > 0) {
                     continue
@@ -570,10 +570,10 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
 
         if (closestFace != null){
             if (closestFace.parent != null) {
-                closestFace.parent!!.children.add(innerFace)
+                closestFace.parent!!.holes.add(innerFace)
                 innerFace.parent = closestFace.parent!!
             } else {
-                closestFace.children.add(innerFace)
+                closestFace.holes.add(innerFace)
                 innerFace.parent = closestFace
             }
         }

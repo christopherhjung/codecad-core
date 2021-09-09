@@ -36,7 +36,7 @@ open class ConvexFace( val points: List<Node>) : Face() {
 
 class PolygonFace( val positions: List<Node>) : Face() {
     var parent: PolygonFace? = null
-    val children = mutableSetOf<PolygonFace>()
+    val holes = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area: Double = 0.0
     var side: Side = Side.Unknown
@@ -55,7 +55,7 @@ class PolygonFace( val positions: List<Node>) : Face() {
 
         val parent = pointsToPolygon(this)
 
-        for( child in this.children ){
+        for( child in this.holes ){
             parent.addHole(pointsToPolygon(child))
         }
 
@@ -85,14 +85,14 @@ class PolygonFace( val positions: List<Node>) : Face() {
     }
 }
 
-class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, val holes: List<Edge>) : Face(), Iterable<Edge>{
     override fun iterator(): Iterator<Edge> {
-        var current : Edge = init
+        var current : Edge = root
         var first = true
 
         return object : Iterator<Edge>{
             override fun hasNext(): Boolean {
-                return first || current != init
+                return first || current != root
             }
 
             override fun next(): Edge {
@@ -106,11 +106,11 @@ class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
 
     fun points() : Iterable<PointD>{
         return Iterable {
-            var current : Edge = init
+            var current : Edge = root
             var first = true
             object : Iterator<PointD>{
                 override fun hasNext(): Boolean {
-                    return first || current != init
+                    return first || current != root
                 }
 
                 override fun next(): PointD {
@@ -125,11 +125,11 @@ class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
 
     fun nodes() : Iterable<Node>{
         return Iterable {
-            var current : Edge = init
+            var current : Edge = root
             var first = true
             object : Iterator<Node>{
                 override fun hasNext(): Boolean {
-                    return first || current != init
+                    return first || current != root
                 }
 
                 override fun next(): Node {
@@ -144,11 +144,11 @@ class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
 
     fun corners() : Iterable<Corner>{
         return Iterable {
-            var current : Edge = init
+            var current : Edge = root
             var first = true
             object : Iterator<Corner>{
                 override fun hasNext(): Boolean {
-                    return first || current != init
+                    return first || current != root
                 }
 
                 override fun next(): Corner {
@@ -163,11 +163,11 @@ class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
 
     fun edges() : Iterable<Edge>{
         return Iterable {
-            var current : Edge = init
+            var current : Edge = root
             var first = true
             object : Iterator<Edge>{
                 override fun hasNext(): Boolean {
-                    return first || current != init
+                    return first || current != root
                 }
 
                 override fun next(): Edge {
@@ -185,7 +185,7 @@ class EdgedFace(val init : Edge) : Face(), Iterable<Edge>{
     }
 
     override fun toPlane(): Plane {
-        val a = init
+        val a = root
         val b = a.next
         val c = b?.next
         return Plane.fromPoints(a.source.node.point, b!!.source.node.point, c!!.source.node.point)

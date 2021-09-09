@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.codecad.core.test.DirectedPlane
+
 class ProjectScope(val project: Project){
     fun sketch(init: SketchScope.() -> Unit): Sketch {
         val builder = SketchScope(project)
@@ -13,7 +15,7 @@ class ProjectScope(val project: Project){
         val face = findFace(sketchToLines(sketch, ignoreConstruction = true), pointer.fixed())
 
         if(face != null){
-            project.volumes.add(Extrude(face, height))
+            project.volumes.add(Extrude(face, DirectedPlane.XY, height))
         }
     }
 
@@ -21,7 +23,7 @@ class ProjectScope(val project: Project){
         val faces = findFaces(sketchToLines(sketch, ignoreConstruction = true))
 
         for(face in faces){
-            project.volumes.add(Extrude(face, height))
+            project.volumes.add(Extrude(face,DirectedPlane.XY,  height))
         }
     }
 }
