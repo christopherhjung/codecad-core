@@ -3,10 +3,7 @@ package com.codecad.core
 import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.test.Corner
-import com.codecad.core.test.Edge
-import com.codecad.core.test.Node
-import com.codecad.core.test.generateFaces
+import com.codecad.core.test.*
 import java.util.*
 
 
@@ -127,6 +124,8 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     val pointMap = HashMap<PointD, Corner>()
     val edges = HashSet<Edge>()
 
+    val corner = mutableSetOf<Corner>()
+
     for (line in ordered) {
         val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
         val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
@@ -143,6 +142,7 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         edges.add(b)
     }
 
+    finishCorners(pointMap.values, Plane.XY)
     return generateFaces(Plane.XY, edges)
 }
 

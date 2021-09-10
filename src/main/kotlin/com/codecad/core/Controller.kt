@@ -4,6 +4,7 @@ import com.codecad.common.ExecutionResult
 import com.codecad.common.LineError
 import com.codecad.common.Model
 import com.codecad.common.Path
+import com.codecad.core.test.mapModel
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -28,39 +29,14 @@ class Controller {
             val project = result.project
 
             val output = ExecutionResult()
-            val model = Model()
 
-            val meshGenerator = MeshGenerator()
-
-            for(sketch in project.sketches){
-                for(figure in sketch.figures){
-                    if(figure is Point){
-                        model.points.add(figure.fixed())
-                    }else{
-                        val points = figureToPoints(figure)
-
-                        val path = Path()
-
-                        for(point in points){
-                            path.points.add(point)
-                        }
-
-                        model.faces.add(path)
-                    }
-                }
-            }
-
-            for(volume in project.volumes){
-                if(volume is Extrude){
-                    model.volumes.add(meshGenerator.generate(volume))
-                }
-            }
 
             /*
             val mapper = ObjectMapper()
             val jsonModel = mapper.writeValueAsString(model)*/
-            return ResponseEntity(model, HttpStatus.OK)
+            return ResponseEntity(mapModel(project), HttpStatus.OK)
         }catch (e: LineException){
+            e.printStackTrace()
             return ResponseEntity(Wrapper(e.locations), HttpStatus.INTERNAL_SERVER_ERROR)
         }
 

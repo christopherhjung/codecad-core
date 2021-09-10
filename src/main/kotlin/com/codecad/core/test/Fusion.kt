@@ -422,22 +422,8 @@ fun applyPlaneSlices(slices : List<PlaneSlice>){
             ignoreEdges.add(edge.twin)
         }
 
-        var comparator: RotaryComparator? = null
 
-        for(corner in corners){
-            if(corner.edges.size > 2){
-                if(comparator == null){
-                    comparator = RotaryComparator(plane)
-                }
-                corner.edges.sortBy(comparator)
-            }
-
-            for(i in corner.edges.indices){
-                val top = corner.edges[i]
-                val bottom = corner.edges[(i+1)%corner.edges.size]
-                top.twin.next = bottom
-            }
-        }
+        finishCorners(corners, plane)
 
         edgeList.removeAll(ignoreEdges)
         val faces = generateFaces(plane, edgeList)
@@ -448,6 +434,25 @@ fun applyPlaneSlices(slices : List<PlaneSlice>){
 
 
     println("hello")
+}
+
+fun finishCorners(corners : Collection<Corner>, plane: Plane){
+    var comparator: RotaryComparator? = null
+
+    for(corner in corners){
+        if(corner.edges.size > 2){
+            if(comparator == null){
+                comparator = RotaryComparator(plane)
+            }
+            corner.edges.sortBy(comparator)
+        }
+
+        for(i in corner.edges.indices){
+            val top = corner.edges[i]
+            val bottom = corner.edges[(i+1)%corner.edges.size]
+            top.twin.next = bottom
+        }
+    }
 }
 
 fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
@@ -510,7 +515,7 @@ fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
 }
 
 
-
+/*
 fun main() {
     val plane = Plane.fromPoints(PointD(0.0,0.0,1.0),PointD(1.0,0.0,1.0),PointD(1.0,1.0,1.0))
     println(plane.normal)
@@ -534,7 +539,7 @@ fun main() {
 
     val slices = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
     applyPlaneSlices(slices)
-}
+}*/
 
 fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)

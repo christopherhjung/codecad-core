@@ -45,44 +45,53 @@ class PolygonFace( val positions: List<Node>) : Face() {
         get() = if(!clockwise) FaceType.Surface else FaceType.Hole
 
     override fun generateTriangles()  : List<TriangleFace>{
-        fun pointsToPolygon(polygonFace: PolygonFace) : org.poly2tri.geometry.polygon.Polygon{
-            val list = mutableListOf<PolygonPoint>()
-            for( point in polygonFace.positions ){
-                list.add(PolygonPoint(point.point.x, point.point.y, point.point.z))
-            }
-            return org.poly2tri.geometry.polygon.Polygon(list)
-        }
-
-        val parent = pointsToPolygon(this)
-
-        for( child in this.holes ){
-            parent.addHole(pointsToPolygon(child))
-        }
-
-        Poly2Tri.triangulate(parent)
-
-        val triangles = mutableListOf<TriangleFace>()
-
-        fun createPoint(trianglePoint: TriangulationPoint) : Node {
-            return Node(PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z))
-        }
-
-        val offset = 0//if(inverted) 1 else 0
-
-        for( triangle in parent.triangles ){
-            val points = triangle.points
-            triangles.add(TriangleFace(
-                createPoint(points[0]),
-                createPoint(points[1 + offset]),
-                createPoint(points[2 - offset])))
-        }
-
-        return triangles
+        return generateTriangles(positions.map { it.point }, holes.map { it.positions.map { it.point } })
     }
 
     override fun toPlane() : Plane{
         return Plane.fromPoints(positions[0].point, positions[1].point, positions[2].point)
     }
+}
+
+fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{
+    fun pointsToPolygon(points: List<PointD>) : org.poly2tri.geometry.polygon.Polygon{
+        val list = mutableListOf<PolygonPoint>()
+        for( point in points ){
+            list.add(PolygonPoint(point.x, point.y, point.z))
+        }
+        return org.poly2tri.geometry.polygon.Polygon(list)
+    }
+
+    val parent = pointsToPolygon(outline)
+
+    for( child in holes ){
+        parent.addHole(pointsToPolygon(child))
+    }
+
+    try{
+        Poly2Tri.triangulate(parent)
+    }catch (e: Exception){
+        e.printStackTrace()
+        throw e
+    }
+
+    val triangles = mutableListOf<TriangleFace>()
+
+    fun createPoint(trianglePoint: TriangulationPoint) : Node {
+        return Node(PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z))
+    }
+
+    val offset = 0//if(inverted) 1 else 0
+
+    for( triangle in parent.triangles ){
+        val points = triangle.points
+        triangles.add(TriangleFace(
+            createPoint(points[0]),
+            createPoint(points[1 + offset]),
+            createPoint(points[2 - offset])))
+    }
+
+    return triangles
 }
 
 class RoutedFace(val root : Edge, val holes: List<Edge>) : Face(), Iterable<Edge>{
@@ -181,39 +190,7 @@ class RoutedFace(val root : Edge, val holes: List<Edge>) : Face(), Iterable<Edge
     }
 
     override fun generateTriangles(): List<TriangleFace> {
-        fun pointsToPolygon(polygonFace: Edge) : org.poly2tri.geometry.polygon.Polygon{
-            val list = mutableListOf<PolygonPoint>()
-            for( point in polygonFace.points() ){
-                list.add(PolygonPoint(point.x, point.y, point.z))
-            }
-            return org.poly2tri.geometry.polygon.Polygon(list)
-        }
-
-        val parent = pointsToPolygon(root)
-
-        for( child in holes ){
-            parent.addHole(pointsToPolygon(child))
-        }
-
-        Poly2Tri.triangulate(parent)
-
-        val triangles = mutableListOf<TriangleFace>()
-
-        fun createPoint(trianglePoint: TriangulationPoint) : Node {
-            return Node(PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z))
-        }
-
-        val offset = 0//if(inverted) 1 else 0
-
-        for( triangle in parent.triangles ){
-            val points = triangle.points
-            triangles.add(TriangleFace(
-                createPoint(points[0]),
-                createPoint(points[1 + offset]),
-                createPoint(points[2 - offset])))
-        }
-
-        return triangles
+        return generateTriangles(root.points().toList(), holes.map { it.points().toList() })
     }
 
     override fun toPlane(): Plane {

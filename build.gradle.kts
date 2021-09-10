@@ -38,7 +38,7 @@ publishing {
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     requiresUnpack("**/kotlin-compiler-*.jar")
-    requiresUnpack("**/kotlin-daemon-*.jar")
+    //requiresUnpack("**/kotlin-daemon-*.jar")
     //requiresUnpack("**/kotlin-*.jar")
     //requiresUnpack("**/kotlinx-*.jar")
 }

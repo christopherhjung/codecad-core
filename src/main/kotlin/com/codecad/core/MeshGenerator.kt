@@ -6,16 +6,19 @@ import com.codecad.core.test.Node
 
 class MeshGenerator {
 
-    fun generate(extrude: Extrude) : Mesh {
-        val testFaces = extrude.extrude()
 
+    fun generate(extrude: Extrude) : Mesh {
+        return generate(extrude.extrude())
+    }
+
+    fun generate(volume: FacedVolume) : Mesh {
         val map = HashMap<PointD, Int>()
         fun getOrAdd(point: PointD) : Int{
             return map.computeIfAbsent(point){map.size}
         }
 
         val faces = mutableListOf<Int>()
-        for( face in testFaces.faces ){
+        for( face in volume.faces ){
             val triangles = face.generateTriangles()
 
             for( triangle in triangles ){

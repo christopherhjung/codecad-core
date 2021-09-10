@@ -2,6 +2,7 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
+import com.codecad.core.test.Node
 import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.Comparator
@@ -17,9 +18,9 @@ class RaycastTest {
         )
 
         val triangle = TriangleFace(
-            PointD(-0.4,0.0,-1.0),
-            PointD(0.4,0.4,-1.0),
-            PointD(0.4,-0.4,-1.0)
+            Node(PointD(-0.4,0.0,-1.0)),
+            Node(PointD(0.4,0.4,-1.0)),
+            Node(PointD(0.4,-0.4,-1.0))
         )
 
         val raycast = Raycast()

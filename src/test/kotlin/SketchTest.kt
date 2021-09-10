@@ -1,5 +1,8 @@
 import com.codecad.core.*
 import com.codecad.core.SketchScope.Companion.ORIGIN
+import com.codecad.core.Value.Companion.cos
+import com.codecad.core.Value.Companion.sin
+import com.codecad.core.test.mapModel
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
 import kotlin.test.assertEquals
@@ -125,6 +128,48 @@ class SketchTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun testets(){
+        fun SketchScope.cycloid(bR: Value, sR: Value): FunctionFigure {
+            return func { t ->
+                val r = t*Math.PI*2
+                val combined = sR + bR
+                Point(combined*cos(r) - sR*cos(combined*(r/sR)) ,
+                    combined*sin(r) - sR*sin(combined*(r/sR)))
+            }
+        }
+
+
+        val project = project {
+
+            val cycloids = sketch {
+                cycloid(const(1.0),const(0.1))
+                cycloid(const(1.6),const(0.1))
+                line(constPoint(-2.0,-2.0), constPoint(2.0,2.0))
+
+                val a = constPoint(-0.1, 0.1)
+                val b = constPoint(-0.7, 0.1)
+                val c = constPoint(-0.1, 0.7)
+
+                line(a,b)
+                line(b,c)
+                line(c,a)
+
+                constPoint(-0.7,0.7)
+            }
+
+
+            extrude(cycloids, Point(Const(1.0),Const(-1.0)), Const(1.0))
+            extrude(cycloids, Point(Const(-0.7),Const(0.7)), Const(0.2))
+
+        }
+
+        mapModel(project)
+
+        println("test")
+
     }
 
 }

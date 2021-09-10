@@ -5,6 +5,8 @@ import com.codecad.core.test.*
 
 abstract class Volume
 
+class FacedVolume(val faces: List<Face>) : Volume()
+
 class PolygonVolume(val faces: List<PolygonFace>) : Volume()
 
 class RoutedVolume(val faces: List<RoutedFace>){
@@ -42,11 +44,11 @@ class RoutedVolume(val faces: List<RoutedFace>){
 }
 
 class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Value) : Volume() {
-    fun extrude(): PolygonVolume {
+    fun extrude(): FacedVolume {
         val height = height.value
 
         val map = HashMap<PointD, Node>()
-        val polygons = mutableListOf<PolygonFace>()
+        val faces = mutableListOf<Face>()
         val inverted = height > 0
 
         val offsetVector = directedPlane.root.normal * height
@@ -72,7 +74,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                     list.reverse()
                 }
 
-                polygons.add(PolygonFace(list))
+                faces.add(ConvexFace(list))
             }
 
             if (inverted) {
@@ -84,8 +86,8 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             val basePolygon = PolygonFace(basePoints)
             val topPolygon = PolygonFace(topPoints)
 
-            polygons.add(basePolygon)
-            polygons.add(topPolygon)
+            faces.add(basePolygon)
+            faces.add(topPolygon)
 
             return Pair(basePolygon, topPolygon)
         }
@@ -100,6 +102,6 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             topPolygon.holes.add(topHole)
         }
 
-        return PolygonVolume(polygons)
+        return FacedVolume(faces)
     }
 }

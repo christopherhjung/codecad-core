@@ -43,6 +43,7 @@ class Executor{
             println("Sicherheitsangriff")
             throw RuntimeException(e)
         } catch (e: ScriptException){
+            e.printStackTrace()
             val cause = e.cause
             if(cause is LineException){
                 throw cause
