@@ -35,6 +35,10 @@ enum class Side{
     Unknown, Outside, Inside
 }
 
+enum class Owner{
+    Unknown, Base, Tool
+}
+
 data class Edge(val source: Corner,
            val target : Corner){
     var next: Edge? = null
@@ -180,18 +184,6 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
         .build()
 
 
-    val planes = HashMap<RoutedFace, Plane>()
-
-    fun faceToPlane(face: RoutedFace) : Plane{
-        if(planes.containsKey(face)){
-            return planes[face]!!
-        }
-
-        val plane = face.toPlane()
-        planes[face] = plane
-        return plane
-    }
-
     fun buildEventQueue(volume: RoutedVolume) : TreeSet<PlaneEvent>{
         val events = TreeSet(planeComparator)
         for(face in volume.faces){
@@ -235,9 +227,9 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
         }
 
         if (event.start) {
-            val leftPlane = faceToPlane(event.face)
+            val leftPlane = event.face.plane
             for (other in active.values) {
-                val rightPlane = faceToPlane(other.face)
+                val rightPlane = other.face.plane
                 val line = Line.fromPlanes(leftPlane, rightPlane)
 
                 if(leftPlane.normal == rightPlane.normal){
@@ -325,7 +317,6 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                     finishSegment = null
                 }
-
             }
         }
     }
@@ -333,7 +324,9 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
     return PlaneSliceResult(resultSlices, uncutFaces)
 }
 
-fun applyPlaneSlices(slices: List<PlaneSlice>) : List<PolygonFace>{
+class FaceAssignment(val baseFaces : MutableList<Face> = mutableListOf(), val toolFaces : MutableList<Face> = mutableListOf())
+
+fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace, Owner>) : FaceAssignment{
 
     val map = HashMap<RoutedFace, MutableList<PlaneSlice>>()
 
@@ -341,11 +334,10 @@ fun applyPlaneSlices(slices: List<PlaneSlice>) : List<PolygonFace>{
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
     }
 
-    val outers = mutableListOf<PolygonFace>()
+    //val outers = mutableListOf<PolygonFace>()
+    val result = FaceAssignment()
 
     for((face, slices) in map.entries){
-        val plane = face.toPlane()
-
         val nodeMap = mutableMapOf<Node, Corner>()
 
         val edgeList = mutableSetOf<Edge>()
@@ -400,8 +392,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice>) : List<PolygonFace>{
             edge.twin.twin = edge
 
             val direction = endCorner.node.point - startCorner.node.point
-
-            val test = slice.plane.normal.cross(direction).dot(plane.normal)
+            val test = direction.cross(slice.plane.normal).dot(slice.face.plane.normal)
 
             if(test > 0){
                 edge.side = Side.Outside
@@ -448,11 +439,17 @@ fun applyPlaneSlices(slices: List<PlaneSlice>) : List<PolygonFace>{
         }
 
         edgeList.removeAll(ignoreEdges)
-        finishCorners(corners, plane)
-        outers.addAll(generateFaces(edgeList, plane))
+
+        val faces = generateFaces(corners, edgeList, face.plane)
+
+        if(assignmentTable[face] == Owner.Tool){
+            result.toolFaces.addAll(faces)
+        }else{
+            result.baseFaces.addAll(faces)
+        }
     }
 
-    return outers
+    return result
 }
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
@@ -472,9 +469,10 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
     }
 }
 
-fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
+fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
+    val sideMap = mutableMapOf<PolygonFace, Side>()
 
-
+    finishCorners(corners, plane)
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
@@ -484,7 +482,7 @@ fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
         var area = PointD.ZERO
         val points = mutableListOf<Node>()
         var current = next
-        val face = PolygonFace(points)
+        val face = PolygonFace(points, plane)
 
         var side = Side.Unknown
         while(true){
@@ -497,7 +495,7 @@ fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
             }
 
             if(current.side != Side.Unknown){
-                if(side != Side.Outside){
+                if(side != Side.Inside){
                     side = current.side
                 }
             }
@@ -509,6 +507,7 @@ fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
         face.area = area.length() / 2
         face.clockwise = area.dot(plane.normal) < 0
         face.side = side
+        sideMap[face] = side
 
         faces.add(face)
     }
@@ -520,12 +519,38 @@ fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
     return polygonFace.positions.minByOrNull { it.point.dot(direction) }!!
 }
 
+fun generateOwnerAssignment(base: RoutedVolume, tool: RoutedVolume) : Map<RoutedFace, Owner>{
+    val map = mutableMapOf<RoutedFace, Owner>()
+    for( face in base.faces ){
+        map[face] = Owner.Base
+    }
+
+    for( face in tool.faces ){
+        map[face] = Owner.Tool
+    }
+    return map
+}
+
 fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
-    val result = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
+    val base = RoutedVolume.from(base)
+    val tool = RoutedVolume.from(tool)
+    val result = computePlaneSlices(base, tool)
 
-    val faces = applyPlaneSlices(result.slices)
+    val ownerAssignment = generateOwnerAssignment(base, tool)
+    val faceAssignment = applyPlaneSlices(result.slices, ownerAssignment)
 
-    return FacedVolume(faces + result.uncut.map { it.original!! })
+    for(uncut in result.uncut.map { it.original!! }){
+        if(ownerAssignment[uncut] == Owner.Tool){
+            faceAssignment.toolFaces.add(uncut)
+        }else{
+            faceAssignment.baseFaces.add(uncut)
+        }
+    }
+
+    val baseFaces = faceAssignment.baseFaces.filter { if(it is PolygonFace) it.side == Side.Outside else true }
+    val toolFaces = faceAssignment.toolFaces.filter { if(it is PolygonFace) it.side == Side.Inside else false }
+
+    return FacedVolume(baseFaces + toolFaces)
 }
 
 fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
@@ -577,7 +602,6 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
                     closestFace = outerFace
                     maxUnitOffset = maxCurrentUnitOffset
                 }
-
             }
         }
 

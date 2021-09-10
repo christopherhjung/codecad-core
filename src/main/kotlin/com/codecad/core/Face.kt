@@ -33,7 +33,7 @@ open class ConvexFace( val points: List<Node>) : Face() {
     }
 }
 
-class PolygonFace( val positions: List<Node>) : Face() {
+class PolygonFace( val positions: List<Node>, val plane: Plane) : Face() {
     var parent: PolygonFace? = null
     val holes = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
@@ -48,7 +48,7 @@ class PolygonFace( val positions: List<Node>) : Face() {
     }
 
     override fun toPlane() : Plane{
-        return Plane.fromPoints(positions[0].point, positions[1].point, positions[2].point)
+        return plane
     }
 }
 
@@ -109,7 +109,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     return triangles
 }
 
-class RoutedFace(val root : Edge, val holes: List<Edge>, val original: Face? = null) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val original: Face? = null) : Face(), Iterable<Edge>{
     override fun iterator(): Iterator<Edge> {
         var current : Edge = root
         var first = true
@@ -209,9 +209,6 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val original: Face? = n
     }
 
     override fun toPlane(): Plane {
-        val a = root
-        val b = a.next
-        val c = b?.next
-        return Plane.fromPoints(a.source.node.point, b!!.source.node.point, c!!.source.node.point)
+        return plane
     }
 }

@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.test.*
 
@@ -62,11 +63,11 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             for(face in polygonVolume.faces){
                 if(face is ConvexFace){
                     val root = generateEdges(face.points)
-                    faces.add(RoutedFace(root, listOf(), face))
+                    faces.add(RoutedFace(root, listOf(), face.toPlane(), face))
                 }else if(face is PolygonFace){
                     val root = generateEdges(face.positions)
                     val holeEdges = face.holes.map { generateEdges(it.positions) }
-                    faces.add(RoutedFace(root, holeEdges, face))
+                    faces.add(RoutedFace(root, holeEdges, face.plane, face))
                 }
             }
 
@@ -109,14 +110,15 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 faces.add(ConvexFace(list))
             }
 
+            val basePolygon : PolygonFace
+            val topPolygon : PolygonFace
             if (inverted) {
-                basePoints = basePoints.reversed()
+                basePolygon = PolygonFace(basePoints.reversed(), Plane(directedPlane.root.normal * -1.0, -directedPlane.root.distance))
+                topPolygon = PolygonFace(topPoints, Plane(directedPlane.root.normal,directedPlane.root.distance + height))
             } else {
-                topPoints = topPoints.reversed()
+                basePolygon = PolygonFace(basePoints, directedPlane.root)
+                topPolygon = PolygonFace(topPoints.reversed(), Plane(directedPlane.root.normal * -1.0, height - directedPlane.root.distance))
             }
-
-            val basePolygon = PolygonFace(basePoints)
-            val topPolygon = PolygonFace(topPoints)
 
             faces.add(basePolygon)
             faces.add(topPolygon)
