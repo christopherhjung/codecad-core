@@ -143,7 +143,7 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     }
 
     finishCorners(pointMap.values, Plane.XY)
-    return generateFaces(Plane.XY, edges)
+    return generateFaces(edges, Plane.XY)
 }
 
 /*

@@ -1,7 +1,11 @@
+import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.SketchScope.Companion.ORIGIN
+import com.codecad.core.Value.Companion.const
 import com.codecad.core.Value.Companion.cos
 import com.codecad.core.Value.Companion.sin
+import com.codecad.core.test.DirectedPlane
+import com.codecad.core.test.Node
 import com.codecad.core.test.mapModel
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
@@ -141,32 +145,33 @@ class SketchTest {
             }
         }
 
-
         val project = project {
 
-            val cycloids = sketch {
-                cycloid(const(1.0),const(0.1))
-                cycloid(const(1.6),const(0.1))
-                line(constPoint(-2.0,-2.0), constPoint(2.0,2.0))
-
-                val a = constPoint(-0.1, 0.1)
-                val b = constPoint(-0.7, 0.1)
-                val c = constPoint(-0.1, 0.7)
-
-                line(a,b)
-                line(b,c)
-                line(c,a)
-
-                constPoint(-0.7,0.7)
+            val big = sketch {
+                polygon(
+                    Point(const(-0.5), const(-0.5)),
+                    Point(const(0.5), const(-0.5)),
+                    Point(const(0.5), const(0.5)),
+                    Point(const(-0.5), const(0.5)),
+                )
             }
 
+            val small = sketch {
+                polygon(
+                    Point(const(-0.2), const(-0.2)),
+                    Point(const(0.2), const(-0.2)),
+                    Point(const(0.2), const(0.2)),
+                    Point(const(-0.2), const(0.2)),
+                )
+            }
 
-            extrude(cycloids, Point(Const(1.0),Const(-1.0)), Const(1.0))
-            extrude(cycloids, Point(Const(-0.7),Const(0.7)), Const(0.2))
+            extrude(big, const(1.0))
+            extrude(small, const(2.0))
+
 
         }
 
-        mapModel(project)
+        val model = mapModel(project)
 
         println("test")
 

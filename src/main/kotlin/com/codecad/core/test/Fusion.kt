@@ -60,6 +60,26 @@ data class Edge(val source: Corner,
             }
         }
     }
+
+    fun corners() : Iterable<Corner>{
+        return Iterable {
+            var start : Edge = this
+            var current : Edge = this
+            var first = true
+            object : Iterator<Corner>{
+                override fun hasNext(): Boolean {
+                    return first || current != start
+                }
+
+                override fun next(): Corner {
+                    first = false
+                    val result = current.source
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
 }
 
 
@@ -121,8 +141,9 @@ fun findIntersections(face: RoutedFace, plane: Plane) : List<Intersection>{
 }
 
 
-fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneSlice>{
+class PlaneSliceResult(val slices: List<PlaneSlice>, val uncut: Set<RoutedFace>)
 
+fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSliceResult{
     val planeComparator = ChainComparator.Builder<PlaneEvent>()
         .withComparable { it.point.x }
         .withComparable { it.point.y }
@@ -183,6 +204,8 @@ fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneS
         return events
     }
 
+    val uncutFaces = (base.faces + tool.faces).toMutableSet()
+
     val baseEventQueue = buildEventQueue(base)
     val toolEventQueue = buildEventQueue(tool)
 
@@ -228,6 +251,9 @@ fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneS
                     continue
                 }
 
+                uncutFaces.remove(event.face)
+                uncutFaces.remove(other.face)
+
                 val intersectionEvents = TreeSet(testComparator)
 
                 for(intersection in leftIntersections){
@@ -252,7 +278,6 @@ fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneS
 
                 var started: Intersection? = null
                 var finishSegment : Intersection? = null
-
 
                 for(intersectionEvent in intersectionEvents){
                     val currentIndex = intersectionEvent.index
@@ -305,10 +330,10 @@ fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneS
         }
     }
 
-    return resultSlices
+    return PlaneSliceResult(resultSlices, uncutFaces)
 }
 
-fun applyPlaneSlices(slices : List<PlaneSlice>) : FacedVolume{
+fun applyPlaneSlices(slices: List<PlaneSlice>) : List<PolygonFace>{
 
     val map = HashMap<RoutedFace, MutableList<PlaneSlice>>()
 
@@ -422,17 +447,12 @@ fun applyPlaneSlices(slices : List<PlaneSlice>) : FacedVolume{
             ignoreEdges.add(edge.twin)
         }
 
-
-        finishCorners(corners, plane)
-
         edgeList.removeAll(ignoreEdges)
-        val faces = generateFaces(plane, edgeList)
-        val outer = combineFaces(plane, faces)
-
-        outers.addAll(outer)
+        finishCorners(corners, plane)
+        outers.addAll(generateFaces(edgeList, plane))
     }
 
-    return FacedVolume(outers)
+    return outers
 }
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
@@ -446,15 +466,15 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
             corner.edges.sortBy(comparator)
         }
 
-        for(i in corner.edges.indices){
-            val top = corner.edges[i]
-            val bottom = corner.edges[(i+1)%corner.edges.size]
+        for((top, bottom) in corner.edges.rollover()){
             top.twin.next = bottom
         }
     }
 }
 
-fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
+fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
+
+
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
@@ -493,59 +513,22 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
         faces.add(face)
     }
 
-    return faces
+    return combineFaces(faces, plane)
 }
 
 fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
-    /*var leftMostOffset: Double = Double.MAX_VALUE
-    var leftMost: PointD? = null
-    for( point in polygonFace.positions ){
-        val leftOffset = point.point.dot(direction)
-        if(leftMostOffset > leftOffset){
-            leftMostOffset = leftOffset
-            leftMost = point.point
-        }
-    }
-
-    val other = polygonFace.positions.minByOrNull { it.point.dot(direction) }
-    return leftMost!!*/
-
     return polygonFace.positions.minByOrNull { it.point.dot(direction) }!!
 }
 
-
-fun main() {
-    val plane = Plane.fromPoints(PointD(0.0,0.0,1.0),PointD(1.0,0.0,1.0),PointD(1.0,1.0,1.0))
-    println(plane.normal)
-    println(plane.distance)
-    val list = listOf(
-        PointD(-0.5,-0.5),
-        PointD(0.5,-0.5),
-        PointD(0.5,0.5),
-        PointD(-0.5,0.5)
-    )
-
-    val list2 = listOf(
-        PointD(-0.2,-0.2),
-        PointD(0.2,-0.2),
-        PointD(0.2,0.2),
-        PointD(-0.2,0.2)
-    )
-
-    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0))
-    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0))
-
-    val result = addVolumes(base, tool)
-
-    println("finish")
-}
-
 fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
-    val slices = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
-    return applyPlaneSlices(slices)
+    val result = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
+
+    val faces = applyPlaneSlices(result.slices)
+
+    return FacedVolume(faces + result.uncut.map { it.original!! })
 }
 
-fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
+fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)
 
     val leftMostMap = mutableMapOf<PolygonFace, PointD>()
@@ -613,4 +596,30 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
 }
 
 
+
+
+/*
+fun main() {
+    val list = listOf(
+        PointD(-0.5,-0.5),
+        PointD(0.5,-0.5),
+        PointD(0.5,0.5),
+        PointD(-0.5,0.5)
+    )
+
+    val list2 = listOf(
+        PointD(-0.2,-0.2),
+        PointD(0.2,-0.2),
+        PointD(0.2,0.2),
+        PointD(-0.2,0.2)
+    )
+
+    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0))
+    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0))
+
+    val result = addVolumes(base, tool)
+
+    println("finish")
+}
+*/
 

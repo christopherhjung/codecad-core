@@ -189,13 +189,9 @@ open class SketchScope(val project: Project) {
     }
 
     fun polygon(vararg points: Point) : List<LineSegment> {
-        val points = mutableListOf(*points)
-        points.add(points.first())
-        var current = points.first()
         val lines = mutableListOf<LineSegment>()
-        for (point in points) {
-            lines.add(line(current, point))
-            current = point
+        for ((left, right) in points.toList().rollover()) {
+            lines.add(line(left, right))
         }
 
         return lines

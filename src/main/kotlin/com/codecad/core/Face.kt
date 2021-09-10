@@ -9,7 +9,6 @@ import org.poly2tri.triangulation.TriangulationPoint
 
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
-
     abstract fun toPlane() : Plane
 }
 
@@ -54,10 +53,26 @@ class PolygonFace( val positions: List<Node>) : Face() {
 }
 
 fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{
+    val plane = Plane.fromPoints(outline)
+    val directedPlane = DirectedPlane.from(plane)
+
+    val map = mutableMapOf<Double, PointD>()
+
+    var current = 0.0
+
+    fun createPoint(point: PointD) : PolygonPoint{
+        val x = directedPlane.first.dot(point) / directedPlane.first.squaredLength()
+        val y = directedPlane.second.dot(point) / directedPlane.second.squaredLength()
+        current++
+
+        map[current] = point
+        return PolygonPoint(x,y , current)
+    }
+
     fun pointsToPolygon(points: List<PointD>) : org.poly2tri.geometry.polygon.Polygon{
         val list = mutableListOf<PolygonPoint>()
         for( point in points ){
-            list.add(PolygonPoint(point.x, point.y, point.z))
+            list.add(createPoint(point))
         }
         return org.poly2tri.geometry.polygon.Polygon(list)
     }
@@ -78,7 +93,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val triangles = mutableListOf<TriangleFace>()
 
     fun createPoint(trianglePoint: TriangulationPoint) : Node {
-        return Node(PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z))
+        return Node(map[trianglePoint.z]!!)
     }
 
     val offset = 0//if(inverted) 1 else 0
@@ -94,7 +109,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     return triangles
 }
 
-class RoutedFace(val root : Edge, val holes: List<Edge>) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, val holes: List<Edge>, val original: Face? = null) : Face(), Iterable<Edge>{
     override fun iterator(): Iterator<Edge> {
         var current : Edge = root
         var first = true

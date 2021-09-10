@@ -5,7 +5,21 @@ import com.codecad.core.test.*
 
 abstract class Volume
 
-class FacedVolume(val faces: List<Face>) : Volume()
+class FacedVolume(val faces: List<Face>) : Volume() {
+    companion object {
+        fun from(volume: Volume): FacedVolume {
+            return if (volume is RoutedVolume) {
+                TODO("not yet implemented")
+            } else if (volume is FacedVolume) {
+                return volume
+            } else if (volume is Extrude) {
+                volume.extrude()
+            } else {
+                TODO("not yet implemented")
+            }
+        }
+    }
+}
 
 class PolygonVolume(val faces: List<PolygonFace>) : Volume()
 
@@ -48,11 +62,11 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             for(face in polygonVolume.faces){
                 if(face is ConvexFace){
                     val root = generateEdges(face.points)
-                    faces.add(RoutedFace(root, listOf()))
+                    faces.add(RoutedFace(root, listOf(), face))
                 }else if(face is PolygonFace){
                     val root = generateEdges(face.positions)
                     val holeEdges = face.holes.map { generateEdges(it.positions) }
-                    faces.add(RoutedFace(root, holeEdges))
+                    faces.add(RoutedFace(root, holeEdges, face))
                 }
             }
 

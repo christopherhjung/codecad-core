@@ -27,10 +27,18 @@ fun mapModel(project: Project) : Model{
         }
     }
 
+    var result: FacedVolume? = null
+
     for(volume in project.volumes){
-        if(volume is Extrude){
-            model.volumes.add(meshGenerator.generate(volume))
+        if(result == null){
+            result = FacedVolume.from(volume)
+        }else{
+            result = addVolumes(result, volume)
         }
+    }
+
+    if(result != null){
+        model.volumes.add(meshGenerator.generate(result))
     }
 
     return model
