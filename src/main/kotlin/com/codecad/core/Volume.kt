@@ -9,9 +9,22 @@ class FacedVolume(val faces: List<Face>) : Volume()
 
 class PolygonVolume(val faces: List<PolygonFace>) : Volume()
 
-class RoutedVolume(val faces: List<RoutedFace>){
+class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     companion object{
-        fun from(polygonVolume: PolygonVolume) : RoutedVolume{
+
+        fun from(volume: Volume) : RoutedVolume{
+            return if(volume is RoutedVolume){
+                volume
+            }else if( volume is FacedVolume ){
+                from(volume)
+            }else if( volume is Extrude ){
+                from(volume.extrude())
+            }else{
+                TODO("not yet implemented")
+            }
+        }
+
+        fun from(polygonVolume: FacedVolume) : RoutedVolume{
             val faces = mutableListOf<RoutedFace>()
             fun generateEdges(points : List<Node>) : Edge{
                 val edges = points.map { Corner(it) }.rollover().map { (left,right) ->
@@ -33,9 +46,14 @@ class RoutedVolume(val faces: List<RoutedFace>){
             }
 
             for(face in polygonVolume.faces){
-                val root = generateEdges(face.positions)
-                val holeEdges = face.holes.map { generateEdges(it.positions) }
-                faces.add(RoutedFace(root, holeEdges))
+                if(face is ConvexFace){
+                    val root = generateEdges(face.points)
+                    faces.add(RoutedFace(root, listOf()))
+                }else if(face is PolygonFace){
+                    val root = generateEdges(face.positions)
+                    val holeEdges = face.holes.map { generateEdges(it.positions) }
+                    faces.add(RoutedFace(root, holeEdges))
+                }
             }
 
             return RoutedVolume(faces)

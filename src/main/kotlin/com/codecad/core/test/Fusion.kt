@@ -308,7 +308,7 @@ fun computePlaneSlices(base : RoutedVolume, tool : RoutedVolume ) :  List<PlaneS
     return resultSlices
 }
 
-fun applyPlaneSlices(slices : List<PlaneSlice>){
+fun applyPlaneSlices(slices : List<PlaneSlice>) : FacedVolume{
 
     val map = HashMap<RoutedFace, MutableList<PlaneSlice>>()
 
@@ -432,8 +432,7 @@ fun applyPlaneSlices(slices : List<PlaneSlice>){
         outers.addAll(outer)
     }
 
-
-    println("hello")
+    return FacedVolume(outers)
 }
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
@@ -515,7 +514,6 @@ fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
 }
 
 
-/*
 fun main() {
     val plane = Plane.fromPoints(PointD(0.0,0.0,1.0),PointD(1.0,0.0,1.0),PointD(1.0,1.0,1.0))
     println(plane.normal)
@@ -534,12 +532,18 @@ fun main() {
         PointD(-0.2,0.2)
     )
 
-    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0)).extrude()
-    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0)).extrude()
+    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0))
+    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0))
 
+    val result = addVolumes(base, tool)
+
+    println("finish")
+}
+
+fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
     val slices = computePlaneSlices(RoutedVolume.from(base), RoutedVolume.from(tool))
-    applyPlaneSlices(slices)
-}*/
+    return applyPlaneSlices(slices)
+}
 
 fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)
