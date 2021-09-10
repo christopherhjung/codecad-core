@@ -482,11 +482,8 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
             queue.remove(current)
         }
 
-        val areaVolume = area.length() / 2
-        val clockwise = area.dot(plane.normal) < 0
-
-        face.area = areaVolume
-        face.clockwise = clockwise
+        face.area = area.length() / 2
+        face.clockwise = area.dot(plane.normal) < 0
         face.side = side
 
         faces.add(face)
@@ -495,8 +492,8 @@ fun generateFaces(plane: Plane, edges: Collection<Edge>) : List<PolygonFace>{
     return faces
 }
 
-fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : PointD {
-    var leftMostOffset: Double = Double.MAX_VALUE
+fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
+    /*var leftMostOffset: Double = Double.MAX_VALUE
     var leftMost: PointD? = null
     for( point in polygonFace.positions ){
         val leftOffset = point.point.dot(direction)
@@ -505,7 +502,11 @@ fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : PointD {
             leftMost = point.point
         }
     }
-    return leftMost!!
+
+    val other = polygonFace.positions.minByOrNull { it.point.dot(direction) }
+    return leftMost!!*/
+
+    return polygonFace.positions.minByOrNull { it.point.dot(direction) }!!
 }
 
 
@@ -540,7 +541,7 @@ fun combineFaces(plane: Plane, faces: List<PolygonFace>) : List<PolygonFace>{
 
     val leftMostMap = mutableMapOf<PolygonFace, PointD>()
     fun getLeftmost(face: PolygonFace) : PointD{
-        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(directedPlane.first, face)}
+        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(directedPlane.first, face).point}
     }
 
     val orderedFaces = faces.sortedBy { getLeftmost(it).dot(directedPlane.first) }
