@@ -181,7 +181,39 @@ class RoutedFace(val root : Edge, val holes: List<Edge>) : Face(), Iterable<Edge
     }
 
     override fun generateTriangles(): List<TriangleFace> {
-        TODO("Not yet implemented")
+        fun pointsToPolygon(polygonFace: Edge) : org.poly2tri.geometry.polygon.Polygon{
+            val list = mutableListOf<PolygonPoint>()
+            for( point in polygonFace.points() ){
+                list.add(PolygonPoint(point.x, point.y, point.z))
+            }
+            return org.poly2tri.geometry.polygon.Polygon(list)
+        }
+
+        val parent = pointsToPolygon(root)
+
+        for( child in holes ){
+            parent.addHole(pointsToPolygon(child))
+        }
+
+        Poly2Tri.triangulate(parent)
+
+        val triangles = mutableListOf<TriangleFace>()
+
+        fun createPoint(trianglePoint: TriangulationPoint) : Node {
+            return Node(PointD(trianglePoint.x, trianglePoint.y, trianglePoint.z))
+        }
+
+        val offset = 0//if(inverted) 1 else 0
+
+        for( triangle in parent.triangles ){
+            val points = triangle.points
+            triangles.add(TriangleFace(
+                createPoint(points[0]),
+                createPoint(points[1 + offset]),
+                createPoint(points[2 - offset])))
+        }
+
+        return triangles
     }
 
     override fun toPlane(): Plane {

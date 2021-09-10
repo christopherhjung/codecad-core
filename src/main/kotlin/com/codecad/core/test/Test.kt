@@ -40,6 +40,26 @@ data class Edge(val source: Corner,
     var next: Edge? = null
     lateinit var twin : Edge
     var side : Side = Side.Unknown
+
+    fun points() : Iterable<PointD>{
+        return Iterable {
+            var start : Edge = this
+            var current : Edge = this
+            var first = true
+            object : Iterator<PointD>{
+                override fun hasNext(): Boolean {
+                    return first || current != start
+                }
+
+                override fun next(): PointD {
+                    first = false
+                    val result =  current.source.node.point
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
 }
 
 

@@ -60,7 +60,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 face.positions.map { Node(directedPlane.first * it.point.x + directedPlane.second * it.point.y) }
             var topPoints = basePoints.map { getOrAdd(it.point + offsetVector) }
 
-            for ((base, top) in basePoints.zip(topPoints).rollover()) {
+            for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {
                 val list = mutableListOf(
                     base.first,
                     top.first,
@@ -83,6 +83,9 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
             val basePolygon = PolygonFace(basePoints)
             val topPolygon = PolygonFace(topPoints)
+
+            polygons.add(basePolygon)
+            polygons.add(topPolygon)
 
             return Pair(basePolygon, topPolygon)
         }
