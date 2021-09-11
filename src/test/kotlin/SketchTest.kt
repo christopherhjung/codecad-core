@@ -1,3 +1,4 @@
+import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.SketchScope.Companion.ORIGIN
@@ -157,7 +158,7 @@ class SketchTest {
             }
 
 
-            val posX = 0.0
+            val posX = 0.4
             val posY = 0.0
 
             val small = sketch {
@@ -170,7 +171,7 @@ class SketchTest {
             }
 
             extrude(big, const(1.0))
-            extrude(small, const(2.0))
+            extrude(small, const(2.0), DirectedPlane.from(Plane(PointD(0.0,0.0,1.0), -0.5), PointD(1.0,0.0,0.0)))
         }
 
         val model = mapModel(project)

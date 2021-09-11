@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.common.Plane
 import com.codecad.core.test.DirectedPlane
 
 class ProjectScope(val project: Project){
@@ -19,12 +20,12 @@ class ProjectScope(val project: Project){
         }
     }
 
-    fun extrude(sketch: Sketch, height: Value) {
+    fun extrude(sketch: Sketch, height: Value, plane: DirectedPlane = DirectedPlane.XY) {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val faces = findFaces(lines)
 
         for(face in faces){
-            project.volumes.add(Extrude(face,DirectedPlane.XY,  height))
+            project.volumes.add(Extrude(face, plane,  height))
         }
     }
 }

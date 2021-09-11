@@ -23,6 +23,17 @@ data class Corner(val node: Node){
             throw RuntimeException("ss")
         }
 
+        if(edge.source.node.point.distanceTo(PointD(0.2,-0.2, 0.0)) < 0.01 &&
+            edge.target.node.point.distanceTo(PointD(0.5,-0.2, 0.0)) < 0.01){
+            println("sss")
+        }
+
+        for(cornerEdge in edges){
+            if(cornerEdge.target === edge.target){
+                throw RuntimeException("ss")
+            }
+        }
+
         edges.add(edge)
     }
 }
@@ -359,8 +370,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             edgeList.add(edge.twin)
         }
 
-        val test1 = edgeList.toList()
-
         val corners = mutableSetOf<Corner>()
         corners.addAll(face.corners())
 
@@ -422,25 +431,17 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             endCorner.addEdge(edge.twin)
 
             if(slice.start != null){
-                /*
-                if(slice.face.plane.distanceTo(slice.start!!.source.node.point) > 1e-8){
-                    println("error")
+                if(slice.start?.target !== startCorner && slice.start?.source !== startCorner){
+                    edgeMap.computeIfAbsent(slice.start!!) { mutableListOf()}.add(startCorner)
                 }
-
-                if(slice.face.plane.distanceTo(slice.start!!.target.node.point) > 1e-8){
-                    println("error")
-                }*/
-
-                edgeMap.computeIfAbsent(slice.start!!) { mutableListOf()}.add(startCorner)
             }
 
             if(slice.end != null) {
-                edgeMap.computeIfAbsent(slice.end!!) { mutableListOf() }.add(endCorner)
+                if(slice.end?.target !== endCorner && slice.end?.source !== endCorner){
+                    edgeMap.computeIfAbsent(slice.end!!) { mutableListOf() }.add(endCorner)
+                }
             }
         }
-
-
-        val test2 = edgeList.toList()
 
         for((edge, corners) in edgeMap.entries){
             val direction = (edge.target.node.point - edge.source.node.point).normalized()
@@ -567,18 +568,24 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
     val ownerAssignment = generateOwnerAssignment(base, tool)
     val faceAssignment = applyPlaneSlices(result.slices, ownerAssignment)
 
-    for(uncut in result.uncut.map { it.original!! }){
+    for(uncut in result.uncut){
         if(ownerAssignment[uncut] == Owner.Tool){
-            faceAssignment.toolFaces.add(uncut)
+            faceAssignment.toolFaces.add(uncut.original!!)
         }else{
-            faceAssignment.baseFaces.add(uncut)
+            faceAssignment.baseFaces.add(uncut.original!!)
         }
     }
 
     val baseFaces = faceAssignment.baseFaces.filter { if(it is PolygonFace) it.side == Side.Outside else true }
     val toolFaces = faceAssignment.toolFaces.filter { if(it is PolygonFace) it.side == Side.Inside else false }
 
-    return FacedVolume(baseFaces + toolFaces)
+    return FacedVolume(baseFaces + toolFaces.map {
+        if( it is PolygonFace ){
+            PolygonFace(it.positions.reversed(), it.plane.inverse())
+        }else if(it is ConvexFace){
+            ConvexFace(it.points.reversed())
+        }else TODO()
+    })
 }
 
 fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
