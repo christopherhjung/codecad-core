@@ -53,6 +53,10 @@ class PolygonFace( val positions: List<Node>, val plane: Plane) : Face() {
 }
 
 fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{
+    if(outline.size < 3){
+        return listOf()
+    }
+
     val plane = Plane.fromPoints(outline)
     val directedPlane = DirectedPlane.from(plane)
 
@@ -80,6 +84,10 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val parent = pointsToPolygon(outline)
 
     for( child in holes ){
+        if(outline.size < 3){
+            continue
+        }
+
         parent.addHole(pointsToPolygon(child))
     }
 
@@ -93,7 +101,8 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val triangles = mutableListOf<TriangleFace>()
 
     fun createPoint(trianglePoint: TriangulationPoint) : Node {
-        return Node(map[trianglePoint.z]!!)
+        return Node( directedPlane.first * trianglePoint.x + directedPlane.second * trianglePoint.y + directedPlane.root.normal * directedPlane.root.distance )
+        //return Node(map[trianglePoint.z]!!)
     }
 
     val offset = 0//if(inverted) 1 else 0

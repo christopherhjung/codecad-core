@@ -184,8 +184,8 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
         .build()
 
 
-    fun buildEventQueue(volume: RoutedVolume) : TreeSet<PlaneEvent>{
-        val events = TreeSet(planeComparator)
+    fun buildEventQueue(volume: RoutedVolume) : List<PlaneEvent>{
+        val events = mutableListOf<PlaneEvent>()
         for(face in volume.faces){
             val points = face.points().toList()
             val min = points.minWithOrNull(pointListComparator)!!
@@ -198,12 +198,15 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
     val uncutFaces = (base.faces + tool.faces).toMutableSet()
 
-    val baseEventQueue = buildEventQueue(base)
-    val toolEventQueue = buildEventQueue(tool)
+    val baseEventQueue = (buildEventQueue(base) + buildEventQueue(tool)).sortedWith(planeComparator)
+    //val toolEventQueue = buildEventQueue(tool)
 
-    baseEventQueue.addAll(toolEventQueue)
+    //baseEventQueue.addAll(toolEventQueue)
 
-    val active = HashMap<RoutedFace, PlaneEvent>()
+    val activeBase = HashMap<RoutedFace, PlaneEvent>()
+    val activeTool = HashMap<RoutedFace, PlaneEvent>()
+
+    //toolEventQueue.forEach { active[it.face] = it }
 
     data class Event(val intersection : Intersection, val offset: Double, val index: Int)
 
@@ -214,23 +217,30 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
     val resultSlices = mutableListOf<PlaneSlice>()
 
-    while (baseEventQueue.isNotEmpty()) {
-        val event = baseEventQueue.pollFirst()!!
-
-        if(event.volume === base){
-            if(event.start){
-                active[event.face] = event
-            }else{
-                active.remove(event.face)
-            }
-            continue
+    for(event in baseEventQueue) {
+        val (currentActive, otherActive) = when{
+            event.volume === base -> Pair(activeBase, activeTool)
+            event.volume === tool -> Pair(activeTool, activeBase)
+            else -> throw RuntimeException("ss")
         }
+
+        if(event.start){
+            currentActive[event.face] = event
+        }else{
+            currentActive.remove(event.face)
+        }
+
+        /*
+        if(event.volume === base){
+            continue
+        }*/
 
         if (event.start) {
             val leftPlane = event.face.plane
-            for (other in active.values) {
+            val leftPoints = event.face.points().toList()
+            for (other in otherActive.values) {
                 val rightPlane = other.face.plane
-                val line = Line.fromPlanes(leftPlane, rightPlane)
+                val rightPoints = other.face.points().toList()
 
                 if(leftPlane.normal == rightPlane.normal){
                     continue
@@ -248,6 +258,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                 val intersectionEvents = TreeSet(testComparator)
 
+                val line = Line.fromPlanes(leftPlane, rightPlane)
                 for(intersection in leftIntersections){
                     intersectionEvents.add(Event(intersection, line.direction.dot(intersection.position.point), 0))
                 }
@@ -305,7 +316,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                             continue
                         }else if(finishSegment != null){
                             if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
-                                currentSlice.end = last[otherIndex]!!.edge
+                                currentSlice.end = intersectionEvent.intersection.edge
                             }
 
                             currentSlice.endPosition = finishSegment.position
@@ -348,6 +359,8 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             edgeList.add(edge.twin)
         }
 
+        val test1 = edgeList.toList()
+
         val corners = mutableSetOf<Corner>()
         corners.addAll(face.corners())
 
@@ -364,6 +377,9 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         }
 
         fun createEdge(source: Corner, target: Corner) : Edge{
+            if(abs(face.plane.distanceTo(target.node.point)) > 1e-8 ){
+                println("error")
+            }
             val edge = Edge(source, target)
             edgeList.add(edge)
             return edge
@@ -406,6 +422,15 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             endCorner.addEdge(edge.twin)
 
             if(slice.start != null){
+                /*
+                if(slice.face.plane.distanceTo(slice.start!!.source.node.point) > 1e-8){
+                    println("error")
+                }
+
+                if(slice.face.plane.distanceTo(slice.start!!.target.node.point) > 1e-8){
+                    println("error")
+                }*/
+
                 edgeMap.computeIfAbsent(slice.start!!) { mutableListOf()}.add(startCorner)
             }
 
@@ -413,6 +438,9 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
                 edgeMap.computeIfAbsent(slice.end!!) { mutableListOf() }.add(endCorner)
             }
         }
+
+
+        val test2 = edgeList.toList()
 
         for((edge, corners) in edgeMap.entries){
             val direction = (edge.target.node.point - edge.source.node.point).normalized()
@@ -619,9 +647,75 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
     return orderedFaces.filter { !it.clockwise }
 }
 
+/*
+
+fun main() {
 
 
 
+    val leftFrontBottom = Node(PointD(-0.5,-0.5))
+    val rightFrontBottom = Node(PointD(0.5,-0.5))
+    val rightBackBottom = Node(PointD(0.5,0.5))
+    val leftBackBottom = Node(PointD(-0.5,0.5))
+
+    val leftFrontTop = Node(PointD(-0.5,-0.5, 1.0))
+    val rightFrontTop = Node(PointD(0.5,-0.5, 1.0))
+    val rightBackTop = Node(PointD(0.5,0.5, 1.0))
+    val leftBackTop = Node(PointD(-0.5,0.5, 1.0))
+
+    val leftBottom = Node(PointD(0.4, 0.0, -1.0))
+    val rightBottom = Node(PointD(0.6, 0.0, -1.0))
+    val leftTop = Node(PointD(0.4, 0.0, 1.0))
+    val rightTop = Node(PointD(0.6, 0.0, 1.0))
+
+    val bottom = listOf(
+        leftBackBottom,
+        rightBackBottom,
+        rightFrontBottom,
+        leftFrontBottom,
+    )
+
+    val top = listOf(
+        leftFrontTop,
+        rightFrontTop,
+        rightBackTop,
+        leftBackTop,
+    )
+
+    val right = listOf(
+        rightFrontBottom,
+        rightBackBottom,
+        rightBackTop,
+        rightFrontTop
+    )
+
+    val tool = listOf(
+        leftBottom,
+        rightBottom,
+        rightTop,
+        leftTop
+    )
+
+    val baseVolume = FacedVolume(
+        listOf(
+            PolygonFace(bottom, Plane.fromPoints(bottom.map { it.point })),
+            PolygonFace(top, Plane.fromPoints(top.map { it.point })),
+            PolygonFace(right, Plane.fromPoints(right.map { it.point })),
+        )
+    )
+
+    val toolVolume = FacedVolume(
+        listOf(
+            PolygonFace(tool, Plane.fromPoints(tool.map { it.point })),
+        )
+    )
+
+    val result = addVolumes(baseVolume, toolVolume)
+
+    println("finish")
+}
+
+*/
 /*
 fun main() {
     val list = listOf(

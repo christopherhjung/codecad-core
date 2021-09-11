@@ -156,19 +156,21 @@ class SketchTest {
                 )
             }
 
+
+            val posX = 0.0
+            val posY = 0.0
+
             val small = sketch {
                 polygon(
-                    Point(const(-0.2), const(-0.2)),
-                    Point(const(0.2), const(-0.2)),
-                    Point(const(0.2), const(0.2)),
-                    Point(const(-0.2), const(0.2)),
+                    Point(const(-0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(0.2 + posY)),
+                    Point(const(-0.2 + posX), const(0.2 + posY)),
                 )
             }
 
             extrude(big, const(1.0))
             extrude(small, const(2.0))
-
-
         }
 
         val model = mapModel(project)
