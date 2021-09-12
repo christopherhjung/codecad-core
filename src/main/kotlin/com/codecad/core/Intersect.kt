@@ -345,7 +345,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
         val triangles = face.generateTriangles()
 
         for( triangle in triangles ){
-            val points = triangle.points
+            val points = triangle.positions
 
             var found = true
             for( i in 0 until 3 ){

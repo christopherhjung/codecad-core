@@ -18,18 +18,18 @@ class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
     }
 }
 
-open class ConvexFace( val points: List<Node>) : Face() {
+open class ConvexFace( val positions: List<Node>) : Face() {
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
-        for( i in 0 until points.size - 2 ){
-            result.add(TriangleFace(points[0], points[i + 1], points[i + 2]))
+        for( i in 0 until positions.size - 2 ){
+            result.add(TriangleFace(positions[0], positions[i + 1], positions[i + 2]))
         }
 
         return result
     }
 
     override fun toPlane() : Plane{
-        return Plane.fromPoints(points[0].point, points[1].point, points[2].point)
+        return Plane.fromPoints(positions[0].point, positions[1].point, positions[2].point)
     }
 }
 

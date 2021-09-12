@@ -22,7 +22,7 @@ class MeshGenerator {
             val triangles = face.generateTriangles()
 
             for( triangle in triangles ){
-                for( node in triangle.points){
+                for( node in triangle.positions){
                     faces.add(getOrAdd(node.point))
                 }
             }

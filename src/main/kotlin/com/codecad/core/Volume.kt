@@ -62,7 +62,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
 
             for(face in polygonVolume.faces){
                 if(face is ConvexFace){
-                    val root = generateEdges(face.points)
+                    val root = generateEdges(face.positions)
                     faces.add(RoutedFace(root, listOf(), face.toPlane(), face))
                 }else if(face is PolygonFace){
                     val root = generateEdges(face.positions)
