@@ -652,12 +652,26 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
         }
 
         if (closestFace != null){
-            if (closestFace.parent != null) {
-                closestFace.parent!!.holes.add(innerFace)
-                innerFace.parent = closestFace.parent!!
-            } else {
-                closestFace.holes.add(innerFace)
-                innerFace.parent = closestFace
+            val target = closestFace.parent ?: closestFace
+            target.holes.add(innerFace)
+            innerFace.parent = target
+
+            if(target.side == Side.Unknown){
+                if(innerFace.side != Side.Unknown){
+                    target.side = innerFace.side
+
+                    for( hole in target.holes ){
+                        hole.side = target.side
+                    }
+                }
+            }else{
+                if(innerFace.side != Side.Unknown){
+                    if(innerFace.side != target.side){
+                        throw RuntimeException("what")
+                    }
+                }else{
+                    innerFace.side = target.side
+                }
             }
         }
     }
