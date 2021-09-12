@@ -124,8 +124,6 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     val pointMap = HashMap<PointD, Corner>()
     val edges = HashSet<Edge>()
 
-    val corner = mutableSetOf<Corner>()
-
     for (line in ordered) {
         val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
         val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }

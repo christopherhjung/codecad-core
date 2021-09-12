@@ -92,7 +92,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
         fun test(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
             var basePoints =
-                face.positions.map { Node(directedPlane.first * it.point.x + directedPlane.second * it.point.y + directedPlane.normal * directedPlane.distance) }
+                face.positions.map { Node(directedPlane.projectXYTo(it.point) ) }
             var topPoints = basePoints.map { getOrAdd(it.point + offsetVector) }
 
             for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {

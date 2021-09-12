@@ -66,17 +66,9 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val plane = Plane.fromPoints(outline)
     val directedPlane = DirectedPlane.from(plane)
 
-    val map = mutableMapOf<Double, PointD>()
-
-    var current = 0.0
-
     fun createPoint(point: PointD) : PolygonPoint{
-        val x = directedPlane.first.dot(point) / directedPlane.first.squaredLength()
-        val y = directedPlane.second.dot(point) / directedPlane.second.squaredLength()
-        current++
-
-        map[current] = point
-        return PolygonPoint(x,y , current)
+        val xy = directedPlane.extractXY(point)
+        return PolygonPoint(xy.x, xy.y , 0.0)
     }
 
     fun pointsToPolygon(points: List<PointD>) : org.poly2tri.geometry.polygon.Polygon{
@@ -107,8 +99,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val triangles = mutableListOf<TriangleFace>()
 
     fun createPoint(trianglePoint: TriangulationPoint) : Node {
-        return Node( directedPlane.first * trianglePoint.x + directedPlane.second * trianglePoint.y + directedPlane.normal * directedPlane.distance )
-        //return Node(map[trianglePoint.z]!!)
+        return Node( directedPlane.projectXYTo(trianglePoint.x, trianglePoint.y) )
     }
 
     val offset = 0//if(inverted) 1 else 0

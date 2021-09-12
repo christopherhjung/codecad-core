@@ -7,6 +7,21 @@ class DirectedPlane(val undirected: Plane, val first: PointD, val second: PointD
     val normal get() = undirected.normal
     val distance get() = undirected.distance
 
+    fun projectXYTo(point: PointD) : PointD{
+        return projectXYTo(point.x, point.y)
+    }
+
+    fun projectXYTo(x: Double, y: Double) : PointD{
+        return first * x + second * y + normal * distance
+    }
+
+    fun extractXY(point: PointD) : PointD{
+        val x = first.dot(point) / first.squaredLength()
+        val y = second.dot(point) / second.squaredLength()
+
+        return PointD(x,y, 0.0)
+    }
+
     companion object{
         fun from(plane: Plane) : DirectedPlane{
             val normal = plane.normal

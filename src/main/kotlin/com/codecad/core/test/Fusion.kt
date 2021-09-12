@@ -704,7 +704,7 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
 
     return FacedVolume(baseFaces + toolFaces.map {
         when (it) {
-            is PolygonFace -> PolygonFace(it.positions.reversed(), it.plane.inverse())
+            is PolygonFace -> PolygonFace(it.positions.reversed(), it.plane.flip())
             is ConvexFace -> ConvexFace(it.positions.reversed())
             else -> TODO()
         }
