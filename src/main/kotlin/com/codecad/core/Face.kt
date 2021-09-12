@@ -101,7 +101,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val triangles = mutableListOf<TriangleFace>()
 
     fun createPoint(trianglePoint: TriangulationPoint) : Node {
-        return Node( directedPlane.first * trianglePoint.x + directedPlane.second * trianglePoint.y + directedPlane.root.normal * directedPlane.root.distance )
+        return Node( directedPlane.first * trianglePoint.x + directedPlane.second * trianglePoint.y + directedPlane.normal * directedPlane.distance )
         //return Node(map[trianglePoint.z]!!)
     }
 

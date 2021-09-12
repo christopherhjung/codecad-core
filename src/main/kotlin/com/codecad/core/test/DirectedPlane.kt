@@ -3,7 +3,10 @@ package com.codecad.core.test
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 
-class DirectedPlane(val root: Plane, val first: PointD, val second: PointD){
+class DirectedPlane(val undirected: Plane, val first: PointD, val second: PointD){
+    val normal get() = undirected.normal
+    val distance get() = undirected.distance
+
     companion object{
         fun from(plane: Plane) : DirectedPlane{
             val normal = plane.normal

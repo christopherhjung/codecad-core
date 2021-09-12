@@ -46,8 +46,8 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
                     val forward = Edge(left,right)
                     forward.twin = Edge(right,left)
                     forward.twin.twin = forward
-                    forward.side = Side.Outside
-                    forward.twin.side = Side.Outside
+                    //forward.side = Side.Outside
+                    //forward.twin.side = Side.Outside
                     left.addEdge(forward)
                     right.addEdge(forward.twin)
                     forward
@@ -84,7 +84,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         val faces = mutableListOf<Face>()
         val inverted = height > 0
 
-        val offsetVector = directedPlane.root.normal * height
+        val offsetVector = directedPlane.normal * height
 
         fun getOrAdd(new: PointD): Node {
             return map.computeIfAbsent(new) { Node(new) }
@@ -92,7 +92,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
         fun test(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
             var basePoints =
-                face.positions.map { Node(directedPlane.first * it.point.x + directedPlane.second * it.point.y + directedPlane.root.normal * directedPlane.root.distance) }
+                face.positions.map { Node(directedPlane.first * it.point.x + directedPlane.second * it.point.y + directedPlane.normal * directedPlane.distance) }
             var topPoints = basePoints.map { getOrAdd(it.point + offsetVector) }
 
             for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {
@@ -113,11 +113,11 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             val basePolygon : PolygonFace
             val topPolygon : PolygonFace
             if (inverted) {
-                basePolygon = PolygonFace(basePoints.reversed(), Plane(directedPlane.root.normal * -1.0, -directedPlane.root.distance))
-                topPolygon = PolygonFace(topPoints, Plane(directedPlane.root.normal,directedPlane.root.distance + height))
+                basePolygon = PolygonFace(basePoints.reversed(), Plane(directedPlane.normal * -1.0, -directedPlane.distance))
+                topPolygon = PolygonFace(topPoints, Plane(directedPlane.normal,directedPlane.distance + height))
             } else {
-                basePolygon = PolygonFace(basePoints, directedPlane.root)
-                topPolygon = PolygonFace(topPoints.reversed(), Plane(directedPlane.root.normal * -1.0, height - directedPlane.root.distance))
+                basePolygon = PolygonFace(basePoints, directedPlane.undirected)
+                topPolygon = PolygonFace(topPoints.reversed(), Plane(directedPlane.normal * -1.0, height - directedPlane.distance))
             }
 
             faces.add(basePolygon)

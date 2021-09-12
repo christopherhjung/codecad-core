@@ -524,7 +524,11 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
             }
 
             if(current.side != Side.Unknown){
-                if(side != Side.Inside){
+                if(side != Side.Unknown ) {
+                    if(side != current.side){
+                        throw RuntimeException("ss")
+                    }
+                }else{
                     side = current.side
                 }
             }
@@ -615,8 +619,8 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
                 val toSource = leftmost - source.point
                 val toTarget = leftmost - target.point
 
-                val c = directedPlane.first.cross(toSource).dot(directedPlane.root.normal)
-                val d = directedPlane.first.cross(toTarget).dot(directedPlane.root.normal)
+                val c = directedPlane.first.cross(toSource).dot(directedPlane.normal)
+                val d = directedPlane.first.cross(toTarget).dot(directedPlane.normal)
 
                 if (c * d > 0) {
                     continue
