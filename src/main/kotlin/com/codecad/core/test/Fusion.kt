@@ -591,11 +591,11 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
     val toolFaces = faceAssignment.toolFaces.filter { if(it is PolygonFace) it.side == Side.Inside else false }
 
     return FacedVolume(baseFaces + toolFaces.map {
-        if( it is PolygonFace ){
-            PolygonFace(it.positions.reversed(), it.plane.inverse())
-        }else if(it is ConvexFace){
-            ConvexFace(it.points.reversed())
-        }else TODO()
+        when (it) {
+            is PolygonFace -> PolygonFace(it.positions.reversed(), it.plane.inverse())
+            is ConvexFace -> ConvexFace(it.points.reversed())
+            else -> TODO()
+        }
     })
 }
 
