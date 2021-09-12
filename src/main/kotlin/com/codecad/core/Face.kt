@@ -18,7 +18,9 @@ class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
     }
 }
 
-open class ConvexFace( val positions: List<Node>) : Face() {
+open class ConvexFace( val positions: List<Node>) : Face(), HasSide {
+    override var side: Side = Side.Unknown
+
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
         for( i in 0 until positions.size - 2 ){
@@ -33,12 +35,16 @@ open class ConvexFace( val positions: List<Node>) : Face() {
     }
 }
 
-class PolygonFace( val positions: List<Node>, val plane: Plane) : Face() {
+interface HasSide{
+    var side : Side
+}
+
+class PolygonFace( val positions: List<Node>, val plane: Plane) : Face(), HasSide {
     var parent: PolygonFace? = null
     val holes = mutableSetOf<PolygonFace>()
     var clockwise: Boolean = false
     var area: Double = 0.0
-    var side: Side = Side.Unknown
+    override var side: Side = Side.Unknown
 
     val type: FaceType
         get() = if(!clockwise) FaceType.Surface else FaceType.Hole

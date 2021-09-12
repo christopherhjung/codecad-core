@@ -1,7 +1,6 @@
 package com.codecad.core
 
 import com.codecad.common.PointD
-import java.text.DecimalFormat
 import kotlin.math.abs
 import kotlin.math.sign
 

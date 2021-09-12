@@ -7,6 +7,7 @@ import com.codecad.core.Value.Companion.cos
 import com.codecad.core.Value.Companion.sin
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
+import com.codecad.core.test.addVolumes
 import com.codecad.core.test.mapModel
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
@@ -157,7 +158,7 @@ class SketchTest {
             }
 
 
-            val posX = 0.0
+            val posX = 0.4
             val posY = 0.0
 
             val small = sketch {
@@ -170,7 +171,7 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane(PointD(0.0,1.0,1.0), -1.0).normalized(), PointD(1.0,1.0).normalized()))
+            extrude(small, Const(2.0))
         }
 
         val model = mapModel(project)
@@ -179,4 +180,136 @@ class SketchTest {
 
     }
 
+
+    @Test
+    fun cornerCase(){
+
+        val leftFrontBottom = Node(PointD(-0.5,-0.5))
+        val rightFrontBottom = Node(PointD(0.5,-0.5))
+        val rightBackBottom = Node(PointD(0.5,0.5))
+        val leftBackBottom = Node(PointD(-0.5,0.5))
+
+        val leftFrontTop = Node(PointD(-0.5,-0.5, 1.0))
+        val rightFrontTop = Node(PointD(0.5,-0.5, 1.0))
+        val rightBackTop = Node(PointD(0.5,0.5, 1.0))
+        val leftBackTop = Node(PointD(-0.5,0.5, 1.0))
+
+        val leftBottom = Node(PointD(0.4, 0.0, 0.0))
+        val rightBottom = Node(PointD(0.6, 0.0, 0.0))
+        val leftTop = Node(PointD(0.4, 0.0, 2.0))
+        val rightTop = Node(PointD(0.6, 0.0, 2.0))
+
+        val bottom = listOf(
+            leftBackBottom,
+            rightBackBottom,
+            rightFrontBottom,
+            leftFrontBottom,
+        )
+
+        val top = listOf(
+            leftFrontTop,
+            rightFrontTop,
+            rightBackTop,
+            leftBackTop,
+        )
+
+        val right = listOf(
+            rightFrontBottom,
+            rightBackBottom,
+            rightBackTop,
+            rightFrontTop
+        )
+
+        val tool = listOf(
+            leftBottom,
+            rightBottom,
+            rightTop,
+            leftTop
+        )
+
+        val baseVolume = FacedVolume(
+            listOf(
+                PolygonFace(bottom, Plane.fromPoints(bottom.map { it.point })),
+                PolygonFace(top, Plane.fromPoints(top.map { it.point })),
+                PolygonFace(right, Plane.fromPoints(right.map { it.point })),
+            )
+        )
+
+        val toolVolume = FacedVolume(
+            listOf(
+                PolygonFace(tool, Plane.fromPoints(tool.map { it.point })),
+            )
+        )
+
+        val result = addVolumes(baseVolume, toolVolume)
+
+        println(result)
+    }
+
+    @Test
+    fun tetstststs(){
+        val project = project {
+            val a = sketch {
+                //circle(point(0.0,0.0), const(1.0))
+
+                val topLine = line(point(0.0, 1.0),point(1.0,1.0))
+                val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
+
+                val vertLine = cline(topLine.p0, bottomLine.p0)
+                val vertLine2 = cline(topLine.p1, bottomLine.p1)
+
+                val leftArc = arc(vertLine.p0, vertLine.p1, param(1.0))
+                val rightArc = arc(vertLine2.p1, vertLine2.p0, param(1.0))
+
+
+                equals(topLine.length, bottomLine.length)
+
+
+
+                perpendicular(topLine, vertLine)
+
+
+
+                equals(leftArc.radius, rightArc.radius)
+                equals(topLine.length, rightArc.radius)
+
+                equals(vertLine.length, vertLine2.length)
+                equals(vertLine2.length, const(2.0))
+
+                equals(leftArc.center, vertLine.midPoint )
+                equals(rightArc.center, vertLine2.midPoint )
+
+                equals(leftArc.radius, topLine.length)
+                equals(topLine.p0, ORIGIN)
+
+                equals(topLine.p0.y, topLine.p1.y)
+
+            }
+
+
+
+            val posX = 0.0
+            val posY = 0.0
+
+            val witdth = 1
+            val height = 1
+
+            val small = sketch {
+                polygon(
+                    Point(const(-2 + posX), const(-2.5 + posY)),
+                    Point(const(2.5 + posX), const(-2.5 + posY)),
+                    Point(const(2.5 + posX), const(0.1 + posY)),
+                    Point(const(-2 + posX), const(0.1 + posY)),
+                )
+            }
+
+            extrude(small, Const(1.0))
+            extrude(a, Const(0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
+        }
+
+
+        val model = mapModel(project)
+
+        println("test")
+    }
 }

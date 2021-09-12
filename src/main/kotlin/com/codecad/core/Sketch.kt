@@ -278,12 +278,50 @@ class Sketch(val project: Project) {
 }
 
 
-abstract class Pattern{
-    abstract fun names() : List<String>
+abstract class Component{
+    //abstract fun names() : List<String>
     abstract fun build(sketch: SketchScope)
 }
 
-class Rect : Pattern() {
+class RoundRect : Component(){
+    lateinit var center: Point
+    lateinit var width: Value
+    lateinit var height: Value
+
+    override fun build(sketch: SketchScope) {
+        with(sketch){
+            val topLine = line(point(0.0, 1.0),point(1.0,1.0))
+            val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
+
+            val vertLine = cline(topLine.p0, bottomLine.p0)
+            val vertLine2 = cline(topLine.p1, bottomLine.p1)
+
+            val leftArc = arc(vertLine.p0, vertLine.p1, param(0.2))
+            val rightArc = arc(vertLine2.p1, vertLine2.p0, param(0.2))
+
+            val centerLine = cline(leftArc.center, rightArc.center)
+
+            equals(topLine.length, bottomLine.length)
+
+            perpendicular(topLine, vertLine)
+
+            equals(leftArc.radius, rightArc.radius)
+            equals(vertLine.length, vertLine2.length)
+
+            equals(topLine.p0.y, topLine.p1.y)
+
+            equals(leftArc.center, vertLine.midPoint )
+            equals(rightArc.center, vertLine2.midPoint )
+
+            center = centerLine.midPoint
+            width = centerLine.length
+            height = vertLine.length
+        }
+    }
+
+}
+
+class Rect : Component() {
     lateinit var a: Point
     lateinit var b: Point
     lateinit var c: Point
@@ -299,7 +337,7 @@ class Rect : Pattern() {
     lateinit var width: Value
     lateinit var height: Value
 
-    override fun names(): List<String> {
+    fun names(): List<String> {
         return listOf("width", "height", "top", "bottom")
     }
 

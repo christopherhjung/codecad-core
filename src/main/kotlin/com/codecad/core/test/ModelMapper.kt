@@ -30,10 +30,10 @@ fun mapModel(project: Project) : Model{
     var result: FacedVolume? = null
 
     for(volume in project.volumes){
-        if(result == null){
-            result = FacedVolume.from(volume)
+        result = if(result == null){
+            FacedVolume.from(volume)
         }else{
-            result = addVolumes(result, volume)
+            addVolumes(result, volume)
         }
     }
 

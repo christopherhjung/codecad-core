@@ -1,4 +1,4 @@
-@file:Suppress("KotlinDeprecation")
+//@file:Suppress("KotlinDeprecation")
 
 package com.codecad.core.test
 
@@ -18,13 +18,22 @@ data class Node(val point : PointD)
 data class Corner(val node: Node){
     val edges = mutableListOf<Edge>()
 
+    fun containsTarget(corner: Corner) : Edge?{
+        for(cornerEdge in edges){
+            if(cornerEdge.target === corner){
+                return cornerEdge
+            }
+        }
+        return null
+    }
+
     fun addEdge(edge: Edge){
         if(edge.source.node !== node){
             throw RuntimeException("ss")
         }
 
-        if(edge.source.node.point.distanceTo(PointD(0.2,-0.2, 0.0)) < 0.01 &&
-            edge.target.node.point.distanceTo(PointD(0.5,-0.2, 0.0)) < 0.01){
+        if(edge.source.node.point.distanceTo(PointD(0.5,0.2, 0.0)) < 0.01 &&
+            edge.target.node.point.distanceTo(PointD(0.2,0.2, 0.0)) < 0.01){
             println("sss")
         }
 
@@ -241,11 +250,6 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
             currentActive.remove(event.face)
         }
 
-        /*
-        if(event.volume === base){
-            continue
-        }*/
-
         if (event.start) {
             val leftPlane = event.face.plane
             val leftPoints = event.face.points().toList()
@@ -257,8 +261,8 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                     continue
                 }
 
-                val leftIntersections = findIntersections(event.face, rightPlane)//.sortedBy { line.direction.dot(it.position.point) }
-                val rightIntersections = findIntersections(other.face, leftPlane)//.sortedBy { line.direction.dot(it.position.point) }
+                val leftIntersections = findIntersections(event.face, rightPlane)
+                val rightIntersections = findIntersections(other.face, leftPlane)
 
                 if(leftIntersections.isEmpty() || rightIntersections.isEmpty()){
                     continue
@@ -363,7 +367,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
     }
 
-    //val outers = mutableListOf<PolygonFace>()
     val result = FaceAssignment()
 
     for((face, slices) in map.entries){
@@ -460,11 +463,17 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
 
             var current = edge.source
             for(corner in sortedCorners){
-                val newEdge = createEdge(current, corner)
-                newEdge.twin = createEdge(corner, current)
-                newEdge.twin.twin = newEdge
-                current.addEdge(newEdge)
-                corner.addEdge(newEdge.twin)
+                val existingEdge = current.containsTarget(corner)
+                if(existingEdge == null){
+                    val newEdge = createEdge(current, corner)
+                    newEdge.twin = createEdge(corner, current)
+                    newEdge.twin.twin = newEdge
+                    current.addEdge(newEdge)
+                    corner.addEdge(newEdge.twin)
+                }else{
+                    edgeList.add(existingEdge)
+                    edgeList.add(existingEdge.twin)
+                }
                 current = corner
             }
 
@@ -518,7 +527,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
         var area = PointD.ZERO
         val points = mutableListOf<Node>()
         var current = next
-        val face = PolygonFace(points, plane)
 
         var side = Side.Unknown
         while(true){
@@ -533,7 +541,8 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
             if(current.side != Side.Unknown){
                 if(side != Side.Unknown ) {
                     if(side != current.side){
-                        throw RuntimeException("ss")
+                        println("upps")
+                        //throw RuntimeException("ss")
                     }
                 }else{
                     side = current.side
@@ -544,6 +553,7 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
             queue.remove(current)
         }
 
+        val face = PolygonFace(points, plane)
         face.area = area.length() / 2
         face.clockwise = area.dot(plane.normal) < 0
         face.side = side
@@ -555,7 +565,7 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
     return combineFaces(faces, plane)
 }
 
-fun getLeftmostPoint(direction: PointD, polygonFace: PolygonFace) : Node {
+fun getLeftmostPoint(polygonFace: PolygonFace, direction: PointD) : Node {
     return polygonFace.positions.minByOrNull { it.point.dot(direction) }!!
 }
 
@@ -569,6 +579,105 @@ fun generateOwnerAssignment(base: RoutedVolume, tool: RoutedVolume) : Map<Routed
         map[face] = Owner.Tool
     }
     return map
+}
+
+fun estimateSides(faces: List<Face>){
+    class Entry(val a: Node, val b : Node){
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Entry) return false
+            return (a == other.a && b == other.b || a == other.b && b == other.a)
+        }
+
+        override fun hashCode(): Int {
+            return (a.hashCode() + 1) * (b.hashCode() + 1)
+        }
+    }
+
+    val map = mutableMapOf<Entry, Side>()
+    val unknowns = mutableSetOf<HasSide>()
+
+    for(face in faces){
+        if(face is HasSide){
+            if(face.side != Side.Unknown){
+                if(face is PolygonFace){
+                    for( loop in face.holes + face ){
+                        for( (left, right) in loop.positions.rollover() ){
+                            val entry = Entry(left, right)
+                            map[entry] = face.side
+                        }
+                    }
+                }else if(face is ConvexFace){
+                    for( (left, right) in face.positions.rollover() ){
+                        val entry = Entry(left, right)
+                        map[entry] = face.side
+                    }
+                }
+            }else{
+                unknowns.add(face)
+            }
+        }
+    }
+
+    var progress = true
+    while(progress){
+        progress = false
+        for(face in unknowns.toList()){
+            if(face is PolygonFace){
+                for( loop in face.holes + face ){
+                    for( (left, right) in loop.positions.rollover() ){
+                        val entry = Entry(left, right)
+                        val side = map[entry]
+                        if(side != null){
+                            face.side = side
+                            break
+                        }
+                    }
+
+
+                    if(face.side != Side.Unknown){
+                        break
+                    }
+                }
+
+                if(face.side != Side.Unknown){
+                    for( loop in face.holes + face ){
+                        for( (left, right) in loop.positions.rollover() ){
+                            val entry = Entry(left, right)
+                            map[entry] = face.side
+                        }
+                    }
+                }
+            }else if(face is ConvexFace){
+                for( (left, right) in face.positions.rollover() ){
+                    val entry = Entry(left, right)
+                    val side = map[entry]
+                    if(side != null){
+                        face.side = side
+                        break
+                    }
+                }
+
+                if(face.side != Side.Unknown){
+                    for( (left, right) in face.positions.rollover() ){
+                        val entry = Entry(left, right)
+                        map[entry] = face.side
+                    }
+                }
+            }
+
+            if(face.side != Side.Unknown){
+                progress = true
+                unknowns.remove(face)
+            }else{
+                println("sss")
+            }
+        }
+    }
+
+    if(unknowns.size != 0){
+        throw RuntimeException("Unknown side")
+    }
 }
 
 fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
@@ -587,8 +696,11 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
         }
     }
 
-    val baseFaces = faceAssignment.baseFaces.filter { if(it is PolygonFace) it.side != Side.Inside else true }
-    val toolFaces = faceAssignment.toolFaces.filter { if(it is PolygonFace) it.side == Side.Inside else false }
+    estimateSides(faceAssignment.toolFaces )
+    estimateSides(faceAssignment.baseFaces)
+
+    val baseFaces = faceAssignment.baseFaces.filter { if(it is HasSide) it.side != Side.Inside else false }
+    val toolFaces = faceAssignment.toolFaces.filter { if(it is HasSide) it.side == Side.Inside else false }
 
     return FacedVolume(baseFaces + toolFaces.map {
         when (it) {
@@ -604,7 +716,7 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
 
     val leftMostMap = mutableMapOf<PolygonFace, PointD>()
     fun getLeftmost(face: PolygonFace) : PointD{
-        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(directedPlane.first, face).point}
+        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(face, directedPlane.first).point}
     }
 
     val orderedFaces = faces.sortedBy { getLeftmost(it).dot(directedPlane.first) }

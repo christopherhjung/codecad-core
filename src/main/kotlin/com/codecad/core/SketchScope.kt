@@ -6,6 +6,7 @@ import de.lighti.clipper.Clipper
 import de.lighti.clipper.ClipperOffset
 import de.lighti.clipper.Path
 import de.lighti.clipper.Paths
+import kotlin.reflect.KClass
 
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
 
@@ -97,6 +98,18 @@ open class SketchScope(val project: Project) {
         } else {
             this
         }
+    }
+
+    fun <T> create(type: KClass<T>) : T where T : Component{
+        val component = type.constructors.first().call()
+        component.build(this)
+        return component
+    }
+
+    inline fun <reified T> create() : T where T : Component{
+        val component = T::class.constructors.first().call()
+        component.build(this)
+        return component
     }
 
     fun pattern(repeat: Int, point: Point, init: PatternScope.(Point) -> Unit): Sketch {
@@ -270,8 +283,8 @@ open class SketchScope(val project: Project) {
         sketch.addConstraint(constraint).lineNumber = callersLineNumber
     }
 
-    fun add(pattern: Pattern){
-        pattern.build(this)
+    fun add(component: Component){
+        component.build(this)
     }
 }
 

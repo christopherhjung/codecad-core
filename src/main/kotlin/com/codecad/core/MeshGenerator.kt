@@ -2,7 +2,6 @@ package com.codecad.core
 
 import com.codecad.common.Mesh
 import com.codecad.common.PointD
-import com.codecad.core.test.Node
 
 class MeshGenerator {
 
