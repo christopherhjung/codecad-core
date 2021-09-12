@@ -85,6 +85,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         val inverted = height > 0
 
         val offsetVector = directedPlane.normal * height
+        val plane = directedPlane.undirected
 
         fun getOrAdd(new: PointD): Node {
             return map.computeIfAbsent(new) { Node(new) }
@@ -110,14 +111,16 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 faces.add(ConvexFace(list))
             }
 
-            val basePolygon : PolygonFace
-            val topPolygon : PolygonFace
-            if (inverted) {
-                basePolygon = PolygonFace(basePoints.reversed(), Plane(directedPlane.normal * -1.0, -directedPlane.distance))
-                topPolygon = PolygonFace(topPoints, Plane(directedPlane.normal,directedPlane.distance + height))
+            val basePolygon = if (inverted) {
+                PolygonFace(basePoints.reversed(), plane.flip())
             } else {
-                basePolygon = PolygonFace(basePoints, directedPlane.undirected)
-                topPolygon = PolygonFace(topPoints.reversed(), Plane(directedPlane.normal * -1.0, height - directedPlane.distance))
+                PolygonFace(basePoints, plane)
+            }
+
+            val topPolygon = if (inverted) {
+                PolygonFace(topPoints, plane.move(height))
+            } else {
+                PolygonFace(topPoints.reversed(), plane.flip().move(height))
             }
 
             faces.add(basePolygon)
@@ -138,4 +141,5 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
         return FacedVolume(faces)
     }
+
 }
