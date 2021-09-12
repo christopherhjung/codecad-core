@@ -264,9 +264,6 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                     continue
                 }
 
-                uncutFaces.remove(event.face)
-                uncutFaces.remove(other.face)
-
                 val intersectionEvents = TreeSet(testComparator)
 
                 val line = Line.fromPlanes(leftPlane, rightPlane)
@@ -292,6 +289,8 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                 var started: Intersection? = null
                 var finishSegment : Intersection? = null
+
+                val sizeBefore = resultSlices.size
 
                 for(intersectionEvent in intersectionEvents){
                     val currentIndex = intersectionEvent.index
@@ -338,6 +337,14 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                     }
 
                     finishSegment = null
+                }
+
+
+                val sizeAfter = resultSlices.size
+
+                if(sizeBefore != sizeAfter){
+                    uncutFaces.remove(event.face)
+                    uncutFaces.remove(other.face)
                 }
             }
         }
@@ -580,7 +587,7 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
         }
     }
 
-    val baseFaces = faceAssignment.baseFaces.filter { if(it is PolygonFace) it.side == Side.Outside else true }
+    val baseFaces = faceAssignment.baseFaces.filter { if(it is PolygonFace) it.side != Side.Inside else true }
     val toolFaces = faceAssignment.toolFaces.filter { if(it is PolygonFace) it.side == Side.Inside else false }
 
     return FacedVolume(baseFaces + toolFaces.map {

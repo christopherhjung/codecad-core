@@ -147,7 +147,6 @@ class SketchTest {
         }
 
         val project = project {
-
             val big = sketch {
                 polygon(
                     Point(const(-0.5), const(-0.5)),
@@ -158,7 +157,7 @@ class SketchTest {
             }
 
 
-            val posX = 0.4
+            val posX = 0.0
             val posY = 0.0
 
             val small = sketch {
@@ -170,8 +169,8 @@ class SketchTest {
                 )
             }
 
-            extrude(big, const(1.0))
-            extrude(small, const(2.0), DirectedPlane.from(Plane(PointD(0.0,0.0,1.0), -0.5), PointD(1.0,0.0,0.0)))
+            extrude(big, Const(1.0))
+            extrude(small, Const(2.0), DirectedPlane.from(Plane(PointD(0.0,1.0,1.0), -1.0).normalized(), PointD(1.0,1.0).normalized()))
         }
 
         val model = mapModel(project)
