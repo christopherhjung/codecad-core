@@ -14,7 +14,7 @@ class FacedVolume(val faces: List<Face>) : Volume() {
             } else if (volume is FacedVolume) {
                 return volume
             } else if (volume is Extrude) {
-                volume.extrude()
+                volume.extrudeRoutedFace()
             } else {
                 TODO("not yet implemented")
             }
@@ -68,6 +68,8 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
                     val root = generateEdges(face.positions)
                     val holeEdges = face.holes.map { generateEdges(it.positions) }
                     faces.add(RoutedFace(root, holeEdges, face.plane, face))
+                }else if(face is RoutedFace){
+                    faces.add(face)
                 }
             }
 
@@ -172,22 +174,14 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
     fun extrudeRoutedFace(): FacedVolume {
         val height = height.value
 
-        val map = HashMap<PointD, Node>()
-        val faces = mutableListOf<Face>()
+        val faces = mutableListOf<RoutedFace>()
         val inverted = height > 0
 
         val offsetVector = directedPlane.normal * height
-
         val plane = directedPlane.undirected
 
-        fun getOrAdd(new: PointD): Node {
-            return map.computeIfAbsent(new) { Node(new) }
-        }
-
-        fun test(face: PolygonFace): Pair<RoutedFace, RoutedFace> {
-
+        fun construct(face: PolygonFace): Pair<RoutedFace, RoutedFace> {
             val positions = if(inverted) face.positions.reversed() else face.positions
-
 
             val bottomNodes = positions.map { Corner(Node(directedPlane.projectXYTo(it.point) )) }
             val topNodes = bottomNodes.map { Corner(Node(it.node.point + offsetVector)) }
@@ -198,7 +192,8 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             var startBackward: Edge? = null
             var lastBackward: Edge? = null
 
-            //val sides = mutableListOf<Edge>()
+            var startEdge: Edge? = null
+            var lastEdge: Edge? = null
 
             for((base, top) in bottomNodes.rollover().zip(topNodes.rollover()) ){
                 val forward = Edge.withAdd(base.first, base.second)
@@ -213,8 +208,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 bottomEdge.next = rightEdge
                 rightEdge.next = topEdge
 
-                //sides.add(topEdge)
-                faces.add(RoutedFace(topEdge, listOf(), Plane.fromPoints(topEdge.points().toList())))
+                faces.add(RoutedFace(topEdge, listOf(), Plane.fromConvexPoints(topEdge.points())))
 
                 val backward = Edge.withAdd(top.second, top.first)
 
@@ -229,21 +223,23 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 if(startForward == null){
                     startForward = forward
                     startBackward = backward
+                    startEdge = leftEdge
                 }else{
                     lastForward!!.next = forward
                     backward.next = lastBackward
+                    Edge.twinEachOther(lastEdge!!, leftEdge)
                 }
 
                 if(base.second === startForward.source){
                     forward.next = startForward
                     startBackward!!.next = backward
+                    Edge.twinEachOther(startEdge!!, rightEdge)
                 }
 
+                lastEdge = leftEdge
                 lastForward = forward
                 lastBackward = backward
             }
-
-
 
             val bottomPlane = if (inverted) {
                 plane.flip()
@@ -254,13 +250,13 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             val topPlane = if (inverted) {
                 plane.move(height)
             } else {
-                plane.flip().move(height)
+                plane.flip(height)
             }
 
             val bottomHoles = mutableListOf<Edge>()
             val topHoles = mutableListOf<Edge>()
             for (child in face.holes) {
-                val (baseHole, topHole) = test(child)
+                val (baseHole, topHole) = construct(child)
 
                 bottomHoles.add(baseHole.root)
                 topHoles.add(topHole.root)
@@ -275,9 +271,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             return Pair(bottomFace, topFace)
         }
 
-
-        val (basePolygon, topPolygon) = test(polygonFace)
-
+        construct(polygonFace)
 
         return FacedVolume(faces)
     }
