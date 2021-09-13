@@ -27,6 +27,13 @@ fun mapModel(project: Project) : Model{
         }
     }
 
+    for(volume in project.volumes){
+        if(volume is Extrude){
+            volume.extrudeRoutedFace()
+        }
+    }
+
+    /*
     var result: FacedVolume? = null
 
     for(volume in project.volumes){
@@ -39,7 +46,7 @@ fun mapModel(project: Project) : Model{
 
     if(result != null){
         model.volumes.add(meshGenerator.generate(result))
-    }
+    }*/
 
     return model
 }

@@ -65,6 +65,23 @@ data class Edge(val source: Corner,
     lateinit var twin : Edge
     var side : Side = Side.Unknown
 
+    companion object{
+        fun withAdd(source: Corner, target: Corner) : Edge{
+            val edge = Edge(source, target)
+            source.addEdge(edge)
+            return edge
+        }
+
+        fun withAdd(source: Node, target: Node) : Edge{
+            return withAdd(Corner(source), Corner(target))
+        }
+
+        fun twinEachOther(left: Edge, right: Edge){
+            left.twin = right
+            right.twin = left
+        }
+    }
+
     fun points() : Iterable<PointD>{
         return Iterable {
             var start : Edge = this

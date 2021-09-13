@@ -142,4 +142,143 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         return FacedVolume(faces)
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    fun extrudeRoutedFace(): FacedVolume {
+        val height = height.value
+
+        val map = HashMap<PointD, Node>()
+        val faces = mutableListOf<Face>()
+        val inverted = height > 0
+
+        val offsetVector = directedPlane.normal * height
+
+        val plane = directedPlane.undirected
+
+        fun getOrAdd(new: PointD): Node {
+            return map.computeIfAbsent(new) { Node(new) }
+        }
+
+        fun test(face: PolygonFace): Pair<RoutedFace, RoutedFace> {
+
+            val positions = if(inverted) face.positions.reversed() else face.positions
+
+
+            val bottomNodes = positions.map { Corner(Node(directedPlane.projectXYTo(it.point) )) }
+            val topNodes = bottomNodes.map { Corner(Node(it.node.point + offsetVector)) }
+
+            var startForward: Edge? = null
+            var lastForward: Edge? = null
+
+            var startBackward: Edge? = null
+            var lastBackward: Edge? = null
+
+            //val sides = mutableListOf<Edge>()
+
+            for((base, top) in bottomNodes.rollover().zip(topNodes.rollover()) ){
+                val forward = Edge.withAdd(base.first, base.second)
+
+                val topEdge = Edge.withAdd(base.second.node, base.first.node)
+                val leftEdge = Edge.withAdd(base.first.node, top.first.node)
+                val bottomEdge = Edge.withAdd(top.first.node, top.second.node)
+                val rightEdge = Edge.withAdd(top.second.node, base.second.node)
+
+                topEdge.next = leftEdge
+                leftEdge.next = bottomEdge
+                bottomEdge.next = rightEdge
+                rightEdge.next = topEdge
+
+                //sides.add(topEdge)
+                faces.add(RoutedFace(topEdge, listOf(), Plane.fromPoints(topEdge.points().toList())))
+
+                val backward = Edge.withAdd(top.second, top.first)
+
+                Edge.twinEachOther(forward, topEdge)
+                Edge.twinEachOther(backward, bottomEdge)
+
+                topEdge.next = leftEdge
+                leftEdge.next = bottomEdge
+                bottomEdge.next = rightEdge
+                rightEdge.next = topEdge
+
+                if(startForward == null){
+                    startForward = forward
+                    startBackward = backward
+                }else{
+                    lastForward!!.next = forward
+                    backward.next = lastBackward
+                }
+
+                if(base.second === startForward.source){
+                    forward.next = startForward
+                    startBackward!!.next = backward
+                }
+
+                lastForward = forward
+                lastBackward = backward
+            }
+
+
+
+            val bottomPlane = if (inverted) {
+                plane.flip()
+            } else {
+                plane
+            }
+
+            val topPlane = if (inverted) {
+                plane.move(height)
+            } else {
+                plane.flip().move(height)
+            }
+
+            val bottomHoles = mutableListOf<Edge>()
+            val topHoles = mutableListOf<Edge>()
+            for (child in face.holes) {
+                val (baseHole, topHole) = test(child)
+
+                bottomHoles.add(baseHole.root)
+                topHoles.add(topHole.root)
+            }
+
+            val bottomFace = RoutedFace(startForward!!, bottomHoles, bottomPlane)
+            val topFace = RoutedFace(startBackward!!, topHoles, topPlane)
+
+            faces.add(bottomFace)
+            faces.add(topFace)
+
+            return Pair(bottomFace, topFace)
+        }
+
+
+        val (basePolygon, topPolygon) = test(polygonFace)
+
+
+        return FacedVolume(faces)
+    }
 }

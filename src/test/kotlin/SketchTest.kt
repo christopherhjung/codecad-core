@@ -354,4 +354,26 @@ class SketchTest {
 
         println("test")
     }
+
+
+    @Test
+    fun routedTest(){
+        val project = project {
+            val big = sketch {
+                polygon(
+                    Point(const(-0.5), const(-0.5)),
+                    Point(const(0.5), const(-0.5)),
+                    Point(const(0.5), const(0.5)),
+                    Point(const(-0.5), const(0.5)),
+                )
+            }
+
+            extrude(big, Const(1.0))
+        }
+
+        val model = mapModel(project)
+
+        println("test")
+
+    }
 }
