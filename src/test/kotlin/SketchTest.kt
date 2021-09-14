@@ -380,8 +380,8 @@ class SketchTest {
                 )
             }
 
-            extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
+            extrude(big, Const(1.0))*
+            extrude(small, Const(2.0), DirectedPlane.from(Plane.XY.move(-0.1)))
         }
 
         val model = mapModel(project)

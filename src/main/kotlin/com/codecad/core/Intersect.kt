@@ -128,8 +128,8 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
         val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
 
-        val a = Edge(left, right)
-        val b = Edge(right, left)
+        val a = Edge(left, right, Plane.XY)
+        val b = Edge(right, left, Plane.XY.flip())
 
         a.twin = b
         b.twin = a

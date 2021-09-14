@@ -60,20 +60,20 @@ enum class Owner{
 }
 
 data class Edge(val source: Corner,
-           val target : Corner){
+           val target : Corner, val plane: Plane){
     var next: Edge? = null
     lateinit var twin : Edge
     var side : Side = Side.Unknown
 
     companion object{
-        fun withAdd(source: Corner, target: Corner) : Edge{
-            val edge = Edge(source, target)
+        fun withAdd(source: Corner, target: Corner, plane: Plane) : Edge{
+            val edge = Edge(source, target, plane)
             source.addEdge(edge)
             return edge
         }
 
-        fun withAdd(source: Node, target: Node) : Edge{
-            return withAdd(Corner(source), Corner(target))
+        fun withAdd(source: Node, target: Node, plane: Plane) : Edge{
+            return withAdd(Corner(source), Corner(target), plane)
         }
 
         fun twinEachOther(left: Edge, right: Edge){
@@ -398,8 +398,8 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
 
     val edgeMap = mutableMapOf<Edge, SpliceOp>()
 
+    val nodeMap = mutableMapOf<Node, Corner>()
     for((face, ops) in map.entries){
-        val nodeMap = mutableMapOf<Node, Corner>()
 
         ops.edges.addAll(face.edges())
         ops.corners.addAll(face.corners())
@@ -420,7 +420,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             if(abs(face.plane.distanceTo(target.node.point)) > 1e-8 ){
                 println("error")
             }
-            val edge = Edge(source, target)
+            val edge = Edge(source, target, face.plane)
             ops.edges.add(edge)
             return edge
         }
@@ -501,8 +501,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         }[it.source] =  it
     }
 
-
-
     for(leftEdge in leftSources.values){
 
         val rightEdge = rightSources[leftEdge.target]!!
@@ -528,18 +526,13 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         leftEdge.source.edges.remove(leftEdge)
         leftEdge.target.edges.remove(leftEdge.twin)
 
-        rightEdge.source.edges.remove(rightEdge)
-        rightEdge.target.edges.remove(rightEdge.twin)
+        for((leftFirst, leftSecond) in leftCorners.zipWithNext()){
 
-        for((leftCorner, rightCorner) in leftCorners.zipWithNext().zip(rightCorners.zipWithNext())){
-            val (leftFirst, leftSecond) = leftCorner
-            val (rightFirst, rightSecond) = rightCorner
-
-            val leftSegment = Edge(leftFirst, leftSecond)
+            val leftSegment = Edge(leftFirst, leftSecond, leftEdge.plane)
             leftFirst.addEdge(leftSegment)
 
-            val rightSegment = Edge(rightSecond, rightFirst)
-            rightSecond.addEdge(rightSegment)
+            val rightSegment = Edge(leftSecond, leftFirst, leftEdge.plane)
+            leftSecond.addEdge(rightSegment)
 
             leftOps.edges.add(leftSegment)
             rightOps.edges.add(rightSegment)
@@ -551,7 +544,10 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         println("ss")
     }
 
+
+
     for( (face, ops) in map ){
+        finishCorners(ops.corners, face.plane)
         val face = generateFaces(ops.corners, ops.edges, face.plane)
 
         val test = face
