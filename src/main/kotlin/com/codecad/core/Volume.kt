@@ -195,8 +195,6 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             var startEdge: Edge? = null
             var lastEdge: Edge? = null
 
-
-
             val bottomPlane = if (inverted) {
                 plane.flip()
             } else {
@@ -223,10 +221,10 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 val bottomEdge = Edge.withAdd(top.first, top.second, sidePlane)
                 val rightEdge = Edge.withAdd(top.second, base.second, sidePlane)
 
-                topEdge.next = leftEdge
-                leftEdge.next = bottomEdge
-                bottomEdge.next = rightEdge
-                rightEdge.next = topEdge
+                topEdge.connect(leftEdge)
+                leftEdge.connect(bottomEdge)
+                bottomEdge.connect(rightEdge)
+                rightEdge.connect(topEdge)
 
                 faces.add(RoutedFace(topEdge, listOf(), sidePlane ))
 
@@ -234,11 +232,6 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
                 Edge.twinEachOther(forward, topEdge)
                 Edge.twinEachOther(backward, bottomEdge)
-
-                topEdge.next = leftEdge
-                leftEdge.next = bottomEdge
-                bottomEdge.next = rightEdge
-                rightEdge.next = topEdge
 
                 if(startForward == null){
                     startForward = forward

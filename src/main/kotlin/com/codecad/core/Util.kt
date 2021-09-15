@@ -44,3 +44,30 @@ fun <T> Iterable<T>.rollover() : Iterable<Pair<T, T>> where T : Any
         }
     }
 }
+
+fun <T> Iterable<T>.lookahead() : Iterable<Pair<T, T>> where T : Any
+{
+    return Iterable {
+        var empty = true
+        var lastObject : T? = null
+        val delegate = iterator()
+
+        if(delegate.hasNext()){
+            empty = false
+            lastObject = delegate.next()
+        }
+
+        object : Iterator<Pair<T, T>>{
+            override fun hasNext(): Boolean {
+                return !empty && delegate.hasNext()
+            }
+
+            override fun next(): Pair<T, T> {
+                val nextObject = delegate.next()
+                val next = Pair(lastObject!!, nextObject)
+                lastObject = nextObject
+                return next
+            }
+        }
+    }
+}

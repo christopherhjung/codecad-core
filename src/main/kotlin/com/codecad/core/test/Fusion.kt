@@ -32,8 +32,8 @@ data class Corner(val node: Node){
             throw RuntimeException("ss")
         }
 
-        if(edge.source.node.point.distanceTo(PointD(0.5,0.2, 0.0)) < 0.01 &&
-            edge.target.node.point.distanceTo(PointD(0.2,0.2, 0.0)) < 0.01){
+        if(edge.source.node.point.distanceTo(PointD(0.2,-0.5, 1.0)) < 0.01 &&
+            edge.target.node.point.distanceTo(PointD(0.2,-0.5, 0.0)) < 0.01){
             println("sss")
         }
 
@@ -61,11 +61,25 @@ enum class Owner{
 
 data class Edge(val source: Corner,
            val target : Corner, val plane: Plane){
+    var prev: Edge? = null
     var next: Edge? = null
     lateinit var twin : Edge
     var side : Side = Side.Unknown
 
+    fun connect(other: Edge){
+        next = other
+        other.prev = this
+    }
+
     companion object{
+        /*fun createDouble(left: Corner, right: Corner){
+            val forward = Edge(left, right)
+            val backward = Edge(right, left)
+            //startCorner.addEdge(edge)
+            //endCorner.addEdge(twin)
+            twinEachOther(forward, backward)
+        }*/
+
         fun withAdd(source: Corner, target: Corner, plane: Plane) : Edge{
             val edge = Edge(source, target, plane)
             source.addEdge(edge)
@@ -143,7 +157,16 @@ data class Edge(val source: Corner,
 
 
 class PlaneEvent(val volume : RoutedVolume, val face: RoutedFace, val point: PointD, val start : Boolean)
-class PlaneSlice(val face: RoutedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null)
+class PlaneSlice(val face: RoutedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null){
+    fun flip(){
+        val startTemp = start
+        val startPositionTemp = startPosition
+        start = end
+        startPosition = endPosition
+        end = startTemp
+        endPosition = startPositionTemp
+    }
+}
 
 class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
     override fun equals(other: Any?): Boolean {
@@ -354,6 +377,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                             }
 
                             currentSlice.endPosition = finishSegment.position
+                            currentSlice.flip()
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
@@ -526,19 +550,41 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         leftEdge.source.edges.remove(leftEdge)
         leftEdge.target.edges.remove(leftEdge.twin)
 
-        for((leftFirst, leftSecond) in leftCorners.zipWithNext()){
 
+        var last: Edge? = null
+        for( (leftFirst, leftSecond) in leftCorners.lookahead()){
             val leftSegment = Edge(leftFirst, leftSecond, leftEdge.plane)
             leftFirst.addEdge(leftSegment)
 
             val rightSegment = Edge(leftSecond, leftFirst, leftEdge.plane)
             leftSecond.addEdge(rightSegment)
 
+            Edge.twinEachOther(leftSegment, rightSegment)
+
+            if(last == null){
+                leftEdge.prev!!.next = leftSegment
+                leftSegment.twin.next = leftEdge.twin
+            }else{
+                last.connect(leftSegment)
+                last.twin.connect(rightSegment)
+            }
+
+            if(leftSecond === leftEdge.target){
+                leftSegment.next = leftEdge.next
+                leftEdge.twin.prev!!.next = leftSegment.twin
+            }
+
+
+            last = leftSegment
+
+
             leftOps.edges.add(leftSegment)
             rightOps.edges.add(rightSegment)
 
-            Edge.twinEachOther(leftSegment, rightSegment)
+            Pair(leftSegment, rightSegment)
         }
+
+
 
 
         println("ss")
