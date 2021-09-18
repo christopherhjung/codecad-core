@@ -53,8 +53,8 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
                     forward
                 }
                 edges.rollover().forEach{ (left, right) ->
-                    left.next = right
-                    right.twin.next = left
+                    left.connect(right)
+                    right.twin.connect(left)
                 }
 
                 return edges.first()
@@ -238,14 +238,14 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                     startBackward = backward
                     startEdge = leftEdge
                 }else{
-                    lastForward!!.next = forward
-                    backward.next = lastBackward
+                    lastForward!!.connect(forward)
+                    backward.connect(lastBackward!!)
                     Edge.twinEachOther(lastEdge!!, leftEdge)
                 }
 
                 if(base.second === startForward.source){
-                    forward.next = startForward
-                    startBackward!!.next = backward
+                    forward.connect(startForward)
+                    startBackward!!.connect(backward)
                     Edge.twinEachOther(startEdge!!, rightEdge)
                 }
 

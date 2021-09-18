@@ -157,15 +157,8 @@ data class Edge(val source: Corner,
 
 
 class PlaneEvent(val volume : RoutedVolume, val face: RoutedFace, val point: PointD, val start : Boolean)
-class PlaneSlice(val face: RoutedFace, val plane: Plane, var start: Edge? = null, var end: Edge? = null, var startPosition : Node? = null, var endPosition: Node? = null){
-    fun flip(){
-        val startTemp = start
-        val startPositionTemp = startPosition
-        start = end
-        startPosition = endPosition
-        end = startTemp
-        endPosition = startPositionTemp
-    }
+class PlaneSlice(val face: RoutedFace, val plane: Plane, var startEdge: Edge? = null, var endEdge: Edge? = null, var startPosition : Corner? = null, var endPosition: Corner? = null){
+
 }
 
 class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
@@ -288,26 +281,26 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
     val resultSlices = mutableListOf<PlaneSlice>()
 
-    for(event in baseEventQueue) {
+    for(leftActive in baseEventQueue) {
         val (currentActive, otherActive) = when{
-            event.volume === base -> Pair(activeBase, activeTool)
-            event.volume === tool -> Pair(activeTool, activeBase)
+            leftActive.volume === base -> Pair(activeBase, activeTool)
+            leftActive.volume === tool -> Pair(activeTool, activeBase)
             else -> throw RuntimeException("ss")
         }
 
-        if(event.start){
-            currentActive[event.face] = event
+        if(leftActive.start){
+            currentActive[leftActive.face] = leftActive
 
-            val leftPlane = event.face.plane
-            for (other in otherActive.values) {
-                val rightPlane = other.face.plane
+            val leftPlane = leftActive.face.plane
+            for (rightActive in otherActive.values) {
+                val rightPlane = rightActive.face.plane
 
                 if(leftPlane.normal == rightPlane.normal){
                     continue
                 }
 
-                val leftIntersections = findIntersections(event.face, rightPlane)
-                val rightIntersections = findIntersections(other.face, leftPlane)
+                val leftIntersections = findIntersections(leftActive.face, rightPlane)
+                val rightIntersections = findIntersections(rightActive.face, leftPlane)
 
                 if(leftIntersections.isEmpty() || rightIntersections.isEmpty()){
                     continue
@@ -328,8 +321,8 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                 fun createSlice(i : Int) : PlaneSlice{
                     return when(i){
-                        0 -> PlaneSlice(event.face, rightPlane)
-                        1 -> PlaneSlice(other.face, leftPlane)
+                        0 -> PlaneSlice(leftActive.face, rightPlane)
+                        1 -> PlaneSlice(rightActive.face, leftPlane)
                         else -> throw RuntimeException("")
                     }
                 }
@@ -337,7 +330,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                 val slices = Array(2){ createSlice(it) }
 
                 var started: Intersection? = null
-                var finishSegment : Intersection? = null
+                var finishSegment : PlaneSlice? = null
 
                 val sizeBefore = resultSlices.size
 
@@ -351,33 +344,32 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                     val otherSlice = slices[otherIndex]
 
                     if(inside[currentIndex] && inside[ otherIndex ] ){
-                        currentSlice.start = intersectionEvent.intersection.edge
-                        currentSlice.startPosition = intersectionEvent.intersection.position
+                        currentSlice.startEdge = intersectionEvent.intersection.edge
+                        currentSlice.startPosition = Corner(intersectionEvent.intersection.position)
 
                         if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
-                            otherSlice.start = last[otherIndex]!!.edge
+                            otherSlice.startEdge = last[otherIndex]!!.edge
                         }
 
                         otherSlice.startPosition = currentSlice.startPosition
                         started = intersectionEvent.intersection
                     }else if(!inside[intersectionEvent.index] ){
                         if(started != null){
-                            currentSlice.end = intersectionEvent.intersection.edge
-                            currentSlice.endPosition = intersectionEvent.intersection.position
+                            currentSlice.endEdge = intersectionEvent.intersection.edge
+                            currentSlice.endPosition = Corner(intersectionEvent.intersection.position)
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
 
-                            finishSegment = intersectionEvent.intersection
+                            finishSegment = currentSlice
                             started = null
                             continue
                         }else if(finishSegment != null){
                             if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
-                                currentSlice.end = intersectionEvent.intersection.edge
+                                currentSlice.endEdge = intersectionEvent.intersection.edge
                             }
 
-                            currentSlice.endPosition = finishSegment.position
-                            currentSlice.flip()
+                            currentSlice.endPosition = finishSegment.endPosition
 
                             resultSlices.add(currentSlice)
                             slices[currentIndex] = createSlice(currentIndex)
@@ -391,12 +383,12 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                 val sizeAfter = resultSlices.size
 
                 if(sizeBefore != sizeAfter){
-                    uncutFaces.remove(event.face)
-                    uncutFaces.remove(other.face)
+                    uncutFaces.remove(leftActive.face)
+                    uncutFaces.remove(rightActive.face)
                 }
             }
         }else{
-            currentActive.remove(event.face)
+            currentActive.remove(leftActive.face)
         }
     }
 
@@ -432,14 +424,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             nodeMap[corner.node] = corner
         }
 
-        fun getOrCreateCorner(node: Node) : Corner{
-            return nodeMap.computeIfAbsent(node){
-                val corner = Corner(node)
-                ops.corners.add(corner)
-                corner
-            }
-        }
-
         fun createEdge(source: Corner, target: Corner) : Edge{
             if(abs(face.plane.distanceTo(target.node.point)) > 1e-8 ){
                 println("error")
@@ -450,24 +434,22 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         }
 
         for( slice in ops.slices ){
-            if(slice.start?.source?.node === slice.startPosition ){
-                if(slice.end?.target?.node === slice.endPosition){
+            if(slice.startEdge?.source?.node === slice.startPosition!!.node ){
+                if(slice.endEdge?.target?.node === slice.endPosition!!.node){
                     continue
                 }
-            }else if(slice.start?.target?.node === slice.startPosition){
-                if(slice.end?.source?.node === slice.endPosition){
+            }else if(slice.startEdge?.target?.node === slice.startPosition!!.node){
+                if(slice.endEdge?.source?.node === slice.endPosition!!.node){
                     continue
                 }
             }
 
             //edge insert
-            val startCorner = getOrCreateCorner(slice.startPosition!!)
-            val endCorner = getOrCreateCorner(slice.endPosition!!)
+            val startCorner = slice.startPosition!!
+            val endCorner = slice.endPosition!!
 
             val edge = createEdge(startCorner, endCorner)
             val twin = createEdge(endCorner, startCorner)
-            startCorner.addEdge(edge)
-            endCorner.addEdge(twin)
             Edge.twinEachOther(edge, twin)
 
             //side detection
@@ -483,15 +465,15 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             }
 
             //hit edge split queueing
-            if(slice.start != null){
-                if(slice.start?.target !== startCorner && slice.start?.source !== startCorner){
-                    edgeMap.computeIfAbsent(slice.start!!) { SpliceOp(face) }.corners.add(startCorner)
+            if(slice.startEdge != null){
+                if(slice.startEdge?.target !== startCorner && slice.startEdge?.source !== startCorner){
+                    edgeMap.computeIfAbsent(slice.startEdge!!) { SpliceOp(face) }.corners.add(startCorner)
                 }
             }
 
-            if(slice.end != null) {
-                if(slice.end?.target !== endCorner && slice.end?.source !== endCorner){
-                    edgeMap.computeIfAbsent(slice.end!!) { SpliceOp(face) }.corners.add(endCorner)
+            if(slice.endEdge != null) {
+                if(slice.endEdge?.target !== endCorner && slice.endEdge?.source !== endCorner){
+                    edgeMap.computeIfAbsent(slice.endEdge!!) { SpliceOp(face) }.corners.add(endCorner)
                 }
             }
         }
@@ -616,7 +598,7 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
 
         for((top, bottom) in corner.edges.rollover()){
             if( top.twin.target === bottom.source ){
-                top.twin.next = bottom
+                top.twin.connect(bottom)
             }else{
                 println("test")
             }
