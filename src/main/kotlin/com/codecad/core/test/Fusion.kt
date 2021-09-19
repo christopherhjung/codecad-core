@@ -368,10 +368,33 @@ class FaceAssignment(val baseFaces : MutableList<Face> = mutableListOf(), val to
 
 class FaceInformation(val slices: MutableList<PlaneSlice> = mutableListOf(), val nodes: MutableList<Node> = mutableListOf(), val edges: MutableList<Edge> = mutableListOf())
 
-class SliceInformation(val face: RoutedFace, val nodes : MutableList<Node> = mutableListOf())
+class SliceInformation(val face: RoutedFace, val inserts : MutableList<InsertInformation> = mutableListOf())
 class InsertInformation(val node: Node, val edge: Edge)
 
+
+class EdgeCut(val a: Node? = null, val b: Node? = null){
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is EdgeCut) return false
+
+        if (!(a == other.a && b == other.b || a == other.b && b == other.a)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return (( a?.hashCode() ?: 0 ) + 1) *  ((b?.hashCode() ?: 0) + 1)
+    }
+}
+
+class CutInformation(){
+    val map = mutableMapOf<Edge, List<Node>>()
+}
+
 fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace, Owner>) : FaceAssignment{
+
+
+
 
     val map = HashMap<RoutedFace, FaceInformation>()
 
@@ -412,33 +435,48 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             val startNode = slice.startNode!!
             val endNode = slice.endNode!!
 
-            val edge = createEdge(startNode, endNode)
-            val twin = createEdge(endNode, startNode)
-            Edge.twinEachOther(edge, twin)
+            val forward = createEdge(startNode, endNode)
+            val backward = createEdge(endNode, startNode)
+
+            forward.connect(backward)
+            backward.connect(forward)
+
+
+            Edge.twinEachOther(forward, backward)
 
             //side detection
             val direction = endNode.point - startNode.point
             val test = direction.cross(slice.plane.normal).dot(slice.face.plane.normal)
 
             if(test > 0){
-                edge.side = Side.Outside
-                twin.side = Side.Inside
+                forward.side = Side.Outside
+                backward.side = Side.Inside
             }else{
-                edge.side = Side.Inside
-                twin.side = Side.Outside
+                forward.side = Side.Inside
+                backward.side = Side.Outside
             }
 
             //hit edge split queueing
             if(slice.startEdge != null){
                 if(slice.startEdge?.target !== startNode && slice.startEdge?.source !== startNode){
-                    edgeMap.computeIfAbsent(slice.startEdge!!) { SliceInformation(face) }.nodes.add(startNode)
+                    if(edgeMap.containsKey(slice.startEdge!!.twin)){
+                        TODO("add to common slicing operation!!")
+                    }
+                    edgeMap.computeIfAbsent(slice.startEdge!!) { SliceInformation(face) }.inserts.add(InsertInformation(startNode, forward))
                 }
+            }else{
+                TODO("slice start has to match with other node!!")
             }
 
             if(slice.endEdge != null) {
                 if(slice.endEdge?.target !== endNode && slice.endEdge?.source !== endNode){
-                    edgeMap.computeIfAbsent(slice.endEdge!!) { SliceInformation(face) }.nodes.add(endNode)
+                    if(edgeMap.containsKey(slice.endEdge!!.twin)){
+                        TODO("add to common slicing operation!!")
+                    }
+                    edgeMap.computeIfAbsent(slice.endEdge!!) { SliceInformation(face) }.inserts.add(InsertInformation(endNode, backward))
                 }
+            }else{
+                TODO("slice end has to match with other node")
             }
         }
 
@@ -460,6 +498,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
 
 
 
+    //refactorinnnngg!!!!!
     val leftSources = mutableMapOf<Node, Edge>()
     val rightSources = mutableMapOf<Node, Edge>()
 
@@ -482,24 +521,31 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         val leftSplice = edgeMap[leftEdge]!!
         val rightSplice = edgeMap[rightEdge]!!
 
-        val leftCorners = leftSplice.nodes.toMutableList()
-        val rightCorners = rightSplice.nodes.toMutableList()
+        val forwardInserts = mutableMapOf<Node, Edge>()
+        leftSplice.inserts.forEach { forwardInserts[it.node] = it.edge }
+
+        val leftInserts = leftSplice.inserts.toMutableList()
+        val rightInserts = rightSplice.inserts.toMutableList()
 
         val leftOps = map[leftSplice.face]!!
         val rightOps = map[rightSplice.face]!!
 
         val leftDirection = (leftEdge.target.point - leftEdge.source.point)//.normalized()
-        leftCorners.add(leftEdge.source)
-        leftCorners.add(leftEdge.target)
-        leftCorners.sortBy { it.point.dot(leftDirection) }
+        val leftNodes = leftInserts.map { it.node }.toMutableList()
+        leftNodes.add(leftEdge.source)
+        leftNodes.add(leftEdge.target)
+        leftNodes.sortBy { it.point.dot(leftDirection) }
 
-        rightCorners.add(rightEdge.source)
-        rightCorners.add(rightEdge.target)
-        rightCorners.sortBy { it.point.dot(leftDirection) }
+        val leftEdges = leftInserts.map { it.edge }
+
+        /*
+        rightNodes.add(rightEdge.source)
+        rightNodes.add(rightEdge.target)
+        rightNodes.sortBy { it.point.dot(leftDirection) }*/
 
         var lastForward: Edge = leftEdge.prev!!
         var lastBackward: Edge = leftEdge.twin.next!!
-        for( (leftFirst, leftSecond) in leftCorners.lookahead()){
+        leftNodes.lookahead().map { (leftFirst, leftSecond) ->
             val forward = Edge(leftFirst, leftSecond, leftEdge.plane)
             val backward = Edge(leftSecond, leftFirst, leftEdge.plane)
 
@@ -513,7 +559,10 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
 
             leftOps.edges.add(forward)
             rightOps.edges.add(backward)
-        }
+
+            forward
+        }.drop(1)
+        TODO("append branches to forward and backward nodes")
 
         lastForward.connect(leftEdge.next!!)
         leftEdge.twin.prev!!.connect(lastBackward)
@@ -523,6 +572,8 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
         println("ss")
     }
 
+
+    //val matcher = mutableListOf<>()
 
 
     for( (face, ops) in map ){
@@ -550,7 +601,7 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
             if( top.twin.target === bottom.source ){
                 top.twin.connect(bottom)
             }else{
-                println("test")
+                TODO("error?")
             }
         }
     }
