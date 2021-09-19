@@ -42,19 +42,15 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
         fun from(polygonVolume: FacedVolume) : RoutedVolume{
             val faces = mutableListOf<RoutedFace>()
             fun generateEdges(points : List<Node>, plane: Plane) : Edge{
-                val edges = points.map { Corner(it) }.rollover().map { (left,right) ->
+                val edges = points.rollover().map { (left,right) ->
                     val forward = Edge(left,right, plane)
-                    forward.twin = Edge(right,left,  plane.flip())
-                    forward.twin.twin = forward
-                    //forward.side = Side.Outside
-                    //forward.twin.side = Side.Outside
-                    left.addEdge(forward)
-                    right.addEdge(forward.twin)
+                    val backward = Edge(right,left,  plane.flip())
+                    Edge.twinEachOther(forward, backward)
                     forward
                 }
                 edges.rollover().forEach{ (left, right) ->
                     left.connect(right)
-                    right.twin.connect(left)
+                    right.twin.connect(left.twin)
                 }
 
                 return edges.first()
@@ -183,8 +179,8 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         fun construct(face: PolygonFace): Pair<RoutedFace, RoutedFace> {
             val positions = if(inverted) face.positions.reversed() else face.positions
 
-            val bottomNodes = positions.map { Corner(Node(directedPlane.projectXYTo(it.point) )) }
-            val topNodes = bottomNodes.map { Corner(Node(it.node.point + offsetVector)) }
+            val bottomNodes = positions.map { Node(directedPlane.projectXYTo(it.point)) }
+            val topNodes = bottomNodes.map { Node(it.point + offsetVector) }
 
             var startForward: Edge? = null
             var lastForward: Edge? = null
@@ -208,18 +204,18 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             }
 
             for((base, top) in bottomNodes.rollover().zip(topNodes.rollover()) ){
-                val forward = Edge.withAdd(base.first, base.second, bottomPlane)
+                val forward = Edge(base.first, base.second, bottomPlane)
 
                 val sidePlane = Plane.fromConvexPoints(listOf(
-                    base.second.node.point,
-                    base.first.node.point,
-                    top.first.node.point,
+                    base.second.point,
+                    base.first.point,
+                    top.first.point,
                 ))
 
-                val topEdge = Edge.withAdd(base.second, base.first, sidePlane)
-                val leftEdge = Edge.withAdd(base.first, top.first, sidePlane)
-                val bottomEdge = Edge.withAdd(top.first, top.second, sidePlane)
-                val rightEdge = Edge.withAdd(top.second, base.second, sidePlane)
+                val topEdge = Edge(base.second, base.first, sidePlane)
+                val leftEdge = Edge(base.first, top.first, sidePlane)
+                val bottomEdge = Edge(top.first, top.second, sidePlane)
+                val rightEdge = Edge(top.second, base.second, sidePlane)
 
                 topEdge.connect(leftEdge)
                 leftEdge.connect(bottomEdge)
@@ -228,7 +224,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
                 faces.add(RoutedFace(topEdge, listOf(), sidePlane ))
 
-                val backward = Edge.withAdd(top.second, top.first, topPlane)
+                val backward = Edge(top.second, top.first, topPlane)
 
                 Edge.twinEachOther(forward, topEdge)
                 Edge.twinEachOther(backward, bottomEdge)

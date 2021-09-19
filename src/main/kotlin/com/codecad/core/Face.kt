@@ -145,7 +145,7 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val o
 
                 override fun next(): PointD {
                     first = false
-                    val result =  current.source.node.point
+                    val result =  current.source.point
                     current = current.next!!
                     return result
                 }
@@ -164,26 +164,7 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val o
 
                 override fun next(): Node {
                     first = false
-                    val result =  current.source.node
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
-    fun corners() : Iterable<Corner>{
-        return Iterable {
-            var current : Edge = root
-            var first = true
-            object : Iterator<Corner>{
-                override fun hasNext(): Boolean {
-                    return first || current != root
-                }
-
-                override fun next(): Corner {
-                    first = false
-                    val result = current.source
+                    val result =  current.source
                     current = current.next!!
                     return result
                 }
