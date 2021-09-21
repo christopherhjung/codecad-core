@@ -368,7 +368,7 @@ class SketchTest {
                 )
             }
 
-            val posX = 0.4
+            val posX = 0.0
             val posY = 0.0
 
             val small = sketch {
@@ -381,7 +381,7 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane.XY.move(-0.1)))
+            extrude(small, Const(2.0), DirectedPlane.from(Plane.XY.move(-0.5)))
         }
 
         val model = mapModel(project)

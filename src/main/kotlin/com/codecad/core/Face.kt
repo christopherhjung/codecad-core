@@ -115,7 +115,13 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     return triangles
 }
 
-class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val original: Face? = null) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane) : Face(), Iterable<Edge>{
+    init {
+        if(edges().toList().filter { it.plane != plane }.isNotEmpty()){
+            println("error")
+        }
+    }
+
     override fun iterator(): Iterator<Edge> {
         var current : Edge = root
         var first = true

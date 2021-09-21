@@ -44,7 +44,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             fun generateEdges(points : List<Node>, plane: Plane) : Edge{
                 val edges = points.rollover().map { (left,right) ->
                     val forward = Edge(left,right, plane)
-                    val backward = Edge(right,left,  plane.flip())
+                    val backward = Edge(right,left,  plane)
                     Edge.twinEachOther(forward, backward)
                     forward
                 }
@@ -59,11 +59,11 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             for(face in polygonVolume.faces){
                 if(face is ConvexFace){
                     val root = generateEdges(face.positions, face.toPlane())
-                    faces.add(RoutedFace(root, listOf(), face.toPlane(), face))
+                    faces.add(RoutedFace(root, listOf(), root.plane))
                 }else if(face is PolygonFace){
                     val root = generateEdges(face.positions, face.plane)
                     val holeEdges = face.holes.map { generateEdges(it.positions, face.plane) }
-                    faces.add(RoutedFace(root, holeEdges, face.plane, face))
+                    faces.add(RoutedFace(root, holeEdges, face.plane))
                 }else if(face is RoutedFace){
                     faces.add(face)
                 }
@@ -245,7 +245,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                     Edge.twinEachOther(startEdge!!, rightEdge)
                 }
 
-                lastEdge = leftEdge
+                lastEdge = rightEdge
                 lastForward = forward
                 lastBackward = backward
             }
