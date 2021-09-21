@@ -136,6 +136,7 @@ class SketchTest {
         }
     }
 
+    /*
     @Test
     fun testets(){
         fun SketchScope.cycloid(bR: Value, sR: Value): FunctionFigure {
@@ -178,7 +179,7 @@ class SketchTest {
 
         println("test")
 
-    }
+    }*/
 
 
     @Test

@@ -71,23 +71,6 @@ data class Edge(val source: Node,
     lateinit var twin : Edge
     var side : Side = Side.Unknown
 
-    init{
-        var counter = 0
-        if( source.point.x != target.point.x ){
-            counter++
-        }
-        if( source.point.y != target.point.y ){
-            counter++
-        }
-        if( source.point.z != target.point.z ){
-            counter++
-        }
-
-        if(counter != 1){
-            throw RuntimeException("ss")
-        }
-    }
-
     fun connect(other: Edge){
         if(target != other.source){
             throw RuntimeException("--")
@@ -590,7 +573,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
     }
 
     for( edges in connects.values ){
-        if(edges.size != 2){
+        if(edges.size > 2){
             throw RuntimeException("--")
         }
 
@@ -669,14 +652,14 @@ fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
                 break
             }
 
-            if(points.size > 100){
-                println("upps")
+            if(points.size > 10000){
+                throw RuntimeException("ss")
             }
 
             if(current.side != Side.Unknown){
                 if(side != Side.Unknown ) {
                     if(side != current.side){
-                        println("upps")
+                        println("error")
                         //throw RuntimeException("ss")
                     }
                 }else{
