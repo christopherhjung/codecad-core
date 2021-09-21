@@ -7,9 +7,12 @@ import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint
 
 
-abstract class Face{
+abstract class Face : HasSide{
     abstract fun generateTriangles() : List<TriangleFace>
     abstract fun toPlane() : Plane
+
+    abstract val positions: List<Node>
+    abstract val holes : MutableSet<Face>
 }
 
 class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
@@ -18,8 +21,10 @@ class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
     }
 }
 
-open class ConvexFace( val positions: List<Node>) : Face(), HasSide {
+open class ConvexFace( override val positions: List<Node>) : Face() {
     override var side: Side = Side.Unknown
+
+    override val holes: MutableSet<Face> = mutableSetOf()
 
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
@@ -39,9 +44,9 @@ interface HasSide{
     var side : Side
 }
 
-class PolygonFace( val positions: List<Node>, val plane: Plane) : Face(), HasSide {
+class PolygonFace( override val positions: List<Node>, val plane: Plane) : Face() {
     var parent: PolygonFace? = null
-    val holes = mutableSetOf<PolygonFace>()
+    override val holes = mutableSetOf<Face>()
     var clockwise: Boolean = false
     var area: Double = 0.0
     override var side: Side = Side.Unknown
@@ -115,10 +120,51 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     return triangles
 }
 
-class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, override val holes: MutableSet<Face> = mutableSetOf()) : Face(), Iterable<Edge>{
+    var parent: RoutedFace? = null
+    var clockwise: Boolean = false
+    var area: Double = 0.0
+    override var side: Side = Side.Unknown
+
+    val plane: Plane = root.plane
+
+    override val positions: List<Node>
+        get() = nodes().toList()
+
     init {
-        if(edges().toList().filter { it.plane != plane }.isNotEmpty()){
+        if(edges().toList().any { it.plane != plane }){
             println("error")
+        }
+    }
+
+    companion object{
+        private fun generateEdges(points : List<Node>, plane: Plane) : Edge{
+            val edges = points.rollover().map { (left,right) ->
+                val forward = Edge(left,right, plane)
+                val backward = Edge(right,left,  plane)
+                Edge.twinEachOther(forward, backward)
+                forward
+            }
+            edges.rollover().forEach{ (left, right) ->
+                left.connect(right)
+                right.twin.connect(left.twin)
+            }
+
+            return edges.first()
+        }
+
+        fun from(face: Face) : RoutedFace{
+            return if(face is ConvexFace){
+                val root = generateEdges(face.positions, face.toPlane())
+                RoutedFace(root)
+            }else if(face is PolygonFace){
+                val root = generateEdges(face.positions, face.plane)
+                RoutedFace(root, face.holes)
+            }else if(face is RoutedFace){
+                face
+            }else{
+                throw RuntimeException("--")
+            }
         }
     }
 
@@ -198,7 +244,7 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane) : Fac
     }
 
     override fun generateTriangles(): List<TriangleFace> {
-        return generateTriangles(root.points().toList(), holes.map { it.points().toList() })
+        return generateTriangles(root.points().toList(), holes.map { it.positions.map { it.point }.toList() })
     }
 
     override fun toPlane(): Plane {

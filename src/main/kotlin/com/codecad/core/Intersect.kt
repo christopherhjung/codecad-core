@@ -107,7 +107,7 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
     return result
 }
 
-fun findFaces(arr2: List<LineD>): List<PolygonFace> {
+fun findFaces(arr2: List<LineD>): List<RoutedFace> {
     val arr = removeIntersections(arr2)
 
     val ordered = mutableListOf<LineD>()
@@ -129,7 +129,7 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
         val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
 
         val a = Edge(left.node, right.node, Plane.XY)
-        val b = Edge(right.node, left.node, Plane.XY.flip())
+        val b = Edge(right.node, left.node, Plane.XY)
 
         Edge.twinEachOther(a,b)
 
@@ -336,7 +336,7 @@ fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
 }
 
 */
-fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
+fun findFace(segments: List<LineD>, point: PointD) : RoutedFace?{
     val faces = findFaces(segments)
 
     for( face in faces ){
