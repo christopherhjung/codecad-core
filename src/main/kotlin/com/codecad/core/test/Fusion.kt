@@ -535,6 +535,10 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
         val plane = cut.plane!!
         edges[plane]!!.remove(forwardEdge)
 
+        for( list in edges.values ){
+            list.remove(forwardEdge.twin)
+        }
+
         var lastForward: Edge = forwardEdge.prev!!
         var lastBackward: Edge = forwardEdge.twin.next!!
         nodes.lookahead().map { (leftFirst, leftSecond) ->
@@ -581,19 +585,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
         //val test = RoutedFace(lastForward, listOf(), Plane.XY).nodes().toList()
 
         //println(test)
-    }
-
-    val slice = edgeSlices.keys.toList()
-
-    for( i in slice.indices ){
-        val left = slice[i]
-        for( j in i + 1 until slice.size ){
-            val right = slice[j]
-
-            if (left.a === right.a && left.b === right.b || left.a === right.b && left.b === right.a){
-                println("----")
-            }
-        }
     }
 
     for( edges in connects.values ){
