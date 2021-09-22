@@ -120,28 +120,21 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     return triangles
 }
 
-class RoutedFace(val root : Edge, override val holes: MutableSet<Face> = mutableSetOf()) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, val plane: Plane, override val holes: MutableSet<Face> = mutableSetOf()) : Face(), Iterable<Edge>{
     var parent: RoutedFace? = null
     var clockwise: Boolean = false
     var area: Double = 0.0
     override var side: Side = Side.Unknown
 
-    val plane: Plane = root.plane
 
     override val positions: List<Node>
         get() = nodes().toList()
 
-    init {
-        if(edges().toList().any { it.plane != plane }){
-            println("error")
-        }
-    }
-
     companion object{
         private fun generateEdges(points : List<Node>, plane: Plane) : Edge{
             val edges = points.rollover().map { (left,right) ->
-                val forward = Edge(left,right, plane)
-                val backward = Edge(right,left,  plane)
+                val forward = Edge(left,right)
+                val backward = Edge(right,left)
                 Edge.twinEachOther(forward, backward)
                 forward
             }
@@ -156,10 +149,10 @@ class RoutedFace(val root : Edge, override val holes: MutableSet<Face> = mutable
         fun from(face: Face) : RoutedFace{
             return if(face is ConvexFace){
                 val root = generateEdges(face.positions, face.toPlane())
-                RoutedFace(root)
+                RoutedFace(root, face.toPlane())
             }else if(face is PolygonFace){
                 val root = generateEdges(face.positions, face.plane)
-                RoutedFace(root, face.holes)
+                RoutedFace(root, face.toPlane(), face.holes)
             }else if(face is RoutedFace){
                 face
             }else{

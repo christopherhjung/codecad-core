@@ -63,7 +63,7 @@ enum class Owner{
     Unknown, Base, Tool
 }
 
-data class Edge(val source: Node, val target : Node, val plane: Plane){
+data class Edge(val source: Node, val target : Node/*, val plane: Plane*/){
     var prev: Edge? = null
     var next: Edge? = null
     lateinit var twin : Edge
@@ -410,8 +410,9 @@ class CutInformation(){
     var forward: Edge? = null
     val forwardCuts = mutableMapOf<Node, Edge>()
     val backwardCuts = mutableMapOf<Node, Edge>()
+    var plane : Plane? = null
 
-    fun addCut(edge: Edge, node: Node, branch: Edge){
+    fun addCut(edge: Edge, node: Node, branch: Edge, plane: Plane){
         if(node != branch.source){
             throw RuntimeException("")
         }
@@ -421,6 +422,7 @@ class CutInformation(){
         }*/
 
         val cuts = if(forward == null){
+            this.plane = plane
             forward = edge
             forwardCuts
         }else if(forward === edge){
@@ -461,7 +463,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
             if(abs(face.plane.distanceTo(target.point)) > 1e-8 ){
                 println("error")
             }
-            val edge = Edge(source, target, face.plane)
+            val edge = Edge(source, target)
             ops.edges.add(edge)
             return edge
         }
@@ -487,8 +489,8 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
             forward.connect(backward)
             backward.connect(forward)
 
-            edges.computeIfAbsent(forward.plane){ mutableSetOf() }.add(forward)
-            edges.computeIfAbsent(backward.plane){ mutableSetOf()}.add(backward)
+            edges.computeIfAbsent(face.plane){ mutableSetOf() }.add(forward)
+            edges.computeIfAbsent(face.plane){ mutableSetOf()}.add(backward)
 
             Edge.twinEachOther(forward, backward)
 
@@ -508,7 +510,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
             if(slice.startEdge != null){
                 if(slice.startEdge?.target !== startNode && slice.startEdge?.source !== startNode){
                     edgeCuts.computeIfAbsent(EdgeCut(slice.startEdge!!)) { CutInformation() }
-                        .addCut(slice.startEdge!!, startNode, forward)
+                        .addCut(slice.startEdge!!, startNode, forward, face.plane)
                 }
             }else{
                 connects.computeIfAbsent(forward.source){ mutableListOf()}.add(forward)
@@ -517,27 +519,12 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
             if(slice.endEdge != null) {
                 if(slice.endEdge?.target !== endNode && slice.endEdge?.source !== endNode){
                     edgeCuts.computeIfAbsent(EdgeCut(slice.endEdge!!)) { CutInformation() }
-                        .addCut(slice.endEdge!!, endNode, backward)
+                        .addCut(slice.endEdge!!, endNode, backward, face.plane)
                 }
             }else{
                 connects.computeIfAbsent(backward.source){ mutableListOf()}.add(backward)
             }
         }
-
-
-        val plane = face.plane
-        //edge split
-
-        //edgeList.removeAll(ignoreEdges)
-
-        /*
-        val faces = generateFaces(corners, edgeList, face.plane)
-
-        if(assignmentTable[face] == Owner.Tool){
-            result.toolFaces.addAll(faces)
-        }else{
-            result.baseFaces.addAll(faces)
-        }*/
     }
 
     for(cut in edgeCuts.values){
@@ -545,13 +532,14 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
         val leftDirection = (forwardEdge.target.point - forwardEdge.source.point)//.normalized()
         val nodes = (cut.forwardCuts.keys + cut.backwardCuts.keys + listOf(forwardEdge.source, forwardEdge.target)).sortedBy { it.point.dot(leftDirection) }
 
-        edges[forwardEdge.plane]!!.remove(forwardEdge)
+        val plane = cut.plane!!
+        edges[plane]!!.remove(forwardEdge)
 
         var lastForward: Edge = forwardEdge.prev!!
         var lastBackward: Edge = forwardEdge.twin.next!!
         nodes.lookahead().map { (leftFirst, leftSecond) ->
-            val forward = Edge(leftFirst, leftSecond, forwardEdge.plane)
-            val backward = Edge(leftSecond, leftFirst, forwardEdge.plane)
+            val forward = Edge(leftFirst, leftSecond)
+            val backward = Edge(leftSecond, leftFirst)
 
             Edge.twinEachOther(forward, backward)
 
@@ -617,12 +605,12 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
     }
 
     val result = FaceAssignment()
-    for((plane, edges) in edges){
+    for((plane, planeEdges) in edges){
         if(assignmentTable[plane] == Owner.Base){
             println("tool")
         }
 
-        val faces = generateFaces(edges, plane)
+        val faces = generateFaces(planeEdges, plane)
 
         for( face in faces ){
             propagateSides(face.edges().toList())
@@ -736,7 +724,7 @@ fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<RoutedFace>{
         }
 
         //val plane = current.plane
-        val face = RoutedFace(current)
+        val face = RoutedFace(current, plane)
         face.area = area.length() / 2
         face.clockwise = area.dot(plane.normal) < 0
 
@@ -898,7 +886,7 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
         when (it) {
             is PolygonFace -> PolygonFace(it.positions.reversed(), it.plane.flip())
             is ConvexFace -> ConvexFace(it.positions.reversed())
-            is RoutedFace -> RoutedFace(invertEdges(it.root))
+            is RoutedFace -> RoutedFace(invertEdges(it.root), it.plane.flip())
             else -> TODO()
         }
     })
@@ -907,10 +895,9 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
 fun invertEdges(root: Edge) : Edge{
     var start: Edge? = null
     var last: Edge? = null
-    val plane = root.plane.flip()
     for( edge in root.edges() ){
-        val forward = Edge(edge.source, edge.target, plane)
-        val backward = Edge(edge.target, edge.source, plane)
+        val forward = Edge(edge.source, edge.target)
+        val backward = Edge(edge.target, edge.source)
 
         Edge.twinEachOther(forward, backward)
 

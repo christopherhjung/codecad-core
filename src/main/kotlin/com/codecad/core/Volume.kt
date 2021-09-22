@@ -180,7 +180,7 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
             }
 
             for((base, top) in bottomNodes.rollover().zip(topNodes.rollover()) ){
-                val forward = Edge(base.first, base.second, bottomPlane)
+                val forward = Edge(base.first, base.second)
 
                 val sidePlane = Plane.fromConvexPoints(listOf(
                     base.second.point,
@@ -188,19 +188,19 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
                     top.first.point,
                 ))
 
-                val topEdge = Edge(base.second, base.first, sidePlane)
-                val leftEdge = Edge(base.first, top.first, sidePlane)
-                val bottomEdge = Edge(top.first, top.second, sidePlane)
-                val rightEdge = Edge(top.second, base.second, sidePlane)
+                val topEdge = Edge(base.second, base.first)
+                val leftEdge = Edge(base.first, top.first)
+                val bottomEdge = Edge(top.first, top.second)
+                val rightEdge = Edge(top.second, base.second)
 
                 topEdge.connect(leftEdge)
                 leftEdge.connect(bottomEdge)
                 bottomEdge.connect(rightEdge)
                 rightEdge.connect(topEdge)
 
-                faces.add(RoutedFace(topEdge, mutableSetOf() ))
+                faces.add(RoutedFace(topEdge, sidePlane, mutableSetOf() ))
 
-                val backward = Edge(top.second, top.first, topPlane)
+                val backward = Edge(top.second, top.first)
 
                 Edge.twinEachOther(forward, topEdge)
                 Edge.twinEachOther(backward, bottomEdge)
@@ -230,13 +230,12 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
             val topHoles = mutableSetOf<Face>()
             for (child in face.holes) {
                 val (baseHole, topHole) = construct(child)
-
-                bottomHoles.add(RoutedFace(baseHole.root, mutableSetOf()))
-                bottomHoles.add(RoutedFace(topHole.root, mutableSetOf()))
+                bottomHoles.add(baseHole)
+                topHoles.add(topHole)
             }
 
-            val bottomFace = RoutedFace(startForward!!, bottomHoles)
-            val topFace = RoutedFace(startBackward!!, topHoles)
+            val bottomFace = RoutedFace(startForward!!, bottomPlane, bottomHoles)
+            val topFace = RoutedFace(startBackward!!, topPlane, topHoles)
 
             faces.add(bottomFace)
             faces.add(topFace)
