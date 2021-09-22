@@ -370,7 +370,7 @@ class SketchTest {
             }
 
             val posX = 0.0
-            val posY = 0.0
+            val posY = 0.4
 
             val small = sketch {
                 polygon(
@@ -389,5 +389,39 @@ class SketchTest {
 
         println("test")
 
+    }
+
+    @Test
+    fun substract(){
+       val project = project {
+            val big = sketch {
+                polygon(
+                    Point(const(-0.5), const(-0.5)),
+                    Point(const(0.5), const(-0.5)),
+                    Point(const(0.5), const(0.5)),
+                    Point(const(-0.5), const(0.5)),
+                )
+            }
+
+
+            val posX = 0.4
+            val posY = 0.0
+
+            val small = sketch {
+                polygon(
+                    Point(const(-0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(0.2 + posY)),
+                    Point(const(-0.2 + posX), const(0.2 + posY)),
+                )
+            }
+
+            extrude(big, Const(1.0))
+            extrude(small, Const(2.0))
+        }
+
+        val model = mapModel(project)
+
+        println(project)
     }
 }

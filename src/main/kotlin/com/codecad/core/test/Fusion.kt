@@ -6,7 +6,6 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import org.jetbrains.kotlin.util.collectionUtils.forEachScope
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.abs
@@ -155,19 +154,19 @@ class PlaneSlice(val face: RoutedFace, val plane: Plane, var startEdge: Edge? = 
 
 }
 
-class EdgeSlice(val a: Node? = null, val b: Node? = null, val plane: Plane?){
+class EdgeSlice(val a: Node , val b: Node , val plane: Plane?){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EdgeSlice) return false
 
-        if (!(a == other.a && b == other.b || a == other.b && b == other.a)) return false
-        if (plane != other.plane) return false
+        if (!(a === other.a && b === other.b || a === other.b && b === other.a)) return false
+        if (plane !== other.plane) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = (( a?.hashCode() ?: 0 ) + 1) *  ((b?.hashCode() ?: 0) + 1)
+        var result = ( a.hashCode() + 1) *  (b.hashCode() + 1)
         result = 31 * result + (plane?.hashCode() ?: 0)
         return result
     }
@@ -596,8 +595,21 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
         //println(test)
     }
 
+    val slice = edgeSlices.keys.toList()
+
+    for( i in slice.indices ){
+        val left = slice[i]
+        for( j in i + 1 until slice.size ){
+            val right = slice[j]
+
+            if (left.a === right.a && left.b === right.b || left.a === right.b && left.b === right.a){
+                println("----")
+            }
+        }
+    }
+
     for( edges in connects.values ){
-        if(edges.size > 2){
+        if(edges.size != 2){
             throw RuntimeException("--")
         }
 
@@ -612,6 +624,18 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
 
         val faces = generateFaces(edges, plane)
 
+        for( face in faces ){
+            propagateSides(face.edges().toList())
+
+            face.side = face.root.side
+
+            for( hole in face.holes ){
+                if(hole is RoutedFace){
+                    propagateSides(hole.edges().toList())
+                    hole.side = hole.root.side
+                }
+            }
+        }
 
         if(assignmentTable[plane] == Owner.Tool){
             result.toolFaces.addAll(faces)
@@ -650,49 +674,71 @@ fun rotaryConnect(edges : Collection<Edge>){
     }
 }
 
-fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<RoutedFace>{
-    val sideMap = mutableMapOf<RoutedFace, Side>()
 
+fun propagateSides(edges: Collection<Edge>) {
+
+    val edgeSet = edges.toList()
+
+    val hasSide = edgeSet.filter { it.side != Side.Unknown }.toMutableSet()
+    val visited = hasSide.toMutableSet()
+
+    fun add(edge: Edge, side: Side){
+        if(!visited.contains(edge)){
+            if(edge.side != Side.Unknown && edge.side != side){
+                println(side)
+                throw RuntimeException("--")
+            }
+
+            edge.side = side
+            visited.add(edge)
+            hasSide.add(edge)
+        }
+    }
+
+    while(hasSide.isNotEmpty()){
+        var sidedEdge = hasSide.first()
+        hasSide.remove(sidedEdge)
+
+        add(sidedEdge.next!!, sidedEdge.side)
+        add(sidedEdge.prev!!, sidedEdge.side)
+    }
+}
+
+fun generateFaces(edges: Collection<Edge>, plane: Plane) : List<RoutedFace>{
     val faces = mutableListOf<RoutedFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
-        val next = queue.first()
-        queue.remove(next)
+        val start = queue.first()
+        queue.remove(start)
 
-        var area = PointD.ZERO
-        val points = mutableListOf<Node>()
-        var current = next
+        val area = PointD()
+        var current = start
 
-        var side = Side.Unknown
+        var counter = 0
 
+        val points = mutableListOf<PointD>()
         while(true){
-            area = area + current.source.point.cross(current.target.point)
-
-            if(current.target === next.source){
-                break
+            if(counter > 10000){
+                throw RuntimeException("--")
             }
 
-            if(current.side != Side.Unknown){
-                if(side != Side.Unknown ) {
-                    if(side != current.side){
-                        println("error")
-                        //throw RuntimeException("ss")
-                    }
-                }else{
-                    side = current.side
-                }
+            points.add(current.source.point)
+
+            area += current.source.point.cross(current.target.point)
+
+            if(current.target === start.source){
+                break
             }
 
             current = current.next!!
             queue.remove(current)
+            counter++
         }
 
         //val plane = current.plane
         val face = RoutedFace(current)
         face.area = area.length() / 2
         face.clockwise = area.dot(plane.normal) < 0
-        face.side = side
-        sideMap[face] = side
 
         faces.add(face)
     }
@@ -842,8 +888,8 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
         }.add(uncut)
     }
 
-    estimateSides(faceAssignment.toolFaces )
-    estimateSides(faceAssignment.baseFaces)
+    //estimateSides(faceAssignment.toolFaces )
+    //estimateSides(faceAssignment.baseFaces)
 
     val baseFaces = faceAssignment.baseFaces.filter { it.side != Side.Inside }
     val toolFaces = faceAssignment.toolFaces.filter { it.side == Side.Inside }
@@ -863,20 +909,25 @@ fun invertEdges(root: Edge) : Edge{
     var last: Edge? = null
     val plane = root.plane.flip()
     for( edge in root.edges() ){
-        val inverted = Edge(edge.target, edge.source, plane)
+        val forward = Edge(edge.source, edge.target, plane)
+        val backward = Edge(edge.target, edge.source, plane)
+
+        Edge.twinEachOther(forward, backward)
 
         if(last != null){
-            inverted.connect(last)
+            last.connect(forward)
+            backward.connect(last.twin)
         }else{
-            start = inverted
+            start = forward
         }
 
-        last = inverted
+        last = forward
     }
 
-    start!!.connect(last!!)
+    last!!.connect(start!!)
+    start.twin.connect(last.twin)
 
-    return start
+    return start.twin
 }
 
 fun combineFaces(faces: List<RoutedFace>, plane: Plane) : List<RoutedFace>{
