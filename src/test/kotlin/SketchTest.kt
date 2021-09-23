@@ -370,7 +370,7 @@ class SketchTest {
             }
 
             val posX = 0.0
-            val posY = 0.4
+            val posY = 0.0
 
             val small = sketch {
                 polygon(
@@ -394,6 +394,36 @@ class SketchTest {
     @Test
     fun substract(){
        val project = project {
+            val posX = 0.0
+            val posY = 0.0
+
+            val small = sketch {
+                polygon(
+                    Point(const(-0.5), const(-0.5)),
+                    Point(const(0.5), const(-0.5)),
+                    Point(const(0.5), const(0.5)),
+                    Point(const(-0.5), const(0.5)),
+                )
+
+                polygon(
+                    Point(const(-0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(-0.2 + posY)),
+                    Point(const(0.2 + posX), const(0.2 + posY)),
+                    Point(const(-0.2 + posX), const(0.2 + posY)),
+                )
+            }
+
+            extrude(small, Const(1.0))
+        }
+
+        val model = mapModel(project)
+
+        println(project)
+    }
+
+    @Test
+    fun komisch(){
+        val project = project {
             val big = sketch {
                 polygon(
                     Point(const(-0.5), const(-0.5)),
@@ -404,7 +434,7 @@ class SketchTest {
             }
 
 
-            val posX = 0.4
+            val posX = 0.0
             val posY = 0.0
 
             val small = sketch {
@@ -417,11 +447,11 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(2.0))
+            extrude(small, Const(2.0), DirectedPlane.from(Plane(PointD(0.0,1.0,1.0), -1.0).normalized(), PointD(1.0,1.0).normalized()))
         }
+
 
         val model = mapModel(project)
 
-        println(project)
     }
 }

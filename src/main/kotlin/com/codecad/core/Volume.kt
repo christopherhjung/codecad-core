@@ -106,8 +106,8 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
 
         val (basePolygon, topPolygon) = test(face)
 
-        for (child in face.holes) {
-            val (baseHole, topHole) = test(child)
+        for (hole in face.holes) {
+            val (baseHole, topHole) = test(hole)
 
             basePolygon.holes.add(baseHole)
             topPolygon.holes.add(topHole)
@@ -152,7 +152,7 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
         val offsetVector = directedPlane.normal * height
         val plane = directedPlane.undirected
 
-        fun construct(face: Face): Pair<RoutedFace, RoutedFace> {
+        fun construct(face: Face, addTopBottom: Boolean = true): Pair<RoutedFace, RoutedFace> {
             val positions = if(inverted) face.positions.reversed() else face.positions
 
             val bottomNodes = positions.map { Node(directedPlane.projectXYTo(it.point)) }
@@ -198,7 +198,7 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
                 bottomEdge.connect(rightEdge)
                 rightEdge.connect(topEdge)
 
-                faces.add(RoutedFace(topEdge, sidePlane, mutableSetOf() ))
+                faces.add(RoutedFace(topEdge, sidePlane ))
 
                 val backward = Edge(top.second, top.first)
 
@@ -228,8 +228,8 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
 
             val bottomHoles = mutableSetOf<Face>()
             val topHoles = mutableSetOf<Face>()
-            for (child in face.holes) {
-                val (baseHole, topHole) = construct(child)
+            for (hole in face.holes) {
+                val (baseHole, topHole) = construct(hole, false)
                 bottomHoles.add(baseHole)
                 topHoles.add(topHole)
             }
@@ -237,8 +237,10 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
             val bottomFace = RoutedFace(startForward!!, bottomPlane, bottomHoles)
             val topFace = RoutedFace(startBackward!!, topPlane, topHoles)
 
-            faces.add(bottomFace)
-            faces.add(topFace)
+            if(addTopBottom){
+                faces.add(bottomFace)
+                faces.add(topFace)
+            }
 
             return Pair(bottomFace, topFace)
         }

@@ -22,9 +22,8 @@ class ProjectScope(val project: Project){
 
     fun extrude(sketch: Sketch, height: Value, plane: DirectedPlane = DirectedPlane.XY) {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
-        val faces = findFaces(lines)
-
-        for(face in faces){
+        val face = findFaces(lines).maxByOrNull { it.area }
+        if(face != null){
             project.volumes.add(Extrude(face, plane,  height))
         }
     }
