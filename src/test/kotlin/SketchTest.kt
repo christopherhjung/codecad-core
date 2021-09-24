@@ -318,37 +318,38 @@ class SketchTest {
 
     @Test
     fun fingerboard(){
-        val project = project {
-            val posX = 0.0
-            val posY = 0.0
+        val project =
+            project {
+                val posX = 0.0
+                val posY = 0.0
 
-            val small = sketch {
-                val rect = create(Rect::class)
-                equals(rect.center, ORIGIN)
-                equals(rect.width, const(4))
-                equals(rect.height, const(5))
-                equals(rect.top.p0.y, rect.top.p1.y)
+                val small = sketch {
+                    val rect = create(Rect::class)
+                    equals(rect.center, ORIGIN)
+                    equals(rect.width, const(4))
+                    equals(rect.height, const(5))
+                    equals(rect.top.p0.y, rect.top.p1.y)
+                }
+
+                val hole = sketch {
+                    val rect = create(RoundRect::class)
+                    equals(rect.center, constPoint(0,1))
+                    equals(rect.width, const(1))
+                    equals(rect.height, const(1))
+                }
+
+                val hole2 = sketch {
+                    val rect = create(RoundRect::class)
+                    equals(rect.center, constPoint(0,-0.8))
+                    equals(rect.width, const(1))
+                    equals(rect.height, const(2))
+                }
+
+                extrude(small, Const(1.0))
+                extrude(hole, Const(0.8), DirectedPlane.from(Plane.XY.move(-0.1), PointD(1.0)))
+                extrude(hole2, Const(0.2), DirectedPlane.from(Plane.XY.move(-0.1), PointD(1.0)))
+
             }
-
-            val hole = sketch {
-                val rect = create(RoundRect::class)
-                equals(rect.center, constPoint(0,1))
-                equals(rect.width, const(1))
-                equals(rect.height, const(1))
-            }
-
-            val hole2 = sketch {
-                val rect = create(RoundRect::class)
-                equals(rect.center, constPoint(0,-1))
-                equals(rect.width, const(1))
-                equals(rect.height, const(2))
-            }
-
-            extrude(small, Const(1.0))
-            extrude(hole, Const(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
-            extrude(hole2, Const(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
-
-        }
 
 
         val model = mapModel(project)

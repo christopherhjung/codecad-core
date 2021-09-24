@@ -179,14 +179,23 @@ fun findIntersections(face: RoutedFace, plane: Plane) : List<Intersection>{
         }else{
             val startDistance = plane.distanceTo(start.point)
             val endDistance = plane.distanceTo(end.point)
-            if( startDistance * endDistance <= 0 && startDistance != endDistance){
-                val intersection = when {
-                    abs(startDistance) < 1e-8 -> start
-                    abs(endDistance) < 1e-8 -> end
-                    else -> Node(start.point + ( end.point - start.point ) *
-                            startDistance / ( startDistance - endDistance ))
-                }
 
+            val intersection = when {
+                abs(startDistance) < 1e-8 -> start
+                abs(endDistance) < 1e-8 -> end
+                else -> {
+                    if( startDistance * endDistance <= 0 && startDistance != endDistance) {
+                        Node(
+                            start.point + (end.point - start.point) *
+                                    startDistance / (startDistance - endDistance)
+                        )
+                    }else{
+                        null
+                    }
+                }
+            }
+
+            if(intersection != null){
                 edgeSlices[edgeSlice] = intersection
                 result.add(Intersection(edge, intersection))
             }
@@ -425,8 +434,6 @@ class CutInformation(){
         }
 
         cuts[node] = branch
-
-        println("ss")
     }
 }
 
@@ -571,10 +578,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
 
         lastForward.connect(forwardEdge.next!!)
         forwardEdge.twin.prev!!.connect(lastBackward)
-
-        //val test = RoutedFace(lastForward, listOf(), Plane.XY).nodes().toList()
-
-        //println(test)
     }
 
     for( edges in connects.values ){
@@ -638,7 +641,9 @@ fun rotaryConnect(edges : Collection<Edge>){
 }
 
 fun resolveMissingSideAssignment( faces: List<RoutedFace> ){
-    val assignedFaces = faces.filter{it.side != Side.Unknown}
+    val assignedFaces = faces.filter{it.side == Side.Unknown}
+
+    println(assignedFaces)
     /*
     val overallEdges = faces.map { it.edges() + it.holes.filterIsInstance<RoutedFace>().map { it.edges() }.flatten() }.flatten()
 
@@ -776,102 +781,6 @@ fun generateOwnerAssignment(base: RoutedVolume, tool: RoutedVolume) : Map<Plane,
     return map
 }
 
-fun estimateSides(faces: List<Face>){
-    class Entry(val a: Node, val b : Node){
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Entry) return false
-            return (a == other.a && b == other.b || a == other.b && b == other.a)
-        }
-
-        override fun hashCode(): Int {
-            return (a.hashCode() + 1) * (b.hashCode() + 1)
-        }
-    }
-
-    val map = mutableMapOf<Entry, Side>()
-    val unknowns = mutableSetOf<HasSide>()
-
-    for(face in faces){
-        if(face.side != Side.Unknown){
-            if(face is PolygonFace){
-                for( loop in face.holes + face ){
-                    for( (left, right) in loop.positions.rollover() ){
-                        val entry = Entry(left, right)
-                        map[entry] = face.side
-                    }
-                }
-            }else if(face is ConvexFace){
-                for( (left, right) in face.positions.rollover() ){
-                    val entry = Entry(left, right)
-                    map[entry] = face.side
-                }
-            }
-        }else{
-            unknowns.add(face)
-        }
-    }
-
-    var progress = true
-    while(progress){
-        progress = false
-        for(face in unknowns.toList()){
-            if(face is PolygonFace){
-                for( loop in face.holes + face ){
-                    for( (left, right) in loop.positions.rollover() ){
-                        val entry = Entry(left, right)
-                        val side = map[entry]
-                        if(side != null){
-                            face.side = side
-                            break
-                        }
-                    }
-
-
-                    if(face.side != Side.Unknown){
-                        break
-                    }
-                }
-
-                if(face.side != Side.Unknown){
-                    for( loop in face.holes + face ){
-                        for( (left, right) in loop.positions.rollover() ){
-                            val entry = Entry(left, right)
-                            map[entry] = face.side
-                        }
-                    }
-                }
-            }else if(face is ConvexFace){
-                for( (left, right) in face.positions.rollover() ){
-                    val entry = Entry(left, right)
-                    val side = map[entry]
-                    if(side != null){
-                        face.side = side
-                        break
-                    }
-                }
-
-                if(face.side != Side.Unknown){
-                    for( (left, right) in face.positions.rollover() ){
-                        val entry = Entry(left, right)
-                        map[entry] = face.side
-                    }
-                }
-            }
-
-            if(face.side != Side.Unknown){
-                progress = true
-                unknowns.remove(face)
-            }else{
-                println("sss")
-            }
-        }
-    }
-
-    if(unknowns.size != 0){
-        throw RuntimeException("Unknown side")
-    }
-}
 
 fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
     val base = RoutedVolume.from(base)
