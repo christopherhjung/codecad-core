@@ -139,8 +139,31 @@ class Edge(val source: Node, val target : Node){
 
 
 class PlaneEvent(val volume : RoutedVolume, val face: RoutedFace, val point: PointD, val start : Boolean)
-class PlaneSlice(val face: RoutedFace, val plane: Plane, var startEdge: Edge? = null, var endEdge: Edge? = null, var startNode : Node? = null, var endNode: Node? = null){
+class PlaneSlice(
 
+    ){
+    var startNode : Node? = null
+    var endNode: Node? = null
+    val entries = Array(2){ PlaneSliceEntry() }
+
+    val baseFace: RoutedFace
+        get() = entries[0].face!!
+    val toolFace: RoutedFace
+        get() = entries[1].face!!
+    val startBaseEdge: Edge?
+        get() = entries[0].startEdge
+    val endBaseEdge: Edge?
+        get() = entries[0].endEdge
+    val startToolEdge: Edge?
+        get() = entries[1].startEdge
+    val endToolEdge: Edge?
+        get() = entries[1].endEdge
+}
+
+class PlaneSliceEntry{
+    var face: RoutedFace? = null
+    var startEdge: Edge? = null
+    var endEdge: Edge? = null
 }
 
 class EdgeSlice(val a: Node , val b: Node , val plane: Plane?){
@@ -272,26 +295,26 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
     val resultSlices = mutableListOf<PlaneSlice>()
 
-    for(leftActive in baseEventQueue) {
+    for(baseActive in baseEventQueue) {
         val (currentActive, otherActive) = when{
-            leftActive.volume === base -> Pair(activeBase, activeTool)
-            leftActive.volume === tool -> Pair(activeTool, activeBase)
+            baseActive.volume === base -> Pair(activeBase, activeTool)
+            baseActive.volume === tool -> Pair(activeTool, activeBase)
             else -> throw RuntimeException("ss")
         }
 
-        if(leftActive.start){
-            currentActive[leftActive.face] = leftActive
+        if(baseActive.start){
+            currentActive[baseActive.face] = baseActive
 
-            val leftPlane = leftActive.face.plane
-            for (rightActive in otherActive.values) {
-                val rightPlane = rightActive.face.plane
+            val basePlane = baseActive.face.plane
+            for (toolActive in otherActive.values) {
+                val toolPlane = toolActive.face.plane
 
-                if(leftPlane.normal == rightPlane.normal){
+                if(basePlane.normal == toolPlane.normal){
                     continue
                 }
 
-                val leftIntersections = findIntersections(leftActive.face, rightPlane)
-                val rightIntersections = findIntersections(rightActive.face, leftPlane)
+                val leftIntersections = findIntersections(baseActive.face, toolPlane)
+                val rightIntersections = findIntersections(toolActive.face, basePlane)
 
                 if(leftIntersections.isEmpty() || rightIntersections.isEmpty()){
                     continue
@@ -299,7 +322,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                 val intersectionEvents = TreeSet(testComparator)
 
-                val line = Line.fromPlanes(leftPlane, rightPlane)
+                val line = Line.fromPlanes(basePlane, toolPlane)
                 for(intersection in leftIntersections){
                     intersectionEvents.add(Event(intersection, line.direction.dot(intersection.position.point), 0))
                 }
@@ -309,7 +332,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 
                 val inside = BooleanArray(2){false}
                 val last = Array<Intersection?>(2){null}
-
+/*
                 fun createSlice(i : Int) : PlaneSlice{
                     return when(i){
                         0 -> PlaneSlice(leftActive.face, rightPlane)
@@ -319,6 +342,8 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                 }
 
                 val slices = Array(2){ createSlice(it) }
+*/
+                var slice = PlaneSlice()
 
                 var started: Intersection? = null
                 var finishSegment : PlaneSlice? = null
@@ -331,39 +356,39 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                     inside[currentIndex] = !inside[currentIndex]
                     last[currentIndex] = intersectionEvent.intersection
 
-                    val currentSlice = slices[currentIndex]
-                    val otherSlice = slices[otherIndex]
+                    var currentEntry = slice.entries[currentIndex]
+                    var otherEntry = slice.entries[otherIndex]
 
                     if(inside[currentIndex] && inside[ otherIndex ] ){
-                        currentSlice.startEdge = intersectionEvent.intersection.edge
-                        currentSlice.startNode = intersectionEvent.intersection.position
+                        slice = PlaneSlice()
+                        currentEntry = slice.entries[currentIndex]
+                        otherEntry = slice.entries[otherIndex]
+
+                        slice.entries[0].face = baseActive.face
+                        slice.entries[1].face = toolActive.face
+
+                        currentEntry.startEdge = intersectionEvent.intersection.edge
+                        slice.startNode = intersectionEvent.intersection.position
 
                         if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
-                            otherSlice.startEdge = last[otherIndex]!!.edge
+                            otherEntry.startEdge = last[otherIndex]!!.edge
                         }
 
-                        otherSlice.startNode = currentSlice.startNode
                         started = intersectionEvent.intersection
                     }else if(!inside[intersectionEvent.index] ){
                         if(started != null){
-                            currentSlice.endEdge = intersectionEvent.intersection.edge
-                            currentSlice.endNode = intersectionEvent.intersection.position
+                            currentEntry.endEdge = intersectionEvent.intersection.edge
+                            slice.endNode = intersectionEvent.intersection.position
 
-                            resultSlices.add(currentSlice)
-                            slices[currentIndex] = createSlice(currentIndex)
+                            resultSlices.add(slice)
 
-                            finishSegment = currentSlice
+                            finishSegment = slice
                             started = null
                             continue
                         }else if(finishSegment != null){
-                            if(last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
-                                currentSlice.endEdge = intersectionEvent.intersection.edge
+                            if(slice.endNode!!.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8){
+                                currentEntry.endEdge = intersectionEvent.intersection.edge
                             }
-
-                            currentSlice.endNode = finishSegment.endNode
-
-                            resultSlices.add(currentSlice)
-                            slices[currentIndex] = createSlice(currentIndex)
                         }
                     }
 
@@ -374,12 +399,12 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
                 val sizeAfter = resultSlices.size
 
                 if(sizeBefore != sizeAfter){
-                    uncutFaces.remove(leftActive.face)
-                    uncutFaces.remove(rightActive.face)
+                    uncutFaces.remove(baseActive.face)
+                    uncutFaces.remove(toolActive.face)
                 }
             }
         }else{
-            currentActive.remove(leftActive.face)
+            currentActive.remove(baseActive.face)
         }
     }
 
@@ -387,8 +412,6 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 }
 
 class FaceAssignment(val baseFaces : MutableList<RoutedFace> = mutableListOf(), val toolFaces : MutableList<RoutedFace> = mutableListOf())
-class FaceInformation(val slices: MutableList<PlaneSlice> = mutableListOf(), val nodes: MutableList<Node> = mutableListOf(), val edges: MutableList<Edge> = mutableListOf())
-
 
 
 class EdgeCut(val edge: Edge){
@@ -415,10 +438,6 @@ class CutInformation(){
         if(node != branch.source){
             throw RuntimeException("")
         }
-/*
-        if(edge.source.point == node.point || edge.target.point == node.point){
-            throw RuntimeException("--")
-        }*/
 
         val cuts = if(forward == null){
             forwardPlane = plane
@@ -442,7 +461,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
     val map = HashMap<RoutedFace, MutableList<PlaneSlice>>()
 
     for(planeSlice in slices){
-        map.computeIfAbsent(planeSlice.face){ mutableListOf() }.add(planeSlice)
+        map.computeIfAbsent(planeSlice.entries[0].face!!){ mutableListOf() }.add(planeSlice)
     }
 
     val edgeCuts = mutableMapOf<EdgeCut, CutInformation>()
@@ -457,6 +476,10 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
                     .addCut(edge, node, cut, plane)
             }
         }else{
+            val size = connects.getOrDefault(cut.source, listOf())
+            if(size.any { it.source === cut.source && it.target === cut.target }){
+                print(",,,")
+            }
             connects.computeIfAbsent(cut.source){ mutableListOf()}.add(cut)
         }
     }
@@ -469,48 +492,33 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
             edges.computeIfAbsent(face.plane){ mutableSetOf() }.addAll(hole.edges())
         }
 
-        fun createEdge(source: Node, target: Node) : Edge{
-            if(abs(face.plane.distanceTo(target.point)) > 1e-8 ){
-                println("error")
-            }
-            return Edge(source, target)
-        }
-
-        for( slice in slices ){
-            if(slice.startEdge?.source === slice.startNode!! ){
-                if(slice.endEdge?.target === slice.endNode!!){
-                    continue
+        fun work(startNode: Node, endNode: Node,
+                 startEdge: Edge?, endEdge: Edge?,
+                 leftFace: RoutedFace, rightFace: RoutedFace) : Edge{
+            if(startEdge?.source === startNode ){
+                if(endEdge?.target === endNode){
+                    return startEdge.prev!!
                 }
-            }else if(slice.startEdge?.target === slice.startNode!!){
-                if(slice.endEdge?.source === slice.endNode!!){
-                    continue
+            }else if(startEdge?.target === startNode){
+                if(endEdge?.source === endNode){
+                    return endEdge.next!!
                 }
             }
 
-            //edge insert
-            val startNode = slice.startNode!!
-            val endNode = slice.endNode!!
-
-            val forward = createEdge(startNode, endNode)
-            val backward = createEdge(endNode, startNode)
-
+            val forward = Edge(startNode, endNode)
+            val backward = Edge(endNode, startNode)
             forward.connect(backward)
             backward.connect(forward)
-
-            edges.computeIfAbsent(face.plane){ mutableSetOf() }.add(forward)
-            edges.computeIfAbsent(face.plane){ mutableSetOf()}.add(backward)
-
             Edge.twinEachOther(forward, backward)
+
+            edges.computeIfAbsent(leftFace.plane){ mutableSetOf() }.add(forward)
+            edges.computeIfAbsent(leftFace.plane){ mutableSetOf()}.add(backward)
 
             //side detection
             val direction = endNode.point - startNode.point
-            val forwardIsOutside = direction.cross(slice.plane.normal).dot(slice.face.plane.normal)  > 0
+            val baseForwardIsOutside = direction.cross(rightFace.plane.normal).dot(leftFace.plane.normal) > 0
 
-            if(sideAssignment.containsKey(forward) ||sideAssignment.containsKey(backward)){
-                throw RuntimeException("--")
-            }
-
-            if(forwardIsOutside){
+            if(baseForwardIsOutside){
                 sideAssignment[forward] = Side.Outside
                 sideAssignment[backward] = Side.Inside
             }else{
@@ -518,8 +526,16 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<Plane, Own
                 sideAssignment[backward] = Side.Outside
             }
 
-            check(slice.startEdge, startNode, forward, face.plane)
-            check(slice.endEdge, endNode, backward, face.plane)
+            check(startEdge, startNode, forward, leftFace.plane)
+            check(endEdge, endNode, backward, leftFace.plane)
+
+            return forward
+        }
+
+
+        for( slice in slices ){
+            work(slice.startNode!!, slice.endNode!!, slice.startBaseEdge, slice.endBaseEdge, slice.baseFace, slice.toolFace)
+            work(slice.startNode!!, slice.endNode!!, slice.startToolEdge, slice.startToolEdge, slice.toolFace, slice.baseFace)
         }
     }
 
