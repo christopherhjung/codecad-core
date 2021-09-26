@@ -27,13 +27,13 @@ fun mapModel(project: Project) : Model{
         }
     }
 
-    var result: FacedVolume? = null
+    var result: RoutedVolume? = null
 
     for(volume in project.volumes){
         result = if(result == null){
-            FacedVolume.from(volume)
+            RoutedVolume.from(volume)
         }else{
-            addVolumes(result, volume)
+            combineVolumes(result, volume, VolumeOperation.Sub)
         }
     }
 

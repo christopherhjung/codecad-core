@@ -7,10 +7,10 @@ class MeshGenerator {
 
 
     fun generate(extrude: Extrude) : Mesh {
-        return generate(extrude.extrude())
+        return generate(extrude.extrudeRoutedFace())
     }
 
-    fun generate(volume: FacedVolume) : Mesh {
+    fun generate(volume: RoutedVolume) : Mesh {
         val map = HashMap<PointD, Int>()
         fun getOrAdd(point: PointD) : Int{
             return map.computeIfAbsent(point){map.size}

@@ -2,12 +2,8 @@ import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.SketchScope.Companion.ORIGIN
-import com.codecad.core.Value.Companion.const
-import com.codecad.core.Value.Companion.cos
-import com.codecad.core.Value.Companion.sin
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
-import com.codecad.core.test.addVolumes
 import com.codecad.core.test.mapModel
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
@@ -227,8 +223,8 @@ class SketchTest {
             rightTop,
             leftTop
         )
-
-        val baseVolume = FacedVolume(
+/*
+        val baseVolume = RoutedVolume(
             listOf(
                 PolygonFace(bottom, Plane.fromPoints(bottom.map { it.point })),
                 PolygonFace(top, Plane.fromPoints(top.map { it.point })),
@@ -236,7 +232,7 @@ class SketchTest {
             )
         )
 
-        val toolVolume = FacedVolume(
+        val toolVolume = RoutedVolume(
             listOf(
                 PolygonFace(tool, Plane.fromPoints(tool.map { it.point })),
             )
@@ -244,7 +240,7 @@ class SketchTest {
 
         val result = addVolumes(baseVolume, toolVolume)
 
-        println(result)
+        println(result)*/
     }
 
     @Test
@@ -383,7 +379,7 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane.XY.move(-0.5)))
+            extrude(small, Const(1.0), DirectedPlane.from(Plane.XY.move(-0.5)))
         }
 
         val model = mapModel(project)

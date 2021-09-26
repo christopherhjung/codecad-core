@@ -6,6 +6,7 @@ import com.codecad.core.test.*
 
 abstract class Volume
 
+/*
 class FacedVolume(val faces: List<Face>) : Volume() {
     companion object {
         fun from(volume: Volume): FacedVolume {
@@ -20,7 +21,7 @@ class FacedVolume(val faces: List<Face>) : Volume() {
             }
         }
     }
-}
+}*/
 
 class PolygonVolume(val faces: List<PolygonFace>) : Volume()
 
@@ -30,15 +31,14 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
         fun from(volume: Volume) : RoutedVolume{
             return if(volume is RoutedVolume){
                 volume
-            }else if( volume is FacedVolume ){
-                from(volume)
             }else if( volume is Extrude ){
-                from(volume.extrude())
+                volume.extrudeRoutedFace()
             }else{
                 TODO("not yet implemented")
             }
         }
 
+        /*
         fun from(polygonVolume: FacedVolume) : RoutedVolume{
             val faces = mutableListOf<RoutedFace>()
 
@@ -47,12 +47,12 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             }
 
             return RoutedVolume(faces)
-        }
+        }*/
     }
 }
 
 class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Value) : Volume() {
-    fun extrude(): FacedVolume {
+    /*fun extrude(): FacedVolume {
         val height = height.value
 
         val map = HashMap<PointD, Node>()
@@ -117,6 +117,7 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
     }
 
 
+*/
 
 
 
@@ -142,8 +143,7 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
 
 
 
-
-    fun extrudeRoutedFace(): FacedVolume {
+    fun extrudeRoutedFace(): RoutedVolume {
         val height = height.value
 
         val faces = mutableListOf<RoutedFace>()
@@ -247,6 +247,6 @@ class Extrude(val face: Face, val directedPlane: DirectedPlane, val height: Valu
 
         construct(face)
 
-        return FacedVolume(faces)
+        return RoutedVolume(faces)
     }
 }
