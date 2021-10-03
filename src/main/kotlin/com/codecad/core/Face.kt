@@ -133,14 +133,14 @@ class RoutedFace(val root : Edge, val plane: Plane, override val holes: MutableS
     companion object{
         private fun generateEdges(points : List<Node>, plane: Plane) : Edge{
             val edges = points.rollover().map { (left,right) ->
-                val forward = Edge(left,right)
-                val backward = Edge(right,left)
+                val forward = Edge(left,right, plane)
+                val backward = Edge(right,left, plane)
                 Edge.twinEachOther(forward, backward)
                 forward
             }
             edges.rollover().forEach{ (left, right) ->
                 left.connect(right)
-                right.twin.connect(left.twin)
+                right.twin!!.connect(left.twin!!)
             }
 
             return edges.first()

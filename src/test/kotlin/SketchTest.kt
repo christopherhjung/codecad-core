@@ -316,7 +316,7 @@ class SketchTest {
     fun fingerboard(){
         val project =
             project {
-                val posX = 0.0
+                val posX = 0.4
                 val posY = 0.0
 
                 val small = sketch {
@@ -366,7 +366,7 @@ class SketchTest {
                 )
             }
 
-            val posX = 0.0
+            val posX = 0.4
             val posY = 0.0
 
             val small = sketch {
@@ -379,7 +379,7 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(1.0), DirectedPlane.from(Plane.XY.move(-0.5)))
+            extrude(small, Const(2.0), DirectedPlane.from(Plane.XY.move(-0.5)))
         }
 
         val model = mapModel(project)

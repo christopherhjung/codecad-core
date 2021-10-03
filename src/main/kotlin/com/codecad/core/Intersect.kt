@@ -128,8 +128,8 @@ fun findFaces(arr2: List<LineD>): List<RoutedFace> {
         val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
         val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
 
-        val a = Edge(left.node, right.node)
-        val b = Edge(right.node, left.node)
+        val a = Edge(left.node, right.node, Plane.XY)
+        val b = Edge(right.node, left.node, Plane.XY)
 
         Edge.twinEachOther(a,b)
 
