@@ -1,3 +1,4 @@
+import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
@@ -121,12 +122,27 @@ class SketchTest {
     }
 
 
+    /*class Test<V>{
+
+    }
+
+    operator fun Test<Value>.plus(other: Test<Value>){
+        LineSegment
+    }
+
+    fun test(){
+        val a = Test<Value>()
+        val b = Test<Value>()
+        val c = a + b
+    }*/
+
+
     @Test
     fun functionTest() {
         val proj = project {
             sketch {
-                func {
-                    t -> Point(Value.cos(t), Value.sin(t))
+                func { t ->
+                    Point(Value.cos(t), Value.sin(t))
                 }
             }
         }
@@ -179,17 +195,17 @@ class SketchTest {
 
 
     @Test
-    fun cornerCase(){
+    fun cornerCase() {
 
-        val leftFrontBottom = Node(PointD(-0.5,-0.5))
-        val rightFrontBottom = Node(PointD(0.5,-0.5))
-        val rightBackBottom = Node(PointD(0.5,0.5))
-        val leftBackBottom = Node(PointD(-0.5,0.5))
+        val leftFrontBottom = Node(PointD(-0.5, -0.5))
+        val rightFrontBottom = Node(PointD(0.5, -0.5))
+        val rightBackBottom = Node(PointD(0.5, 0.5))
+        val leftBackBottom = Node(PointD(-0.5, 0.5))
 
-        val leftFrontTop = Node(PointD(-0.5,-0.5, 1.0))
-        val rightFrontTop = Node(PointD(0.5,-0.5, 1.0))
-        val rightBackTop = Node(PointD(0.5,0.5, 1.0))
-        val leftBackTop = Node(PointD(-0.5,0.5, 1.0))
+        val leftFrontTop = Node(PointD(-0.5, -0.5, 1.0))
+        val rightFrontTop = Node(PointD(0.5, -0.5, 1.0))
+        val rightBackTop = Node(PointD(0.5, 0.5, 1.0))
+        val leftBackTop = Node(PointD(-0.5, 0.5, 1.0))
 
         val leftBottom = Node(PointD(0.4, 0.0, 0.0))
         val rightBottom = Node(PointD(0.6, 0.0, 0.0))
@@ -244,13 +260,13 @@ class SketchTest {
     }
 
     @Test
-    fun tetstststs(){
+    fun tetstststs() {
         val project = project {
             val a = sketch {
                 //circle(point(0.0,0.0), const(1.0))
 
-                val topLine = line(point(0.0, 1.0),point(1.0,1.0))
-                val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
+                val topLine = line(point(0.0, 1.0), point(1.0, 1.0))
+                val bottomLine = line(point(0.0, 0.0), point(1.0, 0.0))
 
                 val vertLine = cline(topLine.p0, bottomLine.p0)
                 val vertLine2 = cline(topLine.p1, bottomLine.p1)
@@ -273,8 +289,8 @@ class SketchTest {
                 equals(vertLine.length, vertLine2.length)
                 equals(vertLine2.length, const(2.0))
 
-                equals(leftArc.center, vertLine.midPoint )
-                equals(rightArc.center, vertLine2.midPoint )
+                equals(leftArc.center, vertLine.midPoint)
+                equals(rightArc.center, vertLine2.midPoint)
 
                 equals(leftArc.radius, topLine.length)
                 equals(topLine.p0, ORIGIN)
@@ -282,7 +298,6 @@ class SketchTest {
                 equals(topLine.p0.y, topLine.p1.y)
 
             }
-
 
 
             val posX = 0.0
@@ -311,9 +326,8 @@ class SketchTest {
     }
 
 
-
     @Test
-    fun fingerboard(){
+    fun fingerboard() {
         val project =
             project {
                 val posX = 0.4
@@ -328,15 +342,15 @@ class SketchTest {
                 }
 
                 val hole = sketch {
-                    val rect = create(RoundRect::class)
-                    equals(rect.center, constPoint(0,1))
+                    val rect = create(Pill::class)
+                    equals(rect.center, constPoint(0, 1))
                     equals(rect.width, const(1))
                     equals(rect.height, const(1))
                 }
 
                 val hole2 = sketch {
-                    val rect = create(RoundRect::class)
-                    equals(rect.center, constPoint(0,-0.8))
+                    val rect = create(Pill::class)
+                    equals(rect.center, constPoint(0, -0.8))
                     equals(rect.width, const(1))
                     equals(rect.height, const(2))
                 }
@@ -355,7 +369,7 @@ class SketchTest {
 
 
     @Test
-    fun routedTest(){
+    fun routedTest() {
         val project = project {
             val big = sketch {
                 polygon(
@@ -389,8 +403,8 @@ class SketchTest {
     }
 
     @Test
-    fun substract(){
-       val project = project {
+    fun substract() {
+        val project = project {
             val posX = 0.0
             val posY = 0.0
 
@@ -419,7 +433,7 @@ class SketchTest {
     }
 
     @Test
-    fun komisch(){
+    fun komisch() {
         val project = project {
             val big = sketch {
                 polygon(
@@ -444,11 +458,58 @@ class SketchTest {
             }
 
             extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane(PointD(0.0,1.0,1.0), -1.0).normalized(), PointD(1.0,1.0).normalized()))
+            extrude(
+                small,
+                Const(2.0),
+                DirectedPlane.from(Plane(PointD(0.0, 1.0, 1.0), -1.0).normalized(), PointD(1.0, 1.0).normalized())
+            )
         }
 
 
         val model = mapModel(project)
 
+    }
+
+    @Test
+    fun addTest() {
+        val project =
+
+                project {
+                    val posX = 0.0
+                    val posY = 0.0
+
+                    val small = sketch {
+                        val rect = create(Rect::class)
+                        equals(rect.center, ORIGIN)
+                        equals(rect.width, const(4))
+                        equals(rect.height, const(5))
+                        equals(rect.top.p0.y, rect.top.p1.y)
+                    }
+
+                    val hole2 = sketch {
+                        val rect = create(Rect::class)
+                        equals(rect.center, constPoint(0,-1))
+                        equals(rect.width, const(1))
+                        equals(rect.height, const(2))
+                    }
+
+                    val hole = sketch {
+                        val rect = create(Rect::class)
+                        equals(rect.center, constPoint(0.6,0.2))
+                        equals(rect.width, const(1))
+                        equals(rect.height, const(1))
+                    }
+
+                    val plane = DirectedPlane.from( Plane.XY.move(-0.1), PointD(1.0))
+
+                    extrude(small, Const(1.0))
+                    extrude(hole2, Const(0.6), plane)
+                    extrude(hole, Const(0.4), plane)
+
+                }
+
+
+
+        val model = mapModel(project)
     }
 }

@@ -2,7 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.PointD
 import com.codecad.core.SketchScope.Companion.AXIS_X
-import java.lang.Math.atan2
+import kotlin.math.atan2
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
@@ -57,6 +57,14 @@ class FunctionFigure( val function: (Value) -> Point) : Figure(){
 
 class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figure(type) {
     companion object{
+        fun const( x: Number,  y: Number) : Point{
+            return Point(Const(x.toDouble()), Const(y.toDouble()))
+        }
+
+        fun param( x: Number, y: Number) : Point{
+            return Point(Parameter(x.toDouble()), Parameter(y.toDouble()))
+        }
+
         fun onCircle(center: Point, radius: Value, angle: Value) : Point {
             return Point(
                 (center.x + radius * Value.cos(angle)),
@@ -75,7 +83,7 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
     fun absoluteAngle(target: Point) : Double{
         val a = AXIS_X.p1
         val b = target - this
-        return atan2((a.x * b.y - a.y * b.x).value , (a.x * b.x + a.y * b.y).value)
+        return atan2((a.x * b.y - a.y * b.x).value, (a.x * b.x + a.y * b.y).value)
     }
 
     fun normalized() : Point {

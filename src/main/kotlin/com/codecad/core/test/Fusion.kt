@@ -208,7 +208,7 @@ val edgeSlices = HashMap<EdgeSlice, Node>()
 
 fun findIntersections(face: RoutedFace, cutPlane: Plane): List<Intersection> {
     val result = mutableListOf<Intersection>()
-    for (edge in face) {
+    for (edge in face + face.holes.filterIsInstance<RoutedFace>().map { it.edges() }.flatten()) {
         val start = edge.source
         val end = edge.target
 
@@ -255,27 +255,13 @@ fun computePlaneSlices(base: RoutedVolume, tool: RoutedVolume): PlaneSliceResult
         .withComparable { it.point.z }
         .withComparable(true) { it.start }
         .withComparator { a, b ->
-            if (a.start && b.start) {
-                if (a.volume === base && b.volume === tool) {
-                    1
-                } else if (a.volume === b.volume) {
-                    1
-                } else {
-                    -1
-                }
-            } else if (!a.start && !b.start) {
-                if (a.volume === tool && b.volume === base) {
-                    1
-                } else if (a.volume === b.volume) {
-                    1
-                } else {
-                    -1
-                }
-            } else {
-                b.start.compareTo(a.start)
+            when{
+                a.volume === b.volume -> 0
+                a.volume === base -> -1
+                else -> 1
             }
         }
-        .withDefault(1)
+        //.withDefault(1)
         .build()
 
     val pointListComparator = ChainComparator.Builder<PointD>()
@@ -299,7 +285,12 @@ fun computePlaneSlices(base: RoutedVolume, tool: RoutedVolume): PlaneSliceResult
 
     val uncutFaces = (base.faces + tool.faces).toMutableSet()
 
-    val baseEventQueue = (buildEventQueue(base) + buildEventQueue(tool)).sortedWith(planeComparator)
+    val input = (buildEventQueue(base) + buildEventQueue(tool))
+    val baseEventQueue = input.sortedWith(planeComparator)
+
+    if(input.size != baseEventQueue.size){
+        throw RuntimeException("11")
+    }
 
     val activeBase = HashMap<RoutedFace, PlaneEvent>()
     val activeTool = HashMap<RoutedFace, PlaneEvent>()
@@ -313,27 +304,28 @@ fun computePlaneSlices(base: RoutedVolume, tool: RoutedVolume): PlaneSliceResult
 
     val resultSlices = mutableListOf<PlaneSlice>()
 
-    for (leftActive in baseEventQueue) {
+    for (baseActive in baseEventQueue) {
         val (currentActive, otherActive) = when {
-            leftActive.volume === base -> Pair(activeBase, activeTool)
-            leftActive.volume === tool -> Pair(activeTool, activeBase)
+            baseActive.volume === base -> Pair(activeBase, activeTool)
+            baseActive.volume === tool -> Pair(activeTool, activeBase)
             else -> throw RuntimeException("ss")
         }
 
-        if (leftActive.start) {
-            currentActive[leftActive.face] = leftActive
+        if (baseActive.start) {
+            val baseFace = baseActive.face
+            currentActive[baseFace] = baseActive
 
-            val baseFace = leftActive.face
             val basePlane = baseFace.plane
-            for (rightActive in otherActive.values) {
-                val toolPlane = rightActive.face.plane
+            for (toolActive in otherActive.values) {
+                val toolFace = toolActive.face
+                val toolPlane = toolFace.plane
 
                 if (basePlane.normal == toolPlane.normal) {
                     continue
                 }
 
-                val leftIntersections = findIntersections(leftActive.face, toolPlane)
-                val rightIntersections = findIntersections(rightActive.face, basePlane)
+                val leftIntersections = findIntersections(baseFace, toolPlane)
+                val rightIntersections = findIntersections(toolFace, basePlane)
 
                 if (leftIntersections.isEmpty() || rightIntersections.isEmpty()) {
                     continue
@@ -370,28 +362,25 @@ fun computePlaneSlices(base: RoutedVolume, tool: RoutedVolume): PlaneSliceResult
 
                     if (inside[currentIndex] && inside[otherIndex]) {
                         slice = PlaneSlice()
+                        slice.entries[0].face = baseFace
+                        slice.entries[1].face = toolFace
+
+
                         currentEntry = slice.entries[currentIndex]
                         val otherEntry = slice.entries[otherIndex]
 
                         slice.baseEntry = intersectionEvent.index
-                        currentEntry.face = leftActive.face
-                        otherEntry.face = rightActive.face
 
                         currentEntry.startEdge = intersectionEvent.intersection.edge
 
-                        if(currentEntry.startEdge!!.plane !== currentEntry.face?.plane){
-                            println("--")
-                        }
 
                         slice.startNode = intersectionEvent.intersection.position
 
                         if (last[otherIndex]!!.position.point.squaredDistanceTo(intersectionEvent.intersection.position.point) < 1e-8) {
                             otherEntry.startEdge = last[otherIndex]!!.edge
-
-                            if(otherEntry.startEdge!!.plane !== currentEntry.face?.plane){
-                                println("--")
-                            }
                         }
+
+                        slice.check()
 
                         started = intersectionEvent.intersection
                     } else if (!inside[intersectionEvent.index]) {
@@ -418,12 +407,12 @@ fun computePlaneSlices(base: RoutedVolume, tool: RoutedVolume): PlaneSliceResult
                 val sizeAfter = resultSlices.size
 
                 if (sizeBefore != sizeAfter) {
-                    uncutFaces.remove(leftActive.face)
-                    uncutFaces.remove(rightActive.face)
+                    uncutFaces.remove(baseActive.face)
+                    uncutFaces.remove(toolActive.face)
                 }
             }
         } else {
-            currentActive.remove(leftActive.face)
+            currentActive.remove(baseActive.face)
         }
     }
 
@@ -450,19 +439,19 @@ class CutInformation {
     var forwardPlane: Plane? = null
     var backwardPlane: Plane? = null
 
-    fun addCut(edge: Edge, branch: Edge, plane: Plane) {
+    fun addCut(edge: Edge, branch: Edge) {
         if( edge.plane != branch.plane ){
             println("--")
         }
 
         val cuts = if (forward == null) {
-            forwardPlane = plane
+            forwardPlane = branch.plane
             forward = edge
             forwardCuts
         } else if (forward === edge) {
             forwardCuts
         } else if (forward!!.twin === edge) {
-            backwardPlane = plane
+            backwardPlane = branch.plane
             backwardCuts
         } else {
             throw RuntimeException("error")
@@ -517,18 +506,25 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
     val seeds = mutableSetOf<Edge>()
     val drops = mutableSetOf<Edge>()
 
-    fun check(edge: Edge?, cut: Edge, leftPlane: Plane) {
+    fun handleCut(edge: Edge?, cut: Edge) {
         if (edge != null) {
             if (edge.target !== cut.source && edge.source !== cut.source) {
                 edgeCuts.computeIfAbsent(EdgeCut(edge)) { CutInformation() }
-                    .addCut(edge, cut, leftPlane)
+                    .addCut(edge, cut)
             }
         } else {
+
+            for( key in connects.keys ){
+                if(key !== cut.source && key.point.distanceTo(cut.source.point) < 1e-5){
+                    throw RuntimeException("--")
+                }
+            }
+
             connects.computeIfAbsent(cut.source) { mutableListOf() }.add(cut)
         }
     }
 
-    fun work(
+    fun cutFace(
         startNode: Node, endNode: Node,
         startEdge: Edge?, endEdge: Edge?,
         leftFace: RoutedFace, rightFace: RoutedFace,
@@ -550,9 +546,9 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
 
         val forward = Edge(startNode, endNode, leftFace.plane)
         val backward = Edge(endNode, startNode, leftFace.plane)
+        Edge.twinEachOther(forward, backward)
 
         val result = if (keepOutside xor baseForwardIsOutside) {
-
             drops.add(forward)
             seeds.add(backward)
             backward
@@ -562,17 +558,11 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
             forward
         }
 
-        Edge.twinEachOther(forward, backward)
-        check(startEdge, forward, leftFace.plane)
-        check(endEdge, backward, leftFace.plane)
+        handleCut(startEdge, forward)
+        handleCut(endEdge, backward)
 
         return result
     }
-
-    planeSliceResult.uncut.forEach {
-        println(it.edges().toList().map { it.source })
-    }
-
 
     for (face in base.faces + tool.faces) {
         edgePool.addAll(face.edges())
@@ -588,7 +578,7 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
     for (slice in slices) {
         slice.check()
 
-        val first = work(
+        val first = cutFace(
             slice.startNode!!,
             slice.endNode!!,
             slice.startBaseEdge,
@@ -597,7 +587,7 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
             slice.toolFace,
             false
         )
-        val second = work(
+        val second = cutFace(
             slice.startNode!!,
             slice.endNode!!,
             slice.startToolEdge,
@@ -680,7 +670,7 @@ fun applyPlaneSlices(base: RoutedVolume, tool: RoutedVolume): MutableList<Routed
     }
 
     val seedAll = findAllReachable(seeds + edgePool)
-    val dropAll = findAllReachable(drops, seedAll)
+    val dropAll = findAllReachable(drops)
 
     val result2 = seedAll - dropAll
 
@@ -726,20 +716,16 @@ fun rotaryConnect(edges: Collection<Edge>) {
     }
 }
 
-fun findAllReachable(seeds: Set<Edge> , finder: Set<Edge> = setOf()) : Set<Edge>{
+fun findAllReachable(seeds: Set<Edge> ) : Set<Edge>{
     val visited = mutableSetOf<Edge>()
     visited.addAll(seeds)
     seeds.forEach {
-        findAllReachable(it, visited, finder)
+        findAllReachable(it, visited)
     }
     return visited
 }
 
-fun findAllReachable(start: Edge, visited: MutableSet<Edge>, finder: Set<Edge> = setOf()){
-    if(finder.contains(start)){
-        println("--")
-    }
-
+fun findAllReachable(start: Edge, visited: MutableSet<Edge>){
     var current: Edge = start
     var first = true
     var quitEarly = false
@@ -763,10 +749,6 @@ fun findAllReachable(start: Edge, visited: MutableSet<Edge>, finder: Set<Edge> =
         }
 
         current = current.next!!
-
-        if(finder.contains(current)){
-            println("--")
-        }
     }
 
     if(quitEarly){

@@ -283,7 +283,7 @@ abstract class Component{
     abstract fun build(sketch: SketchScope)
 }
 
-class RoundRect : Component(){
+class Pill : Component(){
     lateinit var center: Point
     lateinit var width: Value
     lateinit var height: Value
@@ -318,8 +318,54 @@ class RoundRect : Component(){
             height = vertLine.length
         }
     }
-
 }
+
+class XXX : Component(){
+    lateinit var center: Point
+    lateinit var radius: Value
+    lateinit var width: Value
+    lateinit var height: Value
+
+    var rect = Rect()
+
+    override fun build(sketch: SketchScope) {
+        with(sketch){
+            //rect.build(sketch)
+
+            val topLine = line(point(0.0, 1.1),point(1.0,1.1))
+            val bottomLine = line(point(1.0,-0.1),point(0.0,-0.1))
+
+            val leftLine = line(point(-0.1,0.0),point(-0.1, 1.0))
+            val rightLine = line(point(1.1,1.0),point(1.1,0.0))
+
+            equals(topLine.length, bottomLine.length)
+            equals(topLine.length, leftLine.length)
+            equals(topLine.length, rightLine.length)
+
+            val rightTopArc = arc(rightLine.p0, topLine.p1, param(0.2))
+            val topLeftArc = arc(topLine.p0, leftLine.p1, param(0.2))
+
+            val helperTopLeftA = line(topLeftArc.center, topLine.p0)
+            val helperTopLeftB = line(topLeftArc.center, leftLine.p1)
+
+            perpendicular(helperTopLeftA, helperTopLeftB)
+
+            //equals(rightTopArc.center, rect.c )
+            //val leftTopArc = arc(rightLine.p0, topLine.p1, param(0.2))
+            //val leftTopArc = arc(rightLine.p0, topLine.p1, param(0.2))
+
+
+            /*val rightTopArc = arc(vertLine2.p1, vertLine2.p0, param(0.2))
+
+            val leftBottomArc = arc(vertLine.p0, vertLine.p1, param(0.2))
+            val rightBottomArc = arc(vertLine2.p1, vertLine2.p0, param(0.2))
+*/
+            //equals(topLine.length, bottomLine.length)
+
+        }
+    }
+}
+
 
 class Rect : Component() {
     lateinit var a: Point

@@ -6,6 +6,30 @@ import kotlin.test.assertTrue
 
 class ConstraintTest {
 
+    fun assertPerpendicular(line1: LineSegment, line2: LineSegment){
+        val equ = Perpendicular(line1, line2).equation
+        assertEquals(equ.value, 0.0)
+    }
+
+    fun assertCrossPerpendicular(line1: LineSegment, line2: LineSegment){
+        assertPerpendicular(line1, line2)
+        assertPerpendicular(line2, line1)
+    }
+
+    @Test
+    fun perpendicularTest(){
+        val origin = Point.const(1.0,2.0)
+        val right = LineSegment(origin, Point.const(2.0,2.0))
+        val up = LineSegment(origin, Point.const(1.0,3.0))
+        val left = LineSegment(origin, Point.const(0.0,2.0))
+        val down = LineSegment(origin, Point.const(1.0,1.0))
+
+        assertCrossPerpendicular(right, up)
+        assertCrossPerpendicular(right, down)
+
+        assertCrossPerpendicular(left, up)
+        assertCrossPerpendicular(left, down)
+    }
 
     @Test
     fun tangentSolveFromAbove(){

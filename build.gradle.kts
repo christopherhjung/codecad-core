@@ -38,9 +38,6 @@ publishing {
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     requiresUnpack("**/kotlin-compiler-*.jar")
-    //requiresUnpack("**/kotlin-daemon-*.jar")
-    //requiresUnpack("**/kotlin-*.jar")
-    //requiresUnpack("**/kotlinx-*.jar")
 }
 
 repositories {
@@ -58,16 +55,16 @@ dependencies {
     implementation("de.lighti:Clipper:6.4.2")
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    implementation(kotlin("script-runtime"))
+    /*implementation(kotlin("script-runtime"))
     implementation(kotlin("compiler-embeddable"))
     implementation(kotlin("script-util"))
     implementation(kotlin("compiler"))
     implementation(kotlin("daemon"))
     implementation(kotlin("daemon-client"))
+    implementation(kotlin("scripting-compiler-embeddable"))*/
     implementation(kotlin("scripting-jsr223"))
-    implementation(kotlin("scripting-compiler-embeddable"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.4")
     implementation("org.orbisgis:poly2tri:0.1.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")

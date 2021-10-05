@@ -1,5 +1,9 @@
 package com.codecad.core
 
+fun <T> T?.ifNull(block : () -> T) : T{
+    return block()
+}
+
 abstract class Constraint {
 
     var lineNumber: Int = -1

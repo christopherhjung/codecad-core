@@ -92,11 +92,12 @@ open class SketchScope(val project: Project) {
         equals(this, other)
     }
 
-    infix fun Double.unit(other: Int): Double {
+    infix fun Number.unit(other: Int): Double {
+        val value = toDouble()
         return if (other == deg) {
-            Math.toRadians(this)
+            Math.toRadians(value)
         } else {
-            this
+            value
         }
     }
 
