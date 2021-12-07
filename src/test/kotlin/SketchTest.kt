@@ -2,6 +2,7 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
+import com.codecad.core.SketchScope.Companion.AXIS_X
 import com.codecad.core.SketchScope.Companion.ORIGIN
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
@@ -472,43 +473,39 @@ class SketchTest {
 
     @Test
     fun addTest() {
-        val project =
+        val project = project {
+                val posX = 0.0
+                val posY = 0.0
 
-                project {
-                    val posX = 0.0
-                    val posY = 0.0
-
-                    val small = sketch {
-                        val rect = create(Rect::class)
-                        equals(rect.center, ORIGIN)
-                        equals(rect.width, const(4))
-                        equals(rect.height, const(5))
-                        equals(rect.top.p0.y, rect.top.p1.y)
-                    }
-
-                    val hole2 = sketch {
-                        val rect = create(Rect::class)
-                        equals(rect.center, constPoint(0,-1))
-                        equals(rect.width, const(1))
-                        equals(rect.height, const(2))
-                    }
-
-                    val hole = sketch {
-                        val rect = create(Rect::class)
-                        equals(rect.center, constPoint(0.6,0.2))
-                        equals(rect.width, const(1))
-                        equals(rect.height, const(1))
-                    }
-
-                    val plane = DirectedPlane.from( Plane.XY.move(-0.1), PointD(1.0))
-
-                    extrude(small, Const(1.0))
-                    extrude(hole2, Const(0.6), plane)
-                    extrude(hole, Const(0.4), plane)
-
+                val small = sketch {
+                    val rect = create(Rect::class)
+                    equals(rect.center, ORIGIN)
+                    equals(rect.width, const(4))
+                    equals(rect.height, const(5))
+                    equals(rect.top.p0.y, rect.top.p1.y)
                 }
 
+                val hole2 = sketch {
+                    val rect = create(Rect::class)
+                    equals(rect.center, constPoint(-0.2,-1.55))
+                    equals(rect.width, const(1))
+                    equals(rect.height, const(2))
+                }
 
+                val hole = sketch {
+                    val rect = create(Rect::class)
+                    parallel(rect.top, AXIS_X)
+                    equals(rect.center, constPoint(0.9,-1.2))
+                    equals(rect.width, const(3))
+                    equals(rect.height, const(1))
+                }
+
+                val plane = DirectedPlane.from( Plane.XY.move(-0.1), PointD(1.0))
+
+                extrude(small, Const(1.0))
+                extrude(hole2, Const(0.6), plane)
+                extrude(hole, Const(1.0), plane)
+            }
 
         val model = mapModel(project)
     }
