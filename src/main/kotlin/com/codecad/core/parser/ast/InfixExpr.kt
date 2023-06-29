@@ -89,8 +89,8 @@ class InfixExpr(private val lhs: Expr, private val rhs: Expr, private val op: Op
         }
         val lhsVal = lhs.eval(scope)
         return when (op) {
-            Op.And -> true == lhsVal && true == rhs.eval(scope)
-            Op.Or -> true == lhsVal || true == rhs.eval(scope)
+            Op.And -> true == lhsVal && rhs.evalBoolean(scope)
+            Op.Or -> true == lhsVal || rhs.evalBoolean(scope)
             Op.Nullish -> lhsVal ?: rhs.eval(scope)
             else -> {
                 val rhsVal = rhs.eval(scope)
