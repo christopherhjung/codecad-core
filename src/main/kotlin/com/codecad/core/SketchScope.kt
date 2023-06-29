@@ -2,6 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.LineD
 import com.codecad.common.PointD
+import com.codecad.core.sketch.*
 import kotlin.reflect.KClass
 
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
@@ -245,8 +246,8 @@ open class SketchScope(val project: Project) {
     }
 
     private fun addConstraintImpl(constraint: Constraint){
-        val callersLineNumber = Thread.currentThread().stackTrace[3].lineNumber
-        sketch.addConstraint(constraint).lineNumber = callersLineNumber
+        //val callersLineNumber = Thread.currentThread().stackTrace[3].lineNumber
+        //sketch.addConstraint(constraint).lineNumber = callersLineNumber
     }
 
     fun add(component: Component){
@@ -297,7 +298,7 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
 
     val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
-        if(ignoreConstruction && figure.type == LineType.Construction){
+        if(ignoreConstruction && sketch.lineType[figure] == LineType.Construction){
             continue
         }
 

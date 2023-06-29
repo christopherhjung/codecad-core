@@ -1,7 +1,6 @@
-import com.codecad.core.Param
 import com.codecad.core.Solver
 import com.codecad.core.Tracker
-import com.codecad.core.Expr
+import com.codecad.core.sketch.Param
 import com.codecad.core.sketch.World
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

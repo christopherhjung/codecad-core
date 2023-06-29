@@ -7,7 +7,6 @@ import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

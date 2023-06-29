@@ -1,8 +1,9 @@
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.Expr.Companion.cos
-import com.codecad.core.Expr.Companion.sin
+import com.codecad.core.sketch.Expr
+import com.codecad.core.sketch.Literal
+import com.codecad.core.sketch.Param
 import com.codecad.core.sketch.World
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
@@ -144,8 +145,8 @@ class SketchTest {
             return func { t ->
                 val r = t*Math.PI*2
                 val combined = sR + bR
-                Point(combined*cos(r) - sR*cos(combined*(r/sR)) ,
-                    combined*sin(r) - sR*sin(combined*(r/sR)))
+                Point(combined * Expr.cos(r) - sR * Expr.cos(combined*(r/sR)) ,
+                    combined * Expr.sin(r) - sR * Expr.sin(combined*(r/sR)))
             }
         }
 

@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.Param
 import kotlin.math.sqrt
 
 interface Optimizer {

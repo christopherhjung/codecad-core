@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.Param
 import com.codecad.core.sketch.World
 import kotlin.math.cos
 import kotlin.math.sin

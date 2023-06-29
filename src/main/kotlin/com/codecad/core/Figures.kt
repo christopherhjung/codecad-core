@@ -7,10 +7,10 @@ enum class LineType(val prio: Int){
     Normal(2), Construction(3)
 }
 
-abstract class Figure(var type: LineType = LineType.Normal){
+abstract class Figure(){
 }
 
-class LineSegment(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
+class LineSegment(val p0: Point, val p1: Point) : Figure(){
 
     val squaredLength : Expr
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
@@ -47,7 +47,7 @@ class FunctionFigure( val function: (Expr) -> Point) : Figure(){
 
 }
 
-class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure(type) {
+class Point(val x: Expr, val y: Expr) : Figure() {
     companion object{
         fun onCircle(center: Point, radius: Expr, angle: Expr) : Point {
             return Point(

@@ -1,19 +1,15 @@
 package com.codecad.core
 
 import com.codecad.common.LineError
-import com.codecad.core.sketch.World
+import com.codecad.core.sketch.*
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 class Sketch(val project: Project) {
     val world = World()
     val params = HashSet<Param>()
     val constraints = HashSet<Constraint>()
-    val figures = TreeSet<Figure>(){ a, b  ->
-        val comp = a.type.prio.compareTo(b.type.prio)
-        if(comp == 0) 1 else comp
-    }
+    val figures = ArrayList<Figure>()
+    val lineType = HashMap<Figure, LineType>()
 
     fun createParam(value: Double = 0.0): Param {
         val param = Param( world, value )
@@ -47,8 +43,9 @@ class Sketch(val project: Project) {
     }
 
     fun createLine(a: Point, b: Point, type: LineType = LineType.Normal): LineSegment {
-        val line = LineSegment(a, b, type)
+        val line = LineSegment(a, b)
         figures.add(line)
+        lineType.putIfAbsent(line, type)
         return line
     }
 
@@ -172,8 +169,8 @@ class Sketch(val project: Project) {
                 val value = constraintError.evalDouble()
                 error += value
                 if(value > accuracy){
-                    locations.add(LineError("constraint could not be resolved", constraint.lineNumber, 0))
-                    println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
+                    //locations.add(LineError("constraint could not be resolved", constraint.lineNumber, 0))
+                    //println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
                 }
             }
 

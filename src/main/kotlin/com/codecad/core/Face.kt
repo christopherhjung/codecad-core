@@ -1,6 +1,7 @@
 package com.codecad.core
 
-import com.codecad.common.*
+import com.codecad.common.Plane
+import com.codecad.common.PointD
 import com.codecad.core.test.*
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint

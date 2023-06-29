@@ -3,7 +3,10 @@ package com.codecad.core
 import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.test.*
+import com.codecad.core.test.Corner
+import com.codecad.core.test.Edge
+import com.codecad.core.test.Node
+import com.codecad.core.test.generateFaces
 import java.util.*
 
 

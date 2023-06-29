@@ -1,5 +1,8 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.Expr
+import com.codecad.core.sketch.Param
+
 class Tracker() {
     val entries = mutableListOf<MutableMap<Param, Double>>()
     val params = mutableListOf<Param>()

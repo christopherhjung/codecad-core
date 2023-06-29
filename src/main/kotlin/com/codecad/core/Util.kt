@@ -1,6 +1,5 @@
 package com.codecad.core
 
-import com.codecad.common.PointD
 /*
 fun <T> List<T>.rollover() : Iterable<Pair<T, T>> where T : Any
 {

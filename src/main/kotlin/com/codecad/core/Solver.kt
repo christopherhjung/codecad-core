@@ -1,5 +1,8 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.Constraint
+import com.codecad.core.sketch.Expr
+import com.codecad.core.sketch.Param
 import com.codecad.core.sketch.World
 import kotlin.math.abs
 

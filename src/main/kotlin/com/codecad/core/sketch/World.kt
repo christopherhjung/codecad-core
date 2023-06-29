@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.*
+import com.codecad.core.LineSegment
+import com.codecad.core.Point
 import kotlin.math.abs
 import kotlin.math.pow
 
