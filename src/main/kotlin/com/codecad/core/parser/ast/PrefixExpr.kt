@@ -18,7 +18,7 @@ class PrefixExpr(private val expr: Expr, private val op: Op) : Expr {
         return when (op) {
             Op.Sub -> sub(value)
             Op.Add -> value
-            Op.Not -> java.lang.Boolean.FALSE == value
+            Op.Not -> false == value
             else -> throw InterpreterException("Not implemented $op operation!")
         }
     }

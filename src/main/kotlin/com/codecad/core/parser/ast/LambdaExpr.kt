@@ -5,11 +5,10 @@ import com.codecad.core.scope.*
 
 class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
     override fun call(scope: Scope, args: Array<Any?>): Any? {
-        var scope = scope
-        scope = NestedScope.mutual(scope)
-        param!!.assign(scope, args, true)
+        val nestedScope = NestedScope.mutual(scope)
+        param!!.assign(nestedScope, args, true)
         return try {
-            body!!.eval(scope)
+            body!!.eval(nestedScope)
         } catch (e: ReturnException) {
             e.returnValue
         }
@@ -20,11 +19,10 @@ class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
     }
 
     override fun bind(scope: Scope, define: Boolean): Expr {
-        var scope = scope
-        scope = NestedScope.readonly(scope)
-        scope = NestedScope.mutual(scope)
-        val newParam = param!!.bind(scope, true)
-        val newBody = body!!.bind(scope, false)
+        var nestedScope = NestedScope.readonly(scope)
+        nestedScope = NestedScope.mutual(nestedScope)
+        val newParam = param!!.bind(nestedScope, true)
+        val newBody = body!!.bind(nestedScope, false)
         return LambdaExpr(newParam, newBody)
     }
 }

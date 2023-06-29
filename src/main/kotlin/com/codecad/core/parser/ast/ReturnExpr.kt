@@ -13,7 +13,7 @@ class ReturnExpr(private val expr: Expr?) : Expr {
     }
 
     override fun bind(scope: Scope, define: Boolean): Expr {
-        val newExpr = expr!!.bind(scope, define)
+        val newExpr = expr?.bind(scope, define)
         return ReturnExpr(newExpr)
     }
 }

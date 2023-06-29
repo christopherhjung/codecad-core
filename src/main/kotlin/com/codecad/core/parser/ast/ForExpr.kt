@@ -12,14 +12,13 @@ class ForExpr @JvmOverloads constructor(
     private val label: String? = null
 ) : Expr {
     override fun eval(scope: Scope): Any? {
-        var scope = scope
         val iterable = Utils.getIterator(range.eval(scope))
-        scope = NestedScope.mutual(scope)
+        val nestedScope = NestedScope.mutual(scope)
         while (iterable.hasNext()) {
             try {
-                val value = iterable.next()!!
-                variable.assign(scope, value, true)
-                body.eval(scope)
+                val value = iterable.next()
+                variable.assign(nestedScope, value, true)
+                body.eval(nestedScope)
             } catch (e: ContinueException) {
                 if (e.label != label) {
                     throw e

@@ -21,10 +21,8 @@ class NestedScope(val parent: Scope, val child: Scope) : Scope {
             return child
         }
 
-        fun nest(parent: Scope?, child: Scope?): Scope {
-            return if (parent != null) {
-                child?.let { NestedScope(parent, it) } ?: parent
-            } else child!!
+        fun nest(parent: Scope, child: Scope): Scope {
+            return NestedScope(parent, child)
         }
 
         fun readonly(scope: Scope): Scope {

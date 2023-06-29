@@ -29,7 +29,7 @@ interface Expr {
     }
 
     fun evalBoolean(scope: Scope): Boolean {
-        return java.lang.Boolean.TRUE == eval(scope)
+        return true == eval(scope)
     }
 
     fun bind(scope: Scope, define: Boolean): Expr {
