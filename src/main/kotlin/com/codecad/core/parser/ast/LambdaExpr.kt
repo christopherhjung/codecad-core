@@ -21,7 +21,7 @@ class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
 
     override fun bind(scope: Scope, define: Boolean): Expr {
         var scope = scope
-        scope = NestedScope.Companion.readonly(scope)
+        scope = NestedScope.readonly(scope)
         scope = NestedScope.mutual(scope)
         val newParam = param!!.bind(scope, true)
         val newBody = body!!.bind(scope, false)

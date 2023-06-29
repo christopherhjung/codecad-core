@@ -3,7 +3,7 @@ package com.codecad.core.parser.ast
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.Scope
 
-class IdentExpr(private val key: String?) : Expr {
+class IdentExpr(private val key: String) : Expr {
     override fun eval(scope: Scope): Any? {
         return scope.getObject(key)
     }

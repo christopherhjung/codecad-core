@@ -8,8 +8,8 @@ class RefExpr(private val slot: Slot) : Expr {
         return slot.value
     }
 
-    override fun assign(scope: Scope, value: Any?, define: Boolean): Any? {
-        slot.value = value
-        return value
+    override fun assign(scope: Scope, slotVal: Any?, define: Boolean): Any? {
+        slot.value = slotVal
+        return slotVal
     }
 }

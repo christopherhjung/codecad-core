@@ -16,21 +16,20 @@ class ScopedExpr(private val scope: Scope, private val expr: Expr) : Expr {
     }
 
     override fun bind(scope: Scope, define: Boolean): Expr {
-        var scope = scope
-        scope = NestedScope.nest(scope, this.scope)
-        scope = NestedScope.readonly(scope)
+        var nestedScope = NestedScope.nest(scope, this.scope)
+        nestedScope = NestedScope.readonly(nestedScope)
         val collector = MutualScope()
-        scope = NestedScope.nest(scope, collector)
+        nestedScope = NestedScope.nest(nestedScope, collector)
         for (value in this.scope.values()) {
             val content = value.value
             if (content is FunctionExpr) {
-                content.bindFunction(scope)
+                content.bindFunction(nestedScope)
             }
         }
         for (value in this.scope.values()) {
             val content = value.value
             if (content is FunctionExpr) {
-                content.bind(scope, false)
+                content.bind(nestedScope, false)
             }
         }
         val newScope = collector.toStatic()

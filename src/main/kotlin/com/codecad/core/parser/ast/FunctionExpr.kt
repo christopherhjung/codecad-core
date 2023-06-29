@@ -3,20 +3,19 @@ package com.codecad.core.parser.ast
 import com.codecad.core.parser.controlflow.ReturnException
 import com.codecad.core.scope.*
 
-class FunctionExpr(var name: String?, var params: Expr?, var body: Expr?) : Expr {
+class FunctionExpr(var name: String, var params: Expr?, var body: Expr?) : Expr {
 
     override fun call(scope: Scope, args: Array<Any?>): Any? {
-        var scope = scope
-        scope = MutualScope()
-        params!!.assign(scope, args, true)
+        val mutual = MutualScope()
+        params!!.assign(mutual, args, true)
         return try {
-            body!!.eval(scope)
+            body!!.eval(mutual)
         } catch (e: ReturnException) {
             e.returnValue
         }
     }
 
-    override fun eval(scope: Scope): Any? {
+    override fun eval(scope: Scope): Any {
         return ScopedExpr(scope, this)
     }
 

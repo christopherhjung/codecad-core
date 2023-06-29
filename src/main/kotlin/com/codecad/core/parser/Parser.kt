@@ -85,17 +85,19 @@ class Parser private constructor(private val lexer: Lexer) {
         return result
     }
 
-    private fun parseIdent(expect: Boolean): String? {
+    private fun parseIdentOptional(): String? {
         if (isa(Token.Kind.Ident)) {
             return next().symbol
-        } else if (expect) {
-            throw ParseException("Expected identifier")
         }
         return null
     }
 
+    private fun parseIdent(): String {
+        return parseIdentOptional() ?: throw ParseException("Expected identifier")
+    }
+
     private fun parseIdentExpr(): IdentExpr {
-        return IdentExpr(parseIdent(true))
+        return IdentExpr(parseIdent())
     }
 
     private fun parsePtrn(): Expr {
@@ -118,27 +120,23 @@ class Parser private constructor(private val lexer: Lexer) {
 
     private fun parseItem(): Expr {
         val functions = ArrayList<FunctionExpr>()
-        val exprs = ArrayList<Expr?>()
+        val exprs = ArrayList<Expr>()
         while (!isa(Token.Kind.EOL)) {
             when (peek().kind) {
                 Token.Kind.Semi -> {
                     next()
                     continue
                 }
-                Token.Kind.Fn -> {
-                    functions.add(parseFunction())
-                }
-                Token.Kind.Let -> {
-                    exprs.add(parseLetExpr())
-                }
+                Token.Kind.Fn -> functions.add(parseFunction())
+                Token.Kind.Let -> exprs.add(parseLetExpr())
                 else -> exprs.add(parseExpr())
             }
         }
-        val expr : Expr = if (exprs.size == 1) exprs[0] ?: TupleExpr(arrayOf()) else BlockExpr(exprs.toTypedArray())
+        val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(exprs.toTypedArray())
         return if (functions.isEmpty()) {
             expr
         } else {
-            val scopeBuilder: StaticScope.Builder = StaticScope.Companion.builder()
+            val scopeBuilder: StaticScope.Builder = StaticScope.builder()
             for (function in functions) {
                 scopeBuilder.add(function.name, function)
             }
@@ -158,11 +156,11 @@ class Parser private constructor(private val lexer: Lexer) {
 
     private fun parseFunction(): FunctionExpr {
         expect(Token.Kind.Fn)
-        val name = parseIdent(true)
+        val name = parseIdent()
         expect(Token.Kind.LeftParen)
-        val params = ArrayList<Expr?>()
+        val params = ArrayList<Expr>()
         while (!accept(Token.Kind.RightParen)) {
-            if (!params.isEmpty()) {
+            if (params.isNotEmpty()) {
                 expect(Token.Kind.Comma)
             }
             params.add(parseIdentExpr())
@@ -179,7 +177,7 @@ class Parser private constructor(private val lexer: Lexer) {
                 return tuple
             }
             val body = parseExpr()
-            LambdaExpr(TupleExpr.Companion.asTuple(tuple), body)
+            LambdaExpr(TupleExpr.asTuple(tuple), body)
         } else {
             val expr = parseExpr(op.prec().next())
             PrefixExpr(expr, op)
@@ -189,13 +187,13 @@ class Parser private constructor(private val lexer: Lexer) {
     private fun parseInfixExpr(lhs: Expr, op: Op): Expr {
         if (op == Op.Chain) {
             return if (accept(Token.Kind.LeftParen)) {
-                val arg: TupleExpr = TupleExpr.Companion.asTuple(parseTuple())
+                val arg: TupleExpr = TupleExpr.asTuple(parseTuple())
                 CallExpr(lhs, arg, true)
             } else {
-                FieldExpr(lhs, parseIdent(true), true)
+                FieldExpr(lhs, parseIdent(), true)
             }
         } else if (op == Op.Dot) {
-            return FieldExpr(lhs, parseIdent(true))
+            return FieldExpr(lhs, parseIdent())
         }
         val rhs = parseExpr(op.prec().next())
         return InfixExpr(lhs, rhs, op)
@@ -206,9 +204,9 @@ class Parser private constructor(private val lexer: Lexer) {
             val expr = parseExpr()
             if (accept(Token.Kind.Comma)) {
                 return if (accept(Token.Kind.RightParen)) {
-                    TupleExpr(arrayOf<Expr?>(expr))
+                    TupleExpr(arrayOf(expr))
                 } else {
-                    val exprs = ArrayList<Expr?>()
+                    val exprs = ArrayList<Expr>()
                     exprs.add(expr)
                     do {
                         exprs.add(parseExpr())
@@ -220,7 +218,7 @@ class Parser private constructor(private val lexer: Lexer) {
             expect(Token.Kind.RightParen)
             return expr
         }
-        return TupleExpr(arrayOfNulls(0))
+        return TupleExpr(emptyArray())
     }
 
     private fun parseIf(): Expr {
@@ -252,7 +250,7 @@ class Parser private constructor(private val lexer: Lexer) {
 
     private fun parseBlock(): Expr {
         expect(Token.Kind.LeftBrace)
-        val exprs = ArrayList<Expr?>()
+        val exprs = ArrayList<Expr>()
         var valid = true
         while (true) {
             while (accept(Token.Kind.Semi)) {
@@ -269,34 +267,35 @@ class Parser private constructor(private val lexer: Lexer) {
     }
 
     private fun parsePostfixExpr(lhs: Expr, op: Op): Expr {
-        when (op) {
+        return when (op) {
             Op.LeftParen -> {
                 val arg = parseTuple()
-                return CallExpr(lhs, TupleExpr.Companion.asTuple(arg))
+                CallExpr(lhs, TupleExpr.Companion.asTuple(arg))
             }
-            Op.Inc, Op.Dec -> return PostfixExpr(lhs, op)
+            Op.Inc, Op.Dec -> PostfixExpr(lhs, op)
+            else -> throw ParseException("Postfix Expr not yet implemented")
         }
-        throw ParseException("Postfix Expr not yet implemented")
     }
 
     private fun parsePrimaryExpr(): Expr {
         val label = label
         this.label = null
-        when (peek().kind) {
+        return when (peek().kind) {
             Token.Kind.Ident -> {
-                val sym = next().symbol
+                val sym = next().symbol!!
                 if (accept(Token.Kind.Colon)) {
                     this.label = sym
-                    return parseExpr()
+                    parseExpr()
+                }else{
+                    IdentExpr(sym)
                 }
-                return IdentExpr(sym)
             }
-            Token.Kind.String -> return LiteralExpr(next().symbol)
-            Token.Kind.Boolean -> return LiteralExpr(java.lang.Boolean.parseBoolean(next().symbol))
-            Token.Kind.Number -> return LiteralExpr(next().symbol?.toInt())
+            Token.Kind.String -> LiteralExpr(next().symbol)
+            Token.Kind.Boolean -> LiteralExpr(java.lang.Boolean.parseBoolean(next().symbol))
+            Token.Kind.Number -> LiteralExpr(next().symbol?.toInt())
             Token.Kind.Null -> {
                 next()
-                return LiteralExpr(null)
+                LiteralExpr(null)
             }
             Token.Kind.Return -> {
                 next()
@@ -304,25 +303,25 @@ class Parser private constructor(private val lexer: Lexer) {
                 if (!isa(Token.Kind.Semi) && !isa(Token.Kind.RightBrace)) {
                     expr = parseExpr()
                 }
-                return ReturnExpr(expr)
+                ReturnExpr(expr)
             }
             Token.Kind.Break -> {
                 next()
-                return BreakExpr(parseIdent(false))
+                BreakExpr(parseIdentOptional())
             }
             Token.Kind.Continue -> {
                 next()
-                return ContinueExpr(parseIdent(false))
+                ContinueExpr(parseIdentOptional())
             }
-            Token.Kind.If -> return parseIf()
-            Token.Kind.While -> return parseWhile(label)
-            Token.Kind.For -> return parseFor(label)
-            Token.Kind.LeftBrace -> return parseBlock()
+            Token.Kind.If -> parseIf()
+            Token.Kind.While -> parseWhile(label)
+            Token.Kind.For -> parseFor(label)
+            Token.Kind.LeftBrace -> parseBlock()
+            else -> throw ParseException("Expected Identifier, String, Boolean or Number")
         }
-        throw ParseException("Expected Identifier, String, Boolean or Number")
     }
 
-    private fun parseExpr(prec: Prec? = Prec.Bottom): Expr {
+    private fun parseExpr(prec: Prec = Prec.Bottom): Expr {
         val prefixOp = parseOp()
         var lhs = prefixOp?.let { parsePrefixExpr(it) } ?: parsePrimaryExpr()
         while (!isEOL) {
@@ -333,7 +332,7 @@ class Parser private constructor(private val lexer: Lexer) {
             if (op == null) {
                 break
             } else if (op.isInfix) {
-                if (prec!!.largerThan(op.prec())) {
+                if (prec.largerThan(op.prec())) {
                     lastOp = op
                     break
                 }
