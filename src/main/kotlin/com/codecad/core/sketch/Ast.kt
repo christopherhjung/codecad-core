@@ -1,6 +1,5 @@
-package com.codecad.core
+package com.codecad.core.sketch
 
-import com.codecad.core.sketch.World
 import kotlin.math.*
 
 abstract class Expr(val world: World){
@@ -8,9 +7,11 @@ abstract class Expr(val world: World){
     fun evalDouble() : Double{
         return eval() as Double
     }
+
     fun evalBoolean() : Boolean{
         return eval() == true
     }
+
     fun evalLiteral() : Expr{
         return world.literal(eval())
     }
@@ -88,15 +89,6 @@ abstract class Expr(val world: World){
     }
 
     companion object{
-        private val repeatCache = HashMap<Expr, Expr>()
-
-        fun <T> cached(block: () -> T) : T where T : Expr {
-            val newVal = block()
-            return repeatCache.computeIfAbsent(newVal) {
-                newVal
-            } as T
-        }
-
         fun cos(expr: Expr) : Expr {
             return expr.world.cos(expr)
         }
@@ -152,8 +144,6 @@ operator fun Double.div(right: Expr) : Expr {
 fun Double.pow(right: Expr) : Expr {
     return right.world.literal(this).pow(right)
 }
-
-
 
 class Literal(world: World, val value: Any) : Expr(world) {
     companion object{

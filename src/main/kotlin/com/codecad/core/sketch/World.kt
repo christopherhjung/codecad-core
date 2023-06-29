@@ -36,11 +36,11 @@ class World {
             left
         }else if(Literal.isDouble(left) && Literal.isDouble(right)){
             literal(left.evalDouble() + right.evalDouble())
-        }else unify(if(left === right){
-            TimesExpr(this, TWO, right)
+        }else if(left === right){
+            mul(TWO, right)
         }else{
-            AddExpr(this, left, right)
-        })
+            unify(AddExpr(this, left, right))
+        }
     }
 
     fun sub(left : Expr, right: Expr) : Expr {
@@ -66,11 +66,11 @@ class World {
             left
         }else if(Literal.isDouble(left) && Literal.isDouble(right)){
             literal(left.evalDouble() * right.evalDouble())
-        }else unify(if(left === right){
-            PowExpr(this, left, TWO)
+        }else if(left === right){
+            pow(left, TWO)
         }else{
-            TimesExpr(this, left, right)
-        })
+            unify(TimesExpr(this, left, right))
+        }
     }
 
     fun div(left : Expr, right: Expr) : Expr {

@@ -1,6 +1,7 @@
 package com.codecad.core
 
 import com.codecad.common.PointD
+import com.codecad.core.sketch.Expr
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)

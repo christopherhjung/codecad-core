@@ -1,8 +1,10 @@
-package com.codecad.core
+package com.codecad.core.sketch
+
+import com.codecad.core.Circle
+import com.codecad.core.LineSegment
+import com.codecad.core.Point
 
 abstract class Constraint {
-
-    var lineNumber: Int = -1
     var cache: Expr? = null
 
     protected abstract fun equationImpl() : Expr
@@ -20,8 +22,6 @@ abstract class Constraint {
 //class com.codecad.core.Arc(val center: com.codecad.core.Point, val rad: com.codecad.core.Expr, val start: com.codecad.core.Expr, val end: com.codecad.core.Expr) : Element
 
 class PointOnPoint(val a: Point, val b: Point) : Constraint() {
-
-
     override fun equationImpl() : Expr {
         return ((a.x - b.x).pow(2) + (a.y - b.y).pow(2))
     }
