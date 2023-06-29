@@ -6,27 +6,24 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 class Sketch(val project: Project) {
-    val params = HashSet<Parameter>()
+    val params = HashSet<Param>()
     val constraints = HashSet<Constraint>()
     val figures = TreeSet<Figure>(){ a, b  ->
         val comp = a.type.prio.compareTo(b.type.prio)
         if(comp == 0) 1 else comp
     }
 
-    class PruningEntry(val proxies: MutableList<ProxyValue> = mutableListOf(), var fixed: Value? = null)
-    val pruningTable = mutableMapOf<ProxyValue, PruningEntry>()
+    class PruningEntry(var fixed: Expr? = null)
 
-    fun createParameter(value: Double = 0.0): ProxyValue {
-        val param = Parameter(value )
+    fun createParam(value: Double = 0.0): Param {
+        val param = Param(value )
         project.tracker.params.add(param)
         params.add(param)
-        val proxy = ProxyValue(param)
-        pruningTable[proxy] = PruningEntry(mutableListOf(proxy))
-        return proxy
+        return param
     }
 
-    fun createConst(value: Double = 0.0): Const {
-        return Value.const(value)
+    fun createConst(value: Double = 0.0): Literal {
+        return Expr.const(value)
     }
 
     fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point {
@@ -37,15 +34,15 @@ class Sketch(val project: Project) {
         return point
     }
 
-    fun createPoint(x: Value, y: Value): Point {
+    fun createPoint(x: Expr, y: Expr): Point {
         val point = Point(x,y)
         figures.add(point)
         return point
     }
 
     fun createPoint(x: Double = 0.0, y: Double = 0.0): Point {
-        val a = createParameter(x)
-        val b = createParameter(y)
+        val a = createParam(x)
+        val b = createParam(y)
         return createPoint(a,b)
     }
 
@@ -55,26 +52,26 @@ class Sketch(val project: Project) {
         return line
     }
 
-    fun createCircle(center: Point, radius: Value): Circle {
+    fun createCircle(center: Point, radius: Expr): Circle {
         val circle = Circle(center, radius)
         figures.add(circle)
         return circle
     }
 
-    fun createArc(p0: Point, p1: Point, radius: Value): Arc {
+    fun createArc(p0: Point, p1: Point, radius: Expr): Arc {
         val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
     }
 
-    fun createFunction(function : (Value) -> Point) : FunctionFigure {
+    fun createFunction(function : (Expr) -> Point) : FunctionFigure {
         val function = FunctionFigure(function)
         figures.add(function)
         return function
     }
 
     fun createCircle(): Circle {
-        return createCircle(createPoint(), createParameter(1.0))
+        return createCircle(createPoint(), createParam(1.0))
     }
 
     fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): LineSegment {
@@ -94,28 +91,28 @@ class Sketch(val project: Project) {
         constraints.add(constraint)
 
 
-        val constraintLookup = mutableMapOf<Constraint, HashSet<Parameter>>()
-        val parameterLookup = mutableMapOf<Parameter, HashSet<Constraint>>()
+        val constraintLookup = mutableMapOf<Constraint, HashSet<Param>>()
+        val paramLookup = mutableMapOf<Param, HashSet<Constraint>>()
 
         for( con in constraints ){
             for(param in params){
                 val derivate = con.equation.derivative(param)
-                if(derivate !is Const){
+                if(derivate !is Literal){
                     constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
-                    parameterLookup.computeIfAbsent(param){ HashSet() }.add(con)
+                    paramLookup.computeIfAbsent(param){ HashSet() }.add(con)
                 }
             }
         }
 
-        class Test(var level: Int, val parameter : Parameter) : Comparable<Test>{
+        class Test(var level: Int, val param : Param) : Comparable<Test>{
             override fun compareTo(other: Test): Int {
                 return level.compareTo(other.level)
             }
         }
 
         val priorityQueue = PriorityQueue<Test>()
-        val visited = mutableSetOf<Parameter>()
-        val stages = mutableListOf<MutableSet<Parameter>>()
+        val visited = mutableSetOf<Param>()
+        val stages = mutableListOf<MutableSet<Param>>()
 
         stages.add( mutableSetOf())
 
@@ -129,7 +126,7 @@ class Sketch(val project: Project) {
             while(priorityQueue.isNotEmpty()){
                 val test = priorityQueue.poll()
 
-                parameterLookup[test.parameter]!!.forEach { con ->
+                paramLookup[test.param]!!.forEach { con ->
                     constraintLookup[con]!!.forEach { param ->
                         if(visited.add(param)){
                             priorityQueue.offer(Test(test.level + 1, param))
@@ -147,7 +144,8 @@ class Sketch(val project: Project) {
             }else{
                 solve(10e-8, stages)
             }
-            constraint.prune(this)
+            //TODO
+            //constraint.prune(this)
         }catch (e: Exception){
             throw e
         }
@@ -155,94 +153,13 @@ class Sketch(val project: Project) {
         return constraint
     }
 
-    fun collectReferences(value: Value, res: MutableSet<ProxyValue>){
-        if(value is ProxyValue){
-            res.add(value)
-            collectReferences(value.ref, res)
-        }else if(value !is Parameter){
-            for(ref in value.proxyChildren){
-                collectReferences(ref, res)
-            }
-        }
-    }
-
-    fun merge(left: Value, right: Value) {
-        if (left is ProxyValue) {
-            val leftEntry = pruningTable[left]!!
-            if (right is ProxyValue) {
-                val rightEntry = pruningTable[right]!!
-
-                if(leftEntry === rightEntry){
-                    return
-                }
-
-                leftEntry.proxies.addAll(rightEntry.proxies)
-
-                if(leftEntry.fixed != null && rightEntry.fixed != null){
-                    return
-                }else if(rightEntry.fixed != null){
-                    val set = mutableSetOf<ProxyValue>()
-                    collectReferences(rightEntry.fixed!!, set)
-
-                    if(leftEntry.proxies.any { set.contains(it) }){
-                        return
-                    }
-
-                    leftEntry.fixed = rightEntry.fixed
-                    for( proxy in leftEntry.proxies ){
-                        params.remove(proxy.ref)
-                        proxy.ref = rightEntry.fixed!!
-                    }
-                }
-
-                pruningTable[right] = leftEntry
-            } else {
-                if(leftEntry.fixed != null){
-                    return
-                }
-
-                val set = mutableSetOf<ProxyValue>()
-                collectReferences(right, set)
-
-                if(leftEntry.proxies.any { set.contains(it) }){
-                    return
-                }
-
-                leftEntry.fixed = right
-                for( proxy in leftEntry.proxies ){
-                    params.remove(proxy.ref)
-                    proxy.ref = right
-                }
-            }
-        } else if (right is ProxyValue) {
-            val rightEntry = pruningTable[right]!!
-
-            if(rightEntry.fixed != null){
-                return
-            }
-
-            val set = mutableSetOf<ProxyValue>()
-            collectReferences(left, set)
-
-            if(rightEntry.proxies.any { set.contains(it) }){
-                return
-            }
-
-            rightEntry.fixed = left
-            for( proxy in rightEntry.proxies ){
-                params.remove(proxy.ref)
-                proxy.ref = left
-            }
-        }
-    }
-
-    fun solveImpl(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) : Boolean{
+    fun solveImpl(accuracy: Double, params: List<Set<Param>> = listOf(this.params)) : Boolean{
         val solver = Solver(project.tracker)
         val result = solver.solve(listOf(this.params), ArrayList(constraints),accuracy)
         return result
     }
 
-    fun solve(accuracy: Double, params: List<Set<Parameter>> = listOf(this.params)) {
+    fun solve(accuracy: Double, params: List<Set<Param>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
 
         val result = solveImpl(accuracy, params)
@@ -252,7 +169,7 @@ class Sketch(val project: Project) {
             val locations = mutableListOf<LineError>()
             for(constraint in constraints){
                 val constraintError = constraint.equation
-                val value = constraintError.value
+                val value = constraintError.evalDouble()
                 error += value
                 if(value > accuracy){
                     locations.add(LineError("constraint could not be resolved", constraint.lineNumber, 0))
@@ -285,8 +202,8 @@ abstract class Component{
 
 class RoundRect : Component(){
     lateinit var center: Point
-    lateinit var width: Value
-    lateinit var height: Value
+    lateinit var width: Expr
+    lateinit var height: Expr
 
     override fun build(sketch: SketchScope) {
         with(sketch){
@@ -334,8 +251,8 @@ class Rect : Component() {
     lateinit var bottom: LineSegment
     lateinit var left: LineSegment
 
-    lateinit var width: Value
-    lateinit var height: Value
+    lateinit var width: Expr
+    lateinit var height: Expr
 
     fun names(): List<String> {
         return listOf("width", "height", "top", "bottom")

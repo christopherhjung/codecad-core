@@ -13,10 +13,10 @@ abstract class Figure(var type: LineType = LineType.Normal){
 
 class LineSegment(val p0: Point, val p1: Point, type: LineType = LineType.Normal) : Figure(type){
 
-    val squaredLength : Value
+    val squaredLength : Expr
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
 
-    val length : Value
+    val length : Expr
         get() = squaredLength.sqrt()
 
     val midPoint : Point
@@ -29,18 +29,11 @@ class LineSegment(val p0: Point, val p1: Point, type: LineType = LineType.Normal
         get() = difference.normalized()
 }
 
-open class Circle(val center: Point, val radius: Value) : Figure()
+open class Circle(val center: Point, val radius: Expr) : Figure()
 
-/*
-class com.codecad.core.Arc(center: com.codecad.core.Point, radius: com.codecad.core.Value, val start: com.codecad.core.Value, val end: com.codecad.core.Value) : com.codecad.core.Circle(center,radius){
-    val p0 = com.codecad.core.Point.onCircle(center, radius, start)
-    val p1 = com.codecad.core.Point.onCircle(center, radius, end)
-}*/
-
-
-class Arc(val p0: Point, val p1: Point, val helper: Value) : Circle( centerFunction(p0,p1,helper), (p0 -  centerFunction(p0,p1,helper)).length()){
+class Arc(val p0: Point, val p1: Point, val helper: Expr) : Circle( centerFunction(p0,p1,helper), (p0 -  centerFunction(p0,p1,helper)).length()){
     companion object{
-        private fun centerFunction(p0: Point, p1: Point, arcRadius: Value): Point {
+        private fun centerFunction(p0: Point, p1: Point, arcRadius: Expr): Point {
             val direction = p1 - p0
             val half = direction / 2.0
             val middle = p0 + half
@@ -51,23 +44,23 @@ class Arc(val p0: Point, val p1: Point, val helper: Value) : Circle( centerFunct
     }
 }
 
-class FunctionFigure( val function: (Value) -> Point) : Figure(){
+class FunctionFigure( val function: (Expr) -> Point) : Figure(){
 
 }
 
-class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figure(type) {
+class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure(type) {
     companion object{
-        fun onCircle(center: Point, radius: Value, angle: Value) : Point {
+        fun onCircle(center: Point, radius: Expr, angle: Expr) : Point {
             return Point(
-                (center.x + radius * Value.cos(angle)),
-                (center.y + radius * Value.sin(angle))
+                (center.x + radius * Expr.cos(angle)),
+                (center.y + radius * Expr.sin(angle))
             )
         }
 
-        fun conditional(condition: Value, left: Point, right: Point) : Point {
+        fun conditional(condition: Expr, left: Point, right: Point) : Point {
             return Point(
-                Value.conditional(condition, left.x, right.x),
-                Value.conditional(condition, left.y, right.y)
+                Expr.conditional(condition, left.x, right.x),
+                Expr.conditional(condition, left.y, right.y)
             )
         }
     }
@@ -75,57 +68,58 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
     fun absoluteAngle(target: Point) : Double{
         val a = AXIS_X.p1
         val b = target - this
-        return atan2((a.x * b.y - a.y * b.x).value , (a.x * b.x + a.y * b.y).value)
+        return atan2((a.x * b.y - a.y * b.x).evalDouble() , (a.x * b.x + a.y * b.y).evalDouble())
     }
 
     fun normalized() : Point {
         return this / length()
     }
 
-    fun rotate(center: Point, angle: Value) : Point {
-        val a = Value.sin(angle)
-        val b = Value.cos(angle)
+    fun rotate(center: Point, angle: Expr) : Point {
+        val a = Expr.sin(angle)
+        val b = Expr.cos(angle)
 
         return Point(
             b * ( x - center.x) - a * (y - center.y) + center.x,
-            a * ( x - center.x) + b * ( y - center.y) + center.y)
+            a * ( x - center.x) + b * ( y - center.y) + center.y
+        )
     }
 
     fun copy(): Point {
-        return Point(Value.const(x.value), Value.const(y.value))
+        return Point(Expr.const(x.evalDouble()), Expr.const(y.evalDouble()))
     }
 
     fun fixed() : PointD {
-        return PointD(x.value, y.value)
+        return PointD(x.evalDouble(), y.evalDouble())
     }
 
-    fun scalar(other: Point) : Value {
+    fun scalar(other: Point) : Expr {
         return x * other.x + y * other.y
     }
 
-    fun cross(other: Point) : Value {
+    fun cross(other: Point) : Expr {
         return x * other.y - y * other.x
     }
 
-    operator fun times(other: Point) : Value {
+    operator fun times(other: Point) : Expr {
         return x * other.y - y * other.x
     }
 
-    operator fun times(other: Value) : Point {
+    operator fun times(other: Expr) : Point {
         return Point(x * other, y * other)
     }
 
     operator fun times(other: Double) : Point {
-        val value = Value.const(other)
+        val value = Expr.const(other)
         return Point(x * value, y * value)
     }
 
-    operator fun div(other: Value) : Point {
+    operator fun div(other: Expr) : Point {
         return Point(x / other, y / other)
     }
 
     operator fun div(other: Double) : Point {
-        val value = Value.const(other)
+        val value = Expr.const(other)
         return Point(x / value, y / value)
     }
 
@@ -137,23 +131,23 @@ class Point(val x: Value, val y: Value, type: LineType = LineType.Normal) : Figu
         return Point(x - right.x, y - right.y)
     }
 
-    operator fun minus(right: Value) : Point {
+    operator fun minus(right: Expr) : Point {
         return Point(x - right, y - right)
     }
 
-    fun squaredLength(): Value {
+    fun squaredLength(): Expr {
         return x.pow(2) + y.pow(2)
     }
 
-    fun length(): Value {
+    fun length(): Expr {
         return squaredLength().sqrt()
     }
 
-    fun squaredLength(other: Point): Value {
+    fun squaredLength(other: Point): Expr {
         return (x - other.x).pow(2) + (y-other.y).pow(2)
     }
 
-    fun length(other: Point): Value {
+    fun length(other: Point): Expr {
         return squaredLength(other).sqrt()
     }
 

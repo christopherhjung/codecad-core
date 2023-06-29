@@ -2,10 +2,6 @@ package com.codecad.core
 
 import com.codecad.common.LineD
 import com.codecad.common.PointD
-import de.lighti.clipper.Clipper
-import de.lighti.clipper.ClipperOffset
-import de.lighti.clipper.Path
-import de.lighti.clipper.Paths
 import kotlin.reflect.KClass
 
 class PatternScope(project: Project, val count: Int, val center: Point) : SketchScope(project) {
@@ -19,7 +15,7 @@ class PatternScope(project: Project, val count: Int, val center: Point) : Sketch
 
     var current = 0
 
-    private fun rotatePoint(point: Point, angle: Value) : Point {
+    private fun rotatePoint(point: Point, angle: Expr) : Point {
         val array = pointLookup.computeIfAbsent(point){Array(count - 1){null} }
 
         if(array[current] == null){
@@ -77,9 +73,9 @@ open class SketchScope(val project: Project) {
     val sketch = Sketch(project)
 
     companion object{
-        val ORIGIN = Point(Value.const(0.0), Value.const(0.0))
-        val AXIS_X = LineSegment(ORIGIN, Point(Value.const(1.0), Value.const(0.0)))
-        val AXIS_Y = LineSegment(ORIGIN, Point(Value.const(0.0), Value.const(1.0)))
+        val ORIGIN = Point(Expr.const(0.0), Expr.const(0.0))
+        val AXIS_X = LineSegment(ORIGIN, Point(Expr.const(1.0), Expr.const(0.0)))
+        val AXIS_Y = LineSegment(ORIGIN, Point(Expr.const(0.0), Expr.const(1.0)))
     }
 
     val deg = 0
@@ -88,7 +84,7 @@ open class SketchScope(val project: Project) {
     val mm = 2
     val cm = 3
 
-    fun Value.isEquals(other : Value) {
+    fun Expr.isEquals(other : Expr) {
         equals(this, other)
     }
 
@@ -120,56 +116,15 @@ open class SketchScope(val project: Project) {
         return builder.sketch
     }
 
-    fun offset(pointer: Point, offsetValue: Number, block: SketchScope.() -> Unit){
-        val sketchScope = SketchScope(project)
-        sketchScope.block()
-
-        val face = findFace(sketchToLines(sketchScope.sketch), pointer.fixed())
-        val paths = mutableListOf<DoubleArray>()
-
-        val factor = 1000000
-
-        val offset = ClipperOffset()
-        val path = Path()
-
-        if(face != null){
-            val arr = DoubleArray(face.positions.size * 2)
-            paths.add(arr)
-            var i = 0
-            for( point in face.positions.map { it.point }){
-                arr[i++] = point.x
-                arr[i++] = point.y
-
-                path.add(de.lighti.clipper.Point.LongPoint((point.x * factor).toLong(), (point.y * factor).toLong()))
-            }
-        }
-
-        offset.addPath(path, Clipper.JoinType.ROUND, Clipper.EndType.CLOSED_POLYGON );
-
-        val result = Paths()
-        offset.execute(result, offsetValue.toDouble() * factor)
-
-        val points = mutableListOf<Point>()
-        for( resultPath in result ){
-            for( i in resultPath.indices step 2 ){
-                points.add(Point(Const(resultPath[i].x.toDouble() / factor), Const(resultPath[i].y.toDouble() / factor)))
-            }
-        }
-
-        if(points.size != 0){
-            polygon(*points.toTypedArray())
-        }
-    }
-
-    fun param(value: Number = 0.0): ProxyValue {
-        return sketch.createParameter(value.toDouble())
+    fun param(value: Number = 0.0): Expr {
+        return sketch.createParam(value.toDouble())
     }
 
     fun <T> list() : MutableList<T>{
         return mutableListOf()
     }
 
-    fun const(value: Number = 0.0): Const {
+    fun const(value: Number = 0.0): Literal {
         return sketch.createConst(value.toDouble())
     }
 
@@ -189,15 +144,15 @@ open class SketchScope(val project: Project) {
         return sketch.createLine(a, b, LineType.Construction)
     }
 
-    fun circle(center: Point, radius: Value): Circle {
+    fun circle(center: Point, radius: Expr): Circle {
         return sketch.createCircle(center, radius)
     }
 
-    fun arc(p0: Point, p1: Point, radius: Value): Arc {
+    fun arc(p0: Point, p1: Point, radius: Expr): Arc {
         return sketch.createArc(p0,p1,radius)
     }
 
-    fun func(block: (Value) -> Point): FunctionFigure {
+    fun func(block: (Expr) -> Point): FunctionFigure {
         return sketch.createFunction(block)
     }
 
@@ -242,11 +197,11 @@ open class SketchScope(val project: Project) {
         addConstraintImpl(EqualLength(line1, line2))
     }
 
-    fun length(line1: LineSegment, length: Value) {
+    fun length(line1: LineSegment, length: Expr) {
         addConstraintImpl(LineLength(line1, length))
     }
 
-    fun angle(line1: LineSegment, line2: LineSegment, angle: Value) {
+    fun angle(line1: LineSegment, line2: LineSegment, angle: Expr) {
         addConstraintImpl(InternalAngle(line1, line2, angle))
     }
 
@@ -270,11 +225,11 @@ open class SketchScope(val project: Project) {
         addConstraintImpl(PointOnPoint(point1, point2))
     }
 
-    fun equals(value1 : Value, value2: Value) {
+    fun equals(value1 : Expr, value2: Expr) {
         addConstraintImpl(Equals(value1, value2))
     }
 
-    fun radius(circle: Circle, value: Value) {
+    fun radius(circle: Circle, value: Expr) {
         addConstraintImpl(Radius(circle, value))
     }
 

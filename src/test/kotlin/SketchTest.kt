@@ -2,9 +2,8 @@ import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.SketchScope.Companion.ORIGIN
-import com.codecad.core.Value.Companion.const
-import com.codecad.core.Value.Companion.cos
-import com.codecad.core.Value.Companion.sin
+import com.codecad.core.Expr.Companion.cos
+import com.codecad.core.Expr.Companion.sin
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
 import com.codecad.core.test.addVolumes
@@ -23,33 +22,33 @@ class SketchTest {
 
     @Test
     fun cubicDerivativeTest() {
-        val param = Parameter(Math.PI)
+        val param = Param(Math.PI)
         val x2 = param.pow(3)
         val derivative = x2.derivative(param)
-        val value = derivative.value
+        val value = derivative.evalDouble()
         assertEquals(3.0 * Math.PI.pow(2), value)
     }
 
     @Test
     fun constBecomeConst() {
-        val param1 = Const(Math.PI)
-        val param2 = Const(Math.PI)
+        val param1 = Literal(Math.PI)
+        val param2 = Literal(Math.PI)
         val x2 = param1.pow(param2)
-        assertTrue(x2 is Const)
+        assertTrue(x2 is Literal)
         assertEquals(x2.value, Math.PI.pow(Math.PI))
     }
 
     @Test
     fun absTest() {
-        val param1 = Parameter(1.0)
-        val abs = Value.abs(param1)
+        val param1 = Param(1.0)
+        val abs = Expr.abs(param1)
         val derivative = abs.derivative(param1)
 
-        assertEquals(1.0, abs.value)
-        assertEquals(1.0, derivative.value)
+        assertEquals(1.0, abs.evalDouble())
+        assertEquals(1.0, derivative.evalDouble())
         param1.value = -1.0
-        assertEquals(1.0, abs.value)
-        assertEquals(-1.0, derivative.value)
+        assertEquals(1.0, abs.evalDouble())
+        assertEquals(-1.0, derivative.evalDouble())
     }
 
     @Test
@@ -130,7 +129,7 @@ class SketchTest {
         val proj = project {
             sketch {
                 func {
-                    t -> Point(Value.cos(t), Value.sin(t))
+                    t -> Point(Expr.cos(t), Expr.sin(t))
                 }
             }
         }
@@ -138,7 +137,7 @@ class SketchTest {
 
     @Test
     fun testets(){
-        fun SketchScope.cycloid(bR: Value, sR: Value): FunctionFigure {
+        fun SketchScope.cycloid(bR: Expr, sR: Expr): FunctionFigure {
             return func { t ->
                 val r = t*Math.PI*2
                 val combined = sR + bR
@@ -170,8 +169,8 @@ class SketchTest {
                 )
             }
 
-            extrude(big, Const(1.0))
-            extrude(small, Const(2.0))
+            extrude(big, Literal(1.0))
+            extrude(small, Literal(2.0))
         }
 
         val model = mapModel(project)
@@ -303,8 +302,8 @@ class SketchTest {
                 )
             }
 
-            extrude(small, Const(1.0))
-            extrude(a, Const(0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
+            extrude(small, Literal(1.0))
+            extrude(a, Literal(0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
         }
 
 
@@ -343,9 +342,9 @@ class SketchTest {
                 equals(rect.height, const(2))
             }
 
-            extrude(small, Const(1.0))
-            extrude(hole, Const(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
-            extrude(hole2, Const(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(small, Literal(1.0))
+            extrude(hole, Literal(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(hole2, Literal(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
 
         }
 
@@ -380,8 +379,8 @@ class SketchTest {
                 )
             }
 
-            extrude(big, Const(1.0))
-            extrude(small, Const(2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
+            extrude(big, Literal(1.0))
+            extrude(small, Literal(2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
         }
 
         val model = mapModel(project)

@@ -1,14 +1,14 @@
 package com.codecad.core
 
 class Tracker() {
-    val entries = mutableListOf<MutableMap<Parameter, Double>>()
-    val params = mutableListOf<Parameter>()
+    val entries = mutableListOf<MutableMap<Param, Double>>()
+    val params = mutableListOf<Param>()
     val errors = mutableListOf<Double>()
 
-    fun addEntry(params: Collection<Parameter>, error: Value){
-        val entry = mutableMapOf<Parameter, Double>()
+    fun addEntry(params: Collection<Param>, error: Expr){
+        val entry = mutableMapOf<Param, Double>()
         entries.add(entry)
-        errors.add(error.value)
+        errors.add(error.evalDouble())
         for(param in params){
             entry[param] = param.value
         }

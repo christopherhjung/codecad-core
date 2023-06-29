@@ -1,13 +1,13 @@
 import com.codecad.core.SketchScope.Companion.AXIS_X
 import com.codecad.core.SketchScope.Companion.ORIGIN
-import com.codecad.core.Value
+import com.codecad.core.Expr
 import com.codecad.core.project
 import com.codecad.core.sketch
 
 
 project {
-    var length: Value? = null
-    var radius: Value? = null
+    var length: Expr? = null
+    var radius: Expr? = null
 
     sketch {
         //circle(point(0.0,0.0), const(1.0))

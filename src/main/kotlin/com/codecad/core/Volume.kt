@@ -78,9 +78,9 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     }
 }
 
-class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Value) : Volume() {
+class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
     fun extrude(): FacedVolume {
-        val height = height.value
+        val height = height.evalDouble()
 
         val map = HashMap<PointD, Node>()
         val faces = mutableListOf<Face>()
@@ -172,7 +172,7 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
 
     fun extrudeRoutedFace(): FacedVolume {
-        val height = height.value
+        val height = height.evalDouble()
 
         val faces = mutableListOf<RoutedFace>()
         val inverted = height > 0

@@ -16,13 +16,13 @@ class LineSpan(val line: LineSegment) : Span {
 class CircleSpan(val circle: Circle) : Span {
     override fun getPoint(t: Double): Point {
         if(t == 0.0 || t==1.0){
-            return circle.center + Point(circle.radius, Const.ZERO)
+            return circle.center + Point(circle.radius, Literal.ZERO)
         }
 
         val currentAngle = 2 * Math.PI * t
-        val x = (circle.center.x.value + circle.radius.value * cos(currentAngle))
-        val y = (circle.center.y.value + circle.radius.value * sin(currentAngle))
-        return Point(Const(x), Const(y))
+        val x = (circle.center.x.evalDouble() + circle.radius.evalDouble() * cos(currentAngle))
+        val y = (circle.center.y.evalDouble() + circle.radius.evalDouble() * sin(currentAngle))
+        return Point(Literal(x), Literal(y))
     }
 }
 
@@ -45,14 +45,14 @@ class ArcSpan(val arc: Arc) : Span {
         }
 
         val currentAngle = start + diff * t
-        val x = (arc.center.x.value + arc.radius.value * cos(currentAngle))
-        val y = (arc.center.y.value + arc.radius.value * sin(currentAngle))
-        return Point(Const(x), Const(y))
+        val x = (arc.center.x.evalDouble() + arc.radius.evalDouble() * cos(currentAngle))
+        val y = (arc.center.y.evalDouble() + arc.radius.evalDouble() * sin(currentAngle))
+        return Point(Literal(x), Literal(y))
     }
 }
 
 class FunctionSpan(func: FunctionFigure) : Span {
-    private val t: Parameter = Parameter(0.0)
+    private val t: Param = Param(0.0)
     private val formula: Point = func.function(t)
 
     override fun getPoint(t: Double): Point {

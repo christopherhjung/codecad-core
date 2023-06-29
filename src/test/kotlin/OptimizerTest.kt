@@ -1,7 +1,7 @@
-import com.codecad.core.Parameter
+import com.codecad.core.Param
 import com.codecad.core.Solver
 import com.codecad.core.Tracker
-import com.codecad.core.Value
+import com.codecad.core.Expr
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -11,12 +11,12 @@ class OptimizerTest {
     @Test
     fun tangentConstraint(){
         val solver = Solver(Tracker())
-        val target = Value.const(Math.PI)
-        val current = Parameter(100.0)
+        val target = Expr.const(Math.PI)
+        val current = Param(100.0)
         val errorTerm = (current - target).pow(2)
         val success = solver.solveImpl(listOf(current), errorTerm, listOf(errorTerm.derivative(current)), 1e-6)
 
-        assertEquals(target.value, current.value, 1e-3)
+        assertEquals(target.evalDouble(), current.evalDouble(), 1e-3)
         assertTrue(success)
     }
 

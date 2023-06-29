@@ -7,28 +7,18 @@ val targetError = 1e-8
 
 class Solver(val tracker: Tracker) {
 
-    fun copyInto(target: DoubleArray, x: List<Value>) {
-        for (i in x.indices) {
-            target[i] = x[i].value
-        }
-    }
-
-    fun solve(x: List<Set<Parameter>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
-        val current = mutableListOf<Parameter>()
+    fun solve(x: List<Set<Param>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
+        val current = mutableListOf<Param>()
         val number = x.sumOf { it.size }
 
-        var errorTerm: Value = Const.ZERO
+        var errorTerm: Expr = Literal.ZERO
 
         for(constraint in constraints){
-            var eq = constraint.equation
-            if(eq.value < 1e-2){
-                eq *= 10 // important constraints already minimized add some weight
-            }
-
+            val eq = constraint.equation
             errorTerm += eq
         }
 
-        val derivatives = mutableListOf<Value>()
+        val derivatives = mutableListOf<Expr>()
         for( params in x ){
             for (param in params) {
                 current.add(param)
@@ -46,8 +36,8 @@ class Solver(val tracker: Tracker) {
         return false
     }
 
-    fun solveImpl(x: List<Parameter>, errorTerm: Value, derivatives: List<Value>, accuracy: Double = targetError): Boolean{
-        var error = errorTerm.value
+    fun solveImpl(x: List<Param>, errorTerm: Expr, derivatives: List<Expr>, accuracy: Double = targetError): Boolean{
+        var error = errorTerm.evalDouble()
         if (error < accuracy) {
             return true
         }
@@ -65,12 +55,12 @@ class Solver(val tracker: Tracker) {
             tracker.addEntry(x, errorTerm)
 
             for (j in x.indices) {
-                grad[j] = derivatives[j].value
+                grad[j] = derivatives[j].evalDouble()
             }
 
             optimizer.optimize(grad)
 
-            error = errorTerm.value
+            error = errorTerm.evalDouble()
             errorChange = abs(error - lastError)
             lastError = error
             iter++

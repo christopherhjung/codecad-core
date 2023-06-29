@@ -1,430 +1,385 @@
 package com.codecad.core
 
-import com.codecad.core.Value.Companion.modCounter
 import kotlin.math.*
 
-class CachedValue(val ref: Value) : RawValue(){
-    var cachedModCounter = -1
-    var cache: Double = 0.0
-
-    override var value: Double
-        get() {
-            if(cachedModCounter != modCounter){
-                cachedModCounter = modCounter
-                cache = ref.calc()
-            }
-
-            return cache
-        }
-        set(value) {throw RuntimeException()}
-
-}
-
-abstract class RawValue{
-    abstract var value: Double
-/*
-    open fun isOne(): Boolean {
-        return value == 1.0
+abstract class Expr{
+    abstract fun eval() : Any
+    fun evalDouble() : Double{
+        return eval() as Double
+    }
+    fun evalBoolean() : Boolean{
+        return eval() == true
     }
 
-    open fun isZero(): Boolean {
-        return value == 0.0
-    }*/
-
-    /*
-    open fun isConst(): Boolean {
-        return false
-    }*/
-}
-
-operator fun Double.minus(right: Value) : Value {
-    return Value.const(this) - right
-}
-
-operator fun Double.times(right: Value) : Value {
-    return Value.const(this) * right
-}
-
-operator fun Double.div(right: Value) : Value {
-    return Value.const(this) / right
-}
-
-fun Double.pow(right: Value) : Value {
-    return Value.const(this).pow(right)
-}
-
-abstract class Value : RawValue(){
-    abstract val proxyChildren: Set<ProxyValue>
-
-    fun detach() : Const {
-        return const(value)
-    }
-
-    override fun toString(): String {
-        return value.toString()
-    }
-
-    operator fun unaryMinus() : Value {
+    operator fun unaryMinus() : Expr {
         return if(hasConstValue(this, 0.0)){
-            Const.ZERO
-        }else if(this is Const){
-            const(-value)
+            Literal.ZERO
+        }else if(this is Literal && value is Double){
+            Expr.const(-value)
         }else{
-            cached{
-                NegativeValue(this)
+            Expr.cached {
+                NegExpr(this)
             }
         }
     }
 
-    operator fun minus(right: Value) : Value {
+    operator fun minus(right: Expr) : Expr {
         return if(hasConstValue(this, 0.0)){
             right.unaryMinus()
         }else if(hasConstValue(right, 0.0)){
             this
         }else if(hasConstValue(this, 1.0) && hasConstValue(right, 1.0)){
-            Const.ZERO
-        }else if(this is Const && right is Const){
-            const(value - right.value)
+            Literal.ZERO
+        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
+            Expr.const(evalDouble() - right.evalDouble())
         }else if(this === right){
-            Const.ZERO
+            Literal.ZERO
         }else{
-            cached{
-                MinusValue(this, right)
+            Expr.cached {
+                SubExpr(this, right)
             }
         }
     }
 
-    operator fun minus(right: Double) : Value {
-        return if(this is Const){
-            const(value - right)
+    operator fun minus(right: Double) : Expr {
+        return if(Literal.isDouble(this)){
+            Expr.const(evalDouble() - right)
         }else{
-            cached{
-                MinusValue(this, const(right))
+            Expr.cached {
+                SubExpr(this, Expr.const(right))
             }
         }
     }
 
-    operator fun minus(right: Int) : Value {
+    operator fun minus(right: Int) : Expr {
         return minus(right.toDouble())
     }
 
-    operator fun plus(right: Value) : Value {
+    operator fun plus(right: Expr) : Expr {
         return if(hasConstValue(this, 0.0)){
             right
         }else if(hasConstValue(right, 0.0)){
             this
-        }else if(this is Const && right is Const){
-            const(value + right.value)
+        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
+            Expr.const(evalDouble() + right.evalDouble())
         }else if(this === right){
-            cached{
-                TimesValue(const(2.0), right)
+            Expr.cached {
+                TimesExpr(Expr.const(2.0), right)
             }
         }else{
-            cached{
-                AddValue(this, right)
+            Expr.cached {
+                AddExpr(this, right)
             }
         }
     }
 
-    operator fun plus(right: Double) : Value {
-        return if(this is Const){
-            const(value + right)
+    operator fun plus(right: Double) : Expr {
+        return if(Literal.isDouble(this)){
+            Expr.const(evalDouble() + right)
         }else{
-            cached{
-                AddValue(this, const(right))
+            Expr.cached {
+                AddExpr(this, Expr.const(right))
             }
         }
     }
 
-    operator fun plus(right: Int) : Value {
+    operator fun plus(right: Int) : Expr {
         return plus(right.toDouble())
     }
 
-    fun hasConstValue(value: Value, expect: Double) : Boolean{
-        return value is Const && value.value == expect
+    fun hasConstValue(value: Expr, expect: Double) : Boolean{
+        return value is Literal && value.value == expect
     }
 
-    operator fun times(right: Value) : Value {
+    operator fun times(right: Expr) : Expr {
         return if(hasConstValue(this, 0.0) || hasConstValue(right, 0.0)){
-            Const.ZERO
+            Literal.ZERO
         }else if(hasConstValue(this, 1.0)){
             right
         }else if(hasConstValue(right, 1.0)){
             this
-        }else if(this is Const && right is Const){
-            const(value * right.value)
+        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
+            Expr.const(evalDouble() * right.evalDouble())
         }else if(this === right){
-            cached{
-                PowValue(this, const(2.0))
+            Expr.cached {
+                PowExpr(this, Expr.const(2.0))
             }
         }else{
-            cached{
-                TimesValue(this, right)
+            Expr.cached {
+                TimesExpr(this, right)
             }
         }
     }
 
-    operator fun times(right: Double) : Value {
+    operator fun times(right: Double) : Expr {
         return if(right == 0.0) {
-            Const.ZERO
+            Literal.ZERO
         }else if(right == 1.0) {
             this
-        }else if(this is Const){
-            const(value * right)
+        }else if(Literal.isDouble(this)){
+            Expr.const(evalDouble() * right)
         }else{
-            cached{
-                TimesValue(this, const(right))
+            Expr.cached {
+                TimesExpr(this, Expr.const(right))
             }
         }
     }
 
-    operator fun times(right: Int) : Value {
+    operator fun times(right: Int) : Expr {
         return times(right.toDouble())
     }
 
-    operator fun div(right: Value) : Value {
-        return if(this is Const && value == 0.0){
-            Const.ZERO
-        }else if(right is Const && right.value == 1.0){
+    operator fun div(right: Expr) : Expr {
+        return if(this is Literal && value == 0.0){
+            Literal.ZERO
+        }else if(right is Literal && right.value == 1.0){
             this
-        }else if(this is Const && right is Const){
-            const(value / right.value)
+        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
+            Expr.const(evalDouble() / right.evalDouble())
         }else if(this === right){
-            Const.ONE
+            Literal.ONE
         }else{
-            cached{
-                DivValue(this, right)
+            Expr.cached {
+                DivExpr(this, right)
             }
         }
     }
 
-    operator fun div(right: Double) : Value {
+    operator fun div(right: Double) : Expr {
         return if(right == 1.0){
             this
-        }else if(this is Const){
-            const(value / right)
+        }else if(Literal.isDouble(this)){
+            Expr.const(evalDouble() / right)
         }else{
-            cached{
-                DivValue(this, Const(right))
+            Expr.cached {
+                DivExpr(this, Literal(right))
             }
         }
     }
 
-    operator fun div(right: Int) : Value {
+    operator fun div(right: Int) : Expr {
         return div(right.toDouble())
     }
 
-    fun pow(right : Value) : Value {
+    fun pow(right : Expr) : Expr {
         return if(hasConstValue(right, 0.0)){
-            Const.ONE
+            Literal.ONE
         }else if(hasConstValue(right, 1.0)){
             this
         }else if(hasConstValue(this, 0.0)){
-            Const.ZERO
-        }else if(this is Const && right is Const){
-            const(value.pow(right.value))
+            Literal.ZERO
+        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
+            Expr.const(evalDouble().pow(right.evalDouble()))
         }else{
-            cached{ PowValue(this, right) }
+            Expr.cached { PowExpr(this, right) }
         }
 
     }
 
-    fun pow(right : Double) : Value {
+    fun pow(right : Double) : Expr {
         return if(right == 0.0){
-            Const.ONE
+            Literal.ONE
         }else if(right == 1.0){
             this
-        }else if(this is Const){
-            const(value.pow(right))
+        }else if(Literal.isDouble(this)){
+            Expr.const(evalDouble().pow(right))
         }else{
-            cached{
-                PowValue(this, const(right))
+            Expr.cached {
+                PowExpr(this, Expr.const(right))
             }
         }
     }
 
-    fun pow(right : Int) : Value {
+    fun pow(right : Int) : Expr {
         return pow(right.toDouble())
     }
 
-    fun sqrt() : Value {
+    fun sqrt() : Expr {
         return pow(0.5)
     }
 
-    fun smaller(other: Value) : Value {
-        val newVal =  SmallerValue(this, other)
-        if(this is Const && other is Const){
-            return const(newVal.value)
+    fun smaller(other: Expr) : Expr {
+        val newVal =  LtExpr(this, other)
+        if(this is Literal && other is Literal){
+            return Expr.const(newVal.evalDouble())
         }
 
-        return cached{
+        return Expr.cached {
             newVal
         }
     }
 
     companion object{
-        private val repeatCache = HashMap<Value, Value>()
+        private val repeatCache = HashMap<Expr, Expr>()
 
-        fun const(value: Double) : Const {
+        fun const(value: Double) : Literal {
             return cached {
-                Const(value)
+                Literal(value)
             }
         }
 
-        fun <T> cached(block: () -> T) : T where T : Value {
+        fun <T> cached(block: () -> T) : T where T : Expr {
             val newVal = block()
             return repeatCache.computeIfAbsent(newVal) {
                 newVal
             } as T
         }
 
-        fun cos(value: Value) : Value {
-            return if(value is Const){
-                const(cos(value.value))
+        fun cos(value: Expr) : Expr {
+            return if(Literal.isDouble(value)){
+                const(cos(value.evalDouble()))
             }else{
                 cached {
-                    CosValue(value)
+                    CosExpr(value)
                 }
             }
         }
 
-        fun sin(value: Value) : Value {
-            return if(value is Const){
-                const(sin(value.value))
+        fun sin(value: Expr) : Expr {
+            return if(Literal.isDouble(value)){
+                const(sin(value.evalDouble()))
             }else{
                 cached {
-                    SinValue(value)
+                    SinExpr(value)
                 }
             }
         }
 
-        fun log(value: Value) : Value {
-            return if(value is Const){
-                const(log(value.value, Math.E))
+        fun log(value: Expr) : Expr {
+            return if(Literal.isDouble(value)){
+                const(log(value.evalDouble(), Math.E))
             }else{
                 cached {
-                    LogValue(value)
+                    LogExpr(value)
                 }
             }
         }
 
-        fun conditional(condition: Value, left: Value, right: Value) : Value {
-            return if(condition is Const){
-                if(condition.value > 0.5){
+        fun conditional(condition: Expr, left: Expr, right: Expr) : Expr {
+            return if(Literal.isBoolean(condition)){
+                if(condition.evalBoolean()){
                     left
                 }else{
                     right
                 }
-            }else if(left is Const && right is Const && left == right){
+            }else if(left is Literal && right is Literal && left == right){
                 left
             }else{
                 cached {
-                    ConditionalValue(condition, left, right)
+                    IfExpr(condition, left, right)
                 }
             }
         }
 
-        fun min(left: Value, right: Value) : Value {
+        fun min(left: Expr, right: Expr) : Expr {
             return conditional(left.smaller(right), left, right)
         }
 
-        fun max(left: Value, right: Value) : Value {
+        fun max(left: Expr, right: Expr) : Expr {
             return conditional(left.smaller(right), right, left)
         }
 
-        fun abs(other: Value) : Value {
-            return if(other is Const){
-                const(abs(other.value))
+        fun abs(other: Expr) : Expr {
+            return if(Literal.isDouble(other)){
+                const(abs(other.evalDouble()))
             }else{
                 cached {
-                    AbsValue(other)
+                    AbsExpr(other)
                 }
             }
         }
 
-        fun sign(other: Value) : Value {
-            return if(other is Const){
-                const(sign(other.value))
+        fun sign(other: Expr) : Expr {
+            return if(Literal.isDouble(other)){
+                const(sign(other.evalDouble()))
             }else{
                 cached {
-                    SignValue(other)
+                    SignExpr(other)
                 }
             }
         }
-
-        var modCounter = 0
     }
 
-    abstract fun derivative(parameter: Parameter) : Value
-    open fun calc() : Double{
-        return value
-    }
+    abstract fun derivative(param: Param) : Expr
 }
 
-class Const(_value: Double) : Value() {
-    override var value: Double = _value
-    override val proxyChildren: Set<ProxyValue> = emptySet()
+operator fun Double.minus(right: Expr) : Expr {
+    return Expr.const(this) - right
+}
 
+operator fun Double.times(right: Expr) : Expr {
+    return Expr.const(this) * right
+}
+
+operator fun Double.div(right: Expr) : Expr {
+    return Expr.const(this) / right
+}
+
+fun Double.pow(right: Expr) : Expr {
+    return Expr.const(this).pow(right)
+}
+
+
+
+class Literal(val value: Any) : Expr() {
     companion object{
-        val ZERO: Const = const(0.0)
-        val ONE: Const = const(1.0)
+        val ZERO = Literal(0.0)
+        val ONE = Literal(1.0)
+
+        fun isDouble(expr : Expr) : Boolean{
+            return expr is Literal && expr.value is Double
+        }
+
+        fun isBoolean(expr : Expr) : Boolean{
+            return expr is Literal && true == expr.value
+        }
     }
 
-    override fun derivative(parameter: Parameter): Value {
+    override fun eval(): Any {
+        return value
+    }
+
+    override fun derivative(param: Param): Expr {
         return ZERO
     }
+
     override fun equals(other: Any?): Boolean {
-        if(other is Const){
-            return value == other.value
-        }else if(other is ProxyValue){
-            return other == this
-        }
-        return super.equals(other)
+        return other is Literal && value == other.value
     }
 
     override fun hashCode(): Int {
-        return value.toRawBits().toInt()
+        return value.hashCode()
     }
 }
 
 
-class Parameter(_value: Double) : Value() {
-    override val proxyChildren: Set<ProxyValue> = emptySet()
-    override var value: Double = _value
-        set(value){
-            field = value
-            Value.modCounter++
-        }
+class Param(var value : Double) : Expr() {
+    override fun eval(): Any {
+        return value
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return if(this === parameter){
-            Const.ONE
+    override fun derivative(param: Param): Expr {
+        return if(this === param){
+            Literal.ONE
         }else{
-            Const.ZERO
+            Literal.ZERO
         }
     }
 
     override fun equals(other: Any?): Boolean {
-        if(other is ProxyValue){
-            return other === this
-        }
         return this === other
     }
 }
 
-class DerivativeValue(val target: Value, val param: Parameter) : Value(){
-    var cache: Value = target.derivative(param)
+class DeriveExpr(target: Expr, param: Param) : Expr(){
+    var expr: Expr = target.derivative(param)
 
-    override var value: Double
-        get() = cache.value
-        set(value) {
-            throw RuntimeException("not possible to set value")
-        }
+    override fun eval() : Any {
+        return expr.evalDouble()
+    }
 
-    override val proxyChildren: Set<ProxyValue> = emptySet()
-
-    override fun derivative(parameter: Parameter): Value {
-        return DerivativeValue(this, parameter)
+    override fun derivative(param: Param): Expr {
+        return DeriveExpr(this, param)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -432,39 +387,10 @@ class DerivativeValue(val target: Value, val param: Parameter) : Value(){
     }
 }
 
-class ProxyValue(_ref: Value) : Value() {
-    var ref: Value = _ref
-        set(value) {
-            Value.modCounter++
-            field = value
-        }
-
-    override val proxyChildren: Set<ProxyValue> = setOf(this)
-
-    override var value: Double
-        get() {
-            return ref.value
-        }
-        set(value) {
-            ref.value = value
-        }
-
-    override fun derivative(parameter: Parameter): Value {
-        return ref.derivative(parameter)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return ref === this
-    }
-}
-
-
-abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
-    override val proxyChildren: Set<ProxyValue> = super.proxyChildren + right.proxyChildren
-
+abstract class BinaryExpr(val left: Expr, val right: Expr) : Expr(){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BinaryValue) return false
+        if (other !is BinaryExpr) return false
         if (left !== other.left) return false
         if (right !== other.right) return false
         return true
@@ -475,33 +401,10 @@ abstract class BinaryValue(left: Value, val right: Value) : UnaryValue(left){
     }
 }
 
-
-class NotCachedValue(val ref: Value) : RawValue(){
-    override var value: Double
-        get() = ref.calc()
-        set(value) {}
-}
-
-abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value(){
-    override val proxyChildren: Set<ProxyValue> = left.proxyChildren
-
-    private var cachedModCounter = -1
-    private var cache: Double = 0.0
-
-    override var value: Double
-        get() {
-            if(cachedModCounter != modCounter){
-                cachedModCounter = modCounter
-                cache = calc()
-            }
-
-            return cache
-        }
-        set(value) {throw RuntimeException()}
-
+abstract class UnaryExpr(val left: Expr) : Expr(){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is UnaryValue) return false
+        if (other !is UnaryExpr) return false
         if (left !== other.left) return false
         return true
     }
@@ -511,71 +414,81 @@ abstract class UnaryValue(val left: Value, val cached: Boolean = true) : Value()
     }
 }
 
-class PowValue(left: Value, right: Value) : BinaryValue(left, right){
-    override fun calc(): Double =  left.value.pow(right.value)
+class PowExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+    override fun eval() : Any {
+        return left.evalDouble().pow(right.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return if(right is Const){
-            right * left.pow(right - 1) * left.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return if(right is Literal){
+            right * left.pow(right - 1) * left.derivative(param)
         }else{
-            (right.derivative(parameter) * log(left) + right / left * left.derivative(parameter)) * this
+            (right.derivative(param) * log(left) + right / left * left.derivative(param)) * this
         }
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is PowValue && super.equals(other)
+        return other is PowExpr && super.equals(other)
     }
 }
 
-class CosValue( left: Value) : UnaryValue(left){
-    override fun calc(): Double = cos(left.value)
+class CosExpr(left: Expr ) : UnaryExpr(left){
+    override fun eval() : Any {
+        return cos(left.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return -sin(left) * left.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return -sin(left) * left.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is CosValue && super.equals(other)
+        return other is CosExpr && super.equals(other)
     }
 }
 
-class ArcSinValue( left: Value) : UnaryValue(left){
-    override fun calc(): Double = asin(left.value)
+class ArcSinExpr(left: Expr ) : UnaryExpr(left){
+    override fun eval() : Any {
+        return asin(left.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is ArcSinValue && super.equals(other)
+        return other is ArcSinExpr && super.equals(other)
     }
 }
 
-class SinValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = sin(left.value)
+class SinExpr(left: Expr) : UnaryExpr(left){
+    override fun eval() : Any {
+        return sin(left.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return cos(left) * left.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return cos(left) * left.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is SinValue && super.equals(other)
+        return other is SinExpr && super.equals(other)
     }
 }
 
-class LogValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = log(left.value, Math.E)
+class LogExpr(left: Expr) : UnaryExpr(left){
+    override fun eval() : Any {
+        return log(left.evalDouble(), Math.E)
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return left.derivative(parameter) / this
+    override fun derivative(param: Param): Expr {
+        return left.derivative(param) / this
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is LogValue && super.equals(other)
+        return other is LogExpr && super.equals(other)
     }
 }
 
-abstract class CommutativeValue(left: Value, right: Value): BinaryValue(left, right){
+abstract class CommutativeValue(left: Expr, right: Expr): BinaryExpr(left, right){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CommutativeValue) return false
@@ -596,88 +509,102 @@ abstract class CommutativeValue(left: Value, right: Value): BinaryValue(left, ri
     }
 }
 
-class AddValue(left: Value, right: Value) : CommutativeValue(left, right){
-    override fun calc(): Double = left.value + right.value
+class AddExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
+    override fun eval() : Any {
+        return left.evalDouble() + right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return left.derivative(parameter) + right.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return left.derivative(param) + right.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is AddValue && super.equals(other)
+        return other is AddExpr && super.equals(other)
     }
 }
 
-class TimesValue(left: Value, right: Value) : CommutativeValue(left, right){
-    override fun calc(): Double = left.value * right.value
+class TimesExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
+    override fun eval() : Any {
+        return left.evalDouble() * right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return left.derivative(parameter) * right + left * right.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return left.derivative(param) * right + left * right.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is TimesValue && super.equals(other)
+        return other is TimesExpr && super.equals(other)
     }
 }
 
-class SmallerValue(left: Value, right: Value) : BinaryValue(left, right){
-    override fun calc(): Double = if(left.value < right.value) 1.0 else 0.0
+class LtExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+    override fun eval() : Any {
+        return left.evalDouble() < right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return Const.ZERO
+    override fun derivative(param: Param): Expr {
+        return Literal.ZERO
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is SmallerValue && super.equals(other)
+        return other is LtExpr && super.equals(other)
     }
 }
 
-class DivValue(left: Value, right: Value) : BinaryValue(left, right){
-    override fun calc(): Double = left.value / right.value
+class DivExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+    override fun eval() : Any {
+        return left.evalDouble() / right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return (left.derivative(parameter) * right + left * right.derivative(parameter)) / right.pow(2)
+    override fun derivative(param: Param): Expr {
+        return (left.derivative(param) * right + left * right.derivative(param)) / right.pow(2)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is DivValue && super.equals(other)
+        return other is DivExpr && super.equals(other)
     }
 }
 
-class MinusValue(left: Value, right: Value) : BinaryValue(left, right){
-    override fun calc(): Double = left.value - right.value
+class SubExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+    override fun eval() : Any {
+        return left.evalDouble() - right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return left.derivative(parameter) - right.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return left.derivative(param) - right.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is MinusValue && super.equals(other)
+        return other is SubExpr && super.equals(other)
     }
 }
 
-class NegativeValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = -left.value
+class NegExpr(left: Expr) : UnaryExpr(left){
+    override fun eval() : Any {
+        return -left.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return -left.derivative(parameter)
+    override fun derivative(param: Param): Expr {
+        return -left.derivative(param)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is NegativeValue && super.equals(other)
+        return other is NegExpr && super.equals(other)
     }
 }
 
-class ConditionalValue(val condition: Value, left: Value, right: Value) : BinaryValue(left, right){
-    override fun calc(): Double = if(condition.value > 0.5) left.value else right.value
+class IfExpr(val condition: Expr, left: Expr, right: Expr) : BinaryExpr(left, right){
+    override fun eval() : Any {
+        return if(condition.eval() == true) left.evalDouble() else right.evalDouble()
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return conditional(condition, left.derivative(parameter), right.derivative(parameter))
+    override fun derivative(param: Param) : Expr {
+        return conditional(condition, left.derivative(param), right.derivative(param))
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ConditionalValue) return false
+        if (other !is IfExpr) return false
         if (left !== other.left) return false
         if (right !== other.right) return false
         if (condition !== other.condition) return false
@@ -689,33 +616,41 @@ class ConditionalValue(val condition: Value, left: Value, right: Value) : Binary
     }
 }
 
-class AbsValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = abs(left.value)
+class AbsExpr(left: Expr) : UnaryExpr(left){
+    override fun eval() : Any {
+        return abs(left.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        val derivative = left.derivative(parameter)
-        return conditional(left.smaller(Const.ZERO), -derivative, derivative)
+    override fun derivative(param: Param): Expr {
+        val derivative = left.derivative(param)
+        return conditional(left.smaller(Literal.ZERO), -derivative, derivative)
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is AbsValue && super.equals(other)
+        return other is AbsExpr && super.equals(other)
     }
 }
 
-class SignValue(left: Value) : UnaryValue(left){
-    override fun calc(): Double = sign(left.value)
+class SignExpr(left: Expr) : UnaryExpr(left){
+    override fun eval() : Any {
+        return sign(left.evalDouble())
+    }
 
-    override fun derivative(parameter: Parameter): Value {
-        return Const.ZERO
+    override fun derivative(param: Param): Expr {
+        return Literal.ZERO
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is SignValue && super.equals(other)
+        return other is SignExpr && super.equals(other)
     }
 }
 
-class Vector(vararg val values: Value){
-    fun squaredLength(){
+class Tuple(val values: Array<Expr>) : Expr(){
+    override fun eval() : Any {
+        return Array(values.size){ values[it].eval()}
+    }
 
+    override fun derivative(param: Param): Expr {
+        return Tuple(Array(values.size){ values[it].derivative(param)})
     }
 }

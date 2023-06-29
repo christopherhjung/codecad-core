@@ -1,12 +1,12 @@
 import com.codecad.core.*
-import com.codecad.core.Value.Companion.cos
-import com.codecad.core.Value.Companion.sin
+import com.codecad.core.Expr.Companion.cos
+import com.codecad.core.Expr.Companion.sin
 import com.codecad.core.SketchScope.Companion.ORIGIN
 
 
 
 
-fun SketchScope.cycloid(bR: Value, sR: Value): FunctionFigure {
+fun SketchScope.cycloid(bR: Expr, sR: Expr): FunctionFigure {
     return func { t ->
         val r = t*Math.PI*2
         val combined = sR + bR
@@ -23,7 +23,7 @@ project {
 
     val a = sketch {
 
-        offset(Point(Const(0.0),Const(0.0)), -0.1){
+        offset(Point(Literal(0.0),Literal(0.0)), -0.1){
             cycloid(const(teeth * offset),const(offset))
         }
 
@@ -33,7 +33,7 @@ project {
         }
     }
 
-    extrude(a, Point(Const(0.0),Const(0.0)), Const(0.1))
+    extrude(a, Point(Literal(0.0),Literal(0.0)), Literal(0.1))
 
 }
 
