@@ -1,7 +1,7 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.LineSegment
-import com.codecad.core.Point
+import com.codecad.core.Line2
+import com.codecad.core.Point2
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -10,9 +10,9 @@ class World {
     val ONE = Literal(this, 1.0)
     val TWO = Literal(this, 2.0)
 
-    val ORIGIN = Point(ZERO, ZERO)
-    val AXIS_X = LineSegment(ORIGIN, Point(ONE, ZERO))
-    val AXIS_Y = LineSegment(ORIGIN, Point(ZERO, ONE))
+    val ORIGIN = Point2(ZERO, ZERO)
+    val AXIS_X = Line2(ORIGIN, Point2(ONE, ZERO))
+    val AXIS_Y = Line2(ORIGIN, Point2(ZERO, ONE))
 
     private val sea = HashMap<Expr, Expr>()
 

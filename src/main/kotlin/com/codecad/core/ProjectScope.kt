@@ -12,7 +12,7 @@ class ProjectScope(val project: Project){
         return builder.sketch
     }
 
-    fun extrude(sketch: Sketch, pointer: Point, height: Expr) {
+    fun extrude(sketch: Sketch, pointer: Point2, height: Expr) {
         val face = findFace(sketchToLines(sketch, ignoreConstruction = true), pointer.fixed())
 
         if(face != null){

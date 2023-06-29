@@ -95,8 +95,8 @@ class SketchTest {
             sketch {
                 //circle(point(0.0,0.0), const(1.0))
 
-                val points = list<Point>()
-                val points2 = list<Point>()
+                val points = list<Point2>()
+                val points2 = list<Point2>()
 
                 val repeat = 10
                 pattern(repeat / 2, origin()) { center ->
@@ -133,7 +133,7 @@ class SketchTest {
         val proj = project {
             sketch {
                 func {
-                    t -> Point(Expr.cos(t), Expr.sin(t))
+                    t -> Point2(Expr.cos(t), Expr.sin(t))
                 }
             }
         }
@@ -145,7 +145,7 @@ class SketchTest {
             return func { t ->
                 val r = t*Math.PI*2
                 val combined = sR + bR
-                Point(combined * Expr.cos(r) - sR * Expr.cos(combined*(r/sR)) ,
+                Point2(combined * Expr.cos(r) - sR * Expr.cos(combined*(r/sR)) ,
                     combined * Expr.sin(r) - sR * Expr.sin(combined*(r/sR)))
             }
         }
@@ -153,10 +153,10 @@ class SketchTest {
         val project = project {
             val big = sketch {
                 polygon(
-                    Point(literal(-0.5), literal(-0.5)),
-                    Point(literal(0.5), literal(-0.5)),
-                    Point(literal(0.5), literal(0.5)),
-                    Point(literal(-0.5), literal(0.5)),
+                    Point2(literal(-0.5), literal(-0.5)),
+                    Point2(literal(0.5), literal(-0.5)),
+                    Point2(literal(0.5), literal(0.5)),
+                    Point2(literal(-0.5), literal(0.5)),
                 )
             }
 
@@ -166,10 +166,10 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(literal(-0.2 + posX), literal(-0.2 + posY)),
-                    Point(literal(0.2 + posX), literal(-0.2 + posY)),
-                    Point(literal(0.2 + posX), literal(0.2 + posY)),
-                    Point(literal(-0.2 + posX), literal(0.2 + posY)),
+                    Point2(literal(-0.2 + posX), literal(-0.2 + posY)),
+                    Point2(literal(0.2 + posX), literal(-0.2 + posY)),
+                    Point2(literal(0.2 + posX), literal(0.2 + posY)),
+                    Point2(literal(-0.2 + posX), literal(0.2 + posY)),
                 )
             }
 
@@ -299,10 +299,10 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(literal(-2 + posX), literal(-2.5 + posY)),
-                    Point(literal(2.5 + posX), literal(-2.5 + posY)),
-                    Point(literal(2.5 + posX), literal(0.1 + posY)),
-                    Point(literal(-2 + posX), literal(0.1 + posY)),
+                    Point2(literal(-2 + posX), literal(-2.5 + posY)),
+                    Point2(literal(2.5 + posX), literal(-2.5 + posY)),
+                    Point2(literal(2.5 + posX), literal(0.1 + posY)),
+                    Point2(literal(-2 + posX), literal(0.1 + posY)),
                 )
             }
 
@@ -364,10 +364,10 @@ class SketchTest {
         val project = project {
             val big = sketch {
                 polygon(
-                    Point(literal(-0.5), literal(-0.5)),
-                    Point(literal(0.5), literal(-0.5)),
-                    Point(literal(0.5), literal(0.5)),
-                    Point(literal(-0.5), literal(0.5)),
+                    Point2(literal(-0.5), literal(-0.5)),
+                    Point2(literal(0.5), literal(-0.5)),
+                    Point2(literal(0.5), literal(0.5)),
+                    Point2(literal(-0.5), literal(0.5)),
                 )
             }
 
@@ -376,10 +376,10 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(literal(-0.2 + posX), literal(-0.2 + posY)),
-                    Point(literal(0.2 + posX), literal(-0.2 + posY)),
-                    Point(literal(0.2 + posX), literal(0.2 + posY)),
-                    Point(literal(-0.2 + posX), literal(0.2 + posY)),
+                    Point2(literal(-0.2 + posX), literal(-0.2 + posY)),
+                    Point2(literal(0.2 + posX), literal(-0.2 + posY)),
+                    Point2(literal(0.2 + posX), literal(0.2 + posY)),
+                    Point2(literal(-0.2 + posX), literal(0.2 + posY)),
                 )
             }
 

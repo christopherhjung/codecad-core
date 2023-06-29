@@ -22,46 +22,46 @@ class Sketch(val project: Project) {
         return world.literal(value)
     }
 
-    fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point {
+    fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
         val a = createLiteral(x)
         val b = createLiteral(y)
-        val point = Point(a, b)
+        val point = Point2(a, b)
         figures.add(point)
         return point
     }
 
-    fun createPoint(x: Expr, y: Expr): Point {
-        val point = Point(x,y)
+    fun createPoint(x: Expr, y: Expr): Point2 {
+        val point = Point2(x,y)
         figures.add(point)
         return point
     }
 
-    fun createPoint(x: Double = 0.0, y: Double = 0.0): Point {
+    fun createPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
         val a = createParam(x)
         val b = createParam(y)
         return createPoint(a,b)
     }
 
-    fun createLine(a: Point, b: Point, type: LineType = LineType.Normal): LineSegment {
-        val line = LineSegment(a, b)
+    fun createLine(a: Point2, b: Point2, type: LineType = LineType.Normal): Line2 {
+        val line = Line2(a, b)
         figures.add(line)
         lineType.putIfAbsent(line, type)
         return line
     }
 
-    fun createCircle(center: Point, radius: Expr): Circle {
+    fun createCircle(center: Point2, radius: Expr): Circle {
         val circle = Circle(center, radius)
         figures.add(circle)
         return circle
     }
 
-    fun createArc(p0: Point, p1: Point, radius: Expr): Arc {
+    fun createArc(p0: Point2, p1: Point2, radius: Expr): Arc {
         val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
     }
 
-    fun createFunction(function : (Expr) -> Point) : FunctionFigure {
+    fun createFunction(function : (Expr) -> Point2) : FunctionFigure {
         val function = FunctionFigure(function)
         figures.add(function)
         return function
@@ -71,11 +71,11 @@ class Sketch(val project: Project) {
         return createCircle(createPoint(), createParam(1.0))
     }
 
-    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): LineSegment {
+    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line2 {
         return createLine(createPoint(x, y), createPoint(x2, y2))
     }
 
-    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): LineSegment {
+    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line2 {
         return createLine(createConstPoint(x, y), createConstPoint(x2, y2))
     }
 
@@ -198,7 +198,7 @@ abstract class Component{
 }
 
 class RoundRect : Component(){
-    lateinit var center: Point
+    lateinit var center: Point2
     lateinit var width: Expr
     lateinit var height: Expr
 
@@ -236,17 +236,17 @@ class RoundRect : Component(){
 }
 
 class Rect : Component() {
-    lateinit var a: Point
-    lateinit var b: Point
-    lateinit var c: Point
-    lateinit var d: Point
+    lateinit var a: Point2
+    lateinit var b: Point2
+    lateinit var c: Point2
+    lateinit var d: Point2
 
-    lateinit var center: Point
+    lateinit var center: Point2
 
-    lateinit var top: LineSegment
-    lateinit var right: LineSegment
-    lateinit var bottom: LineSegment
-    lateinit var left: LineSegment
+    lateinit var top: Line2
+    lateinit var right: Line2
+    lateinit var bottom: Line2
+    lateinit var left: Line2
 
     lateinit var width: Expr
     lateinit var height: Expr
