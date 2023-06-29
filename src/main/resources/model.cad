@@ -1,0 +1,24 @@
+param length = 1.2 cm
+param radius = 1.2 cm
+
+
+sketch first(plane = plane.xy){
+    val a = line(origin(), point(1.0, 0.5))
+    val b = line(origin(), point(1.0, 1.0))
+
+    val arc = arc(point(1.5, 0.5), point(1.5, 0.5))
+
+
+    equals(b.p1, arc.p1)
+    equals(a.p1, arc.p0)
+    equalLength(a,b)
+    length(a, length)
+    angle(a, b, 30 deg)
+    angle(a, axis.x, 30 deg)
+    tangent(arc, a)
+    tangent(arc, b)
+
+}
+
+println(length)
+println(radius)

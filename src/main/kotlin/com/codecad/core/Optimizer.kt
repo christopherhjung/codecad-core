@@ -29,10 +29,9 @@ class ConjugateGradientOptimizer(private val params: List<Param>): Optimizer {
 }
 
 class AdamOptimizer(private val params: List<Param>) : Optimizer {
-    private val alpha = 0.002
+    private val alpha = 0.05
     private val beta1 = 0.9
     private val beta2 = 0.999
-    private val beta3 = 0.9
     private val epsilon = 10e-8
     private val m = DoubleArray(params.size)
     private val v = DoubleArray(params.size)
@@ -48,8 +47,7 @@ class AdamOptimizer(private val params: List<Param>) : Optimizer {
             v[i] = beta2 * v[i] + ( 1 - beta2 ) * grad[i] * grad[i]
             val mHat = m[i] / (1 - currentBeta1)
             val vHat = v[i] / (1 - currentBeta2)
-            params[i].value -= ( 1 ) * alpha * mHat / ( sqrt(vHat) + epsilon )
+            params[i].value -= alpha * mHat / ( sqrt(vHat) + epsilon )
         }
     }
-
 }

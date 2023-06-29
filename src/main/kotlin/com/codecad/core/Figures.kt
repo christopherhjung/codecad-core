@@ -9,7 +9,7 @@ enum class LineType(val prio: Int){
 
 abstract class Figure()
 
-class Line2(val p0: Point2, val p1: Point2) : Figure(){
+class Segment2(val p0: Point2, val p1: Point2) : Figure(){
     val squaredLength : Expr
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
 
@@ -46,21 +46,6 @@ class FunctionFigure( val function: (Expr) -> Point2) : Figure(){
 }
 
 class Point2(val x: Expr, val y: Expr) : Figure() {
-    companion object{
-        fun onCircle(center: Point2, radius: Expr, angle: Expr) : Point2 {
-            return Point2(
-                (center.x + radius * Expr.cos(angle)),
-                (center.y + radius * Expr.sin(angle))
-            )
-        }
-
-        fun ifExpr(condition: Expr, left: Point2, right: Point2) : Point2 {
-            return Point2(
-                Expr.ifExpr(condition, left.x, right.x),
-                Expr.ifExpr(condition, left.y, right.y)
-            )
-        }
-    }
 
     fun absoluteAngle(target: Point2) : Double{
         val a = target.x.world.AXIS_X.p1
@@ -150,5 +135,101 @@ class Point2(val x: Expr, val y: Expr) : Figure() {
 
     override fun toString(): String {
         return "com.codecad.core.Point(x=$x, y=$y)"
+    }
+
+    companion object{
+        fun onCircle(center: Point2, radius: Expr, angle: Expr) : Point2 {
+            return Point2(
+                (center.x + radius * Expr.cos(angle)),
+                (center.y + radius * Expr.sin(angle))
+            )
+        }
+
+        fun ifExpr(condition: Expr, left: Point2, right: Point2) : Point2 {
+            return Point2(
+                Expr.ifExpr(condition, left.x, right.x),
+                Expr.ifExpr(condition, left.y, right.y)
+            )
+        }
+    }
+}
+
+class Point3(val x: Expr, val y: Expr, val z: Expr) : Figure() {
+
+    fun normalized() : Point3 {
+        return this / length()
+    }
+
+    fun copy(): Point3 {
+        return Point3(x.evalLiteral(), y.evalLiteral(), z.evalLiteral())
+    }
+
+    fun dot(other: Point3) : Expr {
+        return x * other.x + y * other.y + z * other.z
+    }
+
+    fun cross(other: Point3): Point3 {
+        val x = y * other.z - z * other.y
+        val y = z * other.x - this.x * other.z
+        return Point3(this.x * other.y - this.y * other.x, x, y)
+    }
+
+    operator fun times(other: Expr) : Point3 {
+        return Point3(x * other, y * other, z * other)
+    }
+
+    operator fun times(other: Double) : Point3 {
+        val value = x.world.literal(other)
+        return Point3(x * value, y * value, z * value)
+    }
+
+    operator fun div(other: Expr) : Point3 {
+        return Point3(x / other, y / other, z / other)
+    }
+
+    operator fun div(other: Double) : Point3 {
+        val value = x.world.literal(other)
+        return Point3(x / value, y / value, z / value)
+    }
+
+    operator fun plus(right: Point3) : Point3 {
+        return Point3(x + right.x, y + right.y, z + right.z)
+    }
+
+    operator fun minus(right: Point3) : Point3 {
+        return Point3(x - right.x, y - right.y, z - right.z)
+    }
+
+    operator fun minus(right: Expr) : Point3 {
+        return Point3(x - right, y - right, z - right)
+    }
+
+    fun squaredLength(): Expr {
+        return x.pow(2) + y.pow(2) + z.pow(2)
+    }
+
+    fun length(): Expr {
+        return squaredLength().sqrt()
+    }
+
+    fun squaredLength(other: Point2): Expr {
+        return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
+    }
+
+    fun length(other: Point2): Expr {
+        return squaredLength(other).sqrt()
+    }
+
+    override fun toString(): String {
+        return "com.codecad.core.Point(x=$x, y=$y)"
+    }
+
+    companion object{
+        operator fun Double.times(point: Point3): Point3 {
+            return Point3(point.x * this, point.y * this, point.z * this)
+        }
+        operator fun Expr.times(point: Point3): Point3 {
+            return Point3(point.x * this, point.y * this, point.z * this)
+        }
     }
 }

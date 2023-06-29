@@ -11,7 +11,7 @@ class Sketch(val project: Project) {
     val figures = ArrayList<Figure>()
     val lineType = HashMap<Figure, LineType>()
 
-    fun createParam(value: Double = 0.0): Param {
+    fun param(value: Double = 0.0): Param {
         val param = Param( world, value )
         project.tracker.params.add(param)
         params.add(param)
@@ -22,7 +22,7 @@ class Sketch(val project: Project) {
         return world.literal(value)
     }
 
-    fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
+    fun constPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
         val a = createLiteral(x)
         val b = createLiteral(y)
         val point = Point2(a, b)
@@ -30,20 +30,20 @@ class Sketch(val project: Project) {
         return point
     }
 
-    fun createPoint(x: Expr, y: Expr): Point2 {
+    fun point(x: Expr, y: Expr): Point2 {
         val point = Point2(x,y)
         figures.add(point)
         return point
     }
 
-    fun createPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
-        val a = createParam(x)
-        val b = createParam(y)
-        return createPoint(a,b)
+    fun point(x: Double = 0.0, y: Double = 0.0): Point2 {
+        val a = param(x)
+        val b = param(y)
+        return point(a,b)
     }
 
-    fun createLine(a: Point2, b: Point2, type: LineType = LineType.Normal): Line2 {
-        val line = Line2(a, b)
+    fun createLine(a: Point2, b: Point2, type: LineType = LineType.Normal): Segment2 {
+        val line = Segment2(a, b)
         figures.add(line)
         lineType.putIfAbsent(line, type)
         return line
@@ -68,15 +68,15 @@ class Sketch(val project: Project) {
     }
 
     fun createCircle(): Circle {
-        return createCircle(createPoint(), createParam(1.0))
+        return createCircle(point(), param(1.0))
     }
 
-    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line2 {
-        return createLine(createPoint(x, y), createPoint(x2, y2))
+    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
+        return createLine(point(x, y), point(x2, y2))
     }
 
-    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Line2 {
-        return createLine(createConstPoint(x, y), createConstPoint(x2, y2))
+    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
+        return createLine(constPoint(x, y), constPoint(x2, y2))
     }
 
     fun addConstraintImpl(constraint: Constraint){
@@ -243,10 +243,10 @@ class Rect : Component() {
 
     lateinit var center: Point2
 
-    lateinit var top: Line2
-    lateinit var right: Line2
-    lateinit var bottom: Line2
-    lateinit var left: Line2
+    lateinit var top: Segment2
+    lateinit var right: Segment2
+    lateinit var bottom: Segment2
+    lateinit var left: Segment2
 
     lateinit var width: Expr
     lateinit var height: Expr

@@ -1,7 +1,5 @@
-import com.codecad.core.SketchScope.Companion.AXIS_X
-import com.codecad.core.SketchScope.Companion.ORIGIN
-import com.codecad.core.Expr
 import com.codecad.core.project
+import com.codecad.core.sketch.Expr
 
 
 project {
@@ -11,8 +9,8 @@ project {
     sketch {
         //circle(point(0.0,0.0), const(1.0))
 
-        val a = line(ORIGIN,point(1.0,0.5))
-        val b = line(ORIGIN,point(1.0,1.0))
+        val a = line(origin(),point(1.0,0.5))
+        val b = line(origin(),point(1.0,1.0))
 
 
         //perpendicular(a,b)
@@ -25,8 +23,8 @@ project {
         radius = param(1.2)
         val arc = arc(point(1.5,0.5), radius!!, param(0.2), param(90.0 unit deg))
 
-        pointOnArcEnd(b.p1, arc)
-        pointOnArcStart(a.p1, arc)
+        equals(b.p1, arc.p1)
+        equals(a.p1, arc.p0)
         equalLength(a,b)
         length = param(1.0 unit mm)
         length(a, length!!)

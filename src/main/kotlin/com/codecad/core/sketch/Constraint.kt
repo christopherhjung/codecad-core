@@ -1,7 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.Circle
-import com.codecad.core.Line2
+import com.codecad.core.Segment2
 import com.codecad.core.Point2
 
 abstract class Constraint {
@@ -57,19 +57,19 @@ class com.codecad.core.PointOnLine(val point: com.codecad.core.Point, val line: 
     }
 }
 */
-class LineLength(val line: Line2, val length: Expr) : Constraint() {
+class LineLength(val line: Segment2, val length: Expr) : Constraint() {
     override fun equationImpl(): Expr {
         return (line.length - length).pow(2)
     }
 }
 
-class EqualLength(val line1: Line2, val line2: Line2) : Constraint() {
+class EqualLength(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         return (line1.length - line2.length).pow(2)
     }
 }
 
-class Horizontal(val line: Line2) : Constraint() {
+class Horizontal(val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
         val angle = Expr.asin(direction.y / direction.length())
@@ -77,7 +77,7 @@ class Horizontal(val line: Line2) : Constraint() {
     }
 }
 
-class Vertical(val line: Line2) : Constraint() {
+class Vertical(val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
         val angle = Expr.asin(direction.x / direction.length())
@@ -85,7 +85,7 @@ class Vertical(val line: Line2) : Constraint() {
     }
 }
 
-class CircleTangent(val circle: Circle, val line: Line2) : Constraint() {
+class CircleTangent(val circle: Circle, val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
         val distanceCenter = line.p0 - circle.center
@@ -95,18 +95,18 @@ class CircleTangent(val circle: Circle, val line: Line2) : Constraint() {
     }
 }
 
-fun pointAlongLine(line: Line2, r: Expr): Point2 {
+fun pointAlongLine(line: Segment2, r: Expr): Point2 {
     return line.p0 + line.difference * r
 }
 
-fun projectionFactorBetween(line: Line2, point: Point2): Expr {
+fun projectionFactorBetween(line: Segment2, point: Point2): Expr {
     val dx = line.p0.x - line.p1.x
     val dy = line.p0.y - line.p1.y
     val len2 = dx * dx + dy * dy;
     return -((point.x - line.p0.x) * dx + (point.y - line.p0.y) * dy) / len2
 }
 
-fun projectOntoLine(line: Line2, point: Point2): Point2 {
+fun projectOntoLine(line: Segment2, point: Point2): Point2 {
     val r = projectionFactorBetween(line, point)
     return pointAlongLine(line, r)
 }
@@ -117,7 +117,7 @@ fun distanceBetweenPoints(p0: Point2, p1: Point2): Expr {
     return (dx * dx + dy * dy).sqrt();
 }
 
-class Perpendicular(val line1: Line2, val line2: Line2) : Constraint() {
+class Perpendicular(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         return line1.direction.scalar(line2.direction).pow(2)
     }
@@ -144,13 +144,13 @@ fun lineCross(line1: com.codecad.core.Line, line2: com.codecad.core.Line, cross:
     }
 }*/
 
-class Parallel(val line1: Line2, val line2: Line2) : Constraint() {
+class Parallel(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         return line1.direction.cross(line2.direction).pow(2)
     }
 }
 
-class Colinear(val line1: Line2, val line2: Line2) : Constraint() {
+class Colinear(val line1: Segment2, val line2: Segment2) : Constraint() {
     /*override fun error(): Double {
         var error = 0.0
         val dx = line1.b.x.value - line1.a.x.value
@@ -193,7 +193,7 @@ class PointOnCircle(val point: Point2, val circle: Circle) : Constraint() {
     }
 }
 
-class PointOnLine(val point: Point2, val line: Line2) : Constraint() {
+class PointOnLine(val point: Point2, val line: Segment2) : Constraint() {
 
     override fun equationImpl(): Expr {
         return (line.p0 - point).normalized().cross(line.direction).pow(2)
@@ -206,13 +206,13 @@ class Concentric(val circle1: Circle, val circle2: Circle) : Constraint() {
     }
 }
 
-class PointOnLineMidpoint(val point: Point2, val line: Line2) : Constraint() {
+class PointOnLineMidpoint(val point: Point2, val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         return (line.midPoint - point).squaredLength()
     }
 }
 
-class InternalAngle(val line1: Line2, val line2: Line2, val angle: Expr) : Constraint() {
+class InternalAngle(val line1: Segment2, val line2: Segment2, val angle: Expr) : Constraint() {
     override fun equationImpl(): Expr {
         return (line1.direction.scalar(line2.direction) - Expr.cos(angle)).pow(2)
     }

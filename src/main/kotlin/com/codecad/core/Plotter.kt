@@ -5,17 +5,17 @@ import com.codecad.core.sketch.World
 import kotlin.math.cos
 import kotlin.math.sin
 
-interface Span{
+interface Plotter{
     fun getPoint(t: Double): Point2
 }
 
-class LineSpan(val line: Line2) : Span {
+class LinePlotter(val line: Segment2) : Plotter {
     override fun getPoint(t: Double) : Point2 {
         return (line.difference * t + line.p0).copy()
     }
 }
 
-class CircleSpan(val circle: Circle) : Span {
+class CirclePlotter(val circle: Circle) : Plotter {
     override fun getPoint(t: Double): Point2 {
         if(t == 0.0 || t==1.0){
             return circle.center + Point2(circle.radius, circle.radius.world.ZERO)
@@ -29,7 +29,7 @@ class CircleSpan(val circle: Circle) : Span {
     }
 }
 
-class ArcSpan(val arc: Arc) : Span {
+class ArcPlotter(val arc: Arc) : Plotter {
     val start = arc.center.absoluteAngle(arc.p0)
     var end = arc.center.absoluteAngle(arc.p1)
     val diff: Double
@@ -55,7 +55,7 @@ class ArcSpan(val arc: Arc) : Span {
     }
 }
 
-class FunctionSpan(func: FunctionFigure) : Span {
+class FunctionPlotter(func: FunctionFigure) : Plotter {
     private val t: Param = Param(World(), 0.0)
     private val formula: Point2 = func.function(t)
 

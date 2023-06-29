@@ -38,8 +38,8 @@ class PatternScope(project: Project, val count: Int, val center: Point2) : Sketc
                 sketch.figures.add(
                     if(element is Point2){
                         rotatePoint(element, angle)
-                    }else if(element is Line2){
-                        Line2(
+                    }else if(element is Segment2){
+                        Segment2(
                             rotatePoint(element.p0, angle),
                             rotatePoint(element.p1, angle)
                         )
@@ -117,7 +117,7 @@ open class SketchScope(val project: Project) {
     }
 
     fun param(value: Number = 0.0): Expr {
-        return sketch.createParam(value.toDouble())
+        return sketch.param(value.toDouble())
     }
 
     fun <T> list() : MutableList<T>{
@@ -129,18 +129,18 @@ open class SketchScope(val project: Project) {
     }
 
     fun literalPoint(x: Number = 0.0, y: Number = 0.0): Point2 {
-        return sketch.createConstPoint(x.toDouble(), y.toDouble())
+        return sketch.constPoint(x.toDouble(), y.toDouble())
     }
 
     fun point(x: Number = 0.0, y: Number = 0.0): Point2 {
-        return sketch.createPoint(x.toDouble(), y.toDouble())
+        return sketch.point(x.toDouble(), y.toDouble())
     }
 
-    fun line(a: Point2, b: Point2): Line2 {
+    fun line(a: Point2, b: Point2): Segment2 {
         return sketch.createLine(a, b, LineType.Normal)
     }
 
-    fun cline(a: Point2, b: Point2): Line2 {
+    fun cline(a: Point2, b: Point2): Segment2 {
         return sketch.createLine(a, b, LineType.Construction)
     }
 
@@ -156,8 +156,8 @@ open class SketchScope(val project: Project) {
         return sketch.createFunction(block)
     }
 
-    fun polygon(vararg points: Point2) : List<Line2> {
-        val lines = mutableListOf<Line2>()
+    fun polygon(vararg points: Point2) : List<Segment2> {
+        val lines = mutableListOf<Segment2>()
         for ((left, right) in points.toList().rollover()) {
             lines.add(line(left, right))
         }
@@ -165,27 +165,27 @@ open class SketchScope(val project: Project) {
         return lines
     }
 
-    fun line(x: Number = 0.0, y: Number = 0.0, x2: Number = 0.0, y2: Number = 0.0): Line2 {
+    fun line(x: Number = 0.0, y: Number = 0.0, x2: Number = 0.0, y2: Number = 0.0): Segment2 {
         return sketch.createLine(x.toDouble(), y.toDouble(), x2.toDouble(), y2.toDouble())
     }
 
-    fun tangent(circle: Circle, line: Line2) {
+    fun tangent(circle: Circle, line: Segment2) {
         addConstraintImpl(CircleTangent(circle, line))
     }
 
-    fun pointOnLineMidpoint(point: Point2, line: Line2) {
+    fun pointOnLineMidpoint(point: Point2, line: Segment2) {
         addConstraintImpl(PointOnLineMidpoint(point, line))
     }
 
-    fun pointOnLine(point: Point2, line: Line2) {
+    fun pointOnLine(point: Point2, line: Segment2) {
         addConstraintImpl(PointOnLine(point, line))
     }
 
-    fun horizontal(line: Line2) {
+    fun horizontal(line: Segment2) {
         addConstraintImpl(Horizontal(line))
     }
 
-    fun vertical(line: Line2) {
+    fun vertical(line: Segment2) {
         addConstraintImpl(Vertical(line))
     }
 
@@ -193,15 +193,15 @@ open class SketchScope(val project: Project) {
         addConstraintImpl(PointOnCircle(point, circle))
     }
 
-    fun equalLength(line1: Line2, line2: Line2) {
+    fun equalLength(line1: Segment2, line2: Segment2) {
         addConstraintImpl(EqualLength(line1, line2))
     }
 
-    fun length(line1: Line2, length: Expr) {
+    fun length(line1: Segment2, length: Expr) {
         addConstraintImpl(LineLength(line1, length))
     }
 
-    fun angle(line1: Line2, line2: Line2, angle: Expr) {
+    fun angle(line1: Segment2, line2: Segment2, angle: Expr) {
         addConstraintImpl(InternalAngle(line1, line2, angle))
     }
 
@@ -209,11 +209,11 @@ open class SketchScope(val project: Project) {
         addConstraintImpl(constraint)
     }
 
-    fun perpendicular(line1: Line2, line2: Line2){
+    fun perpendicular(line1: Segment2, line2: Segment2){
         addConstraintImpl(Perpendicular(line1, line2))
     }
 
-    fun parallel(line1: Line2, line2: Line2){
+    fun parallel(line1: Segment2, line2: Segment2){
         addConstraintImpl(Parallel(line1, line2))
     }
 
@@ -237,11 +237,11 @@ open class SketchScope(val project: Project) {
         return sketch.world.ORIGIN
     }
 
-    fun axisX() : Line2 {
+    fun axisX() : Segment2 {
         return sketch.world.AXIS_X
     }
 
-    fun axisY() : Line2 {
+    fun axisY() : Segment2 {
         return sketch.world.AXIS_Y
     }
 
@@ -302,10 +302,10 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
             continue
         }
 
-        if(figure is Line2){
+        if(figure is Segment2){
             list.add(LineD(figure.p0.fixed(), figure.p1.fixed()))
         }else if(figure is Arc){
-            val span = ArcSpan(figure)
+            val span = ArcPlotter(figure)
             var last: Point2? = null
             for( i in 0 .. 200){
                 val t = i / 200.0
@@ -317,7 +317,7 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
                 last = point
             }
         }else if(figure is Circle){
-            val span = CircleSpan(figure)
+            val span = CirclePlotter(figure)
             var last: Point2? = null
             for( i in 0 .. 500){
                 val t = i / 500.0
@@ -329,7 +329,7 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
                 last = point
             }
         }else if(figure is FunctionFigure){
-            val span = FunctionSpan(figure)
+            val span = FunctionPlotter(figure)
             var last: Point2? = null
             for( i in 0 .. 500){
                 val t = i / 500.0
@@ -347,11 +347,11 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
 fun figureToPoints(figure: Figure) : List<PointD>{
     val list = mutableListOf<PointD>()
 
-    if(figure is Line2){
+    if(figure is Segment2){
         list.add(figure.p0.fixed())
         list.add(figure.p1.fixed())
     }else if(figure is Arc){
-        val span = ArcSpan(figure)
+        val span = ArcPlotter(figure)
         for( i in 0 .. 200){
             val t = i / 200.0
 
@@ -359,7 +359,7 @@ fun figureToPoints(figure: Figure) : List<PointD>{
             list.add(point.fixed())
         }
     }else if(figure is Circle){
-        val span = CircleSpan(figure)
+        val span = CirclePlotter(figure)
         var last: Point2? = null
         for( i in 0 .. 500){
             val t = i / 500.0
@@ -368,7 +368,7 @@ fun figureToPoints(figure: Figure) : List<PointD>{
             list.add(point.fixed())
         }
     }else if(figure is FunctionFigure){
-        val span = FunctionSpan(figure)
+        val span = FunctionPlotter(figure)
         var last: Point2? = null
         for( i in 0 .. 500){
             val t = i / 500.0
