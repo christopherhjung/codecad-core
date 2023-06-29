@@ -42,6 +42,16 @@ class TupleExpr(private val elems: Array<Expr>) : Expr {
         return TupleExpr(newElems)
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TupleExpr) return false
+        return elems.contentEquals(other.elems)
+    }
+
+    override fun hashCode(): Int {
+        return elems.contentHashCode()
+    }
+
     companion object {
         fun asTuple(expr: Expr): TupleExpr {
             return if (expr is TupleExpr) {
@@ -51,4 +61,6 @@ class TupleExpr(private val elems: Array<Expr>) : Expr {
             }
         }
     }
+
+
 }

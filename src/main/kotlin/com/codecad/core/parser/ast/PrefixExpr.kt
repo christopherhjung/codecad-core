@@ -35,4 +35,16 @@ class PrefixExpr(private val expr: Expr, private val op: Op) : Expr {
         val newExpr = expr.bind(scope, false)
         return PrefixExpr(newExpr, op)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PrefixExpr) return false
+        return expr === other.expr || op === other.op
+    }
+
+    override fun hashCode(): Int {
+        var result = expr.hashCode()
+        result = 31 * result + op.hashCode()
+        return result
+    }
 }

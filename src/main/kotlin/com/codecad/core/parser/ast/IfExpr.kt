@@ -24,4 +24,17 @@ class IfExpr(private val condition: Expr, private val trueBranch: Expr, private 
             }
         } else IfExpr(newCondition, newTrueBranch, newFalseBranch)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is IfExpr) return false
+        return condition === other.condition && trueBranch === other.trueBranch && falseBranch === other.falseBranch
+    }
+
+    override fun hashCode(): Int {
+        var result = condition.hashCode()
+        result = 31 * result + trueBranch.hashCode()
+        result = 31 * result + (falseBranch?.hashCode() ?: 0)
+        return result
+    }
 }

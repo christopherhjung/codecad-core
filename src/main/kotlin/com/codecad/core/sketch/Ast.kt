@@ -235,79 +235,6 @@ abstract class UnaryExpr(world: World, val left: Expr) : Expr(world){
     }
 }
 
-class PowExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
-    override fun eval() : Any {
-        return left.evalDouble().pow(right.evalDouble())
-    }
-
-    override fun derivative(param: Param): Expr {
-        return if(right is Literal){
-            right * left.pow(right - 1) * left.derivative(param)
-        }else{
-            (right.derivative(param) * log(left) + right / left * left.derivative(param)) * this
-        }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is PowExpr && super.equals(other)
-    }
-}
-
-class CosExpr( world: World, val left: Expr ) : Expr(world){
-    override fun eval() : Any {
-        return cos(left.evalDouble())
-    }
-
-    override fun derivative(param: Param): Expr {
-        return -sin(left) * left.derivative(param)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is CosExpr && super.equals(other)
-    }
-}
-
-class Asin(world: World, val left: Expr ) : Expr(world){
-    override fun eval() : Any {
-        return asin(left.evalDouble())
-    }
-
-    override fun derivative(param: Param): Expr {
-        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(param)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is Asin && super.equals(other)
-    }
-}
-
-class SinExpr(world: World, val left: Expr) : Expr(world){
-    override fun eval() : Any {
-        return sin(left.evalDouble())
-    }
-
-    override fun derivative(param: Param): Expr {
-        return cos(left) * left.derivative(param)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is SinExpr && super.equals(other)
-    }
-}
-
-class LogExpr(world: World, val left: Expr) : Expr(world){
-    override fun eval() : Any {
-        return log(left.evalDouble(), Math.E)
-    }
-
-    override fun derivative(param: Param): Expr {
-        return left.derivative(param) / this
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is LogExpr && super.equals(other)
-    }
-}
 
 abstract class CommutativeValue(world: World, left: Expr, right: Expr): BinaryExpr(world, left, right){
     override fun equals(other: Any?): Boolean {
@@ -437,6 +364,16 @@ class IfExpr(world: World, val condition: Expr, left: Expr, right: Expr) : Binar
     }
 }
 
+class Tuple(world: World, val values: Array<Expr>) : Expr(world){
+    override fun eval() : Any {
+        return Array(values.size){ values[it].eval()}
+    }
+
+    override fun derivative(param: Param): Expr {
+        return Tuple(world, Array(values.size){ values[it].derivative(param)})
+    }
+}
+
 class AbsExpr(world: World, val left: Expr) : Expr(world){
     override fun eval() : Any {
         return abs(left.evalDouble())
@@ -466,12 +403,77 @@ class SignExpr(world: World, val left: Expr) : Expr(world ){
     }
 }
 
-class Tuple(world: World, val values: Array<Expr>) : Expr(world){
+
+class PowExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
-        return Array(values.size){ values[it].eval()}
+        return left.evalDouble().pow(right.evalDouble())
     }
 
     override fun derivative(param: Param): Expr {
-        return Tuple(world, Array(values.size){ values[it].derivative(param)})
+        return if(right is Literal){
+            right * left.pow(right - 1) * left.derivative(param)
+        }else{
+            (right.derivative(param) * log(left) + right / left * left.derivative(param)) * this
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is PowExpr && super.equals(other)
+    }
+}
+
+class CosExpr( world: World, val left: Expr ) : Expr(world){
+    override fun eval() : Any {
+        return cos(left.evalDouble())
+    }
+
+    override fun derivative(param: Param): Expr {
+        return -sin(left) * left.derivative(param)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is CosExpr && super.equals(other)
+    }
+}
+
+class Asin(world: World, val left: Expr ) : Expr(world){
+    override fun eval() : Any {
+        return asin(left.evalDouble())
+    }
+
+    override fun derivative(param: Param): Expr {
+        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(param)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Asin && super.equals(other)
+    }
+}
+
+class SinExpr(world: World, val left: Expr) : Expr(world){
+    override fun eval() : Any {
+        return sin(left.evalDouble())
+    }
+
+    override fun derivative(param: Param): Expr {
+        return cos(left) * left.derivative(param)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is SinExpr && super.equals(other)
+    }
+}
+
+class LogExpr(world: World, val left: Expr) : Expr(world){
+    override fun eval() : Any {
+        return log(left.evalDouble(), Math.E)
+    }
+
+    override fun derivative(param: Param): Expr {
+        return left.derivative(param) / this
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is LogExpr && super.equals(other)
     }
 }

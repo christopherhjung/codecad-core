@@ -130,4 +130,17 @@ class InfixExpr(private val lhs: Expr, private val rhs: Expr, private val op: Op
         }
         return newExpr
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is InfixExpr) return false
+        return lhs === other.lhs && rhs === other.rhs && op === other.op
+    }
+
+    override fun hashCode(): Int {
+        var result = lhs.hashCode()
+        result = 31 * result + rhs.hashCode()
+        result = 31 * result + op.hashCode()
+        return result
+    }
 }
