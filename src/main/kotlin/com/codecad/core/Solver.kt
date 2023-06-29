@@ -1,5 +1,6 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.World
 import kotlin.math.abs
 
 val minErrorChange = 1e-18
@@ -7,11 +8,11 @@ val targetError = 1e-8
 
 class Solver(val tracker: Tracker) {
 
-    fun solve(x: List<Set<Param>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
+    fun solve(world: World, x: List<Set<Param>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
         val current = mutableListOf<Param>()
         val number = x.sumOf { it.size }
 
-        var errorTerm: Expr = Literal.ZERO
+        var errorTerm: Expr = world.ZERO
 
         for(constraint in constraints){
             val eq = constraint.equation

@@ -1,8 +1,6 @@
 package com.codecad.core
 
 import com.codecad.common.PointD
-import com.codecad.core.SketchScope.Companion.AXIS_X
-import java.lang.Math.atan2
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
@@ -57,18 +55,18 @@ class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure
             )
         }
 
-        fun conditional(condition: Expr, left: Point, right: Point) : Point {
+        fun ifExpr(condition: Expr, left: Point, right: Point) : Point {
             return Point(
-                Expr.conditional(condition, left.x, right.x),
-                Expr.conditional(condition, left.y, right.y)
+                Expr.ifExpr(condition, left.x, right.x),
+                Expr.ifExpr(condition, left.y, right.y)
             )
         }
     }
 
     fun absoluteAngle(target: Point) : Double{
-        val a = AXIS_X.p1
+        val a = target.x.world.AXIS_X.p1
         val b = target - this
-        return atan2((a.x * b.y - a.y * b.x).evalDouble() , (a.x * b.x + a.y * b.y).evalDouble())
+        return kotlin.math.atan2((a.x * b.y - a.y * b.x).evalDouble(), (a.x * b.x + a.y * b.y).evalDouble())
     }
 
     fun normalized() : Point {
@@ -86,7 +84,7 @@ class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure
     }
 
     fun copy(): Point {
-        return Point(Expr.const(x.evalDouble()), Expr.const(y.evalDouble()))
+        return Point(x.evalLiteral(), y.evalLiteral())
     }
 
     fun fixed() : PointD {
@@ -110,7 +108,7 @@ class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure
     }
 
     operator fun times(other: Double) : Point {
-        val value = Expr.const(other)
+        val value = x.world.literal(other)
         return Point(x * value, y * value)
     }
 
@@ -119,7 +117,7 @@ class Point(val x: Expr, val y: Expr, type: LineType = LineType.Normal) : Figure
     }
 
     operator fun div(other: Double) : Point {
-        val value = Expr.const(other)
+        val value = x.world.literal(other)
         return Point(x / value, y / value)
     }
 

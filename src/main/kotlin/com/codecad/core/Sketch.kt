@@ -1,11 +1,13 @@
 package com.codecad.core
 
 import com.codecad.common.LineError
+import com.codecad.core.sketch.World
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 class Sketch(val project: Project) {
+    val world = World()
     val params = HashSet<Param>()
     val constraints = HashSet<Constraint>()
     val figures = TreeSet<Figure>(){ a, b  ->
@@ -13,22 +15,20 @@ class Sketch(val project: Project) {
         if(comp == 0) 1 else comp
     }
 
-    class PruningEntry(var fixed: Expr? = null)
-
     fun createParam(value: Double = 0.0): Param {
-        val param = Param(value )
+        val param = Param( world, value )
         project.tracker.params.add(param)
         params.add(param)
         return param
     }
 
-    fun createConst(value: Double = 0.0): Literal {
-        return Expr.const(value)
+    fun createLiteral(value: Double = 0.0) : Expr {
+        return world.literal(value)
     }
 
     fun createConstPoint(x: Double = 0.0, y: Double = 0.0): Point {
-        val a = createConst(x)
-        val b = createConst(y)
+        val a = createLiteral(x)
+        val b = createLiteral(y)
         val point = Point(a, b)
         figures.add(point)
         return point
@@ -155,7 +155,7 @@ class Sketch(val project: Project) {
 
     fun solveImpl(accuracy: Double, params: List<Set<Param>> = listOf(this.params)) : Boolean{
         val solver = Solver(project.tracker)
-        val result = solver.solve(listOf(this.params), ArrayList(constraints),accuracy)
+        val result = solver.solve(world, listOf(this.params), ArrayList(constraints),accuracy)
         return result
     }
 

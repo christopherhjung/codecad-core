@@ -1,9 +1,9 @@
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.SketchScope.Companion.ORIGIN
 import com.codecad.core.Expr.Companion.cos
 import com.codecad.core.Expr.Companion.sin
+import com.codecad.core.sketch.World
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
 import com.codecad.core.test.addVolumes
@@ -22,7 +22,8 @@ class SketchTest {
 
     @Test
     fun cubicDerivativeTest() {
-        val param = Param(Math.PI)
+        val world = World()
+        val param = Param(world, Math.PI)
         val x2 = param.pow(3)
         val derivative = x2.derivative(param)
         val value = derivative.evalDouble()
@@ -31,8 +32,9 @@ class SketchTest {
 
     @Test
     fun constBecomeConst() {
-        val param1 = Literal(Math.PI)
-        val param2 = Literal(Math.PI)
+        val world = World()
+        val param1 = world.literal(Math.PI)
+        val param2 = world.literal(Math.PI)
         val x2 = param1.pow(param2)
         assertTrue(x2 is Literal)
         assertEquals(x2.value, Math.PI.pow(Math.PI))
@@ -40,7 +42,8 @@ class SketchTest {
 
     @Test
     fun absTest() {
-        val param1 = Param(1.0)
+        val world = World()
+        val param1 = Param(world, 1.0)
         val abs = Expr.abs(param1)
         val derivative = abs.derivative(param1)
 
@@ -70,13 +73,13 @@ class SketchTest {
                 equals(topLine.length, rightArc.radius)
 
                 equals(vertLine.length, vertLine2.length)
-                equals(vertLine2.length, const(2.0))
+                equals(vertLine2.length, literal(2.0))
 
                 equals(leftArc.center, vertLine.midPoint)
                 equals(rightArc.center, vertLine2.midPoint)
 
                 equals(leftArc.radius, topLine.length)
-                equals(topLine.p0, ORIGIN)
+                equals(topLine.p0, origin())
 
                 equals(topLine.p0.y, topLine.p1.y)
             }
@@ -95,15 +98,15 @@ class SketchTest {
                 val points2 = list<Point>()
 
                 val repeat = 10
-                pattern(repeat / 2, ORIGIN) { center ->
+                pattern(repeat / 2, origin()) { center ->
                     val a = line(center, point(1.0, 1.0))
                     val b = line(center, point(1.0, 0.5))
 
                     val arc = arc(b.p1, a.p1, param(1.0))
 
-                    angle(a, b, const((360.0 / repeat) unit deg))
+                    angle(a, b, literal((360.0 / repeat) unit deg))
                     equals(a.length, b.length)
-                    equals(b.length, const(1.0))
+                    equals(b.length, literal(1.0))
                     tangent(arc, a)
 
                     all(a.p1, points)
@@ -149,10 +152,10 @@ class SketchTest {
         val project = project {
             val big = sketch {
                 polygon(
-                    Point(const(-0.5), const(-0.5)),
-                    Point(const(0.5), const(-0.5)),
-                    Point(const(0.5), const(0.5)),
-                    Point(const(-0.5), const(0.5)),
+                    Point(literal(-0.5), literal(-0.5)),
+                    Point(literal(0.5), literal(-0.5)),
+                    Point(literal(0.5), literal(0.5)),
+                    Point(literal(-0.5), literal(0.5)),
                 )
             }
 
@@ -162,15 +165,15 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(const(-0.2 + posX), const(-0.2 + posY)),
-                    Point(const(0.2 + posX), const(-0.2 + posY)),
-                    Point(const(0.2 + posX), const(0.2 + posY)),
-                    Point(const(-0.2 + posX), const(0.2 + posY)),
+                    Point(literal(-0.2 + posX), literal(-0.2 + posY)),
+                    Point(literal(0.2 + posX), literal(-0.2 + posY)),
+                    Point(literal(0.2 + posX), literal(0.2 + posY)),
+                    Point(literal(-0.2 + posX), literal(0.2 + posY)),
                 )
             }
 
-            extrude(big, Literal(1.0))
-            extrude(small, Literal(2.0))
+            extrude(big, Literal(World(), 1.0))
+            extrude(small, Literal(World(), 2.0))
         }
 
         val model = mapModel(project)
@@ -273,13 +276,13 @@ class SketchTest {
                 equals(topLine.length, rightArc.radius)
 
                 equals(vertLine.length, vertLine2.length)
-                equals(vertLine2.length, const(2.0))
+                equals(vertLine2.length, literal(2.0))
 
                 equals(leftArc.center, vertLine.midPoint )
                 equals(rightArc.center, vertLine2.midPoint )
 
                 equals(leftArc.radius, topLine.length)
-                equals(topLine.p0, ORIGIN)
+                equals(topLine.p0, origin())
 
                 equals(topLine.p0.y, topLine.p1.y)
 
@@ -295,15 +298,15 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(const(-2 + posX), const(-2.5 + posY)),
-                    Point(const(2.5 + posX), const(-2.5 + posY)),
-                    Point(const(2.5 + posX), const(0.1 + posY)),
-                    Point(const(-2 + posX), const(0.1 + posY)),
+                    Point(literal(-2 + posX), literal(-2.5 + posY)),
+                    Point(literal(2.5 + posX), literal(-2.5 + posY)),
+                    Point(literal(2.5 + posX), literal(0.1 + posY)),
+                    Point(literal(-2 + posX), literal(0.1 + posY)),
                 )
             }
 
-            extrude(small, Literal(1.0))
-            extrude(a, Literal(0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
+            extrude(small, Literal(World(),1.0))
+            extrude(a, Literal(World(),0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
         }
 
 
@@ -322,29 +325,29 @@ class SketchTest {
 
             val small = sketch {
                 val rect = create(Rect::class)
-                equals(rect.center, ORIGIN)
-                equals(rect.width, const(4))
-                equals(rect.height, const(5))
+                equals(rect.center, origin())
+                equals(rect.width, literal(4))
+                equals(rect.height, literal(5))
                 equals(rect.top.p0.y, rect.top.p1.y)
             }
 
             val hole = sketch {
                 val rect = create(RoundRect::class)
-                equals(rect.center, constPoint(0,1))
-                equals(rect.width, const(1))
-                equals(rect.height, const(1))
+                equals(rect.center, literalPoint(0,1))
+                equals(rect.width, literal(1))
+                equals(rect.height, literal(1))
             }
 
             val hole2 = sketch {
                 val rect = create(RoundRect::class)
-                equals(rect.center, constPoint(0,-1))
-                equals(rect.width, const(1))
-                equals(rect.height, const(2))
+                equals(rect.center, literalPoint(0,-1))
+                equals(rect.width, literal(1))
+                equals(rect.height, literal(2))
             }
 
-            extrude(small, Literal(1.0))
-            extrude(hole, Literal(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
-            extrude(hole2, Literal(0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(small, Literal(World(), 1.0))
+            extrude(hole, Literal(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(hole2, Literal(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
 
         }
 
@@ -360,10 +363,10 @@ class SketchTest {
         val project = project {
             val big = sketch {
                 polygon(
-                    Point(const(-0.5), const(-0.5)),
-                    Point(const(0.5), const(-0.5)),
-                    Point(const(0.5), const(0.5)),
-                    Point(const(-0.5), const(0.5)),
+                    Point(literal(-0.5), literal(-0.5)),
+                    Point(literal(0.5), literal(-0.5)),
+                    Point(literal(0.5), literal(0.5)),
+                    Point(literal(-0.5), literal(0.5)),
                 )
             }
 
@@ -372,15 +375,15 @@ class SketchTest {
 
             val small = sketch {
                 polygon(
-                    Point(const(-0.2 + posX), const(-0.2 + posY)),
-                    Point(const(0.2 + posX), const(-0.2 + posY)),
-                    Point(const(0.2 + posX), const(0.2 + posY)),
-                    Point(const(-0.2 + posX), const(0.2 + posY)),
+                    Point(literal(-0.2 + posX), literal(-0.2 + posY)),
+                    Point(literal(0.2 + posX), literal(-0.2 + posY)),
+                    Point(literal(0.2 + posX), literal(0.2 + posY)),
+                    Point(literal(-0.2 + posX), literal(0.2 + posY)),
                 )
             }
 
-            extrude(big, Literal(1.0))
-            extrude(small, Literal(2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
+            extrude(big, Literal(World(), 1.0))
+            extrude(small, Literal(World(), 2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
         }
 
         val model = mapModel(project)

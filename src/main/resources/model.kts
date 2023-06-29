@@ -2,7 +2,6 @@ import com.codecad.core.SketchScope.Companion.AXIS_X
 import com.codecad.core.SketchScope.Companion.ORIGIN
 import com.codecad.core.Expr
 import com.codecad.core.project
-import com.codecad.core.sketch
 
 
 project {
@@ -31,8 +30,8 @@ project {
         equalLength(a,b)
         length = param(1.0 unit mm)
         length(a, length!!)
-        angle(a,b,const(30.0 unit deg))
-        angle(a, AXIS_X, const(30.0 unit deg))
+        angle(a,b,literal(30.0 unit deg))
+        angle(a, AXIS_X, literal(30.0 unit deg))
 
         //pointOnLine(arc.center, b)
         tangent(arc, a)

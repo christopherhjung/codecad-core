@@ -24,12 +24,12 @@ project {
     val a = sketch {
 
         offset(Point(Literal(0.0),Literal(0.0)), -0.1){
-            cycloid(const(teeth * offset),const(offset))
+            cycloid(literal(teeth * offset),literal(offset))
         }
 
 
         pattern(5, ORIGIN){
-            circle(constPoint(0.5,0), const(0.2))
+            circle(literalPoint(0.5,0), literal(0.2))
         }
     }
 

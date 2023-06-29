@@ -30,7 +30,7 @@ class PatternScope(project: Project, val count: Int, val center: Point) : Sketch
         val rawElements = sketch.figures.toList()
 
         for(i in 0 until count - 1){
-            val angle = const((2 * Math.PI / count) * (i + 1))
+            val angle = literal((2 * Math.PI / count) * (i + 1))
             current = i
 
             for(element in rawElements){
@@ -73,9 +73,8 @@ open class SketchScope(val project: Project) {
     val sketch = Sketch(project)
 
     companion object{
-        val ORIGIN = Point(Expr.const(0.0), Expr.const(0.0))
-        val AXIS_X = LineSegment(ORIGIN, Point(Expr.const(1.0), Expr.const(0.0)))
-        val AXIS_Y = LineSegment(ORIGIN, Point(Expr.const(0.0), Expr.const(1.0)))
+        /*
+        */
     }
 
     val deg = 0
@@ -124,11 +123,11 @@ open class SketchScope(val project: Project) {
         return mutableListOf()
     }
 
-    fun const(value: Number = 0.0): Literal {
-        return sketch.createConst(value.toDouble())
+    fun literal(value: Number = 0.0): Expr {
+        return sketch.createLiteral(value.toDouble())
     }
 
-    fun constPoint(x: Number = 0.0, y: Number = 0.0): Point {
+    fun literalPoint(x: Number = 0.0, y: Number = 0.0): Point {
         return sketch.createConstPoint(x.toDouble(), y.toDouble())
     }
 
@@ -231,6 +230,18 @@ open class SketchScope(val project: Project) {
 
     fun radius(circle: Circle, value: Expr) {
         addConstraintImpl(Radius(circle, value))
+    }
+
+    fun origin() : Point {
+        return sketch.world.ORIGIN
+    }
+
+    fun axisX() : LineSegment {
+        return sketch.world.AXIS_X
+    }
+
+    fun axisY() : LineSegment {
+        return sketch.world.AXIS_Y
     }
 
     private fun addConstraintImpl(constraint: Constraint){

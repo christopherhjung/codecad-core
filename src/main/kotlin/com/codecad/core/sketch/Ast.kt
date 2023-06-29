@@ -1,8 +1,9 @@
 package com.codecad.core
 
+import com.codecad.core.sketch.World
 import kotlin.math.*
 
-abstract class Expr{
+abstract class Expr(val world: World){
     abstract fun eval() : Any
     fun evalDouble() : Double{
         return eval() as Double
@@ -10,45 +11,20 @@ abstract class Expr{
     fun evalBoolean() : Boolean{
         return eval() == true
     }
+    fun evalLiteral() : Expr{
+        return world.literal(eval())
+    }
 
     operator fun unaryMinus() : Expr {
-        return if(hasConstValue(this, 0.0)){
-            Literal.ZERO
-        }else if(this is Literal && value is Double){
-            Expr.const(-value)
-        }else{
-            Expr.cached {
-                NegExpr(this)
-            }
-        }
+        return world.negate(this)
     }
 
     operator fun minus(right: Expr) : Expr {
-        return if(hasConstValue(this, 0.0)){
-            right.unaryMinus()
-        }else if(hasConstValue(right, 0.0)){
-            this
-        }else if(hasConstValue(this, 1.0) && hasConstValue(right, 1.0)){
-            Literal.ZERO
-        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
-            Expr.const(evalDouble() - right.evalDouble())
-        }else if(this === right){
-            Literal.ZERO
-        }else{
-            Expr.cached {
-                SubExpr(this, right)
-            }
-        }
+        return world.sub(this, right)
     }
 
     operator fun minus(right: Double) : Expr {
-        return if(Literal.isDouble(this)){
-            Expr.const(evalDouble() - right)
-        }else{
-            Expr.cached {
-                SubExpr(this, Expr.const(right))
-            }
-        }
+        return world.sub(this, world.literal(right))
     }
 
     operator fun minus(right: Int) : Expr {
@@ -56,73 +32,23 @@ abstract class Expr{
     }
 
     operator fun plus(right: Expr) : Expr {
-        return if(hasConstValue(this, 0.0)){
-            right
-        }else if(hasConstValue(right, 0.0)){
-            this
-        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
-            Expr.const(evalDouble() + right.evalDouble())
-        }else if(this === right){
-            Expr.cached {
-                TimesExpr(Expr.const(2.0), right)
-            }
-        }else{
-            Expr.cached {
-                AddExpr(this, right)
-            }
-        }
+        return world.add(this, right)
     }
 
     operator fun plus(right: Double) : Expr {
-        return if(Literal.isDouble(this)){
-            Expr.const(evalDouble() + right)
-        }else{
-            Expr.cached {
-                AddExpr(this, Expr.const(right))
-            }
-        }
+        return world.add(this, world.literal(right))
     }
 
     operator fun plus(right: Int) : Expr {
         return plus(right.toDouble())
     }
 
-    fun hasConstValue(value: Expr, expect: Double) : Boolean{
-        return value is Literal && value.value == expect
-    }
-
     operator fun times(right: Expr) : Expr {
-        return if(hasConstValue(this, 0.0) || hasConstValue(right, 0.0)){
-            Literal.ZERO
-        }else if(hasConstValue(this, 1.0)){
-            right
-        }else if(hasConstValue(right, 1.0)){
-            this
-        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
-            Expr.const(evalDouble() * right.evalDouble())
-        }else if(this === right){
-            Expr.cached {
-                PowExpr(this, Expr.const(2.0))
-            }
-        }else{
-            Expr.cached {
-                TimesExpr(this, right)
-            }
-        }
+        return world.mul(this, right)
     }
 
     operator fun times(right: Double) : Expr {
-        return if(right == 0.0) {
-            Literal.ZERO
-        }else if(right == 1.0) {
-            this
-        }else if(Literal.isDouble(this)){
-            Expr.const(evalDouble() * right)
-        }else{
-            Expr.cached {
-                TimesExpr(this, Expr.const(right))
-            }
-        }
+        return world.mul(this, world.literal(right))
     }
 
     operator fun times(right: Int) : Expr {
@@ -130,31 +56,11 @@ abstract class Expr{
     }
 
     operator fun div(right: Expr) : Expr {
-        return if(this is Literal && value == 0.0){
-            Literal.ZERO
-        }else if(right is Literal && right.value == 1.0){
-            this
-        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
-            Expr.const(evalDouble() / right.evalDouble())
-        }else if(this === right){
-            Literal.ONE
-        }else{
-            Expr.cached {
-                DivExpr(this, right)
-            }
-        }
+        return world.div(this, right)
     }
 
     operator fun div(right: Double) : Expr {
-        return if(right == 1.0){
-            this
-        }else if(Literal.isDouble(this)){
-            Expr.const(evalDouble() / right)
-        }else{
-            Expr.cached {
-                DivExpr(this, Literal(right))
-            }
-        }
+        return world.div(this, world.literal(right))
     }
 
     operator fun div(right: Int) : Expr {
@@ -162,32 +68,11 @@ abstract class Expr{
     }
 
     fun pow(right : Expr) : Expr {
-        return if(hasConstValue(right, 0.0)){
-            Literal.ONE
-        }else if(hasConstValue(right, 1.0)){
-            this
-        }else if(hasConstValue(this, 0.0)){
-            Literal.ZERO
-        }else if(Literal.isDouble(this) && Literal.isDouble(right)){
-            Expr.const(evalDouble().pow(right.evalDouble()))
-        }else{
-            Expr.cached { PowExpr(this, right) }
-        }
-
+        return world.pow(this, right)
     }
 
     fun pow(right : Double) : Expr {
-        return if(right == 0.0){
-            Literal.ONE
-        }else if(right == 1.0){
-            this
-        }else if(Literal.isDouble(this)){
-            Expr.const(evalDouble().pow(right))
-        }else{
-            Expr.cached {
-                PowExpr(this, Expr.const(right))
-            }
-        }
+        return world.pow(this, world.literal(right))
     }
 
     fun pow(right : Int) : Expr {
@@ -199,24 +84,11 @@ abstract class Expr{
     }
 
     fun smaller(other: Expr) : Expr {
-        val newVal =  LtExpr(this, other)
-        if(this is Literal && other is Literal){
-            return Expr.const(newVal.evalDouble())
-        }
-
-        return Expr.cached {
-            newVal
-        }
+        return world.lt(this, other)
     }
 
     companion object{
         private val repeatCache = HashMap<Expr, Expr>()
-
-        fun const(value: Double) : Literal {
-            return cached {
-                Literal(value)
-            }
-        }
 
         fun <T> cached(block: () -> T) : T where T : Expr {
             val newVal = block()
@@ -225,78 +97,40 @@ abstract class Expr{
             } as T
         }
 
-        fun cos(value: Expr) : Expr {
-            return if(Literal.isDouble(value)){
-                const(cos(value.evalDouble()))
-            }else{
-                cached {
-                    CosExpr(value)
-                }
-            }
+        fun cos(expr: Expr) : Expr {
+            return expr.world.cos(expr)
         }
 
-        fun sin(value: Expr) : Expr {
-            return if(Literal.isDouble(value)){
-                const(sin(value.evalDouble()))
-            }else{
-                cached {
-                    SinExpr(value)
-                }
-            }
+        fun sin(expr: Expr) : Expr {
+            return expr.world.sin(expr)
         }
 
-        fun log(value: Expr) : Expr {
-            return if(Literal.isDouble(value)){
-                const(log(value.evalDouble(), Math.E))
-            }else{
-                cached {
-                    LogExpr(value)
-                }
-            }
+        fun asin(expr: Expr) : Expr {
+            return expr.world.asin(expr)
         }
 
-        fun conditional(condition: Expr, left: Expr, right: Expr) : Expr {
-            return if(Literal.isBoolean(condition)){
-                if(condition.evalBoolean()){
-                    left
-                }else{
-                    right
-                }
-            }else if(left is Literal && right is Literal && left == right){
-                left
-            }else{
-                cached {
-                    IfExpr(condition, left, right)
-                }
-            }
+        fun log(expr: Expr) : Expr {
+            return expr.world.log(expr)
+        }
+
+        fun ifExpr(condition: Expr, left: Expr, right: Expr) : Expr {
+            return condition.world.ifExpr(condition, left, right)
         }
 
         fun min(left: Expr, right: Expr) : Expr {
-            return conditional(left.smaller(right), left, right)
+            return ifExpr(left.smaller(right), left, right)
         }
 
         fun max(left: Expr, right: Expr) : Expr {
-            return conditional(left.smaller(right), right, left)
+            return ifExpr(left.smaller(right), right, left)
         }
 
-        fun abs(other: Expr) : Expr {
-            return if(Literal.isDouble(other)){
-                const(abs(other.evalDouble()))
-            }else{
-                cached {
-                    AbsExpr(other)
-                }
-            }
+        fun abs(expr: Expr) : Expr {
+            return expr.world.abs(expr)
         }
 
-        fun sign(other: Expr) : Expr {
-            return if(Literal.isDouble(other)){
-                const(sign(other.evalDouble()))
-            }else{
-                cached {
-                    SignExpr(other)
-                }
-            }
+        fun sign(expr: Expr) : Expr {
+            return expr.world.sign(expr)
         }
     }
 
@@ -304,28 +138,25 @@ abstract class Expr{
 }
 
 operator fun Double.minus(right: Expr) : Expr {
-    return Expr.const(this) - right
+    return right.world.literal(this) - right
 }
 
 operator fun Double.times(right: Expr) : Expr {
-    return Expr.const(this) * right
+    return right.world.literal(this) * right
 }
 
 operator fun Double.div(right: Expr) : Expr {
-    return Expr.const(this) / right
+    return right.world.literal(this) / right
 }
 
 fun Double.pow(right: Expr) : Expr {
-    return Expr.const(this).pow(right)
+    return right.world.literal(this).pow(right)
 }
 
 
 
-class Literal(val value: Any) : Expr() {
+class Literal(world: World, val value: Any) : Expr(world) {
     companion object{
-        val ZERO = Literal(0.0)
-        val ONE = Literal(1.0)
-
         fun isDouble(expr : Expr) : Boolean{
             return expr is Literal && expr.value is Double
         }
@@ -340,7 +171,7 @@ class Literal(val value: Any) : Expr() {
     }
 
     override fun derivative(param: Param): Expr {
-        return ZERO
+        return world.ZERO
     }
 
     override fun equals(other: Any?): Boolean {
@@ -353,16 +184,16 @@ class Literal(val value: Any) : Expr() {
 }
 
 
-class Param(var value : Double) : Expr() {
+class Param(world: World, var value : Double) : Expr(world) {
     override fun eval(): Any {
         return value
     }
 
     override fun derivative(param: Param): Expr {
         return if(this === param){
-            Literal.ONE
+            world.ONE
         }else{
-            Literal.ZERO
+            world.ZERO
         }
     }
 
@@ -371,7 +202,7 @@ class Param(var value : Double) : Expr() {
     }
 }
 
-class DeriveExpr(target: Expr, param: Param) : Expr(){
+class DeriveExpr(world: World, target: Expr, param: Param) : Expr(world){
     var expr: Expr = target.derivative(param)
 
     override fun eval() : Any {
@@ -379,7 +210,7 @@ class DeriveExpr(target: Expr, param: Param) : Expr(){
     }
 
     override fun derivative(param: Param): Expr {
-        return DeriveExpr(this, param)
+        return DeriveExpr(world, this, param)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -387,7 +218,7 @@ class DeriveExpr(target: Expr, param: Param) : Expr(){
     }
 }
 
-abstract class BinaryExpr(val left: Expr, val right: Expr) : Expr(){
+abstract class BinaryExpr(world: World, val left: Expr, val right: Expr) : Expr(world){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is BinaryExpr) return false
@@ -401,7 +232,7 @@ abstract class BinaryExpr(val left: Expr, val right: Expr) : Expr(){
     }
 }
 
-abstract class UnaryExpr(val left: Expr) : Expr(){
+abstract class UnaryExpr(world: World, val left: Expr) : Expr(world){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is UnaryExpr) return false
@@ -414,7 +245,7 @@ abstract class UnaryExpr(val left: Expr) : Expr(){
     }
 }
 
-class PowExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+class PowExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
         return left.evalDouble().pow(right.evalDouble())
     }
@@ -432,7 +263,7 @@ class PowExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
     }
 }
 
-class CosExpr(left: Expr ) : UnaryExpr(left){
+class CosExpr( world: World, val left: Expr ) : Expr(world){
     override fun eval() : Any {
         return cos(left.evalDouble())
     }
@@ -446,7 +277,7 @@ class CosExpr(left: Expr ) : UnaryExpr(left){
     }
 }
 
-class ArcSinExpr(left: Expr ) : UnaryExpr(left){
+class Asin(world: World, val left: Expr ) : Expr(world){
     override fun eval() : Any {
         return asin(left.evalDouble())
     }
@@ -456,11 +287,11 @@ class ArcSinExpr(left: Expr ) : UnaryExpr(left){
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is ArcSinExpr && super.equals(other)
+        return other is Asin && super.equals(other)
     }
 }
 
-class SinExpr(left: Expr) : UnaryExpr(left){
+class SinExpr(world: World, val left: Expr) : Expr(world){
     override fun eval() : Any {
         return sin(left.evalDouble())
     }
@@ -474,7 +305,7 @@ class SinExpr(left: Expr) : UnaryExpr(left){
     }
 }
 
-class LogExpr(left: Expr) : UnaryExpr(left){
+class LogExpr(world: World, val left: Expr) : Expr(world){
     override fun eval() : Any {
         return log(left.evalDouble(), Math.E)
     }
@@ -488,7 +319,7 @@ class LogExpr(left: Expr) : UnaryExpr(left){
     }
 }
 
-abstract class CommutativeValue(left: Expr, right: Expr): BinaryExpr(left, right){
+abstract class CommutativeValue(world: World, left: Expr, right: Expr): BinaryExpr(world, left, right){
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CommutativeValue) return false
@@ -509,7 +340,7 @@ abstract class CommutativeValue(left: Expr, right: Expr): BinaryExpr(left, right
     }
 }
 
-class AddExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
+class AddExpr(world: World, left: Expr, right: Expr) : CommutativeValue(world, left, right){
     override fun eval() : Any {
         return left.evalDouble() + right.evalDouble()
     }
@@ -523,7 +354,7 @@ class AddExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
     }
 }
 
-class TimesExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
+class TimesExpr(world: World, left: Expr, right: Expr) : CommutativeValue(world, left, right){
     override fun eval() : Any {
         return left.evalDouble() * right.evalDouble()
     }
@@ -537,13 +368,13 @@ class TimesExpr(left: Expr, right: Expr) : CommutativeValue(left, right){
     }
 }
 
-class LtExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+class LtExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
         return left.evalDouble() < right.evalDouble()
     }
 
     override fun derivative(param: Param): Expr {
-        return Literal.ZERO
+        return world.ZERO
     }
 
     override fun equals(other: Any?): Boolean {
@@ -551,7 +382,7 @@ class LtExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
     }
 }
 
-class DivExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+class DivExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
         return left.evalDouble() / right.evalDouble()
     }
@@ -565,7 +396,7 @@ class DivExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
     }
 }
 
-class SubExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
+class SubExpr(world: World, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
         return left.evalDouble() - right.evalDouble()
     }
@@ -579,7 +410,7 @@ class SubExpr(left: Expr, right: Expr) : BinaryExpr(left, right){
     }
 }
 
-class NegExpr(left: Expr) : UnaryExpr(left){
+class NegExpr(world: World, val left: Expr) : Expr(world){
     override fun eval() : Any {
         return -left.evalDouble()
     }
@@ -593,13 +424,13 @@ class NegExpr(left: Expr) : UnaryExpr(left){
     }
 }
 
-class IfExpr(val condition: Expr, left: Expr, right: Expr) : BinaryExpr(left, right){
+class IfExpr(world: World, val condition: Expr, left: Expr, right: Expr) : BinaryExpr(world, left, right){
     override fun eval() : Any {
         return if(condition.eval() == true) left.evalDouble() else right.evalDouble()
     }
 
     override fun derivative(param: Param) : Expr {
-        return conditional(condition, left.derivative(param), right.derivative(param))
+        return ifExpr(condition, left.derivative(param), right.derivative(param))
     }
 
     override fun equals(other: Any?): Boolean {
@@ -616,14 +447,14 @@ class IfExpr(val condition: Expr, left: Expr, right: Expr) : BinaryExpr(left, ri
     }
 }
 
-class AbsExpr(left: Expr) : UnaryExpr(left){
+class AbsExpr(world: World, val left: Expr) : Expr(world){
     override fun eval() : Any {
         return abs(left.evalDouble())
     }
 
     override fun derivative(param: Param): Expr {
         val derivative = left.derivative(param)
-        return conditional(left.smaller(Literal.ZERO), -derivative, derivative)
+        return ifExpr(left.smaller(world.ZERO), -derivative, derivative)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -631,13 +462,13 @@ class AbsExpr(left: Expr) : UnaryExpr(left){
     }
 }
 
-class SignExpr(left: Expr) : UnaryExpr(left){
+class SignExpr(world: World, val left: Expr) : Expr(world ){
     override fun eval() : Any {
         return sign(left.evalDouble())
     }
 
     override fun derivative(param: Param): Expr {
-        return Literal.ZERO
+        return world.ZERO
     }
 
     override fun equals(other: Any?): Boolean {
@@ -645,12 +476,12 @@ class SignExpr(left: Expr) : UnaryExpr(left){
     }
 }
 
-class Tuple(val values: Array<Expr>) : Expr(){
+class Tuple(world: World, val values: Array<Expr>) : Expr(world){
     override fun eval() : Any {
         return Array(values.size){ values[it].eval()}
     }
 
     override fun derivative(param: Param): Expr {
-        return Tuple(Array(values.size){ values[it].derivative(param)})
+        return Tuple(world, Array(values.size){ values[it].derivative(param)})
     }
 }

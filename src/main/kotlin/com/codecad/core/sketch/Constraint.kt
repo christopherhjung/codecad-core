@@ -72,7 +72,7 @@ class EqualLength(val line1: LineSegment, val line2: LineSegment) : Constraint()
 class Horizontal(val line: LineSegment) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
-        val angle = ArcSinExpr(direction.y / direction.length())
+        val angle = Expr.asin(direction.y / direction.length())
         return angle.pow(2)
     }
 }
@@ -80,7 +80,7 @@ class Horizontal(val line: LineSegment) : Constraint() {
 class Vertical(val line: LineSegment) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
-        val angle = ArcSinExpr(direction.x / direction.length())
+        val angle = Expr.asin(direction.x / direction.length())
         return angle.pow(2)
     }
 }
@@ -214,7 +214,7 @@ class PointOnLineMidpoint(val point: Point, val line: LineSegment) : Constraint(
 
 class InternalAngle(val line1: LineSegment, val line2: LineSegment, val angle: Expr) : Constraint() {
     override fun equationImpl(): Expr {
-        return (line1.direction.scalar(line2.direction) - CosExpr(angle)).pow(2)
+        return (line1.direction.scalar(line2.direction) - Expr.cos(angle)).pow(2)
     }
 }
 

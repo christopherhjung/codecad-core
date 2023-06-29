@@ -1,4 +1,5 @@
 import com.codecad.core.*
+import com.codecad.core.sketch.World
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
@@ -8,8 +9,9 @@ class CacheTest {
 
     @Test
     fun cacheTest(){
-        val a = Param(2.0)
-        val b = Param(3.0)
+        val world = World();
+        val a = Param(world, 2.0)
+        val b = Param(world, 3.0)
         assertSame(a + b, a + b)
         assertSame(a * b, a * b)
         assertSame(a / b, a / b)
@@ -19,8 +21,9 @@ class CacheTest {
 
     @Test
     fun commuTest(){
-        val a = Param(2.0)
-        val b = Param(3.0)
+        val world = World();
+        val a = Param(world, 2.0)
+        val b = Param(world, 3.0)
         assertSame(a + b, b + a)
         assertSame(a * b, b * a)
         assertNotSame(a / b, b / a)
@@ -30,31 +33,35 @@ class CacheTest {
 
     @Test
     fun equalsTest(){
-        val a = Param(2.0)
-        val b = Param(3.0)
-        assertEquals(AddExpr(a,b), AddExpr(a,b))
-        assertEquals(TimesExpr(a,b), TimesExpr(a,b))
-        assertEquals(DivExpr(a,b), DivExpr(a,b))
-        assertEquals(PowExpr(a,b), PowExpr(a,b))
+        val world = World();
+        val a = Param(world, 2.0)
+        val b = Param(world,3.0)
+        assertEquals(world.add(a,b), world.add(a,b))
+        assertEquals(world.mul(a,b), world.mul(a,b))
+        assertEquals(world.div(a,b), world.div(a,b))
+        assertEquals(world.pow(a,b), world.pow(a,b))
     }
 
     @Test
     fun addSimplification(){
-        val a = Param(2.0)
+        val world = World();
+        val a = Param(world, 2.0)
         assertSame(a+a, 2.0 * a)
     }
 
     @Test
     fun timesSimplification(){
-        val a = Param(2.0)
+        val world = World();
+        val a = Param(world, 2.0)
         assertSame(a*a, a.pow(2))
     }
 
     @Test
     fun complexCacheTest(){
-        val a = Param(2.0)
-        val b = Param(3.0)
-        val c = Param(3.0)
+        val world = World();
+        val a = Param(world, 2.0)
+        val b = Param(world, 3.0)
+        val c = Param(world, 3.0)
         assertSame(a + b * c, c * b + a )
     }
 }
