@@ -42,41 +42,109 @@ class Sketch(val project: Project) {
         return point(a,b)
     }
 
-    fun createLine(a: Point2, b: Point2, type: LineType = LineType.Normal): Segment2 {
+    fun line(a: Point2, b: Point2, type: LineType = LineType.Normal): Segment2 {
         val line = Segment2(a, b)
         figures.add(line)
         lineType.putIfAbsent(line, type)
         return line
     }
 
-    fun createCircle(center: Point2, radius: Expr): Circle {
+    fun cline(a: Point2, b: Point2) : Segment2{
+        return line(a,b,LineType.Construction)
+    }
+
+    fun circle(center: Point2, radius: Expr): Circle {
         val circle = Circle(center, radius)
         figures.add(circle)
         return circle
     }
 
-    fun createArc(p0: Point2, p1: Point2, radius: Expr): Arc {
+    fun arc(p0: Point2, p1: Point2, radius: Expr): Arc {
         val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
     }
 
-    fun createFunction(function : (Expr) -> Point2) : FunctionFigure {
+    fun func(function : (Expr) -> Point2) : FunctionFigure {
         val function = FunctionFigure(function)
         figures.add(function)
         return function
     }
 
-    fun createCircle(): Circle {
-        return createCircle(point(), param(1.0))
+    fun circle(): Circle {
+        return circle(point(), param(1.0))
     }
 
-    fun createLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
-        return createLine(point(x, y), point(x2, y2))
+    fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
+        return line(point(x, y), point(x2, y2))
     }
 
-    fun createConstLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
-        return createLine(constPoint(x, y), constPoint(x2, y2))
+    fun constLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): Segment2 {
+        return line(constPoint(x, y), constPoint(x2, y2))
+    }
+
+    fun tangent(circle: Circle, line: Segment2) {
+        addConstraintImpl(CircleTangent(circle, line))
+    }
+
+    fun pointOnLineMidpoint(point: Point2, line: Segment2) {
+        addConstraintImpl(PointOnLineMidpoint(point, line))
+    }
+
+    fun pointOnLine(point: Point2, line: Segment2) {
+        addConstraintImpl(PointOnLine(point, line))
+    }
+
+    fun horizontal(line: Segment2) {
+        addConstraintImpl(Horizontal(line))
+    }
+
+    fun vertical(line: Segment2) {
+        addConstraintImpl(Vertical(line))
+    }
+
+    fun pointOnCircle(point: Point2, circle: Circle) {
+        addConstraintImpl(PointOnCircle(point, circle))
+    }
+
+    fun equalLength(line1: Segment2, line2: Segment2) {
+        addConstraintImpl(EqualLength(line1, line2))
+    }
+
+    fun length(line1: Segment2, length: Expr) {
+        addConstraintImpl(LineLength(line1, length))
+    }
+
+    fun angle(line1: Segment2, line2: Segment2, angle: Expr) {
+        addConstraintImpl(InternalAngle(line1, line2, angle))
+    }
+
+    fun addConstraint(constraint: Constraint) {
+        addConstraintImpl(constraint)
+    }
+
+    fun perpendicular(line1: Segment2, line2: Segment2){
+        addConstraintImpl(Perpendicular(line1, line2))
+    }
+
+    fun parallel(line1: Segment2, line2: Segment2){
+        addConstraintImpl(Parallel(line1, line2))
+    }
+
+    fun pointOnPoint(point1: Point2, point2: Point2) {
+        addConstraintImpl(PointOnPoint(point1, point2))
+    }
+
+    fun equal(point1: Point2, point2: Point2) {
+        addConstraintImpl(PointOnPoint(point1, point2))
+    }
+
+    fun equal(value1 : Expr, value2: Expr) {
+        addConstraintImpl(Equals(value1, value2))
+    }
+
+    fun radius(circle: Circle, value: Expr) {
+        addConstraintImpl(Radius(circle, value))
     }
 
     fun addConstraintImpl(constraint: Constraint){
@@ -193,8 +261,7 @@ class Sketch(val project: Project) {
 
 
 abstract class Component{
-    //abstract fun names() : List<String>
-    abstract fun build(sketch: SketchScope)
+    abstract fun build(sketch: Sketch)
 }
 
 class RoundRect : Component(){
@@ -202,7 +269,7 @@ class RoundRect : Component(){
     lateinit var width: Expr
     lateinit var height: Expr
 
-    override fun build(sketch: SketchScope) {
+    override fun build(sketch: Sketch) {
         with(sketch){
             val topLine = line(point(0.0, 1.0),point(1.0,1.0))
             val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
@@ -215,17 +282,17 @@ class RoundRect : Component(){
 
             val centerLine = cline(leftArc.center, rightArc.center)
 
-            equals(topLine.length, bottomLine.length)
+            equal(topLine.length, bottomLine.length)
 
             perpendicular(topLine, vertLine)
 
-            equals(leftArc.radius, rightArc.radius)
-            equals(vertLine.length, vertLine2.length)
+            equal(leftArc.radius, rightArc.radius)
+            equal(vertLine.length, vertLine2.length)
 
-            equals(topLine.p0.y, topLine.p1.y)
+            equal(topLine.p0.y, topLine.p1.y)
 
-            equals(leftArc.center, vertLine.midPoint )
-            equals(rightArc.center, vertLine2.midPoint )
+            equal(leftArc.center, vertLine.midPoint )
+            equal(rightArc.center, vertLine2.midPoint )
 
             center = centerLine.midPoint
             width = centerLine.length
@@ -255,7 +322,7 @@ class Rect : Component() {
         return listOf("width", "height", "top", "bottom")
     }
 
-    override fun build(sketch: SketchScope) {
+    override fun build(sketch: Sketch) {
         with(sketch){
             a = point(0.0,0.0)
             b = point(1.0,0.0)
@@ -271,9 +338,9 @@ class Rect : Component() {
             height = right.length
             center = (a + b + c + d) / 4.0
 
-            equals((c-a).length(), (d - b).length())
-            equals(top.length , bottom.length)
-            equals(left.length , right.length)
+            equal((c-a).length(), (d - b).length())
+            equal(top.length , bottom.length)
+            equal(left.length , right.length)
         }
     }
 }

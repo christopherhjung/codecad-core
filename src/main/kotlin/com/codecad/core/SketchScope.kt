@@ -73,11 +73,6 @@ class PatternScope(project: Project, val count: Int, val center: Point2) : Sketc
 open class SketchScope(val project: Project) {
     val sketch = Sketch(project)
 
-    companion object{
-        /*
-        */
-    }
-
     val deg = 0
     val rad = 1
 
@@ -85,7 +80,7 @@ open class SketchScope(val project: Project) {
     val cm = 3
 
     fun Expr.isEquals(other : Expr) {
-        equals(this, other)
+        equal(this, other)
     }
 
     infix fun Double.unit(other: Int): Double {
@@ -98,13 +93,13 @@ open class SketchScope(val project: Project) {
 
     fun <T> create(type: KClass<T>) : T where T : Component{
         val component = type.constructors.first().call()
-        component.build(this)
+        component.build(sketch)
         return component
     }
 
     inline fun <reified T> create() : T where T : Component{
         val component = T::class.constructors.first().call()
-        component.build(this)
+        component.build(sketch)
         return component
     }
 
@@ -137,23 +132,23 @@ open class SketchScope(val project: Project) {
     }
 
     fun line(a: Point2, b: Point2): Segment2 {
-        return sketch.createLine(a, b, LineType.Normal)
+        return sketch.line(a, b, LineType.Normal)
     }
 
     fun cline(a: Point2, b: Point2): Segment2 {
-        return sketch.createLine(a, b, LineType.Construction)
+        return sketch.line(a, b, LineType.Construction)
     }
 
     fun circle(center: Point2, radius: Expr): Circle {
-        return sketch.createCircle(center, radius)
+        return sketch.circle(center, radius)
     }
 
     fun arc(p0: Point2, p1: Point2, radius: Expr): Arc {
-        return sketch.createArc(p0,p1,radius)
+        return sketch.arc(p0,p1,radius)
     }
 
     fun func(block: (Expr) -> Point2): FunctionFigure {
-        return sketch.createFunction(block)
+        return sketch.func(block)
     }
 
     fun polygon(vararg points: Point2) : List<Segment2> {
@@ -166,7 +161,7 @@ open class SketchScope(val project: Project) {
     }
 
     fun line(x: Number = 0.0, y: Number = 0.0, x2: Number = 0.0, y2: Number = 0.0): Segment2 {
-        return sketch.createLine(x.toDouble(), y.toDouble(), x2.toDouble(), y2.toDouble())
+        return sketch.line(x.toDouble(), y.toDouble(), x2.toDouble(), y2.toDouble())
     }
 
     fun tangent(circle: Circle, line: Segment2) {
@@ -221,11 +216,11 @@ open class SketchScope(val project: Project) {
         addConstraintImpl(PointOnPoint(point1, point2))
     }
 
-    fun equals(point1: Point2, point2: Point2) {
+    fun equal(point1: Point2, point2: Point2) {
         addConstraintImpl(PointOnPoint(point1, point2))
     }
 
-    fun equals(value1 : Expr, value2: Expr) {
+    fun equal(value1 : Expr, value2: Expr) {
         addConstraintImpl(Equals(value1, value2))
     }
 
@@ -247,11 +242,11 @@ open class SketchScope(val project: Project) {
 
     private fun addConstraintImpl(constraint: Constraint){
         //val callersLineNumber = Thread.currentThread().stackTrace[3].lineNumber
-        //sketch.addConstraint(constraint).lineNumber = callersLineNumber
+        sketch.addConstraint(constraint)
     }
 
     fun add(component: Component){
-        component.build(this)
+        component.build(sketch)
     }
 }
 

@@ -1,8 +1,8 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.Circle
-import com.codecad.core.Segment2
 import com.codecad.core.Point2
+import com.codecad.core.Segment2
 
 abstract class Constraint {
     var cache: Expr? = null

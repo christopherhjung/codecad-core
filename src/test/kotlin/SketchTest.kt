@@ -67,22 +67,22 @@ class SketchTest {
 
                 val leftArc = arc(vertLine.p0, vertLine.p1, param(1.0))
                 val rightArc = arc(vertLine2.p1, vertLine2.p0, param(1.0))
-                equals(topLine.length, bottomLine.length)
+                equal(topLine.length, bottomLine.length)
                 perpendicular(topLine, vertLine)
-                equals(topLine.length, bottomLine.length)
-                equals(leftArc.radius, rightArc.radius)
-                equals(topLine.length, rightArc.radius)
+                equal(topLine.length, bottomLine.length)
+                equal(leftArc.radius, rightArc.radius)
+                equal(topLine.length, rightArc.radius)
 
-                equals(vertLine.length, vertLine2.length)
-                equals(vertLine2.length, literal(2.0))
+                equal(vertLine.length, vertLine2.length)
+                equal(vertLine2.length, literal(2.0))
 
-                equals(leftArc.center, vertLine.midPoint)
-                equals(rightArc.center, vertLine2.midPoint)
+                equal(leftArc.center, vertLine.midPoint)
+                equal(rightArc.center, vertLine2.midPoint)
 
-                equals(leftArc.radius, topLine.length)
-                equals(topLine.p0, origin())
+                equal(leftArc.radius, topLine.length)
+                equal(topLine.p0, origin())
 
-                equals(topLine.p0.y, topLine.p1.y)
+                equal(topLine.p0.y, topLine.p1.y)
             }
         }
 
@@ -106,8 +106,8 @@ class SketchTest {
                     val arc = arc(b.p1, a.p1, param(1.0))
 
                     angle(a, b, literal((360.0 / repeat) unit deg))
-                    equals(a.length, b.length)
-                    equals(b.length, literal(1.0))
+                    equal(a.length, b.length)
+                    equal(b.length, literal(1.0))
                     tangent(arc, a)
 
                     all(a.p1, points)
@@ -265,7 +265,7 @@ class SketchTest {
                 val rightArc = arc(vertLine2.p1, vertLine2.p0, param(1.0))
 
 
-                equals(topLine.length, bottomLine.length)
+                equal(topLine.length, bottomLine.length)
 
 
 
@@ -273,19 +273,19 @@ class SketchTest {
 
 
 
-                equals(leftArc.radius, rightArc.radius)
-                equals(topLine.length, rightArc.radius)
+                equal(leftArc.radius, rightArc.radius)
+                equal(topLine.length, rightArc.radius)
 
-                equals(vertLine.length, vertLine2.length)
-                equals(vertLine2.length, literal(2.0))
+                equal(vertLine.length, vertLine2.length)
+                equal(vertLine2.length, literal(2.0))
 
-                equals(leftArc.center, vertLine.midPoint )
-                equals(rightArc.center, vertLine2.midPoint )
+                equal(leftArc.center, vertLine.midPoint )
+                equal(rightArc.center, vertLine2.midPoint )
 
-                equals(leftArc.radius, topLine.length)
-                equals(topLine.p0, origin())
+                equal(leftArc.radius, topLine.length)
+                equal(topLine.p0, origin())
 
-                equals(topLine.p0.y, topLine.p1.y)
+                equal(topLine.p0.y, topLine.p1.y)
 
             }
 
@@ -326,24 +326,24 @@ class SketchTest {
 
             val small = sketch {
                 val rect = create(Rect::class)
-                equals(rect.center, origin())
-                equals(rect.width, literal(4))
-                equals(rect.height, literal(5))
-                equals(rect.top.p0.y, rect.top.p1.y)
+                equal(rect.center, origin())
+                equal(rect.width, literal(4))
+                equal(rect.height, literal(5))
+                equal(rect.top.p0.y, rect.top.p1.y)
             }
 
             val hole = sketch {
                 val rect = create(RoundRect::class)
-                equals(rect.center, literalPoint(0,1))
-                equals(rect.width, literal(1))
-                equals(rect.height, literal(1))
+                equal(rect.center, literalPoint(0,1))
+                equal(rect.width, literal(1))
+                equal(rect.height, literal(1))
             }
 
             val hole2 = sketch {
                 val rect = create(RoundRect::class)
-                equals(rect.center, literalPoint(0,-1))
-                equals(rect.width, literal(1))
-                equals(rect.height, literal(2))
+                equal(rect.center, literalPoint(0,-1))
+                equal(rect.width, literal(1))
+                equal(rect.height, literal(2))
             }
 
             extrude(small, Literal(World(), 1.0))

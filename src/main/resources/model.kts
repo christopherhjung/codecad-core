@@ -23,8 +23,8 @@ project {
         radius = param(1.2)
         val arc = arc(point(1.5,0.5), radius!!, param(0.2), param(90.0 unit deg))
 
-        equals(b.p1, arc.p1)
-        equals(a.p1, arc.p0)
+        equal(b.p1, arc.p1)
+        equal(a.p1, arc.p0)
         equalLength(a,b)
         length = param(1.0 unit mm)
         length(a, length!!)

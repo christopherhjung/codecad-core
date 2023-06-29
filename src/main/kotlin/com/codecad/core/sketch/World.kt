@@ -1,9 +1,9 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.Segment2
 import com.codecad.core.Plane
 import com.codecad.core.Point2
 import com.codecad.core.Point3
+import com.codecad.core.Segment2
 import kotlin.math.abs
 import kotlin.math.pow
 

@@ -71,6 +71,8 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.4")
     implementation("org.orbisgis:poly2tri:0.1.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
+
+    implementation("org.apache.commons:commons-lang3:3.12.0")
 }
 
 tasks.test {

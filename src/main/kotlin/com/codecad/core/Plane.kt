@@ -1,10 +1,8 @@
 package com.codecad.core
 
-import com.codecad.core.sketch.Expr
-import com.codecad.core.sketch.World
-import com.codecad.core.sketch.minus
 import com.codecad.core.Point3.Companion.times
-import kotlin.math.pow
+import com.codecad.core.sketch.Expr
+import com.codecad.core.sketch.minus
 
 class Line(val origin: Point3, val direction: Point3){
     companion object{
