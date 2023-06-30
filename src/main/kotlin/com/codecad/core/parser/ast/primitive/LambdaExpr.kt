@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.parser.controlflow.ReturnException
 import com.codecad.core.scope.NestedScope

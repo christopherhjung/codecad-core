@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.scope.Scope
 import com.codecad.core.sketch.World
@@ -68,7 +68,7 @@ class PowExpr(world: World, val left: Expr, val right: Expr) : Expr(world){
     }
 }
 
-class CosExpr( world: World, val left: Expr ) : Expr(world){
+class CosExpr( world: World, val left: Expr) : Expr(world){
     override fun eval(scope: Scope) : Any {
         return cos(left.evalDouble(scope))
     }
@@ -88,7 +88,7 @@ class CosExpr( world: World, val left: Expr ) : Expr(world){
     }
 }
 
-class Asin(world: World, val left: Expr ) : Expr(world){
+class Asin(world: World, val left: Expr) : Expr(world){
     override fun eval(scope: Scope) : Any {
         return asin(left.evalDouble(scope))
     }

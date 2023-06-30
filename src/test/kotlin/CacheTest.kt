@@ -1,6 +1,5 @@
-import com.codecad.core.*
-import com.codecad.core.parser.ast.ParamExpr
-import com.codecad.core.parser.ast.times
+import com.codecad.core.parser.ast.primitive.ParamExpr
+import com.codecad.core.parser.ast.primitive.times
 import com.codecad.core.sketch.World
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

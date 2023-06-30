@@ -10,7 +10,7 @@ fun SketchScope.cycloid(bR: Expr, sR: Expr): FunctionFigure {
     return func { t ->
         val r = t*Math.PI*2
         val combined = sR + bR
-        Point2(combined*cos(r) - sR*cos(combined*(r/sR)) ,
+        Vec2(combined*cos(r) - sR*cos(combined*(r/sR)) ,
             combined*sin(r) - sR*sin(combined*(r/sR)))
     }
 }
@@ -23,7 +23,7 @@ project {
 
     val a = sketch {
 
-        offset(Point2(Literal(0.0),Literal(0.0)), -0.1){
+        offset(Vec2(Literal(0.0),Literal(0.0)), -0.1){
             cycloid(literal(teeth * offset),literal(offset))
         }
 
@@ -33,7 +33,7 @@ project {
         }
     }
 
-    extrude(a, Point2(Literal(0.0),Literal(0.0)), Literal(0.1))
+    extrude(a, Vec2(Literal(0.0),Literal(0.0)), Literal(0.1))
 
 }
 

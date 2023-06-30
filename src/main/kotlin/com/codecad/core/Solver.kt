@@ -1,12 +1,12 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.Expr
-import com.codecad.core.parser.ast.ParamExpr
+import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.parser.ast.primitive.ParamExpr
 import com.codecad.core.sketch.Constraint
 import com.codecad.core.sketch.World
 import kotlin.math.abs
 
-val minErrorChange = 1e-18
+val minErrorChange = 1e-10
 val targetError = 1e-8
 
 class Solver(val tracker: Tracker) {
@@ -75,6 +75,7 @@ class Solver(val tracker: Tracker) {
         }
 
         println(iter)
+        println(error)
 
         return error < accuracy
     }

@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.scope.Scope
 import com.codecad.core.sketch.World
@@ -23,5 +23,9 @@ class ParamExpr(world: World, var value: Double) : Expr(world) {
         }else{
             world.ZERO
         }
+    }
+
+    override fun toString(): String {
+        return "ParamExpr(value=$value)"
     }
 }

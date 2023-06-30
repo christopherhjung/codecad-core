@@ -13,7 +13,7 @@ class Lexer(code: String) {
     }
 
     private fun curr(): Int {
-        return if (isEOL) -1 else chars[idx].toInt()
+        return if (isEOL) -1 else chars[idx].code
     }
 
     private fun currChar(): Char {
@@ -51,6 +51,10 @@ class Lexer(code: String) {
             return true
         }
         return false
+    }
+
+    fun accept(cha: Char): Boolean {
+        return accept(cha.code)
     }
 
     private val isNumeric: Boolean
@@ -100,116 +104,116 @@ class Lexer(code: String) {
         while (!isEOL) {
             enter = Token.Enter.Token
             while (true) {
-                if (accept(' '.code) || accept('\t'.code)) {
+                if (accept(' ') || accept('\t')) {
                     if (enter == Token.Enter.Token) {
                         enter = Token.Enter.Space
                     }
-                } else if (accept('\n'.code) || accept('\r'.code)) {
+                } else if (accept('\n') || accept('\r')) {
                     enter = Token.Enter.NL
                 } else {
                     break
                 }
             }
-            if (accept('='.code)) {
-                return if (accept('='.code)) {
+            if (accept('=')) {
+                return if (accept('=')) {
                     token(Token.Kind.Eq)
                 } else {
                     token(Token.Kind.Assign)
                 }
             }
-            if (accept('!'.code)) {
-                return if (accept('='.code)) {
+            if (accept('!')) {
+                return if (accept('=')) {
                     token(Token.Kind.Ne)
                 } else {
                     token(Token.Kind.Not)
                 }
             }
-            if (accept('<'.code)) {
-                return if (accept('='.code)) {
+            if (accept('<')) {
+                return if (accept('=')) {
                     token(Token.Kind.Le)
                 } else {
                     token(Token.Kind.Lt)
                 }
             }
-            if (accept('>'.code)) {
-                return if (accept('='.code)) {
+            if (accept('>')) {
+                return if (accept('=')) {
                     token(Token.Kind.Ge)
                 } else {
                     token(Token.Kind.Gt)
                 }
             }
-            if (accept('?'.code)) {
-                return if (accept('?'.code)) {
+            if (accept('?')) {
+                return if (accept('?')) {
                     token(Token.Kind.Nullish)
-                } else if (accept('.'.code)) {
+                } else if (accept('.')) {
                     token(Token.Kind.Chain)
                 } else {
                     token(Token.Kind.Quest)
                 }
             }
-            if (accept('&'.code)) {
+            if (accept('&')) {
                 return token(Token.Kind.BitAnd)
             }
-            if (accept('|'.code)) {
+            if (accept('|')) {
                 return token(Token.Kind.BitOr)
             }
-            if (accept('^'.code)) {
+            if (accept('^')) {
                 return token(Token.Kind.BitXor)
             }
-            if (accept('('.code)) {
+            if (accept('(')) {
                 return token(Token.Kind.LeftParen)
             }
-            if (accept(')'.code)) {
+            if (accept(')')) {
                 return token(Token.Kind.RightParen)
             }
-            if (accept('{'.code)) {
+            if (accept('{')) {
                 return token(Token.Kind.LeftBrace)
             }
-            if (accept('}'.code)) {
+            if (accept('}')) {
                 return token(Token.Kind.RightBrace)
             }
-            if (accept('+'.code)) {
-                if (accept('+'.code)) {
+            if (accept('+')) {
+                if (accept('+')) {
                     return token(Token.Kind.Inc)
-                } else if (accept('='.code)) {
+                } else if (accept('=')) {
                     return token(Token.Kind.AssignPlus)
                 }
                 return token(Token.Kind.Plus)
             }
-            if (accept('-'.code)) {
-                if (accept('-'.code)) {
+            if (accept('-')) {
+                if (accept('-')) {
                     return token(Token.Kind.Dec)
-                } else if (accept('>'.code)) {
+                } else if (accept('>')) {
                     return token(Token.Kind.Arrow)
-                } else if (accept('='.code)) {
+                } else if (accept('=')) {
                     return token(Token.Kind.AssignMinus)
                 }
                 return token(Token.Kind.Minus)
             }
-            if (accept('*'.code)) {
-                if (accept('*'.code)) {
+            if (accept('*')) {
+                if (accept('*')) {
                     return token(Token.Kind.Pow)
-                } else if (accept('='.code)) {
+                } else if (accept('=')) {
                     return token(Token.Kind.AssignStar)
                 }
                 return token(Token.Kind.Star)
             }
-            if (accept('/'.code)) {
-                if (accept('='.code)) {
+            if (accept('/')) {
+                if (accept('=')) {
                     return token(Token.Kind.AssignSlash)
                 }
-                if (accept('*'.code)) { // arbitrary comment
+                if (accept('*')) { // arbitrary comment
                     var depth = 1
                     while (true) {
                         if (isEOL) {
                             return token(Token.Kind.Error)
                         }
-                        if (accept('/'.code)) {
-                            if (accept('*'.code)) {
+                        if (accept('/')) {
+                            if (accept('*')) {
                                 depth += 1
                             }
-                        } else if (accept('*'.code)) {
-                            if (accept('/'.code)) {
+                        } else if (accept('*')) {
+                            if (accept('/')) {
                                 depth -= 1
                                 if (depth == 0) {
                                     break
@@ -221,12 +225,12 @@ class Lexer(code: String) {
                     }
                     continue
                 }
-                if (accept('/'.code)) {
+                if (accept('/')) {
                     while (true) {
                         if (isEOL) {
                             return token(Token.Kind.Error)
                         }
-                        if (accept('\n'.code)) {
+                        if (accept('\n')) {
                             break
                         } else {
                             next()
@@ -236,18 +240,18 @@ class Lexer(code: String) {
                 }
                 return token(Token.Kind.Slash)
             }
-            if (accept('.'.code)) {
-                if (!accept('.'.code)) {
+            if (accept('.')) {
+                if (!accept('.')) {
                     return token(Token.Kind.Dot)
                 }
-                return if (!accept('.'.code)) {
+                return if (!accept('.')) {
                     token(Token.Kind.Range)
                 } else token(Token.Kind.Ellipsis)
             }
-            if (accept(','.code)) {
+            if (accept(',')) {
                 return token(Token.Kind.Comma)
             }
-            if (accept(';'.code)) {
+            if (accept(';')) {
                 return token(Token.Kind.Semi)
             }
             if (isNumeric) {
@@ -256,6 +260,14 @@ class Lexer(code: String) {
                 while (isNumeric) {
                     shift()
                 }
+                if(accept('.')){
+                    while (isNumeric) {
+                        shift()
+                    }
+
+                    return token(Token.Kind.Real, string)
+                }
+
                 return token(Token.Kind.Number, string)
             }
             if (isAlpha) {
@@ -280,12 +292,13 @@ class Lexer(code: String) {
                     "let" -> return token(Token.Kind.Let)
                     "for" -> return token(Token.Kind.For)
                     "in" -> return token(Token.Kind.In)
+                    "sketch" -> return token(Token.Kind.Sketch)
                 }
                 return token(Token.Kind.Ident, value)
             }
-            if (accept('\"'.code)) {
+            if (accept('\"')) {
                 mark()
-                while (!accept('\"'.code)) {
+                while (!accept('\"')) {
                     if (isEOL) {
                         return token(Token.Kind.Error)
                     }

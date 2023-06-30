@@ -3,7 +3,8 @@ package com.codecad.core.parser
 import com.codecad.core.exception.ParseException
 import com.codecad.core.lexer.Lexer
 import com.codecad.core.lexer.Token
-import com.codecad.core.parser.ast.*
+import com.codecad.core.parser.ast.complex.SketchExpr
+import com.codecad.core.parser.ast.primitive.*
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.StaticScope
 import com.codecad.core.sketch.World
@@ -87,7 +88,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return result
     }
 
-    private fun parseIdentOptional(): String? {
+    private fun parseIdentOpt(): String? {
         if (isa(Token.Kind.Ident)) {
             return next().symbol
         }
@@ -95,7 +96,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
     }
 
     private fun parseIdent(): String {
-        return parseIdentOptional() ?: throw ParseException("Expected identifier")
+        return parseIdentOpt() ?: throw ParseException("Expected identifier")
     }
 
     private fun parseIdentExpr(): IdentExpr {
@@ -120,6 +121,13 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return LetExpr(world, ptrn, init)
     }
 
+    private fun parseSketchExpr(): Expr {
+        expect(Token.Kind.Sketch)
+        val name = parseIdent()
+        val body = parseBlock()
+        return SketchExpr(world, name, body)
+    }
+
     private fun parseItem(): Expr {
         val functions = ArrayList<FunctionExpr>()
         val exprs = ArrayList<Expr>()
@@ -131,6 +139,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
                 }
                 Token.Kind.Fn -> functions.add(parseFunction())
                 Token.Kind.Let -> exprs.add(parseLetExpr())
+                Token.Kind.Sketch -> exprs.add(parseSketchExpr())
                 else -> exprs.add(parseExpr())
             }
         }
@@ -294,7 +303,8 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
             }
             Token.Kind.String -> LiteralExpr(world, next().symbol)
             Token.Kind.Boolean -> LiteralExpr(world, java.lang.Boolean.parseBoolean(next().symbol))
-            Token.Kind.Number -> LiteralExpr(world, next().symbol?.toInt())
+            Token.Kind.Number -> LiteralExpr(world, next().symbol!!.toInt())
+            Token.Kind.Real -> LiteralExpr(world, next().symbol!!.toDouble())
             Token.Kind.Null -> {
                 next()
                 LiteralExpr(world, null)
@@ -309,11 +319,11 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
             }
             Token.Kind.Break -> {
                 next()
-                BreakExpr(world, parseIdentOptional())
+                BreakExpr(world, parseIdentOpt())
             }
             Token.Kind.Continue -> {
                 next()
-                ContinueExpr(world, parseIdentOptional())
+                ContinueExpr(world, parseIdentOpt())
             }
             Token.Kind.If -> parseIf()
             Token.Kind.While -> parseWhile(label)

@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.Scope
@@ -54,5 +54,9 @@ class FieldExpr(
         } catch (e: IllegalAccessException) {
             throw InterpreterException("Expected map or valid object in field expr!", e)
         }
+    }
+
+    override fun bind(scope: Scope, define: Boolean): Expr {
+        return FieldExpr(world, objExpr.bind(scope, define), name, optional)
     }
 }

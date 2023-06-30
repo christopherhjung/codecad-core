@@ -1,7 +1,6 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.IdentExpr
-import com.codecad.core.parser.ast.ParamExpr
+import com.codecad.core.parser.ast.primitive.ParamExpr
 import kotlin.math.sqrt
 
 interface Optimizer {

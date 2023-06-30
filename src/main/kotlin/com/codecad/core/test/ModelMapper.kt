@@ -11,7 +11,7 @@ fun mapModel(project: Project) : Model{
 
     for(sketch in project.sketches){
         for(figure in sketch.figures){
-            if(figure is Point2){
+            if(figure is Vec2){
                 model.points.add(figure.fixed())
             }else{
                 val points = figureToPoints(figure)

@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.Op
@@ -20,15 +20,18 @@ class InfixExpr(world: World, private val lhs: Expr, private val rhs: Expr, priv
     }
 
     private fun add(lhs: Any?, rhs: Any?): Any {
-        if (lhs is Int && rhs is Int) {
+        if(lhs is Expr || rhs is Expr){
+            val lhs = orLiteral(world, lhs)
+            val rhs = orLiteral(world, rhs)
+            return world.infix(lhs, rhs, Op.Add)
+        }else if (lhs is Double || rhs is Double) {
+            return (lhs as Number).toDouble() + (rhs as Number).toDouble()
+        } else if (lhs is Int && rhs is Int) {
             return lhs + rhs
-        } else if (lhs is Double && rhs is Double) {
-            return lhs + rhs
-        } else if (lhs is String) {
-            return lhs.toString() + rhs.toString()
-        } else if (rhs is String) {
+        } else if (lhs is String || rhs is String) {
             return lhs.toString() + rhs.toString()
         }
+
         throw InterpreterException("Expected two Integer or any String for addition!")
     }
 
@@ -141,10 +144,10 @@ class InfixExpr(world: World, private val lhs: Expr, private val rhs: Expr, priv
     override fun bind(scope: Scope, define: Boolean): Expr {
         val newLhs = lhs.bind(scope, false)
         val newRhs = rhs.bind(scope, false)
-        val newExpr = InfixExpr(world, newLhs, newRhs, op)
+        val newExpr = world.infix(newLhs, newRhs, op)
         if (newLhs is LiteralExpr && rhs is LiteralExpr) {
             val newValue = newExpr.eval(scope)
-            return LiteralExpr(world, newValue)
+            return world.literal(newValue)
         }
         return newExpr
     }

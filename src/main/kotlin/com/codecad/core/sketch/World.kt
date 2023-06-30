@@ -1,11 +1,11 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.Plane
-import com.codecad.core.Point2
+import com.codecad.core.Vec2
 import com.codecad.core.Point3
 import com.codecad.core.Segment2
 import com.codecad.core.parser.Op
-import com.codecad.core.parser.ast.*
+import com.codecad.core.parser.ast.primitive.*
 import com.codecad.core.scope.EmptyScope
 import kotlin.math.abs
 import kotlin.math.pow
@@ -15,9 +15,9 @@ class World {
     val ONE = LiteralExpr(this, 1.0)
     val TWO = LiteralExpr(this, 2.0)
 
-    val ORIGIN = Point2(ZERO, ZERO)
-    val AXIS_X = Segment2(ORIGIN, Point2(ONE, ZERO))
-    val AXIS_Y = Segment2(ORIGIN, Point2(ZERO, ONE))
+    val ORIGIN = Vec2(ZERO, ZERO)
+    val AXIS_X = Segment2(ORIGIN, Vec2(ONE, ZERO))
+    val AXIS_Y = Segment2(ORIGIN, Vec2(ZERO, ONE))
 
     val XY = Plane(Point3(ZERO,ZERO,ONE), ZERO)
     val YZ = Plane(Point3(ONE,ZERO,ZERO), ZERO)
@@ -25,7 +25,7 @@ class World {
 
     private val sea = HashMap<Expr, Expr>()
 
-    private fun unify(expr: Expr) : Expr{
+    private fun unify(expr: Expr) : Expr {
         return sea.putIfAbsent(expr, expr) ?: expr
     }
 
@@ -39,119 +39,120 @@ class World {
         }
     }
 
-    fun infix(left : Expr, right: Expr, op : Op) : Expr{
+    fun infix(lhs : Expr, rhs: Expr, op : Op) : Expr {
         return when(op){
-            Op.Add -> add(left, right)
-            Op.Sub -> sub(left, right)
-            Op.Mul -> mul(left, right)
-            Op.Div -> div(left, right)
+            Op.Add -> add(lhs, rhs)
+            Op.Sub -> sub(lhs, rhs)
+            Op.Mul -> mul(lhs, rhs)
+            Op.Div -> div(lhs, rhs)
+            Op.Assign -> unify(InfixExpr(this, lhs, rhs, op))
             else -> throw NotImplementedError()
         }
     }
 
-    fun prefix(left : Expr, op : Op) : Expr{
+    fun prefix(lhs : Expr, op : Op) : Expr {
         return when(op){
-            Op.Sub -> negate(left)
+            Op.Sub -> negate(lhs)
             else -> throw NotImplementedError()
         }
     }
 
-    fun add(left : Expr, right: Expr) : Expr{
-        return if(left === ZERO){
-            right
-        }else if(right === ZERO){
-            left
-        }else if(left is LiteralExpr && right is LiteralExpr){
-            literal(left.evalDouble() + right.evalDouble())
-        }else if(left === right){
-            mul(TWO, right)
+    fun add(lhs : Expr, rhs: Expr) : Expr {
+        return if(lhs === ZERO){
+            rhs
+        }else if(rhs === ZERO){
+            lhs
+        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
+            literal(lhs.evalDouble() + rhs.evalDouble())
+        }else if(lhs === rhs){
+            mul(TWO, rhs)
         }else{
-            unify(InfixExpr(this, left, right, Op.Add))
+            unify(InfixExpr(this, lhs, rhs, Op.Add))
         }
     }
 
-    fun sub(left : Expr, right: Expr) : Expr {
-        return if (left === ZERO) {
-            negate(right)
-        } else if (right === ZERO) {
-            left
-        } else if (left === right) {
+    fun sub(lhs : Expr, rhs: Expr) : Expr {
+        return if (lhs === ZERO) {
+            negate(rhs)
+        } else if (rhs === ZERO) {
+            lhs
+        } else if (lhs === rhs) {
             ZERO
-        }else if(left is LiteralExpr && right is LiteralExpr){
-            literal(left.evalDouble() - right.evalDouble())
+        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
+            literal(lhs.evalDouble() - rhs.evalDouble())
         } else {
-            unify(InfixExpr(this, left, right, Op.Sub))
+            unify(InfixExpr(this, lhs, rhs, Op.Sub))
         }
     }
 
-    fun mul(left : Expr, right: Expr) : Expr{
-        return if(left === ZERO || right === ZERO){
+    fun mul(lhs : Expr, rhs: Expr) : Expr {
+        return if(lhs === ZERO || rhs === ZERO){
             ZERO
-        }else if(left === ONE){
-            right
-        }else if(right === ONE){
-            left
-        }else if(left is LiteralExpr && right is LiteralExpr){
-            literal(left.evalDouble() * right.evalDouble())
-        }else if(left === right){
-            pow(left, TWO)
+        }else if(lhs === ONE){
+            rhs
+        }else if(rhs === ONE){
+            lhs
+        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
+            literal(lhs.evalDouble() * rhs.evalDouble())
+        }else if(lhs === rhs){
+            pow(lhs, TWO)
         }else{
-            unify(InfixExpr(this, left, right, Op.Mul))
+            unify(InfixExpr(this, lhs, rhs, Op.Mul))
         }
     }
 
-    fun div(left : Expr, right: Expr) : Expr {
-        return if (left === ZERO) {
+    fun div(lhs : Expr, rhs: Expr) : Expr {
+        return if (lhs === ZERO) {
             ZERO
-        }else if (right === ONE){
-            left
-        }else if (left === right){
+        }else if (rhs === ONE){
+            lhs
+        }else if (lhs === rhs){
             ONE
-        }else if (left is LiteralExpr && right is LiteralExpr) {
-            literal(left.evalDouble() / right.evalDouble())
+        }else if (lhs is LiteralExpr && rhs is LiteralExpr) {
+            literal(lhs.evalDouble() / rhs.evalDouble())
         }else {
-            unify(InfixExpr(this, left, right, Op.Div))
+            unify(InfixExpr(this, lhs, rhs, Op.Div))
         }
     }
 
-    fun lt(left : Expr, right: Expr) : Expr{
-        val newVal = InfixExpr(this, left, right, Op.Lt)
-        if (left is LiteralExpr && right is LiteralExpr) {
+    fun lt(lhs : Expr, rhs: Expr) : Expr {
+        val newVal = InfixExpr(this, lhs, rhs, Op.Lt)
+        if (lhs is LiteralExpr && rhs is LiteralExpr) {
             return literal(newVal.evalDouble())
         }
 
         return unify(newVal)
     }
 
-    fun ifExpr(condition: Expr, left: Expr, right: Expr) : Expr {
+    fun ifExpr(condition: Expr, lhs: Expr, rhs: Expr) : Expr {
         return if(condition is LiteralExpr){
             if(condition.evalBoolean(EmptyScope)){
-                left
+                lhs
             }else{
-                right
+                rhs
             }
-        }else if(left is LiteralExpr && right is LiteralExpr && left === right){
-            left
+        }else if(lhs is LiteralExpr && rhs is LiteralExpr && lhs === rhs){
+            lhs
         }else{
-            unify(IfExpr(this, condition, left, right))
+            unify(IfExpr(this, condition, lhs, rhs))
         }
     }
 
-    fun pow(left : Expr, right: Expr) : Expr{
-        return if(right === ZERO){
+    fun pow(lhs : Expr, rhs: Expr) : Expr {
+        return if(rhs === ZERO){
             ONE
-        }else if(right === ONE){
-            left
-        }else if(left === ZERO){
+        }else if(rhs === ONE){
+            lhs
+        }else if(lhs === ZERO){
             ZERO
-        }else if (left is LiteralExpr && right is LiteralExpr) {
-            literal(left.evalDouble().pow(right.evalDouble()))
+        }else if (lhs is LiteralExpr && rhs is LiteralExpr) {
+            literal(lhs.evalDouble().pow(rhs.evalDouble()))
         }else{
-            unify(PowExpr(this, left, right))
+            unify(PowExpr(this, lhs, rhs))
         }
     }
 
-    fun cos(expr : Expr) : Expr{
+    fun cos(expr : Expr) : Expr {
         return if(expr is LiteralExpr){
             literal(kotlin.math.cos(expr.evalDouble()))
         }else{
@@ -159,7 +160,7 @@ class World {
         }
     }
 
-    fun sin(expr : Expr) : Expr{
+    fun sin(expr : Expr) : Expr {
         return if(expr is LiteralExpr){
             literal(kotlin.math.sin(expr.evalDouble()))
         }else{
@@ -167,7 +168,7 @@ class World {
         }
     }
 
-    fun asin(expr : Expr) : Expr{
+    fun asin(expr : Expr) : Expr {
         return if(expr is LiteralExpr){
             literal(kotlin.math.asin(expr.evalDouble()))
         }else{
@@ -175,7 +176,7 @@ class World {
         }
     }
 
-    fun log(expr : Expr) : Expr{
+    fun log(expr : Expr) : Expr {
         return if(expr is LiteralExpr){
             literal(kotlin.math.log(expr.evalDouble(), Math.E))
         }else{
@@ -183,7 +184,7 @@ class World {
         }
     }
 
-    fun abs(expr: Expr) : Expr{
+    fun abs(expr: Expr) : Expr {
         return if(expr is LiteralExpr){
             literal(abs(expr.evalDouble()))
         }else{
@@ -199,7 +200,7 @@ class World {
         }
     }
 
-    fun literal(value: Any) : Expr{
+    fun literal(value: Any?) : Expr {
         return when(value){
             0.0 -> ZERO
             1.0 -> ONE

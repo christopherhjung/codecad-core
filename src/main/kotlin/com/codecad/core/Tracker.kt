@@ -1,7 +1,7 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.Expr
-import com.codecad.core.parser.ast.ParamExpr
+import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.parser.ast.primitive.ParamExpr
 
 
 class Tracker() {

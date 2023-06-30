@@ -1,7 +1,8 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.ObjectFunction
+import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
 import com.codecad.core.sketch.World
 
@@ -16,11 +17,12 @@ class CallExpr(world: World,
             if (optional) return null
             throw InterpreterException("Null pointer exception")
         }
+        val nestedScope = NestedScope.mutual(scope)
         val arg = arg.eval(scope) as Array<Any?>
         if (callee is Expr) {
-            return callee.call(scope, arg)
+            return callee.call(nestedScope, arg)
         } else if (callee is ObjectFunction) {
-            return callee.call(arg)
+            return callee.call(nestedScope, arg)
         }
         throw InterpreterException("is not callable!")
     }

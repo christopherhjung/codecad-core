@@ -1,6 +1,6 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.Expr
+import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.test.DirectedPlane
 
 class ProjectScope(val project: Project){
@@ -12,7 +12,7 @@ class ProjectScope(val project: Project){
         return builder.sketch
     }
 
-    fun extrude(sketch: Sketch, pointer: Point2, height: Expr) {
+    fun extrude(sketch: Sketch, pointer: Vec2, height: Expr) {
         val face = findFace(sketchToLines(sketch, ignoreConstruction = true), pointer.fixed())
 
         if(face != null){

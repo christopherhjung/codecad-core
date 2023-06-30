@@ -7,9 +7,7 @@ class NestedScope(val parent: Scope, val child: Scope) : Scope {
     }
 
     override fun setObject(key: String?, value: Any?, define: Boolean): Boolean {
-        return if (parent.setObject(key, value, false)) {
-            true
-        } else child.setObject(key, value, define)
+        return parent.setObject(key, value, false) || child.setObject(key, value, define)
     }
 
     companion object {

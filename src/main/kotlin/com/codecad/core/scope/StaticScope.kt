@@ -83,7 +83,7 @@ class StaticScope(private val map: Map<String?, Slot?>) : Scope {
         companion object {
             private fun toFunc(obj: Any?, method: Method): ObjectFunction {
                 return object : ObjectFunction {
-                    override fun call(args: Array<Any?>): Any {
+                    override fun call(scope: Scope, args: Array<Any?>) : Any {
                         try {
                             return method.invoke(obj, *args)
                         } catch (e: IllegalAccessException) {
@@ -112,7 +112,7 @@ class StaticScope(private val map: Map<String?, Slot?>) : Scope {
                 return if (methods.size == 1) {
                     toFunc(obj, methods[0])
                 } else object : ObjectFunction {
-                    override fun call(args: Array<Any?>): Any {
+                    override fun call(scope: Scope, args: Array<Any?>): Any {
                         try {
                             for (method in methods) {
                                 if (isAssignableTo(method, args)) {

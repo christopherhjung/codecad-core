@@ -1,20 +1,18 @@
 package com.codecad.core
 
-import com.codecad.common.LineError
-import com.codecad.core.parser.ast.Expr
-import com.codecad.core.parser.ast.IdentExpr
-import com.codecad.core.parser.ast.LiteralExpr
-import com.codecad.core.parser.ast.ParamExpr
+import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.parser.ast.primitive.LiteralExpr
+import com.codecad.core.parser.ast.primitive.ParamExpr
 import com.codecad.core.sketch.*
 import java.util.*
 import kotlin.collections.HashMap
 
 class Sketch(val project: Project) {
-    val world = World()
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val figures = ArrayList<Figure>()
     val lineType = HashMap<Figure, LineType>()
+    val world: World = project.world
 
     fun param(value: Double = 0.0): ParamExpr {
         val param = ParamExpr( world, value )
@@ -27,50 +25,50 @@ class Sketch(val project: Project) {
         return world.literal(value)
     }
 
-    fun constPoint(x: Double = 0.0, y: Double = 0.0): Point2 {
+    fun constPoint(x: Double = 0.0, y: Double = 0.0): Vec2 {
         val a = createLiteral(x)
         val b = createLiteral(y)
-        val point = Point2(a, b)
+        val point = Vec2(a, b)
         figures.add(point)
         return point
     }
 
-    fun point(x: Expr, y: Expr): Point2 {
-        val point = Point2(x,y)
+    fun point(x: Expr, y: Expr): Vec2 {
+        val point = Vec2(x,y)
         figures.add(point)
         return point
     }
 
-    fun point(x: Double = 0.0, y: Double = 0.0): Point2 {
+    fun point(x: Double = 0.0, y: Double = 0.0): Vec2 {
         val a = param(x)
         val b = param(y)
         return point(a,b)
     }
 
-    fun line(a: Point2, b: Point2, type: LineType = LineType.Normal): Segment2 {
+    fun line(a: Vec2, b: Vec2, type: LineType = LineType.Normal): Segment2 {
         val line = Segment2(a, b)
         figures.add(line)
         lineType.putIfAbsent(line, type)
         return line
     }
 
-    fun cline(a: Point2, b: Point2) : Segment2{
+    fun cline(a: Vec2, b: Vec2) : Segment2{
         return line(a,b,LineType.Construction)
     }
 
-    fun circle(center: Point2, radius: Expr): Circle {
+    fun circle(center: Vec2, radius: Expr): Circle {
         val circle = Circle(center, radius)
         figures.add(circle)
         return circle
     }
 
-    fun arc(p0: Point2, p1: Point2, radius: Expr): Arc {
+    fun arc(p0: Vec2, p1: Vec2, radius: Expr): Arc {
         val circle = Arc(p0,p1,radius)
         figures.add(circle)
         return circle
     }
 
-    fun func(function : (Expr) -> Point2) : FunctionFigure {
+    fun func(function : (Expr) -> Vec2) : FunctionFigure {
         val function = FunctionFigure(function)
         figures.add(function)
         return function
@@ -92,11 +90,11 @@ class Sketch(val project: Project) {
         addConstraintImpl(CircleTangent(circle, line))
     }
 
-    fun pointOnLineMidpoint(point: Point2, line: Segment2) {
+    fun pointOnLineMidpoint(point: Vec2, line: Segment2) {
         addConstraintImpl(PointOnLineMidpoint(point, line))
     }
 
-    fun pointOnLine(point: Point2, line: Segment2) {
+    fun pointOnLine(point: Vec2, line: Segment2) {
         addConstraintImpl(PointOnLine(point, line))
     }
 
@@ -108,7 +106,7 @@ class Sketch(val project: Project) {
         addConstraintImpl(Vertical(line))
     }
 
-    fun pointOnCircle(point: Point2, circle: Circle) {
+    fun pointOnCircle(point: Vec2, circle: Circle) {
         addConstraintImpl(PointOnCircle(point, circle))
     }
 
@@ -116,7 +114,7 @@ class Sketch(val project: Project) {
         addConstraintImpl(EqualLength(line1, line2))
     }
 
-    fun length(line1: Segment2, length: Expr) {
+    fun len(line1: Segment2, length: Expr) {
         addConstraintImpl(LineLength(line1, length))
     }
 
@@ -136,15 +134,15 @@ class Sketch(val project: Project) {
         addConstraintImpl(Parallel(line1, line2))
     }
 
-    fun pointOnPoint(point1: Point2, point2: Point2) {
-        addConstraintImpl(PointOnPoint(point1, point2))
+    fun pointOnPoint(point1: Vec2, vec2: Vec2) {
+        addConstraintImpl(PointOnPoint(point1, vec2))
     }
 
-    fun equal(point1: Point2, point2: Point2) {
-        addConstraintImpl(PointOnPoint(point1, point2))
+    fun eq(point1: Vec2, vec2: Vec2) {
+        addConstraintImpl(PointOnPoint(point1, vec2))
     }
 
-    fun equal(value1 : Expr, value2: Expr) {
+    fun eq(value1 : Expr, value2: Expr) {
         addConstraintImpl(Equals(value1, value2))
     }
 
@@ -270,7 +268,7 @@ abstract class Component{
 }
 
 class RoundRect : Component(){
-    lateinit var center: Point2
+    lateinit var center: Vec2
     lateinit var width: Expr
     lateinit var height: Expr
 
@@ -287,17 +285,17 @@ class RoundRect : Component(){
 
             val centerLine = cline(leftArc.center, rightArc.center)
 
-            equal(topLine.length, bottomLine.length)
+            eq(topLine.length, bottomLine.length)
 
             perpendicular(topLine, vertLine)
 
-            equal(leftArc.radius, rightArc.radius)
-            equal(vertLine.length, vertLine2.length)
+            eq(leftArc.radius, rightArc.radius)
+            eq(vertLine.length, vertLine2.length)
 
-            equal(topLine.p0.y, topLine.p1.y)
+            eq(topLine.p0.y, topLine.p1.y)
 
-            equal(leftArc.center, vertLine.midPoint )
-            equal(rightArc.center, vertLine2.midPoint )
+            eq(leftArc.center, vertLine.midPoint )
+            eq(rightArc.center, vertLine2.midPoint )
 
             center = centerLine.midPoint
             width = centerLine.length
@@ -308,12 +306,12 @@ class RoundRect : Component(){
 }
 
 class Rect : Component() {
-    lateinit var a: Point2
-    lateinit var b: Point2
-    lateinit var c: Point2
-    lateinit var d: Point2
+    lateinit var a: Vec2
+    lateinit var b: Vec2
+    lateinit var c: Vec2
+    lateinit var d: Vec2
 
-    lateinit var center: Point2
+    lateinit var center: Vec2
 
     lateinit var top: Segment2
     lateinit var right: Segment2
@@ -343,9 +341,9 @@ class Rect : Component() {
             height = right.length
             center = (a + b + c + d) / 4.0
 
-            equal((c-a).length(), (d - b).length())
-            equal(top.length , bottom.length)
-            equal(left.length , right.length)
+            eq((c-a).length(), (d - b).length())
+            eq(top.length , bottom.length)
+            eq(left.length , right.length)
         }
     }
 }

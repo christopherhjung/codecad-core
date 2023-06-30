@@ -1,4 +1,4 @@
-package com.codecad.core.parser.ast
+package com.codecad.core.parser.ast.primitive
 
 import com.codecad.core.Utils
 import com.codecad.core.exception.InterpreterException
@@ -47,7 +47,7 @@ abstract class Expr(val world: World) {
         return this
     }
 
-    open fun derivative(expr: Expr) : Expr{
+    open fun derivative(expr: Expr) : Expr {
         throw RuntimeException("not implemented")
     }
 
@@ -164,6 +164,10 @@ abstract class Expr(val world: World) {
 
         fun sign(expr: Expr) : Expr {
             return expr.world.sign(expr)
+        }
+
+        fun orLiteral(world: World, any: Any?) : Expr{
+            return any as? Expr ?: world.literal(any)
         }
     }
 }

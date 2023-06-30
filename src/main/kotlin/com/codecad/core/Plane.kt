@@ -1,8 +1,8 @@
 package com.codecad.core
 
 import com.codecad.core.Point3.Companion.times
-import com.codecad.core.parser.ast.Expr
-import com.codecad.core.parser.ast.minus
+import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.parser.ast.primitive.minus
 
 class Line(val origin: Point3, val direction: Point3){
     companion object{
@@ -70,7 +70,7 @@ class Plane(val normal : Point3, val distance: Expr){
         return Plane(normal, distance + offset)
     }
 
-    fun distanceTo(p: Point3) : Expr{
+    fun distanceTo(p: Point3) : Expr {
         return normal.dot(p) - distance
     }
 
