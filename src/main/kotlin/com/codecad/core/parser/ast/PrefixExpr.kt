@@ -3,10 +3,14 @@ package com.codecad.core.parser.ast
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 import java.util.function.Consumer
 
-class PrefixExpr(private val expr: Expr, private val op: Op) : Expr {
+class PrefixExpr(world: World, private val expr: Expr, private val op: Op) : Expr(world) {
     private fun sub(value: Any?): Any {
+        if (value is Double) {
+            return -value
+        }
         if (value is Int) {
             return -value
         }
@@ -33,7 +37,14 @@ class PrefixExpr(private val expr: Expr, private val op: Op) : Expr {
 
     override fun bind(scope: Scope, define: Boolean): Expr {
         val newExpr = expr.bind(scope, false)
-        return PrefixExpr(newExpr, op)
+        return PrefixExpr(world, newExpr, op)
+    }
+
+    override fun derivative(expr: Expr): Expr {
+        return when(op){
+            Op.Sub -> -this.expr.derivative(expr)
+            else -> throw InterpreterException("Not implemented derivative for $op")
+        }
     }
 
     override fun equals(other: Any?): Boolean {

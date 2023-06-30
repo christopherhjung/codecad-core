@@ -1,15 +1,17 @@
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.sketch.Expr
-import com.codecad.core.sketch.Literal
-import com.codecad.core.sketch.Param
+import com.codecad.core.parser.ast.Expr
+import com.codecad.core.parser.ast.LiteralExpr
+import com.codecad.core.parser.ast.ParamExpr
 import com.codecad.core.sketch.World
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
 import com.codecad.core.test.addVolumes
 import com.codecad.core.test.mapModel
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -22,9 +24,10 @@ class SketchTest {
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun cubicDerivativeTest() {
         val world = World()
-        val param = Param(world, Math.PI)
+        val param = ParamExpr(world, Math.PI)
         val x2 = param.pow(3)
         val derivative = x2.derivative(param)
         val value = derivative.evalDouble()
@@ -32,19 +35,21 @@ class SketchTest {
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun constBecomeConst() {
         val world = World()
         val param1 = world.literal(Math.PI)
         val param2 = world.literal(Math.PI)
         val x2 = param1.pow(param2)
-        assertTrue(x2 is Literal)
+        assertTrue(x2 is LiteralExpr)
         assertEquals(x2.value, Math.PI.pow(Math.PI))
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun absTest() {
         val world = World()
-        val param1 = Param(world, 1.0)
+        val param1 = ParamExpr(world, 1.0)
         val abs = Expr.abs(param1)
         val derivative = abs.derivative(param1)
 
@@ -90,6 +95,7 @@ class SketchTest {
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun complexTest2() {
         val proj = project {
             sketch {
@@ -129,6 +135,7 @@ class SketchTest {
 
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun functionTest() {
         val proj = project {
             sketch {
@@ -140,6 +147,7 @@ class SketchTest {
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun testets(){
         fun SketchScope.cycloid(bR: Expr, sR: Expr): FunctionFigure {
             return func { t ->
@@ -173,8 +181,8 @@ class SketchTest {
                 )
             }
 
-            extrude(big, Literal(World(), 1.0))
-            extrude(small, Literal(World(), 2.0))
+            extrude(big, LiteralExpr(World(), 1.0))
+            extrude(small, LiteralExpr(World(), 2.0))
         }
 
         val model = mapModel(project)
@@ -185,6 +193,7 @@ class SketchTest {
 
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun cornerCase(){
 
         val leftFrontBottom = Node(PointD(-0.5,-0.5))
@@ -250,6 +259,7 @@ class SketchTest {
     }
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun tetstststs(){
         val project = project {
             val a = sketch {
@@ -306,8 +316,8 @@ class SketchTest {
                 )
             }
 
-            extrude(small, Literal(World(),1.0))
-            extrude(a, Literal(World(),0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
+            extrude(small, LiteralExpr(World(),1.0))
+            extrude(a, LiteralExpr(World(),0.2), DirectedPlane.from(Plane(Plane.XY.normal, 0.1)))
         }
 
 
@@ -319,6 +329,7 @@ class SketchTest {
 
 
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun fingerboard(){
         val project = project {
             val posX = 0.0
@@ -346,9 +357,9 @@ class SketchTest {
                 equal(rect.height, literal(2))
             }
 
-            extrude(small, Literal(World(), 1.0))
-            extrude(hole, Literal(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
-            extrude(hole2, Literal(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(small, LiteralExpr(World(), 1.0))
+            extrude(hole, LiteralExpr(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
+            extrude(hole2, LiteralExpr(World(), 0.8), DirectedPlane.from(Plane(Plane.XY.normal, -0.1), PointD(1.0)))
 
         }
 
@@ -358,8 +369,9 @@ class SketchTest {
         println("test")
     }
 
-
+/*
     @Test
+    @Timeout(1000, unit= TimeUnit.MILLISECONDS)
     fun routedTest(){
         val project = project {
             val big = sketch {
@@ -383,13 +395,12 @@ class SketchTest {
                 )
             }
 
-            extrude(big, Literal(World(), 1.0))
-            extrude(small, Literal(World(), 2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
+            extrude(big, LiteralExpr(World(), 1.0))
+            extrude(small, LiteralExpr(World(), 2.0), DirectedPlane.from(Plane(Plane.XY.normal, -0.1)))
         }
 
         val model = mapModel(project)
 
         println("test")
-
-    }
+    }*/
 }

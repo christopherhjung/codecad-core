@@ -2,8 +2,13 @@ package com.codecad.core.parser.ast
 
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class IfExpr(private val condition: Expr, private val trueBranch: Expr, private val falseBranch: Expr?) : Expr {
+class IfExpr(
+    world: World,
+    private val condition: Expr,
+    private val trueBranch: Expr,
+    private val falseBranch: Expr?) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         if (condition.evalBoolean(scope)) {
             return trueBranch.eval(scope)
@@ -22,8 +27,13 @@ class IfExpr(private val condition: Expr, private val trueBranch: Expr, private 
             } else {
                 newFalseBranch!!
             }
-        } else IfExpr(newCondition, newTrueBranch, newFalseBranch)
+        } else IfExpr(world, newCondition, newTrueBranch, newFalseBranch)
     }
+
+    override fun derivative(expr: Expr): Expr {
+        return world.ifExpr(condition, trueBranch.derivative(expr), falseBranch?.derivative(expr)!!)
+    }
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

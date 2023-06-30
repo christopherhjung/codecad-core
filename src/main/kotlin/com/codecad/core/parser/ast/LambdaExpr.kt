@@ -1,9 +1,11 @@
 package com.codecad.core.parser.ast
 
 import com.codecad.core.parser.controlflow.ReturnException
-import com.codecad.core.scope.*
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
+class LambdaExpr(world: World, private val param: Expr?, private val body: Expr?) : Expr(world) {
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val nestedScope = NestedScope.mutual(scope)
         param!!.assign(nestedScope, args, true)
@@ -15,7 +17,7 @@ class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
     }
 
     override fun eval(scope: Scope): Any {
-        return ScopedExpr(scope, this)
+        return ScopedExpr(world, scope, this)
     }
 
     override fun bind(scope: Scope, define: Boolean): Expr {
@@ -23,6 +25,6 @@ class LambdaExpr(private val param: Expr?, private val body: Expr?) : Expr {
         nestedScope = NestedScope.mutual(nestedScope)
         val newParam = param!!.bind(nestedScope, true)
         val newBody = body!!.bind(nestedScope, false)
-        return LambdaExpr(newParam, newBody)
+        return LambdaExpr(world, newParam, newBody)
     }
 }

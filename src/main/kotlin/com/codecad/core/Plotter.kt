@@ -1,6 +1,6 @@
 package com.codecad.core
 
-import com.codecad.core.sketch.Param
+import com.codecad.core.parser.ast.ParamExpr
 import com.codecad.core.sketch.World
 import kotlin.math.cos
 import kotlin.math.sin
@@ -11,7 +11,7 @@ interface Plotter{
 
 class LinePlotter(val line: Segment2) : Plotter {
     override fun getPoint(t: Double) : Point2 {
-        return (line.difference * t + line.p0).copy()
+        return (line.difference * t + line.p0).eval()
     }
 }
 
@@ -56,11 +56,11 @@ class ArcPlotter(val arc: Arc) : Plotter {
 }
 
 class FunctionPlotter(func: FunctionFigure) : Plotter {
-    private val t: Param = Param(World(), 0.0)
+    private val t = ParamExpr(World(), 0.0)
     private val formula: Point2 = func.function(t)
 
     override fun getPoint(t: Double): Point2 {
         this.t.value = if(t == 1.0){ 0.0 }else t
-        return formula.copy()
+        return formula.eval()
     }
 }

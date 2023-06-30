@@ -4,9 +4,11 @@ import com.codecad.core.exception.ParseException
 import com.codecad.core.lexer.Lexer
 import com.codecad.core.lexer.Token
 import com.codecad.core.parser.ast.*
-import com.codecad.core.scope.*
+import com.codecad.core.scope.MutualScope
+import com.codecad.core.scope.StaticScope
+import com.codecad.core.sketch.World
 
-class Parser private constructor(private val lexer: Lexer) {
+class Parser private constructor(private val lexer: Lexer, private val world: World) {
     private var lastOp: Op? = null
     private val lookahead = arrayOfNulls<Token>(LOOKAHEAD_SIZE)
     private var currIdx = 0
@@ -97,7 +99,7 @@ class Parser private constructor(private val lexer: Lexer) {
     }
 
     private fun parseIdentExpr(): IdentExpr {
-        return IdentExpr(parseIdent())
+        return IdentExpr(world, parseIdent())
     }
 
     private fun parsePtrn(): Expr {
@@ -115,7 +117,7 @@ class Parser private constructor(private val lexer: Lexer) {
         if (accept(Token.Kind.Assign)) {
             init = parseExpr()
         }
-        return LetExpr(ptrn, init)
+        return LetExpr(world, ptrn, init)
     }
 
     private fun parseItem(): Expr {
@@ -132,7 +134,7 @@ class Parser private constructor(private val lexer: Lexer) {
                 else -> exprs.add(parseExpr())
             }
         }
-        val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(exprs.toTypedArray())
+        val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(world, exprs.toTypedArray())
         return if (functions.isEmpty()) {
             expr
         } else {
@@ -140,7 +142,7 @@ class Parser private constructor(private val lexer: Lexer) {
             for (function in functions) {
                 scopeBuilder.add(function.name, function)
             }
-            ScopedExpr(scopeBuilder.build(), expr)
+            ScopedExpr(world, scopeBuilder.build(), expr)
         }
     }
 
@@ -167,7 +169,7 @@ class Parser private constructor(private val lexer: Lexer) {
         }
         val body = parseBlock()
         val paramArr = params.toTypedArray()
-        return FunctionExpr(name, TupleExpr(paramArr), body)
+        return FunctionExpr(world, name, TupleExpr(world, paramArr), body)
     }
 
     private fun parsePrefixExpr(op: Op): Expr {
@@ -177,10 +179,10 @@ class Parser private constructor(private val lexer: Lexer) {
                 return tuple
             }
             val body = parseExpr()
-            LambdaExpr(TupleExpr.asTuple(tuple), body)
+            LambdaExpr(world, TupleExpr.asTuple(tuple), body)
         } else {
             val expr = parseExpr(op.prec().next())
-            PrefixExpr(expr, op)
+            world.prefix(expr, op)
         }
     }
 
@@ -188,15 +190,15 @@ class Parser private constructor(private val lexer: Lexer) {
         if (op == Op.Chain) {
             return if (accept(Token.Kind.LeftParen)) {
                 val arg: TupleExpr = TupleExpr.asTuple(parseTuple())
-                CallExpr(lhs, arg, true)
+                CallExpr(world, lhs, arg, true)
             } else {
-                FieldExpr(lhs, parseIdent(), true)
+                FieldExpr(world, lhs, parseIdent(), true)
             }
         } else if (op == Op.Dot) {
-            return FieldExpr(lhs, parseIdent())
+            return FieldExpr(world, lhs, parseIdent())
         }
         val rhs = parseExpr(op.prec().next())
-        return InfixExpr(lhs, rhs, op)
+        return world.infix(lhs, rhs, op)
     }
 
     private fun parseTuple(): Expr {
@@ -204,7 +206,7 @@ class Parser private constructor(private val lexer: Lexer) {
             val expr = parseExpr()
             if (accept(Token.Kind.Comma)) {
                 return if (accept(Token.Kind.RightParen)) {
-                    TupleExpr(arrayOf(expr))
+                    TupleExpr(world, arrayOf(expr))
                 } else {
                     val exprs = ArrayList<Expr>()
                     exprs.add(expr)
@@ -212,13 +214,13 @@ class Parser private constructor(private val lexer: Lexer) {
                         exprs.add(parseExpr())
                     } while (accept(Token.Kind.Comma))
                     expect(Token.Kind.RightParen)
-                    TupleExpr(exprs.toTypedArray())
+                    TupleExpr(world, exprs.toTypedArray())
                 }
             }
             expect(Token.Kind.RightParen)
             return expr
         }
-        return TupleExpr(emptyArray())
+        return TupleExpr(world, emptyArray())
     }
 
     private fun parseIf(): Expr {
@@ -229,14 +231,14 @@ class Parser private constructor(private val lexer: Lexer) {
         if (accept(Token.Kind.Else)) {
             falseBranch = parseBlock()
         }
-        return IfExpr(condition, trueBranch, falseBranch)
+        return IfExpr(world, condition, trueBranch, falseBranch)
     }
 
     private fun parseWhile(label: String?): Expr {
         expect(Token.Kind.While)
         val condition = parseExpr()
         val body = parseBlock()
-        return WhileExpr(condition, body, label)
+        return WhileExpr(world, condition, body, label)
     }
 
     private fun parseFor(label: String?): Expr {
@@ -245,7 +247,7 @@ class Parser private constructor(private val lexer: Lexer) {
         expect(Token.Kind.In)
         val range = parseExpr()
         val body = parseBlock()
-        return ForExpr(variable, range, body, label)
+        return ForExpr(world, variable, range, body, label)
     }
 
     private fun parseBlock(): Expr {
@@ -263,16 +265,16 @@ class Parser private constructor(private val lexer: Lexer) {
             exprs.add(parseStmt())
             valid = false
         }
-        return BlockExpr(exprs.toTypedArray())
+        return BlockExpr(world, exprs.toTypedArray())
     }
 
     private fun parsePostfixExpr(lhs: Expr, op: Op): Expr {
         return when (op) {
             Op.LeftParen -> {
                 val arg = parseTuple()
-                CallExpr(lhs, TupleExpr.Companion.asTuple(arg))
+                CallExpr(world, lhs, TupleExpr.asTuple(arg))
             }
-            Op.Inc, Op.Dec -> PostfixExpr(lhs, op)
+            Op.Inc, Op.Dec -> PostfixExpr(world, lhs, op)
             else -> throw ParseException("Postfix Expr not yet implemented")
         }
     }
@@ -287,15 +289,15 @@ class Parser private constructor(private val lexer: Lexer) {
                     this.label = sym
                     parseExpr()
                 }else{
-                    IdentExpr(sym)
+                    IdentExpr(world, sym)
                 }
             }
-            Token.Kind.String -> LiteralExpr(next().symbol)
-            Token.Kind.Boolean -> LiteralExpr(java.lang.Boolean.parseBoolean(next().symbol))
-            Token.Kind.Number -> LiteralExpr(next().symbol?.toInt())
+            Token.Kind.String -> LiteralExpr(world, next().symbol)
+            Token.Kind.Boolean -> LiteralExpr(world, java.lang.Boolean.parseBoolean(next().symbol))
+            Token.Kind.Number -> LiteralExpr(world, next().symbol?.toInt())
             Token.Kind.Null -> {
                 next()
-                LiteralExpr(null)
+                LiteralExpr(world, null)
             }
             Token.Kind.Return -> {
                 next()
@@ -303,15 +305,15 @@ class Parser private constructor(private val lexer: Lexer) {
                 if (!isa(Token.Kind.Semi) && !isa(Token.Kind.RightBrace)) {
                     expr = parseExpr()
                 }
-                ReturnExpr(expr)
+                ReturnExpr(world, expr)
             }
             Token.Kind.Break -> {
                 next()
-                BreakExpr(parseIdentOptional())
+                BreakExpr(world, parseIdentOptional())
             }
             Token.Kind.Continue -> {
                 next()
-                ContinueExpr(parseIdentOptional())
+                ContinueExpr(world, parseIdentOptional())
             }
             Token.Kind.If -> parseIf()
             Token.Kind.While -> parseWhile(label)
@@ -401,9 +403,9 @@ class Parser private constructor(private val lexer: Lexer) {
 
     companion object {
         private const val LOOKAHEAD_SIZE = 2
-        fun parse(expr: String): Expr {
+        fun parse(expr: String, world: World = World()): Expr {
             val lex = Lexer(expr)
-            val parser = Parser(lex)
+            val parser = Parser(lex, world)
             var ast = parser.parse()
             val bindScope = MutualScope()
             ast = ast.bind(bindScope, false)

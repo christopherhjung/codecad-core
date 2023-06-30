@@ -3,8 +3,9 @@ package com.codecad.core.parser.ast
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class ScopedExpr(private val scope: Scope, private val expr: Expr) : Expr {
+class ScopedExpr(world: World, private val scope: Scope, private val expr: Expr) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val nestedScope: Scope = NestedScope.nest(scope, this.scope)
         return expr.eval(nestedScope)
@@ -34,6 +35,6 @@ class ScopedExpr(private val scope: Scope, private val expr: Expr) : Expr {
         }
         val newScope = collector.toStatic()
         val newExpr = expr.bind(newScope, define)
-        return ScopedExpr(newScope, newExpr)
+        return ScopedExpr(world, newScope, newExpr)
     }
 }

@@ -2,8 +2,12 @@ package com.codecad.core.parser.ast
 
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class IdentExpr(private val key: String) : Expr {
+class IdentExpr(
+    world: World,
+    private val key: String
+) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         return scope.getObject(key)
     }
@@ -22,7 +26,15 @@ class IdentExpr(private val key: String) : Expr {
         val value = scope.getValue(key) ?: return this
         val content = value.value
         return if (content is FunctionExpr) {
-            LiteralExpr(content)
-        } else RefExpr(value)
+            LiteralExpr(world, content)
+        } else RefExpr(world, value)
+    }
+
+    override fun derivative(expr: Expr): Expr {
+        return if(this === expr){
+            world.ONE
+        }else{
+            world.ZERO
+        }
     }
 }

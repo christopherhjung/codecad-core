@@ -6,7 +6,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.*
-import java.util.function.Function
 import java.util.stream.Collectors
 
 class StaticScope(private val map: Map<String?, Slot?>) : Scope {

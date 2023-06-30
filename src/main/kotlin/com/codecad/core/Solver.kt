@@ -1,8 +1,8 @@
 package com.codecad.core
 
+import com.codecad.core.parser.ast.Expr
+import com.codecad.core.parser.ast.ParamExpr
 import com.codecad.core.sketch.Constraint
-import com.codecad.core.sketch.Expr
-import com.codecad.core.sketch.Param
 import com.codecad.core.sketch.World
 import kotlin.math.abs
 
@@ -11,8 +11,8 @@ val targetError = 1e-8
 
 class Solver(val tracker: Tracker) {
 
-    fun solve(world: World, x: List<Set<Param>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
-        val current = mutableListOf<Param>()
+    fun solve(world: World, x: List<Set<ParamExpr>>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
+        val current = mutableListOf<ParamExpr>()
         val number = x.sumOf { it.size }
 
         var errorTerm: Expr = world.ZERO
@@ -40,7 +40,7 @@ class Solver(val tracker: Tracker) {
         return false
     }
 
-    fun solveImpl(x: List<Param>, errorTerm: Expr, derivatives: List<Expr>, accuracy: Double = targetError): Boolean{
+    fun solveImpl(x: List<ParamExpr>, errorTerm: Expr, derivatives: List<Expr>, accuracy: Double = targetError): Boolean{
         var error = errorTerm.evalDouble()
         if (error < accuracy) {
             return true

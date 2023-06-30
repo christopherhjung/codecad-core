@@ -3,12 +3,13 @@ package com.codecad.core.parser.ast
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class CallExpr(
-    private val callee: Expr,
-    private val arg: Expr,
-    private val optional: Boolean = false
-) : Expr {
+class CallExpr(world: World,
+               private val callee: Expr,
+               private val arg: Expr,
+               private val optional: Boolean = false
+) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val callee = callee.eval(scope)
         if (callee == null) {
@@ -27,6 +28,6 @@ class CallExpr(
     override fun bind(scope: Scope, define: Boolean): Expr {
         val newCallee = callee.bind(scope, define)
         val newArg = arg.bind(scope, define)
-        return CallExpr(newCallee, newArg, optional)
+        return CallExpr(world, newCallee, newArg, optional)
     }
 }

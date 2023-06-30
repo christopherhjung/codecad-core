@@ -1,8 +1,9 @@
 package com.codecad.core.parser.ast
 
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class LetExpr(private val ptrn: Expr, private val init: Expr?) : Expr {
+class LetExpr(world: World, private val ptrn: Expr, private val init: Expr?) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         var initVal: Any? = null
         if (init != null) {
@@ -14,6 +15,6 @@ class LetExpr(private val ptrn: Expr, private val init: Expr?) : Expr {
 
     override fun bind(scope: Scope, define: Boolean): Expr {
         val newInit = init?.bind(scope, false)
-        return LetExpr(ptrn.bind(scope, true), newInit)
+        return LetExpr(world, ptrn.bind(scope, true), newInit)
     }
 }

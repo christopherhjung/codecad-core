@@ -1,35 +1,15 @@
 package com.codecad.core
 
-import com.codecad.core.sketch.Param
+import com.codecad.core.parser.ast.IdentExpr
+import com.codecad.core.parser.ast.ParamExpr
 import kotlin.math.sqrt
 
 interface Optimizer {
     fun optimize(grad: DoubleArray)
 }
 
-class ConjugateGradientOptimizer(private val params: List<Param>): Optimizer {
-    private val values = DoubleArray(params.size)
-    private val alpha = DoubleArray(params.size)
-    private val residuum = DoubleArray(params.size)
-
-    init {
-
-    }
-
-    override fun optimize(grad: DoubleArray) {
-        for((i, param) in params.withIndex()){
-            values[i] = param.value
-        }
-
-        var alpha = 0.0
-        for(i in params.indices){
-            alpha += residuum[i] * residuum[i]
-        }
-    }
-}
-
-class AdamOptimizer(private val params: List<Param>) : Optimizer {
-    private val alpha = 0.05
+class AdamOptimizer(private val params: List<ParamExpr>) : Optimizer {
+    private val alpha = 0.01
     private val beta1 = 0.9
     private val beta2 = 0.999
     private val epsilon = 10e-8

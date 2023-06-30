@@ -2,10 +2,11 @@ package com.codecad.core.parser.ast
 
 import com.codecad.core.Utils
 import com.codecad.core.exception.InterpreterException
-import com.codecad.core.scope.*
+import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 import java.util.function.Consumer
 
-class TupleExpr(private val elems: Array<Expr>) : Expr {
+class TupleExpr(world: World, private val elems: Array<Expr>) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val list = ArrayList<Any?>()
         for (elem in elems) {
@@ -39,7 +40,7 @@ class TupleExpr(private val elems: Array<Expr>) : Expr {
         val newElems = Array(elems.size){
             elems[it].bind(scope, define)
         }
-        return TupleExpr(newElems)
+        return TupleExpr(world, newElems)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -57,7 +58,7 @@ class TupleExpr(private val elems: Array<Expr>) : Expr {
             return if (expr is TupleExpr) {
                 expr
             } else {
-                TupleExpr(arrayOf(expr))
+                TupleExpr(expr.world, arrayOf(expr))
             }
         }
     }

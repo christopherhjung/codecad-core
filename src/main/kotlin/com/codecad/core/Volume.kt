@@ -2,7 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.sketch.Expr
+import com.codecad.core.parser.ast.Expr
 import com.codecad.core.test.Corner
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Edge

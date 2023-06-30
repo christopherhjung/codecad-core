@@ -4,13 +4,16 @@ import com.codecad.core.Plane
 import com.codecad.core.Point2
 import com.codecad.core.Point3
 import com.codecad.core.Segment2
+import com.codecad.core.parser.Op
+import com.codecad.core.parser.ast.*
+import com.codecad.core.scope.EmptyScope
 import kotlin.math.abs
 import kotlin.math.pow
 
 class World {
-    val ZERO = Literal(this, 0.0)
-    val ONE = Literal(this, 1.0)
-    val TWO = Literal(this, 2.0)
+    val ZERO = LiteralExpr(this, 0.0)
+    val ONE = LiteralExpr(this, 1.0)
+    val TWO = LiteralExpr(this, 2.0)
 
     val ORIGIN = Point2(ZERO, ZERO)
     val AXIS_X = Segment2(ORIGIN, Point2(ONE, ZERO))
@@ -29,10 +32,27 @@ class World {
     fun negate(expr : Expr) : Expr {
         return if(expr === ZERO){
             ZERO
-        }else if(expr is Literal){
+        }else if(expr is LiteralExpr){
             literal(-expr.evalDouble())
         }else{
-            unify(NegExpr(this, expr))
+            unify(PrefixExpr(this, expr, Op.Sub))
+        }
+    }
+
+    fun infix(left : Expr, right: Expr, op : Op) : Expr{
+        return when(op){
+            Op.Add -> add(left, right)
+            Op.Sub -> sub(left, right)
+            Op.Mul -> mul(left, right)
+            Op.Div -> div(left, right)
+            else -> throw NotImplementedError()
+        }
+    }
+
+    fun prefix(left : Expr, op : Op) : Expr{
+        return when(op){
+            Op.Sub -> negate(left)
+            else -> throw NotImplementedError()
         }
     }
 
@@ -41,12 +61,12 @@ class World {
             right
         }else if(right === ZERO){
             left
-        }else if(Literal.isDouble(left) && Literal.isDouble(right)){
+        }else if(left is LiteralExpr && right is LiteralExpr){
             literal(left.evalDouble() + right.evalDouble())
         }else if(left === right){
             mul(TWO, right)
         }else{
-            unify(AddExpr(this, left, right))
+            unify(InfixExpr(this, left, right, Op.Add))
         }
     }
 
@@ -57,10 +77,10 @@ class World {
             left
         } else if (left === right) {
             ZERO
-        } else if (Literal.isDouble(left) && Literal.isDouble(right)) {
+        }else if(left is LiteralExpr && right is LiteralExpr){
             literal(left.evalDouble() - right.evalDouble())
         } else {
-            unify(SubExpr(this,left, right))
+            unify(InfixExpr(this, left, right, Op.Sub))
         }
     }
 
@@ -71,12 +91,12 @@ class World {
             right
         }else if(right === ONE){
             left
-        }else if(Literal.isDouble(left) && Literal.isDouble(right)){
+        }else if(left is LiteralExpr && right is LiteralExpr){
             literal(left.evalDouble() * right.evalDouble())
         }else if(left === right){
             pow(left, TWO)
         }else{
-            unify(TimesExpr(this, left, right))
+            unify(InfixExpr(this, left, right, Op.Mul))
         }
     }
 
@@ -87,10 +107,33 @@ class World {
             left
         }else if (left === right){
             ONE
-        }else if (Literal.isDouble(left) && Literal.isDouble(right)) {
+        }else if (left is LiteralExpr && right is LiteralExpr) {
             literal(left.evalDouble() / right.evalDouble())
         }else {
-            unify(DivExpr(this, left, right))
+            unify(InfixExpr(this, left, right, Op.Div))
+        }
+    }
+
+    fun lt(left : Expr, right: Expr) : Expr{
+        val newVal = InfixExpr(this, left, right, Op.Lt)
+        if (left is LiteralExpr && right is LiteralExpr) {
+            return literal(newVal.evalDouble())
+        }
+
+        return unify(newVal)
+    }
+
+    fun ifExpr(condition: Expr, left: Expr, right: Expr) : Expr {
+        return if(condition is LiteralExpr){
+            if(condition.evalBoolean(EmptyScope)){
+                left
+            }else{
+                right
+            }
+        }else if(left is LiteralExpr && right is LiteralExpr && left === right){
+            left
+        }else{
+            unify(IfExpr(this, condition, left, right))
         }
     }
 
@@ -101,24 +144,15 @@ class World {
             left
         }else if(left === ZERO){
             ZERO
-        }else if(Literal.isDouble(left) && Literal.isDouble(right)){
+        }else if (left is LiteralExpr && right is LiteralExpr) {
             literal(left.evalDouble().pow(right.evalDouble()))
         }else{
             unify(PowExpr(this, left, right))
         }
     }
 
-    fun lt(left : Expr, right: Expr) : Expr{
-        val newVal =  LtExpr(this, left, right)
-        if(left is Literal && right is Literal){
-            return literal(newVal.evalDouble())
-        }
-
-        return unify(newVal)
-    }
-
     fun cos(expr : Expr) : Expr{
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(kotlin.math.cos(expr.evalDouble()))
         }else{
             unify(CosExpr(this, expr))
@@ -126,7 +160,7 @@ class World {
     }
 
     fun sin(expr : Expr) : Expr{
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(kotlin.math.sin(expr.evalDouble()))
         }else{
             unify(SinExpr(this, expr))
@@ -134,7 +168,7 @@ class World {
     }
 
     fun asin(expr : Expr) : Expr{
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(kotlin.math.asin(expr.evalDouble()))
         }else{
             unify(Asin(this, expr))
@@ -142,29 +176,15 @@ class World {
     }
 
     fun log(expr : Expr) : Expr{
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(kotlin.math.log(expr.evalDouble(), Math.E))
         }else{
             unify(LogExpr(this, expr))
         }
     }
 
-    fun ifExpr(condition: Expr, left: Expr, right: Expr) : Expr {
-        return if(Literal.isBoolean(condition)){
-            if(condition.evalBoolean()){
-                left
-            }else{
-                right
-            }
-        }else if(left is Literal && right is Literal && left == right){
-            left
-        }else{
-            unify(IfExpr(this, condition, left, right))
-        }
-    }
-
     fun abs(expr: Expr) : Expr{
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(abs(expr.evalDouble()))
         }else{
             unify(AbsExpr(this, expr))
@@ -172,20 +192,19 @@ class World {
     }
 
     fun sign(expr: Expr) : Expr {
-        return if(Literal.isDouble(expr)){
+        return if(expr is LiteralExpr){
             literal(kotlin.math.sign(expr.evalDouble()))
         }else{
             unify(SignExpr(this, expr))
         }
     }
 
-
     fun literal(value: Any) : Expr{
         return when(value){
             0.0 -> ZERO
             1.0 -> ONE
             2.0 -> TWO
-            else -> unify(Literal(this, value))
+            else -> unify(LiteralExpr(this, value))
         }
     }
 }

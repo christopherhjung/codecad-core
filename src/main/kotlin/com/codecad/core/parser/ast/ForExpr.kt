@@ -3,14 +3,17 @@ package com.codecad.core.parser.ast
 import com.codecad.core.Utils
 import com.codecad.core.parser.controlflow.BreakException
 import com.codecad.core.parser.controlflow.ContinueException
-import com.codecad.core.scope.*
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class ForExpr @JvmOverloads constructor(
+class ForExpr(
+    world: World,
     private val variable: Expr,
     private val range: Expr,
     private val body: Expr,
     private val label: String? = null
-) : Expr {
+) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val iterable = Utils.getIterator(range.eval(scope))
         val nestedScope = NestedScope.mutual(scope)
@@ -38,6 +41,6 @@ class ForExpr @JvmOverloads constructor(
         val newVariable = variable.bind(scope, true)
         val newRange = range.bind(scope, false)
         val newBody = body.bind(scope, false)
-        return ForExpr(newVariable, newRange, newBody, label)
+        return ForExpr(world, newVariable, newRange, newBody, label)
     }
 }

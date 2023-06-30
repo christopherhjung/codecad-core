@@ -2,12 +2,14 @@ package com.codecad.core.parser.ast
 
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class FieldExpr @JvmOverloads constructor(
+class FieldExpr(
+    world: World,
     private val objExpr: Expr,
     private val name: String?,
     private val optional: Boolean = false
-) : Expr {
+) : Expr(world) {
 
     override fun eval(scope: Scope): Any? {
         val value = objExpr.eval(scope)

@@ -3,12 +3,14 @@ package com.codecad.core.parser.ast
 import com.codecad.core.parser.controlflow.BreakException
 import com.codecad.core.parser.controlflow.ContinueException
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
 class WhileExpr(
-    private val condition: Expr,
-    private val body: Expr,
-    private val label: String? = null
-) : Expr {
+    world: World,
+                private val condition: Expr,
+                private val body: Expr,
+                private val label: String? = null
+) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         while (condition.evalBoolean(scope)) {
             try {
@@ -31,6 +33,6 @@ class WhileExpr(
     override fun bind(scope: Scope, define: Boolean): Expr {
         val newCondition = condition.bind(scope, false)
         val newBody = body.bind(scope, false)
-        return WhileExpr(newCondition, newBody, label)
+        return WhileExpr(world, newCondition, newBody, label)
     }
 }

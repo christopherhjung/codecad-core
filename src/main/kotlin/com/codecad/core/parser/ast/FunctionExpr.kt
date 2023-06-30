@@ -1,9 +1,16 @@
 package com.codecad.core.parser.ast
 
 import com.codecad.core.parser.controlflow.ReturnException
-import com.codecad.core.scope.*
+import com.codecad.core.scope.MutualScope
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class FunctionExpr(var name: String, var params: Expr?, var body: Expr?) : Expr {
+class FunctionExpr(
+    world: World,
+    var name: String,
+    var params: Expr?,
+    var body: Expr?) : Expr(world) {
 
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val mutual = MutualScope()
@@ -16,7 +23,7 @@ class FunctionExpr(var name: String, var params: Expr?, var body: Expr?) : Expr 
     }
 
     override fun eval(scope: Scope): Any {
-        return ScopedExpr(scope, this)
+        return ScopedExpr(world, scope, this)
     }
 
     override fun bind(scope: Scope, define: Boolean): Expr {
@@ -30,7 +37,7 @@ class FunctionExpr(var name: String, var params: Expr?, var body: Expr?) : Expr 
     }
 
     fun bindFunction(scope: Scope) {
-        val newFunctionExpr = FunctionExpr(name, null, null)
+        val newFunctionExpr = FunctionExpr(world, name, null, null)
         scope.setObject(name, newFunctionExpr, true)
     }
 }

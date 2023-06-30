@@ -2,6 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.LineD
 import com.codecad.common.PointD
+import com.codecad.core.parser.ast.Expr
 import com.codecad.core.sketch.*
 import kotlin.reflect.KClass
 

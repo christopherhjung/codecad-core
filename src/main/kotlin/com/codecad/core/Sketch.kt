@@ -1,18 +1,23 @@
 package com.codecad.core
 
 import com.codecad.common.LineError
+import com.codecad.core.parser.ast.Expr
+import com.codecad.core.parser.ast.IdentExpr
+import com.codecad.core.parser.ast.LiteralExpr
+import com.codecad.core.parser.ast.ParamExpr
 import com.codecad.core.sketch.*
 import java.util.*
+import kotlin.collections.HashMap
 
 class Sketch(val project: Project) {
     val world = World()
-    val params = HashSet<Param>()
+    val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val figures = ArrayList<Figure>()
     val lineType = HashMap<Figure, LineType>()
 
-    fun param(value: Double = 0.0): Param {
-        val param = Param( world, value )
+    fun param(value: Double = 0.0): ParamExpr {
+        val param = ParamExpr( world, value )
         project.tracker.params.add(param)
         params.add(param)
         return param
@@ -155,29 +160,28 @@ class Sketch(val project: Project) {
         println(constraint::class.simpleName)
         constraints.add(constraint)
 
-
-        val constraintLookup = mutableMapOf<Constraint, HashSet<Param>>()
-        val paramLookup = mutableMapOf<Param, HashSet<Constraint>>()
+        val constraintLookup = mutableMapOf<Constraint, HashSet<ParamExpr>>()
+        val paramLookup = mutableMapOf<ParamExpr, HashSet<Constraint>>()
 
         for( con in constraints ){
             for(param in params){
                 val derivate = con.equation.derivative(param)
-                if(derivate !is Literal){
+                if(derivate !is LiteralExpr){
                     constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
                     paramLookup.computeIfAbsent(param){ HashSet() }.add(con)
                 }
             }
         }
 
-        class Test(var level: Int, val param : Param) : Comparable<Test>{
+        class Test(var level: Int, val param : ParamExpr) : Comparable<Test>{
             override fun compareTo(other: Test): Int {
                 return level.compareTo(other.level)
             }
         }
 
         val priorityQueue = PriorityQueue<Test>()
-        val visited = mutableSetOf<Param>()
-        val stages = mutableListOf<MutableSet<Param>>()
+        val visited = mutableSetOf<ParamExpr>()
+        val stages = mutableListOf<MutableSet<ParamExpr>>()
 
         stages.add( mutableSetOf())
 
@@ -218,17 +222,18 @@ class Sketch(val project: Project) {
         return constraint
     }
 
-    fun solveImpl(accuracy: Double, params: List<Set<Param>> = listOf(this.params)) : Boolean{
+    fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
         val solver = Solver(project.tracker)
         val result = solver.solve(world, listOf(this.params), ArrayList(constraints),accuracy)
         return result
     }
 
-    fun solve(accuracy: Double, params: List<Set<Param>> = listOf(this.params)) {
+    fun solve(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
 
         val result = solveImpl(accuracy, params)
 
+        /*
         if(!result){
             var error = 0.0
             val locations = mutableListOf<LineError>()
@@ -243,7 +248,7 @@ class Sketch(val project: Project) {
             }
 
             throw LineException(locations)
-        }
+        }*/
 
 
         val end = System.currentTimeMillis()

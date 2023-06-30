@@ -1,8 +1,10 @@
 package com.codecad.core.parser.ast
 
-import com.codecad.core.scope.*
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.World
 
-class BlockExpr(private val exprs: Array<Expr>) : Expr {
+class BlockExpr(world: World, private val exprs: Array<Expr>) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         var nestedScope = NestedScope.mutual(scope)
         var result = null as Any?
@@ -17,6 +19,6 @@ class BlockExpr(private val exprs: Array<Expr>) : Expr {
         val newExprs = Array(exprs.size){
             exprs[it].bind(nestedScope, false)
         }
-        return BlockExpr(newExprs)
+        return BlockExpr(world, newExprs)
     }
 }

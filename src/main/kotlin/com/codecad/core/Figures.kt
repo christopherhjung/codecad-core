@@ -1,7 +1,9 @@
 package com.codecad.core
 
 import com.codecad.common.PointD
-import com.codecad.core.sketch.Expr
+import com.codecad.core.parser.ast.Expr
+import com.codecad.core.scope.EmptyScope
+import com.codecad.core.scope.Scope
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
@@ -50,7 +52,10 @@ class Point2(val x: Expr, val y: Expr) : Figure() {
     fun absoluteAngle(target: Point2) : Double{
         val a = target.x.world.AXIS_X.p1
         val b = target - this
-        return kotlin.math.atan2((a.x * b.y - a.y * b.x).evalDouble(), (a.x * b.x + a.y * b.y).evalDouble())
+        return kotlin.math.atan2(
+            (a.x * b.y - a.y * b.x).evalDouble(),
+            (a.x * b.x + a.y * b.y).evalDouble()
+        )
     }
 
     fun normalized() : Point2 {
@@ -67,8 +72,8 @@ class Point2(val x: Expr, val y: Expr) : Figure() {
         )
     }
 
-    fun copy(): Point2 {
-        return Point2(x.evalLiteral(), y.evalLiteral())
+    fun eval(scope: Scope = EmptyScope): Point2 {
+        return Point2(x.evalLiteral(scope), y.evalLiteral(scope))
     }
 
     fun fixed() : PointD {
@@ -161,7 +166,7 @@ class Point3(val x: Expr, val y: Expr, val z: Expr) : Figure() {
     }
 
     fun copy(): Point3 {
-        return Point3(x.evalLiteral(), y.evalLiteral(), z.evalLiteral())
+        return Point3(x.evalLiteral(EmptyScope), y.evalLiteral(EmptyScope), z.evalLiteral(EmptyScope))
     }
 
     fun dot(other: Point3) : Expr {

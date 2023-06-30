@@ -1,6 +1,6 @@
 package com.codecad.core
 
-import com.codecad.core.sketch.Expr
+import com.codecad.core.parser.ast.Expr
 import com.codecad.core.test.DirectedPlane
 
 class ProjectScope(val project: Project){

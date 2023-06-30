@@ -2,8 +2,9 @@ package com.codecad.core.parser.ast
 
 import com.codecad.core.scope.Scope
 import com.codecad.core.scope.Slot
+import com.codecad.core.sketch.World
 
-class RefExpr(private val slot: Slot) : Expr {
+class RefExpr(world: World, private val slot: Slot) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         return slot.value
     }

@@ -1,15 +1,16 @@
 package com.codecad.core
 
-import com.codecad.core.sketch.Expr
-import com.codecad.core.sketch.Param
+import com.codecad.core.parser.ast.Expr
+import com.codecad.core.parser.ast.ParamExpr
+
 
 class Tracker() {
-    val entries = mutableListOf<MutableMap<Param, Double>>()
-    val params = mutableListOf<Param>()
+    val entries = mutableListOf<MutableMap<ParamExpr, Double>>()
+    val params = mutableListOf<ParamExpr>()
     val errors = mutableListOf<Double>()
 
-    fun addEntry(params: Collection<Param>, error: Expr){
-        val entry = mutableMapOf<Param, Double>()
+    fun addEntry(params: Collection<ParamExpr>, error: Expr){
+        val entry = mutableMapOf<ParamExpr, Double>()
         entries.add(entry)
         errors.add(error.evalDouble())
         for(param in params){
