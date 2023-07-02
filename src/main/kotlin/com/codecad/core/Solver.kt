@@ -33,7 +33,7 @@ class Solver(val tracker: Tracker) {
         val result = solveImpl(current, errorTerm, derivatives, accuracy)
 
         if(result){
-            println("${current.size} instead of ${number}")
+            println("${current.size} instead of $number")
             return true
         }
 
@@ -43,6 +43,7 @@ class Solver(val tracker: Tracker) {
     fun solveImpl(x: List<ParamExpr>, errorTerm: Expr, derivatives: List<Expr>, accuracy: Double = targetError): Boolean{
         var error = errorTerm.evalDouble()
         if (error < accuracy) {
+            println("error: $error")
             return true
         }
 
@@ -55,7 +56,7 @@ class Solver(val tracker: Tracker) {
         val optimizer = AdamOptimizer(x)
 
         val start = System.currentTimeMillis()
-        while ((errorChange > minErrorChange && error > accuracy ) && iter < 100000) {
+        while ((errorChange > minErrorChange && error > accuracy ) && iter < 20000) {
             tracker.addEntry(x, errorTerm)
 
             for (j in x.indices) {
@@ -72,10 +73,11 @@ class Solver(val tracker: Tracker) {
             if(System.currentTimeMillis() - start > 1000){
                 //return false
             }
+
         }
 
-        println(iter)
-        println(error)
+        println("iterations: $iter")
+        println("error: $error")
 
         return error < accuracy
     }

@@ -3,6 +3,8 @@ package com.codecad.core.parser.ast.primitive
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.Scope
 import com.codecad.core.sketch.World
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 
 class FieldExpr(
     world: World,
@@ -21,11 +23,12 @@ class FieldExpr(
             val map = value as Map<String?, Any>
             return map[name]
         }
-        val valClass: Class<*> = value.javaClass
         return try {
-            val field = valClass.getDeclaredField(name)
+            val field = value::class.declaredMemberProperties.find { it.name == name }
+
+            field!!
             field.isAccessible = true
-            field[value]
+            field.getter.call(value)
         } catch (e: NoSuchFieldException) {
             throw InterpreterException("Expected map or valid object in field expr!", e)
         } catch (e: IllegalAccessException) {

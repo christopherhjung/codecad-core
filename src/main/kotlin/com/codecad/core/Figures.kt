@@ -28,18 +28,38 @@ class Segment2(val p0: Vec2, val p1: Vec2) : Figure(){
         get() = difference.normalized()
 }
 
-open class Circle(val center: Vec2, val radius: Expr) : Figure()
+interface CircleLike{
+    val center : Vec2
+    val radius : Expr
+}
 
-class Arc(val p0: Vec2, val p1: Vec2, val helper: Expr) : Circle( centerFunction(p0,p1,helper), (p0 -  centerFunction(p0,p1,helper)).length()){
-    companion object{
-        private fun centerFunction(p0: Vec2, p1: Vec2, arcRadius: Expr): Vec2 {
-            val direction = p1 - p0
-            val half = direction / 2.0
-            val middle = p0 + half
-            val normalizedDirection = direction.normalized()
-            val positive = Vec2(-normalizedDirection.y, normalizedDirection.x)
-            return middle + positive * arcRadius
-        }
+open class Circle(override val center: Vec2, override val radius: Expr) : Figure(), CircleLike
+
+class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
+
+    private val radiusSign: Expr = run{
+        val s = (p1 - p0).length()
+        (h.pow(2) * 4 + s.pow(2)) / (h * 8)
+    }
+
+    override val radius: Expr = run{
+        Expr.abs(radiusSign)
+    }
+
+    override val center: Vec2 = run{
+        val direction = p1 - p0
+        val middle = (p0 + p1) * 0.5
+        val normalizedDirection = direction.normalized()
+        val positive = Vec2(normalizedDirection.y, -normalizedDirection.x)
+        middle + positive * (h - radiusSign)
+    }
+
+    val test: Vec2 = run{
+        val direction = p1 - p0
+        val middle = (p0 + p1) * 0.5
+        val normalizedDirection = direction.normalized()
+        val positive = Vec2(normalizedDirection.y, -normalizedDirection.x)
+        middle + positive * (h)
     }
 }
 
@@ -50,11 +70,10 @@ class FunctionFigure( val function: (Expr) -> Vec2) : Figure(){
 class Vec2(val x: Expr, val y: Expr) : Figure() {
 
     fun absoluteAngle(target: Vec2) : Double{
-        val a = target.x.world.AXIS_X.p1
-        val b = target - this
+        val b = (target - this).eval()
         return kotlin.math.atan2(
-            (a.x * b.y - a.y * b.x).evalDouble(),
-            (a.x * b.x + a.y * b.y).evalDouble()
+            b.y.evalDouble(),
+            b.x.evalDouble(),
         )
     }
 

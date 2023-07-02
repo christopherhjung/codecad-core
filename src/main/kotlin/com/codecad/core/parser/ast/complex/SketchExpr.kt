@@ -20,7 +20,7 @@ class SketchExpr(
         val nestedScope = NestedScope.mutual(scope)
         nestedScope.sketch = sketch
         val result = body.eval(nestedScope)
-        sketch.solve(1e-6)
+        //sketch.solve(1e-6)
         return result
     }
 

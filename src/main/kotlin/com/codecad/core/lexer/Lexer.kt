@@ -101,8 +101,8 @@ class Lexer(code: String) {
     }
 
     operator fun next(): Token {
+        enter = Token.Enter.Token
         while (!isEOL) {
-            enter = Token.Enter.Token
             while (true) {
                 if (accept(' ') || accept('\t')) {
                     if (enter == Token.Enter.Token) {
@@ -223,6 +223,7 @@ class Lexer(code: String) {
                         }
                         next()
                     }
+                    enter = Token.Enter.NL
                     continue
                 }
                 if (accept('/')) {
@@ -236,6 +237,7 @@ class Lexer(code: String) {
                             next()
                         }
                     }
+                    enter = Token.Enter.NL
                     continue
                 }
                 return token(Token.Kind.Slash)

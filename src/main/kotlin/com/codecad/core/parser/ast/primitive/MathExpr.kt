@@ -42,29 +42,29 @@ class SignExpr(world: World, val left: Expr) : Expr(world ){
 }
 
 
-class PowExpr(world: World, val left: Expr, val right: Expr) : Expr(world){
+class PowExpr(world: World, val base: Expr, val exp: Expr) : Expr(world){
     override fun eval(scope: Scope) : Any {
-        return left.evalDouble(scope).pow(right.evalDouble(scope))
+        return base.evalDouble(scope).pow(exp.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
-        return if(right is LiteralExpr){
-            right * left.pow(right - 1) * left.derivative(expr)
+        return if(this.exp is LiteralExpr){
+            this.exp * base.pow(this.exp - 1) * base.derivative(expr)
         }else{
-            (right.derivative(expr) * log(left) + right / left * left.derivative(expr)) * this
+            (this.exp.derivative(expr) * log(base) + this.exp / base * base.derivative(expr)) * this
         }
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
             other is PowExpr
-                && left === other.left
-                && right === other.right
+                && base === other.base
+                && exp === other.exp
     }
 
     override fun hashCode(): Int {
-        val result = 31 * left.hashCode()
-        return 31 * result + right.hashCode()
+        val result = 31 * base.hashCode()
+        return 31 * result + exp.hashCode()
     }
 }
 

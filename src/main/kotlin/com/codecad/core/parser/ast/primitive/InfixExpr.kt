@@ -157,7 +157,7 @@ class InfixExpr(world: World, private val lhs: Expr, private val rhs: Expr, priv
             Op.Add -> lhs.derivative(expr) + rhs.derivative(expr)
             Op.Sub -> lhs.derivative(expr) - rhs.derivative(expr)
             Op.Mul -> lhs.derivative(expr) * rhs + lhs * rhs.derivative(expr)
-            Op.Div -> (lhs.derivative(expr) * rhs + lhs * rhs.derivative(expr)) / rhs.pow(2)
+            Op.Div -> (lhs.derivative(expr) * rhs - lhs * rhs.derivative(expr)) / rhs.pow(2)
             else -> throw InterpreterException("Not implemented derivative for $op")
         }
     }

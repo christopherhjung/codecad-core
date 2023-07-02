@@ -138,17 +138,19 @@ class World {
         }
     }
 
-    fun pow(lhs : Expr, rhs: Expr) : Expr {
-        return if(rhs === ZERO){
+    fun pow(base : Expr, exp: Expr) : Expr {
+        return if(exp === ZERO){
             ONE
-        }else if(rhs === ONE){
-            lhs
-        }else if(lhs === ZERO){
+        }else if(exp === ONE){
+            base
+        }else if(base === ZERO){
             ZERO
-        }else if (lhs is LiteralExpr && rhs is LiteralExpr) {
-            literal(lhs.evalDouble().pow(rhs.evalDouble()))
+        }/*else if(base is PowExpr){
+            pow(base.base, mul(base.exp, exp))
+        }*/else if (base is LiteralExpr && exp is LiteralExpr) {
+            literal(base.evalDouble().pow(exp.evalDouble()))
         }else{
-            unify(PowExpr(this, lhs, rhs))
+            unify(PowExpr(this, base, exp))
         }
     }
 

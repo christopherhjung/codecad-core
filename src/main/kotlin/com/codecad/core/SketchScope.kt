@@ -49,7 +49,7 @@ class PatternScope(project: Project, val count: Int, val center: Vec2) : SketchS
                             Arc(
                                 rotatePoint(element.p0, angle),
                                 rotatePoint(element.p1, angle),
-                                element.helper
+                                element.h
                             )
                         }else{
                             Circle(
@@ -165,7 +165,7 @@ open class SketchScope(val project: Project) {
         return sketch.line(x.toDouble(), y.toDouble(), x2.toDouble(), y2.toDouble())
     }
 
-    fun tangent(circle: Circle, line: Segment2) {
+    fun tangent(circle: CircleLike, line: Segment2) {
         addConstraintImpl(CircleTangent(circle, line))
     }
 
@@ -190,11 +190,11 @@ open class SketchScope(val project: Project) {
     }
 
     fun equalLength(line1: Segment2, line2: Segment2) {
-        addConstraintImpl(EqualLength(line1, line2))
+        addConstraintImpl(Equals(line1.length, line2.length))
     }
 
     fun length(line1: Segment2, length: Expr) {
-        addConstraintImpl(LineLength(line1, length))
+        addConstraintImpl(Equals(line1.length, length))
     }
 
     fun angle(line1: Segment2, line2: Segment2, angle: Expr) {
@@ -226,7 +226,7 @@ open class SketchScope(val project: Project) {
     }
 
     fun radius(circle: Circle, value: Expr) {
-        addConstraintImpl(Radius(circle, value))
+        addConstraintImpl(Equals(circle.radius, value))
     }
 
     fun origin() : Vec2 {

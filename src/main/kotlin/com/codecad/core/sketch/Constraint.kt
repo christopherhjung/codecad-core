@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.Circle
+import com.codecad.core.CircleLike
 import com.codecad.core.Vec2
 import com.codecad.core.Segment2
 import com.codecad.core.parser.ast.primitive.Expr
@@ -58,6 +59,7 @@ class com.codecad.core.PointOnLine(val point: com.codecad.core.Point, val line: 
     }
 }
 */
+/*
 class LineLength(val line: Segment2, val length: Expr) : Constraint() {
     override fun equationImpl(): Expr {
         return Expr.abs(line.length - length)
@@ -68,7 +70,7 @@ class EqualLength(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
         return Expr.abs(line1.length - line2.length)
     }
-}
+}*/
 
 class Horizontal(val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
@@ -86,13 +88,14 @@ class Vertical(val line: Segment2) : Constraint() {
     }
 }
 
-class CircleTangent(val circle: Circle, val line: Segment2) : Constraint() {
+class CircleTangent(val circle: CircleLike, val line : Segment2) : Constraint() {
     override fun equationImpl(): Expr {
-        val direction = line.p1 - line.p0
-        val distanceCenter = line.p0 - circle.center
-        val offset = Expr.abs(direction.cross(distanceCenter)) / direction.length()
-        val error = Expr.abs(offset - circle.radius)
-        return error
+        val lineDirection = line.p1 - line.p0
+        val centerLineDirection = circle.center - line.p0
+        val offset = Expr.abs(lineDirection.cross(centerLineDirection)) / lineDirection.length()
+        val test = Expr.abs(offset - circle.radius)
+
+        return test
     }
 }
 
@@ -120,7 +123,7 @@ fun distanceBetweenPoints(p0: Vec2, p1: Vec2): Expr {
 
 class Perpendicular(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
-        return line1.direction.scalar(line2.direction).pow(2)
+        return Expr.abs(line1.direction.normalized().scalar(line2.direction.normalized()))
     }
 }
 /*
@@ -219,14 +222,8 @@ class InternalAngle(val line1: Segment2, val line2: Segment2, val angle: Expr) :
     }
 }
 
-class Radius(val circle: Circle, val radius: Expr) : Constraint() {
-    override fun equationImpl(): Expr {
-        return (radius - circle.radius).pow(2)
-    }
-}
-
 class Equals(val left: Expr, val right: Expr) : Constraint() {
     override fun equationImpl(): Expr {
-        return (left - right).pow(2)
+        return Expr.abs(left - right)
     }
 }

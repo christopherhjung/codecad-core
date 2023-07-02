@@ -1,6 +1,14 @@
 package com.codecad.core
 
 import com.codecad.common.LineError
+import com.codecad.core.parser.ObjectFunction
+import com.codecad.core.parser.Parser
+import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.scope.MutualScope
+import com.codecad.core.scope.project
+import com.codecad.core.scope.sketch
+import com.codecad.core.scope.world
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
@@ -10,18 +18,108 @@ class ExecutionResult(val output: String, val project: Project)
 
 class Executor{
     companion object{
-        var engine: ScriptEngine? = null
-
+        private val LOGGER = LoggerFactory.getLogger(Controller::class.java)
         fun execute(code: String) : ExecutionResult {
-            if(engine == null){
-                engine = ScriptEngineManager().getEngineByExtension("kts")
-            }
-
-            return Executor().execute(engine!!, code)
+            return Executor().execute(code)
         }
     }
 
-    fun execute(engine: ScriptEngine, code: String) : ExecutionResult {
+    fun run(expr: Expr) : Project{
+        val scope = MutualScope()
+
+        val project = Project()
+        scope.project = project
+        val world = project.world
+        scope.world = world
+        scope.setObject("println", ObjectFunction{ _, args ->
+            LOGGER.info(args[0].toString())
+        }, true)
+        scope.setObject("vec2", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val world = scope.world
+            val lhs = Expr.orLiteral(world, args[0])
+            val rhs = Expr.orLiteral(world, args[1])
+            return@ObjectFunction sketch.point(lhs, rhs)
+        }, true)
+        scope.setObject("param", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val init = (args[0] as Number).toDouble()
+            return@ObjectFunction sketch.param(init)
+        }, true)
+        scope.setObject("param2", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val lhs = sketch.param(args[0] as Double)
+            val rhs = sketch.param(args[1] as Double)
+            return@ObjectFunction sketch.point(lhs, rhs)
+        }, true)
+        scope.setObject("line", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val lhs = args[0] as Vec2
+            val rhs = args[1] as Vec2
+            return@ObjectFunction sketch.line(lhs, rhs)
+        }, true)
+        scope.setObject("circle", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val world = scope.world
+            val lhs = args[0] as Vec2
+            val rhs = Expr.orLiteral(world, args[1])
+            return@ObjectFunction sketch.circle(lhs, rhs)
+        }, true)
+        scope.setObject("arc", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val world = scope.world
+            val p0 = args[0] as Vec2
+            val p1 = args[1] as Vec2
+            return@ObjectFunction sketch.arc(p0, p1, sketch.param(-1.0))
+        }, true)
+
+
+        scope.setObject("eq", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val world = scope.world
+            var lhs = args[0]
+            var rhs = args[1]
+            if( lhs is Vec2 && rhs is Vec2 ){
+                return@ObjectFunction sketch.eq(lhs, rhs)
+            }
+
+            lhs = Expr.orLiteral(world, args[0])
+            rhs = Expr.orLiteral(world, args[1])
+            return@ObjectFunction sketch.eq(lhs, rhs)
+        }, true)
+        scope.setObject("len", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val world = scope.world
+            val lhs = args[0] as Segment2
+            val rhs = Expr.orLiteral(world, args[1])
+            return@ObjectFunction sketch.len(lhs, rhs)
+        }, true)
+        scope.setObject("perp", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val seg0 = args[0] as Segment2
+            val seg1 = args[1] as Segment2
+            return@ObjectFunction sketch.perp(seg0, seg1)
+        }, true)
+        scope.setObject("tangent", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val circle = args[0] as CircleLike
+            val line = args[1] as Segment2
+            return@ObjectFunction sketch.tangent(circle, line)
+        }, true)
+        scope.setObject("origin", world.ORIGIN, true)
+
+
+        scope.setObject("fit", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            sketch.solve(1e-7)
+        }, true)
+
+        val result = expr.eval(scope)
+
+        return project
+    }
+
+    fun execute(code: String) : ExecutionResult {
         val reset = System.out
 
         val newContext = SimpleScriptContext()
@@ -31,17 +129,12 @@ class Executor{
         newContext.errorWriter = printWriter
         val stream = PrintStream(output)
 
-
-
-
-        System.setOut(stream)
-        System.setErr(stream)
+        //System.setOut(stream)
+        //System.setErr(stream)
         try{
-            val project = engine.eval(code, newContext.getBindings(ScriptContext.ENGINE_SCOPE)) as? Project
-            return ExecutionResult(output.toString(), project ?: Project())
-        }catch (e: AccessDeniedException){
-            println("Sicherheitsangriff")
-            throw RuntimeException(e)
+            val expr = Parser.parse(code)
+            val project = run(expr)
+            return ExecutionResult(output.toString(), project)
         } catch (e: ScriptException){
             e.printStackTrace()
             val cause = e.cause

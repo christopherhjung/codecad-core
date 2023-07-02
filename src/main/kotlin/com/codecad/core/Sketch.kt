@@ -63,9 +63,11 @@ class Sketch(val project: Project) {
     }
 
     fun arc(p0: Vec2, p1: Vec2, radius: Expr): Arc {
-        val circle = Arc(p0,p1,radius)
-        figures.add(circle)
-        return circle
+        val arc = Arc(p0,p1,radius)
+        figures.add(arc)
+        figures.add(arc.center)
+        figures.add(arc.test)
+        return arc
     }
 
     fun func(function : (Expr) -> Vec2) : FunctionFigure {
@@ -86,7 +88,7 @@ class Sketch(val project: Project) {
         return line(constPoint(x, y), constPoint(x2, y2))
     }
 
-    fun tangent(circle: Circle, line: Segment2) {
+    fun tangent(circle: CircleLike, line: Segment2) {
         addConstraintImpl(CircleTangent(circle, line))
     }
 
@@ -111,11 +113,11 @@ class Sketch(val project: Project) {
     }
 
     fun equalLength(line1: Segment2, line2: Segment2) {
-        addConstraintImpl(EqualLength(line1, line2))
+        addConstraintImpl(Equals(line1.length, line2.length))
     }
 
     fun len(line1: Segment2, length: Expr) {
-        addConstraintImpl(LineLength(line1, length))
+        addConstraintImpl(Equals(line1.length, length))
     }
 
     fun angle(line1: Segment2, line2: Segment2, angle: Expr) {
@@ -126,7 +128,7 @@ class Sketch(val project: Project) {
         addConstraintImpl(constraint)
     }
 
-    fun perpendicular(line1: Segment2, line2: Segment2){
+    fun perp(line1: Segment2, line2: Segment2){
         addConstraintImpl(Perpendicular(line1, line2))
     }
 
@@ -147,7 +149,7 @@ class Sketch(val project: Project) {
     }
 
     fun radius(circle: Circle, value: Expr) {
-        addConstraintImpl(Radius(circle, value))
+        addConstraintImpl(Equals(circle.radius, value))
     }
 
     fun addConstraintImpl(constraint: Constraint){
@@ -248,9 +250,8 @@ class Sketch(val project: Project) {
             throw LineException(locations)
         }*/
 
-
         val end = System.currentTimeMillis()
-        println("time need: ${end - start}")
+        println("time: ${end - start}ms")
     }
 
     override fun toString(): String {
@@ -287,7 +288,7 @@ class RoundRect : Component(){
 
             eq(topLine.length, bottomLine.length)
 
-            perpendicular(topLine, vertLine)
+            perp(topLine, vertLine)
 
             eq(leftArc.radius, rightArc.radius)
             eq(vertLine.length, vertLine2.length)

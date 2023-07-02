@@ -20,4 +20,8 @@ class LiteralExpr(world: World, val value: Any?) : Expr(world) {
     override fun hashCode(): Int {
         return value?.hashCode() ?: 0
     }
+
+    override fun toString(): String {
+        return "LiteralExpr(value=$value)"
+    }
 }
