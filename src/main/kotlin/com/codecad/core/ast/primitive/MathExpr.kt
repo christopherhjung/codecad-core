@@ -4,7 +4,11 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import kotlin.math.*
 
-class AbsExpr(world: World, val left: Expr) : Expr(world){
+abstract class MathExpr(world: World) : Expr(world){
+    abstract fun arg() : Expr
+}
+
+class AbsExpr(world: World, val left: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return abs(left.evalDouble(scope))
     }
@@ -12,6 +16,10 @@ class AbsExpr(world: World, val left: Expr) : Expr(world){
     override fun derivative(expr: Expr): Expr {
         val derivative = left.derivative(expr)
         return ifExpr(left.smaller(world.ZERO), -derivative, derivative)
+    }
+
+    override fun arg(): Expr {
+        return left
     }
 
     override fun equals(other: Any?): Boolean {
@@ -23,13 +31,17 @@ class AbsExpr(world: World, val left: Expr) : Expr(world){
     }
 }
 
-class SignExpr(world: World, val left: Expr) : Expr(world ){
+class SignExpr(world: World, val left: Expr) : MathExpr(world ){
     override fun eval(scope: Scope) : Any {
         return sign(left.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
         return world.ZERO
+    }
+
+    override fun arg(): Expr {
+        return left
     }
 
     override fun equals(other: Any?): Boolean {
@@ -42,7 +54,7 @@ class SignExpr(world: World, val left: Expr) : Expr(world ){
 }
 
 
-class PowExpr(world: World, val base: Expr, val exp: Expr) : Expr(world){
+class PowExpr(world: World, val base: Expr, val exp: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return base.evalDouble(scope).pow(exp.evalDouble(scope))
     }
@@ -53,6 +65,10 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : Expr(world){
         }else{
             world.exp(world.log(exp) * base).derivative(expr)
         }
+    }
+
+    override fun arg(): Expr {
+        return world.tuple(base, exp)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -68,13 +84,17 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : Expr(world){
     }
 }
 
-class CosExpr(world: World, val left: Expr) : Expr(world){
+class CosExpr(world: World, val left: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return cos(left.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
         return -sin(left) * left.derivative(expr)
+    }
+
+    override fun arg(): Expr {
+        return left
     }
 
     override fun equals(other: Any?): Boolean {
@@ -88,13 +108,17 @@ class CosExpr(world: World, val left: Expr) : Expr(world){
     }
 }
 
-class Asin(world: World, val left: Expr) : Expr(world){
+class Asin(world: World, val left: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return asin(left.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
         return 1.0 / (1.0 - left.pow(2)).sqrt() * left.derivative(expr)
+    }
+
+    override fun arg(): Expr {
+        return left
     }
 
     override fun equals(other: Any?): Boolean {
@@ -108,13 +132,17 @@ class Asin(world: World, val left: Expr) : Expr(world){
     }
 }
 
-class SinExpr(world: World, val left: Expr) : Expr(world){
+class SinExpr(world: World, val left: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return sin(left.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
         return cos(left) * left.derivative(expr)
+    }
+
+    override fun arg(): Expr {
+        return left
     }
 
     override fun equals(other: Any?): Boolean {
@@ -128,13 +156,17 @@ class SinExpr(world: World, val left: Expr) : Expr(world){
     }
 }
 
-class ExpExpr(world: World, val expr: Expr) : Expr(world){
+class ExpExpr(world: World, val expr: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return exp(expr.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
         return this
+    }
+
+    override fun arg(): Expr {
+        return expr
     }
 
     override fun equals(other: Any?): Boolean {
@@ -148,13 +180,17 @@ class ExpExpr(world: World, val expr: Expr) : Expr(world){
     }
 }
 
-class LogExpr(world: World, val expr: Expr) : Expr(world){
+class LogExpr(world: World, val expr: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return log(expr.evalDouble(scope), Math.E)
     }
 
     override fun derivative(expr: Expr): Expr {
         return this.expr.derivative(expr) / this
+    }
+
+    override fun arg(): Expr {
+        return expr
     }
 
     override fun equals(other: Any?): Boolean {

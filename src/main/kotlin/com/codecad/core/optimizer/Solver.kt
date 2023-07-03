@@ -5,6 +5,9 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.sketch.Constraint
 import com.codecad.core.World
+import com.codecad.core.rewrite.MultiUseScanner
+import com.codecad.core.rewrite.Rewriter
+import com.codecad.core.rewrite.ShareRewriter
 import kotlin.math.abs
 
 val minErrorChange = 1e-10
@@ -30,6 +33,24 @@ class Solver(val tracker: Tracker) {
                 derivatives.add(errorTerm.derivative(param))
             }
         }
+
+        val test = world.tuple(*derivatives.toTypedArray())
+
+
+
+        val rewriter = ShareRewriter(world)
+        val result2 = rewriter.rewrite(test)
+
+        val nanos = System.nanoTime()
+            test.eval()
+        val end = System.nanoTime() - nanos
+        val nanos2 = System.nanoTime()
+            result2.eval()
+        val end2 = System.nanoTime() - nanos2
+
+
+        println(end)
+        println(end2)
 
         val result = solveImpl(current, errorTerm, derivatives, accuracy)
 

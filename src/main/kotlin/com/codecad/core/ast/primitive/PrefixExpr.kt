@@ -6,7 +6,7 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import java.util.function.Consumer
 
-class PrefixExpr(world: World, private val expr: Expr, private val op: Op) : Expr(world) {
+class PrefixExpr(world: World, val expr: Expr, val op: Op) : Expr(world) {
     private fun sub(value: Any?): Any {
         if (value is Double) {
             return -value

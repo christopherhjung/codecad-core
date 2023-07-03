@@ -13,4 +13,12 @@ class RefExpr(world: World, private val slot: Slot) : Expr(world) {
         slot.value = obj
         return obj
     }
+
+    override fun equals(other: Any?): Boolean {
+        return this === other || other is RefExpr && slot == other.slot
+    }
+
+    override fun hashCode(): Int {
+        return System.identityHashCode(slot)
+    }
 }

@@ -6,7 +6,7 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import java.util.function.Consumer
 
-class TupleExpr(world: World, private val elems: Array<Expr>) : Expr(world) {
+class TupleExpr(world: World, val elems: Array<out Expr>) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val list = ArrayList<Any?>()
         for (elem in elems) {

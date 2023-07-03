@@ -3,6 +3,7 @@ package com.codecad.core
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
+import com.codecad.core.scope.Slot
 import kotlin.math.pow
 
 class World {
@@ -251,5 +252,13 @@ class World {
             2.0 -> TWO
             else -> unify(LiteralExpr(this, value))
         }
+    }
+
+    fun tuple(vararg expr: Expr) : Expr{
+        return unify(TupleExpr(this, expr))
+    }
+
+    fun ref(slot : Slot) : Expr{
+        return unify(RefExpr(this, slot))
     }
 }

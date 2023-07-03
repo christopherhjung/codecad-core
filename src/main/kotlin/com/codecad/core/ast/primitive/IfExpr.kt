@@ -6,9 +6,9 @@ import com.codecad.core.World
 
 class IfExpr(
     world: World,
-    private val condition: Expr,
-    private val trueBranch: Expr,
-    private val falseBranch: Expr?) : Expr(world) {
+    val condition: Expr,
+    val trueBranch: Expr,
+    val falseBranch: Expr?) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         if (condition.evalBoolean(scope)) {
             return trueBranch.eval(scope)
