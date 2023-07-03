@@ -9,7 +9,11 @@ enum class LineType(val prio: Int){
     Normal(2), Construction(3)
 }
 
-abstract class Figure
+abstract class Figure{
+    open fun plotter() : Plotter{
+        throw NotImplementedError("Not implemented plotter")
+    }
+}
 
 class Segment2(val p0: Vec2, val p1: Vec2) : Figure(){
     val squaredLength : Expr
@@ -26,6 +30,10 @@ class Segment2(val p0: Vec2, val p1: Vec2) : Figure(){
 
     val direction : Vec2
         get() = difference.normalized()
+
+    override fun plotter(): Plotter {
+        return LinePlotter(this)
+    }
 }
 
 interface CircleLike{
@@ -33,7 +41,11 @@ interface CircleLike{
     val radius : Expr
 }
 
-open class Circle(override val center: Vec2, override val radius: Expr) : Figure(), CircleLike
+open class Circle(override val center: Vec2, override val radius: Expr) : Figure(), CircleLike{
+    override fun plotter(): Plotter {
+        return CirclePlotter(this)
+    }
+}
 
 class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
 
@@ -53,11 +65,23 @@ class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
         val positive = Vec2(normalizedDirection.y, -normalizedDirection.x)
         middle + positive * (h - radiusSign)
     }
+
+    override fun plotter(): Plotter {
+        return ArcPlotter(this)
+    }
 }
 
-class FunctionFigure( val function: (Expr) -> Vec2) : Figure()
+class FunctionFigure( val function: (Expr) -> Vec2) : Figure(){
+    override fun plotter(): Plotter {
+        return FunctionPlotter(this)
+    }
+}
 
 class Vec2(val x: Expr, val y: Expr) : Figure() {
+
+    override fun plotter(): Plotter {
+        return PointPlotter(this)
+    }
 
     fun absoluteAngle(target: Vec2) : Double{
         val b = (target - this).eval()

@@ -12,14 +12,12 @@ fun mapModel(project: Project) : Model{
     val model = Model()
 
     val meshGenerator = MeshGenerator()
-
     for(sketch in project.sketches){
         for(figure in sketch.figures){
             if(figure is Vec2){
                 model.points.add(figure.fixed())
             }else{
                 val points = figureToPoints(figure)
-
                 val path = Path()
 
                 for(point in points){

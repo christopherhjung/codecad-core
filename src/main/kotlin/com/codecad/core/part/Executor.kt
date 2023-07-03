@@ -21,7 +21,7 @@ import javax.script.SimpleScriptContext
 
 class ExecutionResult(val output: String, val project: Project)
 
-class Executor{
+class Executor private constructor(){
     companion object{
         private val LOGGER = LoggerFactory.getLogger(Executor::class.java)
         fun execute(code: String) : ExecutionResult {
@@ -137,47 +137,8 @@ class Executor{
     }
 
     fun execute(code: String) : ExecutionResult {
-        val reset = System.out
-
-        val newContext = SimpleScriptContext()
-        val output = ByteArrayOutputStream()
-        val printWriter = PrintWriter(output, true)
-        newContext.writer = printWriter
-        newContext.errorWriter = printWriter
-        val stream = PrintStream(output)
-
-        //System.setOut(stream)
-        //System.setErr(stream)
-        try{
-            val expr = Parser.parse(code)
-            val project = run(expr)
-            return ExecutionResult(output.toString(), project)
-        } catch (e: ScriptException){
-            e.printStackTrace()
-            val cause = e.cause
-            if(cause is LineException){
-                throw cause
-            }else{
-                val lineErrors = mutableListOf<LineError>()
-                val pattern = "^(?<msg>.+) \\((?<file>.+?):(?<line>\\d+):(?<column>\\d+)\\)$".toRegex()
-                for(line in e.message?.lines() ?: emptyList()){
-                    val result = pattern.matchEntire(line)
-                    if(result != null){
-
-                        val msg = result.groups[1]!!.value
-                        val file = result.groups[2]!!.value
-                        val line = result.groups[3]!!.value.toInt()
-                        val column = result.groups[4]!!.value.toInt()
-
-                        lineErrors.add(LineError(msg, line, column))
-                    }
-                }
-
-                throw LineException(lineErrors, output.toString() + " " + e.message)
-            }
-        }finally {
-            System.setOut(reset)
-            System.setErr(reset)
-        }
+        val expr = Parser.parse(code)
+        val project = run(expr)
+        return ExecutionResult("", project)
     }
 }

@@ -8,7 +8,6 @@ import com.codecad.core.sketch.*
 import kotlin.reflect.KClass
 
 class PatternScope(project: Project, val count: Int, val center: Vec2) : SketchScope(project) {
-
     val allCrawler = mutableMapOf<Vec2, MutableList<MutableList<Vec2>>>()
     val pointLookup = mutableMapOf<Vec2, Array<Vec2?>>()
 
@@ -46,18 +45,17 @@ class PatternScope(project: Project, val count: Int, val center: Vec2) : SketchS
                             rotatePoint(element.p1, angle)
                         )
                     }else if(element is Circle){
-                        if(element is Arc){
-                            Arc(
-                                rotatePoint(element.p0, angle),
-                                rotatePoint(element.p1, angle),
-                                element.h
-                            )
-                        }else{
-                            Circle(
-                                rotatePoint(element.center, angle),
-                                element.radius
-                            )
-                        }
+
+                        Circle(
+                            rotatePoint(element.center, angle),
+                            element.radius
+                        )
+                    }else if(element is Arc){
+                        Arc(
+                            rotatePoint(element.p0, angle),
+                            rotatePoint(element.p1, angle),
+                            element.h
+                        )
                     }else continue
                 )
             }
@@ -253,34 +251,6 @@ open class SketchScope(val project: Project) {
 }
 
 
-
-
-/*
-class Point3D(val x: Double, val y: Double, val z: Double){
-    override fun toString(): String {
-        return "Point3D(x=$x, y=$y)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Point3D) return false
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-        if (z != other.z) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x.hashCode()
-        result = 31 * result + y.hashCode()
-        result = 31 * result + z.hashCode()
-        return result
-    }
-}*/
-
-
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
     val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
@@ -288,44 +258,13 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
             continue
         }
 
-        if(figure is Segment2){
-            list.add(LineD(figure.p0.fixed(), figure.p1.fixed()))
-        }else if(figure is Arc){
-            val span = ArcPlotter(figure)
-            var last: Vec2? = null
-            for( i in 0 .. 200){
-                val t = i / 200.0
+        val plotter = figure.plotter()
 
-                val point = span.getPoint(t)
-                if(last != null){
-                    list.add(LineD(last.fixed(), point.fixed()))
-                }
-                last = point
-            }
-        }else if(figure is Circle){
-            val span = CirclePlotter(figure)
-            var last: Vec2? = null
-            for( i in 0 .. 500){
-                val t = i / 500.0
-
-                val point = span.getPoint(t)
-                if(last != null){
-                    list.add(LineD(last.fixed(), point.fixed()))
-                }
-                last = point
-            }
-        }else if(figure is FunctionFigure){
-            val span = FunctionPlotter(figure)
-            var last: Vec2? = null
-            for( i in 0 .. 500){
-                val t = i / 500.0
-
-                val point = span.getPoint(t)
-                if(last != null){
-                    list.add(LineD(last.fixed(), point.fixed()))
-                }
-                last = point
-            }
+        var last = plotter.next()
+        while( plotter.hasNext() ){
+            val next = plotter.next()
+            list.add(LineD(last.fixed(), next.fixed()))
+            last = next
         }
     }
     return list
@@ -333,99 +272,12 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
 fun figureToPoints(figure: Figure) : List<PointD>{
     val list = mutableListOf<PointD>()
 
-    if(figure is Segment2){
-        list.add(figure.p0.fixed())
-        list.add(figure.p1.fixed())
-    }else if(figure is Arc){
-        val span = ArcPlotter(figure)
-        for( i in 0 .. 200){
-            val t = i / 200.0
+    val plotter = figure.plotter()
 
-            val point = span.getPoint(t)
-            list.add(point.fixed())
-        }
-    }else if(figure is Circle){
-        val span = CirclePlotter(figure)
-        for( i in 0 .. 500){
-            val t = i / 500.0
-            val point = span.getPoint(t)
-            list.add(point.fixed())
-        }
-    }else if(figure is FunctionFigure){
-        val span = FunctionPlotter(figure)
-        for( i in 0 .. 500){
-            val t = i / 500.0
-            val point = span.getPoint(t)
-            list.add(point.fixed())
-        }
+    while( plotter.hasNext() ){
+        list.add(plotter.next().fixed())
     }
 
     return list
 }
 
-/*
-fun Canvas.line(line: com.codecad.core.Line){
-    line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
-}
-
-fun Canvas.circle(circle: com.codecad.core.Circle){
-    circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
-}*/
-
-
-
-/*
-fun Builder.getAutocadFile(filePath: String?): ArrayList<com.codecad.core.Line> {
-
-    val lines = ArrayList<com.codecad.core.Line>()
-    val parser = ParserBuilder.createDefaultParser()
-    parser.parse(filePath, DXFParser.DEFAULT_ENCODING)
-    val doc: DXFDocument = parser.document
-    val layer0 = doc.getDXFLayer(DXFConstants.DEFAULT_LAYER)
-    val lst = layer0.getDXFEntities(DXFConstants.ENTITY_TYPE_LINE)
-    for (index in lst.indices) {
-        val bounds = lst[index].bounds
-        val line = line(
-            com.codecad.core.Point(
-                com.codecad.core.Parameter(bounds.minimumX),
-                com.codecad.core.Parameter(bounds.minimumY)
-            ),
-            com.codecad.core.Point(
-                com.codecad.core.Parameter( bounds.maximumX),
-                com.codecad.core.Parameter( bounds.maximumY)
-            )
-        )
-        lines.add(line)
-    }
-
-    val splines = layer0.getDXFEntities(DXFConstants.ENTITY_TYPE_SPLINE)
-
-
-
-    val verticies = layer0.getDXFEntities(DXFConstants.ENTITY_TYPE_VERTEX)
-
-    for(vertex in verticies){
-
-    }
-
-
-    for(spline in splines){
-        spline as DXFSpline
-
-        var last: com.codecad.core.Point? = null
-        for(splinePoint in spline.splinePointIterator){
-            val point = com.codecad.core.Point(
-                com.codecad.core.Parameter(splinePoint.x),
-                com.codecad.core.Parameter(splinePoint.y)
-            )
-
-            if(last != null){
-                line(point, last)
-            }
-
-            last = point
-        }
-    }
-
-    return lines
-}*/
