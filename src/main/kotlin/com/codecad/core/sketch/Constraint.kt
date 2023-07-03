@@ -123,7 +123,7 @@ fun distanceBetweenPoints(p0: Vec2, p1: Vec2): Expr {
 
 class Perpendicular(val line1: Segment2, val line2: Segment2) : Constraint() {
     override fun equationImpl(): Expr {
-        return Expr.abs(line1.direction.normalized().scalar(line2.direction.normalized()))
+        return (line1.direction.normalized().scalar(line2.direction.normalized())).pow(2)
     }
 }
 /*

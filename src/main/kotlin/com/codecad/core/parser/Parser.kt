@@ -196,12 +196,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
             }
             else -> {
                 val expr = parseExpr(op.prec().next())
-
-                when(op){
-                    Op.Inc -> world.infix(expr, world.add(expr, world.ONE), Op.Assign)
-                    Op.Dec -> world.infix(expr, world.sub(expr, world.ONE), Op.Assign)
-                    else -> world.prefix(expr, op)
-                }
+                world.prefix(expr, op)
             }
         }
     }
@@ -218,13 +213,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
             return FieldExpr(world, lhs, parseIdent())
         }
         val rhs = parseExpr(op.prec().next())
-        return when(op){
-            Op.AssignAdd -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
-            Op.AssignSub -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
-            Op.AssignMul -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
-            Op.AssignDiv -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
-            else -> world.infix(lhs, rhs, op)
-        }
+        return world.infix(lhs, rhs, op)
     }
 
     private fun parseTuple(): Expr {
@@ -294,13 +283,13 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return BlockExpr(world, exprs.toTypedArray())
     }
 
-    private fun parsePostfixExpr(lhs: Expr, op: Op): Expr {
+    private fun parsePostfixExpr(expr: Expr, op: Op): Expr {
         return when (op) {
             Op.LeftParen -> {
                 val arg = parseTuple()
-                com.codecad.core.ast.primitive.CallExpr(world, lhs, TupleExpr.asTuple(arg))
+                CallExpr(world, expr, TupleExpr.asTuple(arg))
             }
-            Op.Inc, Op.Dec -> PostfixExpr(world, lhs, op)
+            Op.Inc, Op.Dec -> world.postfix(expr, op)
             else -> throw ParseException("Postfix Expr not yet implemented")
         }
     }

@@ -10,9 +10,9 @@ import kotlin.math.pow
 class InfixExpr(world: World, val lhs: Expr, val rhs: Expr, val op: Op) : Expr(world) {
     private fun compare(lhs: Any?, rhs: Any?): Int {
         if (lhs is String && rhs is String) {
-            return lhs.compareTo((rhs as String?)!!)
+            return lhs.compareTo(rhs)
         } else if (lhs is Int && rhs is Int) {
-            return lhs.compareTo((rhs as Int?)!!)
+            return lhs.compareTo(rhs)
         } else if (lhs is Double && rhs is Double) {
             return lhs.compareTo(rhs)
         }

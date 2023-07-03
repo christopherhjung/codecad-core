@@ -1,9 +1,5 @@
 package com.codecad.core
 
-import com.codecad.core.Plane
-import com.codecad.core.Point3
-import com.codecad.core.Segment2
-import com.codecad.core.Vec2
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
@@ -45,13 +41,25 @@ class World {
             Op.Mul -> mul(lhs, rhs)
             Op.Div -> div(lhs, rhs)
             Op.Assign -> unify(InfixExpr(this, lhs, rhs, op))
+            Op.AssignAdd -> infix(lhs, add(lhs, rhs), Op.Assign)
+            Op.AssignSub -> infix(lhs, add(lhs, rhs), Op.Assign)
+            Op.AssignMul -> infix(lhs, add(lhs, rhs), Op.Assign)
+            Op.AssignDiv -> infix(lhs, add(lhs, rhs), Op.Assign)
             else -> throw NotImplementedError()
         }
     }
 
-    fun prefix(lhs : Expr, op : Op) : Expr {
+    fun prefix(expr : Expr, op : Op) : Expr {
         return when(op){
-            Op.Sub -> negate(lhs)
+            Op.Sub -> negate(expr)
+            Op.Inc, Op.Dec -> unify(PrefixExpr(this, expr, op))
+            else -> throw NotImplementedError()
+        }
+    }
+
+    fun postfix(expr : Expr, op : Op) : Expr {
+        return when(op){
+            Op.Inc, Op.Dec -> unify(PostfixExpr(this, expr, op))
             else -> throw NotImplementedError()
         }
     }
