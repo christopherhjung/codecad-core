@@ -224,6 +224,6 @@ class InternalAngle(val line1: Segment2, val line2: Segment2, val angle: Expr) :
 
 class Equals(val left: Expr, val right: Expr) : Constraint() {
     override fun equationImpl(): Expr {
-        return Expr.abs(left - right)
+        return (left - right).pow(2)
     }
 }

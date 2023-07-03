@@ -185,16 +185,24 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
     }
 
     private fun parsePrefixExpr(op: Op): Expr {
-        return if (op == Op.LeftParen) {
-            val tuple = parseTuple()
-            if (!accept(Token.Kind.Arrow)) {
-                return tuple
+        return when(op){
+            Op.LeftParen -> {
+                val tuple = parseTuple()
+                if (!accept(Token.Kind.Arrow)) {
+                    return tuple
+                }
+                val body = parseExpr()
+                LambdaExpr(world, TupleExpr.asTuple(tuple), body)
             }
-            val body = parseExpr()
-            LambdaExpr(world, TupleExpr.asTuple(tuple), body)
-        } else {
-            val expr = parseExpr(op.prec().next())
-            world.prefix(expr, op)
+            else -> {
+                val expr = parseExpr(op.prec().next())
+
+                when(op){
+                    Op.Inc -> world.infix(expr, world.add(expr, world.ONE), Op.Assign)
+                    Op.Dec -> world.infix(expr, world.sub(expr, world.ONE), Op.Assign)
+                    else -> world.prefix(expr, op)
+                }
+            }
         }
     }
 
@@ -202,7 +210,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         if (op == Op.Chain) {
             return if (accept(Token.Kind.LeftParen)) {
                 val arg: TupleExpr = TupleExpr.asTuple(parseTuple())
-                com.codecad.core.ast.primitive.CallExpr(world, lhs, arg, true)
+                CallExpr(world, lhs, arg, true)
             } else {
                 FieldExpr(world, lhs, parseIdent(), true)
             }
@@ -210,7 +218,13 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
             return FieldExpr(world, lhs, parseIdent())
         }
         val rhs = parseExpr(op.prec().next())
-        return world.infix(lhs, rhs, op)
+        return when(op){
+            Op.AssignAdd -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
+            Op.AssignSub -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
+            Op.AssignMul -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
+            Op.AssignDiv -> world.infix(lhs, world.add(lhs, rhs), Op.Assign)
+            else -> world.infix(lhs, rhs, op)
+        }
     }
 
     private fun parseTuple(): Expr {

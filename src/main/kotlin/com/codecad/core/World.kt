@@ -67,7 +67,7 @@ class World {
             if(lhs is LiteralExpr){
                 literal(lhs.evalDouble() + rhs.evalDouble())
             }else if(lhs is InfixExpr && lhs.op == Op.Add && lhs.rhs is LiteralExpr){
-                add(lhs.lhs,  add(lhs.rhs, rhs))
+                add(lhs.lhs, add(lhs.rhs, rhs))
             }else{
                 unify(InfixExpr(this, lhs, rhs, Op.Add))
             }
