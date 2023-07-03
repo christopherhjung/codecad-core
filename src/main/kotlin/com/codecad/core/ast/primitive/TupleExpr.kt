@@ -7,12 +7,12 @@ import com.codecad.core.World
 import java.util.function.Consumer
 
 class TupleExpr(world: World, val elems: Array<out Expr>) : Expr(world) {
-    override fun eval(scope: Scope): Any? {
+    override fun eval(scope: Scope): Any {
         val list = ArrayList<Any?>()
         for (elem in elems) {
             elem.collect(scope) { e: Any? -> list.add(e) }
         }
-        return list.toArray()
+        return list.toTypedArray()
     }
 
     override fun assign(scope: Scope, obj: Any?, define: Boolean): Any? {

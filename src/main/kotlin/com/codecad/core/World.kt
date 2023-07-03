@@ -41,12 +41,22 @@ class World {
             Op.Sub -> sub(lhs, rhs)
             Op.Mul -> mul(lhs, rhs)
             Op.Div -> div(lhs, rhs)
-            Op.Assign -> unify(InfixExpr(this, lhs, rhs, op))
             Op.AssignAdd -> infix(lhs, add(lhs, rhs), Op.Assign)
             Op.AssignSub -> infix(lhs, add(lhs, rhs), Op.Assign)
             Op.AssignMul -> infix(lhs, add(lhs, rhs), Op.Assign)
             Op.AssignDiv -> infix(lhs, add(lhs, rhs), Op.Assign)
+            Op.Lt, Op.Le, Op.Gt, Op.Ge -> cmp(lhs, rhs, op)
+            Op.Assign -> unify(InfixExpr(this, lhs, rhs, op))
             else -> throw NotImplementedError()
+        }
+    }
+
+    private fun cmp(lhs : Expr, rhs: Expr, op : Op) : Expr{
+        val infix = InfixExpr(this, lhs, rhs, op)
+        return if(lhs is LiteralExpr && rhs is LiteralExpr){
+            literal(infix.evalDouble())
+        }else{
+            unify(infix)
         }
     }
 
@@ -140,12 +150,7 @@ class World {
     }
 
     fun lt(lhs : Expr, rhs: Expr) : Expr {
-        val newVal = InfixExpr(this, lhs, rhs, Op.Lt)
-        if (lhs is LiteralExpr && rhs is LiteralExpr) {
-            return literal(newVal.evalDouble())
-        }
-
-        return unify(newVal)
+        return cmp(lhs, rhs, Op.Lt)
     }
 
     fun ifExpr(condition: Expr, lhs: Expr, rhs: Expr) : Expr {
@@ -197,11 +202,11 @@ class World {
     }
 
     fun asin(expr : Expr) : Expr {
-        val asin = Asin(this, expr)
+        val asinExpr = AsinExpr(this, expr)
         return if(expr is LiteralExpr){
-            asin.evalLiteral()
+            asinExpr.evalLiteral()
         }else{
-            unify(asin)
+            unify(asinExpr)
         }
     }
 
@@ -210,7 +215,7 @@ class World {
         return if(expr is LiteralExpr){
             log.evalLiteral()
         }else if(expr is ExpExpr){
-            expr.expr
+            expr.arg
         }else{
             unify(log)
         }
@@ -221,7 +226,7 @@ class World {
         return if(expr is LiteralExpr){
             exp.evalLiteral()
         }else if(expr is LogExpr){
-            expr.expr
+            expr.arg
         }else{
             unify(exp)
         }

@@ -21,7 +21,7 @@ class AdamOptimizer(private val params: List<ParamExpr>) : Optimizer {
     override fun optimize(grad: DoubleArray) {
         currentBeta1 *= beta1
         currentBeta2 *= beta2
-        for(i in grad.indices){
+        for(i in params.indices){
             m[i] = beta1 * m[i] + ( 1 - beta1 ) * grad[i]
             v[i] = beta2 * v[i] + ( 1 - beta2 ) * grad[i] * grad[i]
             val mHat = m[i] / (1 - currentBeta1)

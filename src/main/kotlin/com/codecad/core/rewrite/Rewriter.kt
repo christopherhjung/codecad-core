@@ -5,7 +5,6 @@ import com.codecad.core.ast.controlflow.BlockExpr
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.Slot
-import kotlin.math.exp
 
 abstract class Rewriter {
     open fun rewriteInfix(expr : InfixExpr) : Expr = expr
@@ -93,10 +92,11 @@ class ShareRewriter(val world: World) : Rewriter(){
             return expr
         }
 
+        nodes.clear()
+        exprs.clear()
         scanExprs.forEach { nodes[it] = Node(world.ref(Slot(0.0))) }
         val result = rewriteImpl(expr)
         exprs.add(result)
-
         return BlockExpr(world, exprs.toTypedArray())
     }
 
@@ -123,6 +123,12 @@ class ShareRewriter(val world: World) : Rewriter(){
     override fun rewriteMath(expr: MathExpr): Expr {
         return old2new(expr, when(expr){
             is PowExpr -> world.pow(rewriteImpl(expr.base), rewriteImpl(expr.exp))
+            is AbsExpr -> world.abs(rewriteImpl(expr.arg))
+            is SinExpr -> world.sin(rewriteImpl(expr.arg))
+            is CosExpr -> world.cos(rewriteImpl(expr.arg))
+            is AsinExpr -> world.asin(rewriteImpl(expr.arg))
+            is ExpExpr -> world.exp(rewriteImpl(expr.arg))
+            is LogExpr -> world.log(rewriteImpl(expr.arg))
             else -> throw NotImplementedError("missing")
         })
     }

@@ -8,32 +8,32 @@ abstract class MathExpr(world: World) : Expr(world){
     abstract fun arg() : Expr
 }
 
-class AbsExpr(world: World, val left: Expr) : MathExpr(world){
+class AbsExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return abs(left.evalDouble(scope))
+        return abs(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
-        val derivative = left.derivative(expr)
-        return ifExpr(left.smaller(world.ZERO), -derivative, derivative)
+        val derivative = arg.derivative(expr)
+        return ifExpr(arg.smaller(world.ZERO), -derivative, derivative)
     }
 
     override fun arg(): Expr {
-        return left
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is AbsExpr && left === other.left
+        return other is AbsExpr && arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * left.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
-class SignExpr(world: World, val left: Expr) : MathExpr(world ){
+class SignExpr(world: World, val arg: Expr) : MathExpr(world ){
     override fun eval(scope: Scope) : Any {
-        return sign(left.evalDouble(scope))
+        return sign(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
@@ -41,15 +41,15 @@ class SignExpr(world: World, val left: Expr) : MathExpr(world ){
     }
 
     override fun arg(): Expr {
-        return left
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is SignExpr && left === other.left
+        return other is SignExpr && arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * left.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
@@ -84,81 +84,81 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : MathExpr(world){
     }
 }
 
-class CosExpr(world: World, val left: Expr) : MathExpr(world){
+class CosExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return cos(left.evalDouble(scope))
+        return cos(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
-        return -sin(left) * left.derivative(expr)
+        return -sin(arg) * arg.derivative(expr)
     }
 
     override fun arg(): Expr {
-        return left
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
                 other is CosExpr &&
-                left === other.left
+                arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * left.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
-class Asin(world: World, val left: Expr) : MathExpr(world){
+class AsinExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return asin(left.evalDouble(scope))
+        return asin(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
-        return 1.0 / (1.0 - left.pow(2)).sqrt() * left.derivative(expr)
+        return 1.0 / (1.0 - arg.pow(2)).sqrt() * arg.derivative(expr)
     }
 
     override fun arg(): Expr {
-        return left
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
-                other is Asin &&
-                left === other.left
+                other is AsinExpr &&
+                arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * left.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
-class SinExpr(world: World, val left: Expr) : MathExpr(world){
+class SinExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return sin(left.evalDouble(scope))
+        return sin(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
-        return cos(left) * left.derivative(expr)
+        return cos(arg) * arg.derivative(expr)
     }
 
     override fun arg(): Expr {
-        return left
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
                 other is SinExpr &&
-                left === other.left
+                arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * left.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
-class ExpExpr(world: World, val expr: Expr) : MathExpr(world){
+class ExpExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return exp(expr.evalDouble(scope))
+        return exp(arg.evalDouble(scope))
     }
 
     override fun derivative(expr: Expr): Expr {
@@ -166,40 +166,40 @@ class ExpExpr(world: World, val expr: Expr) : MathExpr(world){
     }
 
     override fun arg(): Expr {
-        return expr
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
                 other is ExpExpr &&
-                expr === other.expr
+                arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * expr.hashCode()
+        return 31 * arg.hashCode()
     }
 }
 
-class LogExpr(world: World, val expr: Expr) : MathExpr(world){
+class LogExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
-        return log(expr.evalDouble(scope), Math.E)
+        return log(arg.evalDouble(scope), Math.E)
     }
 
     override fun derivative(expr: Expr): Expr {
-        return this.expr.derivative(expr) / this
+        return this.arg.derivative(expr) / this
     }
 
     override fun arg(): Expr {
-        return expr
+        return arg
     }
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
                 other is LogExpr &&
-                expr === other.expr
+                arg === other.arg
     }
 
     override fun hashCode(): Int {
-        return 31 * expr.hashCode()
+        return 31 * arg.hashCode()
     }
 }
