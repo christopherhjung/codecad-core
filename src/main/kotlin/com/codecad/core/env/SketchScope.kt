@@ -2,6 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.LineD
 import com.codecad.common.PointD
+import com.codecad.core.env.Project
 import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.sketch.*
 import kotlin.reflect.KClass
@@ -72,7 +73,7 @@ class PatternScope(project: Project, val count: Int, val center: Vec2) : SketchS
 }
 
 open class SketchScope(val project: Project) {
-    val sketch = Sketch(project)
+    val sketch = Sketch(project, "")
 
     val deg = 0
     val rad = 1
@@ -281,17 +282,6 @@ class Point3D(val x: Double, val y: Double, val z: Double){
 
 
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
-/*
-    val split = HashMap<Figure, MutableList<Point>>()
-
-    for( constraint in sketch.constraints ){
-        if( constraint is PointOnCircle ){
-            split.computeIfAbsent(constraint.circle){ mutableListOf()}
-        }else if(constraint is PointOnPoint){
-
-        }
-    }*/
-
     val list = mutableListOf<LineD>()
     for(figure in sketch.figures){
         if(ignoreConstruction && sketch.lineType[figure] == LineType.Construction){
@@ -356,19 +346,15 @@ fun figureToPoints(figure: Figure) : List<PointD>{
         }
     }else if(figure is Circle){
         val span = CirclePlotter(figure)
-        var last: Vec2? = null
         for( i in 0 .. 500){
             val t = i / 500.0
-
             val point = span.getPoint(t)
             list.add(point.fixed())
         }
     }else if(figure is FunctionFigure){
         val span = FunctionPlotter(figure)
-        var last: Vec2? = null
         for( i in 0 .. 500){
             val t = i / 500.0
-
             val point = span.getPoint(t)
             list.add(point.fixed())
         }

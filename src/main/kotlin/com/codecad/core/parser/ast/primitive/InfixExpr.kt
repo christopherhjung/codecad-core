@@ -7,7 +7,7 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.sketch.World
 import kotlin.math.pow
 
-class InfixExpr(world: World, private val lhs: Expr, private val rhs: Expr, private val op: Op) : Expr(world) {
+class InfixExpr(world: World, val lhs: Expr, val rhs: Expr, val op: Op) : Expr(world) {
     private fun compare(lhs: Any?, rhs: Any?): Int {
         if (lhs is String && rhs is String) {
             return lhs.compareTo((rhs as String?)!!)

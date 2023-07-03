@@ -53,14 +53,6 @@ class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
         val positive = Vec2(normalizedDirection.y, -normalizedDirection.x)
         middle + positive * (h - radiusSign)
     }
-
-    val test: Vec2 = run{
-        val direction = p1 - p0
-        val middle = (p0 + p1) * 0.5
-        val normalizedDirection = direction.normalized()
-        val positive = Vec2(normalizedDirection.y, -normalizedDirection.x)
-        middle + positive * (h)
-    }
 }
 
 class FunctionFigure( val function: (Expr) -> Vec2) : Figure(){

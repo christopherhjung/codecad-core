@@ -1,6 +1,6 @@
 package com.codecad.core.scope
 
-import com.codecad.core.Project
+import com.codecad.core.env.Project
 import com.codecad.core.Sketch
 import com.codecad.core.sketch.World
 

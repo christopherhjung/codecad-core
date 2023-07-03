@@ -48,10 +48,10 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : Expr(world){
     }
 
     override fun derivative(expr: Expr): Expr {
-        return if(this.exp is LiteralExpr){
-            this.exp * base.pow(this.exp - 1) * base.derivative(expr)
+        return if(exp is LiteralExpr){
+            exp * base.pow(exp - 1) * base.derivative(expr)
         }else{
-            (this.exp.derivative(expr) * log(base) + this.exp / base * base.derivative(expr)) * this
+            (exp.derivative(expr) * log(base) + exp / base * base.derivative(expr)) * this
         }
     }
 
@@ -94,7 +94,7 @@ class Asin(world: World, val left: Expr) : Expr(world){
     }
 
     override fun derivative(expr: Expr): Expr {
-        return 1.0/ (1.0 - left.pow(2)).sqrt() * left.derivative(expr)
+        return 1.0 / (1.0 - left.pow(2)).sqrt() * left.derivative(expr)
     }
 
     override fun equals(other: Any?): Boolean {

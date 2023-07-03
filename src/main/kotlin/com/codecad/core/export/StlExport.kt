@@ -1,11 +1,11 @@
-package com.codecad.core
+package com.codecad.core.export
 
 import com.codecad.common.Mesh
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class StlExport {
-    fun export(mesh: Mesh): ByteArray{
+class StlExport : ModelExport{
+    override fun export(mesh: Mesh): ByteArray{
         val positions = mesh.points
         val indices = mesh.indices
 

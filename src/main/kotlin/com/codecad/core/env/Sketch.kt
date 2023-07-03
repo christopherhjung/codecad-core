@@ -1,5 +1,7 @@
 package com.codecad.core
 
+import com.codecad.core.env.Project
+import com.codecad.core.optimizer.Solver
 import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.parser.ast.primitive.LiteralExpr
 import com.codecad.core.parser.ast.primitive.ParamExpr
@@ -7,7 +9,7 @@ import com.codecad.core.sketch.*
 import java.util.*
 import kotlin.collections.HashMap
 
-class Sketch(val project: Project) {
+class Sketch(val project: Project, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val figures = ArrayList<Figure>()
@@ -66,7 +68,6 @@ class Sketch(val project: Project) {
         val arc = Arc(p0,p1,radius)
         figures.add(arc)
         figures.add(arc.center)
-        figures.add(arc.test)
         return arc
     }
 

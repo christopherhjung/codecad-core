@@ -607,24 +607,8 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
 
             area = area + current.source.node.point.cross(current.target.node.point)
 
-
-            print(current.source)
-            print(System.identityHashCode(current.source))
-            print(" -- ")
-            println(current.source.node.point)
-
-
-            print(current.target)
-            print(System.identityHashCode(current.target))
-            print(" -- ")
-            println(current.source.node.point)
-
             if(current.target === next.source){
                 break
-            }
-
-            if(points.size > 100){
-                println("upps")
             }
 
             if(current.side != Side.Unknown){
@@ -879,98 +863,3 @@ fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
 
     return orderedFaces.filter { !it.clockwise }
 }
-
-/*
-
-fun main() {
-
-
-
-    val leftFrontBottom = Node(PointD(-0.5,-0.5))
-    val rightFrontBottom = Node(PointD(0.5,-0.5))
-    val rightBackBottom = Node(PointD(0.5,0.5))
-    val leftBackBottom = Node(PointD(-0.5,0.5))
-
-    val leftFrontTop = Node(PointD(-0.5,-0.5, 1.0))
-    val rightFrontTop = Node(PointD(0.5,-0.5, 1.0))
-    val rightBackTop = Node(PointD(0.5,0.5, 1.0))
-    val leftBackTop = Node(PointD(-0.5,0.5, 1.0))
-
-    val leftBottom = Node(PointD(0.4, 0.0, -1.0))
-    val rightBottom = Node(PointD(0.6, 0.0, -1.0))
-    val leftTop = Node(PointD(0.4, 0.0, 1.0))
-    val rightTop = Node(PointD(0.6, 0.0, 1.0))
-
-    val bottom = listOf(
-        leftBackBottom,
-        rightBackBottom,
-        rightFrontBottom,
-        leftFrontBottom,
-    )
-
-    val top = listOf(
-        leftFrontTop,
-        rightFrontTop,
-        rightBackTop,
-        leftBackTop,
-    )
-
-    val right = listOf(
-        rightFrontBottom,
-        rightBackBottom,
-        rightBackTop,
-        rightFrontTop
-    )
-
-    val tool = listOf(
-        leftBottom,
-        rightBottom,
-        rightTop,
-        leftTop
-    )
-
-    val baseVolume = FacedVolume(
-        listOf(
-            PolygonFace(bottom, Plane.fromPoints(bottom.map { it.point })),
-            PolygonFace(top, Plane.fromPoints(top.map { it.point })),
-            PolygonFace(right, Plane.fromPoints(right.map { it.point })),
-        )
-    )
-
-    val toolVolume = FacedVolume(
-        listOf(
-            PolygonFace(tool, Plane.fromPoints(tool.map { it.point })),
-        )
-    )
-
-    val result = addVolumes(baseVolume, toolVolume)
-
-    println("finish")
-}
-
-*/
-/*
-fun main() {
-    val list = listOf(
-        PointD(-0.5,-0.5),
-        PointD(0.5,-0.5),
-        PointD(0.5,0.5),
-        PointD(-0.5,0.5)
-    )
-
-    val list2 = listOf(
-        PointD(-0.2,-0.2),
-        PointD(0.2,-0.2),
-        PointD(0.2,0.2),
-        PointD(-0.2,0.2)
-    )
-
-    val base = Extrude(PolygonFace(list.map { Node(it) }), DirectedPlane.XY,   Const(1.0))
-    val tool = Extrude(PolygonFace(list2.map { Node(it) }), DirectedPlane.XY,  Const(2.0))
-
-    val result = addVolumes(base, tool)
-
-    println("finish")
-}
-*/
-

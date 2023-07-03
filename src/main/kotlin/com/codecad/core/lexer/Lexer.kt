@@ -229,7 +229,7 @@ class Lexer(code: String) {
                 if (accept('/')) {
                     while (true) {
                         if (isEOL) {
-                            return token(Token.Kind.Error)
+                            return token(Token.Kind.EOL)
                         }
                         if (accept('\n')) {
                             break

@@ -62,12 +62,18 @@ class World {
             rhs
         }else if(rhs === ZERO){
             lhs
-        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
-            literal(lhs.evalDouble() + rhs.evalDouble())
         }else if(lhs === rhs){
             mul(TWO, rhs)
+        }else if(rhs is LiteralExpr){
+            if(lhs is LiteralExpr){
+                literal(lhs.evalDouble() + rhs.evalDouble())
+            }else if(lhs is InfixExpr && lhs.op == Op.Add && lhs.rhs is LiteralExpr){
+                add(lhs.lhs,  add(lhs.rhs, rhs))
+            }else{
+                unify(InfixExpr(this, lhs, rhs, Op.Add))
+            }
         }else{
-            unify(InfixExpr(this, lhs, rhs, Op.Add))
+            unify(InfixExpr(this, rhs, lhs, Op.Add))
         }
     }
 
@@ -92,12 +98,18 @@ class World {
             rhs
         }else if(rhs === ONE){
             lhs
-        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
-            literal(lhs.evalDouble() * rhs.evalDouble())
         }else if(lhs === rhs){
             pow(lhs, TWO)
+        }else if(rhs is LiteralExpr){
+            if(lhs is LiteralExpr){
+                literal(lhs.evalDouble() * rhs.evalDouble())
+            }else if(lhs is InfixExpr && lhs.op == Op.Mul && lhs.rhs is LiteralExpr){
+                mul(lhs.lhs,  mul(lhs.rhs, rhs))
+            }else{
+                unify(InfixExpr(this, lhs, rhs, Op.Mul))
+            }
         }else{
-            unify(InfixExpr(this, lhs, rhs, Op.Mul))
+            unify(InfixExpr(this, rhs, lhs, Op.Mul))
         }
     }
 
@@ -108,8 +120,12 @@ class World {
             lhs
         }else if (lhs === rhs){
             ONE
-        }else if (lhs is LiteralExpr && rhs is LiteralExpr) {
-            literal(lhs.evalDouble() / rhs.evalDouble())
+        }else if (rhs is LiteralExpr) {
+            if(lhs is LiteralExpr){
+                literal(lhs.evalDouble() / rhs.evalDouble())
+            }else{
+                mul(lhs, literal(1.0 / rhs.evalDouble()))
+            }
         }else {
             unify(InfixExpr(this, lhs, rhs, Op.Div))
         }
@@ -145,9 +161,9 @@ class World {
             base
         }else if(base === ZERO){
             ZERO
-        }/*else if(base is PowExpr){
+        }else if(base is PowExpr){
             pow(base.base, mul(base.exp, exp))
-        }*/else if (base is LiteralExpr && exp is LiteralExpr) {
+        }else if (base is LiteralExpr && exp is LiteralExpr) {
             literal(base.evalDouble().pow(exp.evalDouble()))
         }else{
             unify(PowExpr(this, base, exp))
@@ -155,50 +171,56 @@ class World {
     }
 
     fun cos(expr : Expr) : Expr {
+        val cosExpr = CosExpr(this, expr)
         return if(expr is LiteralExpr){
-            literal(kotlin.math.cos(expr.evalDouble()))
+            cosExpr.evalLiteral()
         }else{
-            unify(CosExpr(this, expr))
+            unify(cosExpr)
         }
     }
 
     fun sin(expr : Expr) : Expr {
+        val sinExpr = SinExpr(this, expr)
         return if(expr is LiteralExpr){
-            literal(kotlin.math.sin(expr.evalDouble()))
+            sinExpr.evalLiteral()
         }else{
-            unify(SinExpr(this, expr))
+            unify(sinExpr)
         }
     }
 
     fun asin(expr : Expr) : Expr {
+        val asin = Asin(this, expr)
         return if(expr is LiteralExpr){
-            literal(kotlin.math.asin(expr.evalDouble()))
+            asin.evalLiteral()
         }else{
-            unify(Asin(this, expr))
+            unify(asin)
         }
     }
 
     fun log(expr : Expr) : Expr {
+        val log = LogExpr(this, expr)
         return if(expr is LiteralExpr){
-            literal(kotlin.math.log(expr.evalDouble(), Math.E))
+            log.evalLiteral()
         }else{
-            unify(LogExpr(this, expr))
+            unify(log)
         }
     }
 
     fun abs(expr: Expr) : Expr {
+        val abs = AbsExpr(this, expr)
         return if(expr is LiteralExpr){
-            literal(abs(expr.evalDouble()))
+            abs.evalLiteral()
         }else{
-            unify(AbsExpr(this, expr))
+            unify(abs)
         }
     }
 
     fun sign(expr: Expr) : Expr {
+        val sign = SignExpr(this, expr)
         return if(expr is LiteralExpr){
-            literal(kotlin.math.sign(expr.evalDouble()))
+            sign.evalLiteral()
         }else{
-            unify(SignExpr(this, expr))
+            unify(sign)
         }
     }
 

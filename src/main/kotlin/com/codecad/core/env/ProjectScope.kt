@@ -1,5 +1,7 @@
-package com.codecad.core
+package com.codecad.core.env
 
+import com.codecad.core.*
+import com.codecad.core.env.Project
 import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.test.DirectedPlane
 

@@ -111,8 +111,8 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
 }
 
 fun findFaces(arr2: List<LineD>): List<PolygonFace> {
-    val arr = removeIntersections(arr2)
-
+    val ordered = removeIntersections(arr2)
+/*
     val ordered = mutableListOf<LineD>()
     for (line in arr) {
         ordered.add(
@@ -122,7 +122,7 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
                 line
             }
         )
-    }
+    }*/
 
     val pointMap = HashMap<PointD, Corner>()
     val edges = HashSet<Edge>()
@@ -146,199 +146,6 @@ fun findFaces(arr2: List<LineD>): List<PolygonFace> {
     return generateFaces(pointMap.values, edges, Plane.XY)
 }
 
-/*
-data class Node(
-    val p: PointD
-) : Comparable<Node> {
-    val edges = mutableListOf<Edge>()
-
-    override fun compareTo(other: Node): Int {
-        if (p.x == other.p.x) return p.y.compareTo(other.p.y)
-        return p.x.compareTo(other.p.x)
-    }
-}*/
-
-/*
-data class Edge(val source : Node, val target: Node){
-    var next: Edge? = null
-    lateinit var twin: Edge
-    var polygonFace: PolygonFace? = null
-
-    //var inner = false
-    var index = -1
-}*/
-
-/*
-fun Edge.orientationTo(other: Edge) : Int{
-    return (target.p - source.p).crossZ(other.target.p - other.source.p).sign.toInt()
-}
-
-fun Edge.orientationTo(other: PointD) : Int{
-    return (target.p - source.p).crossZ(other - source.p).sign.toInt()
-}
-
-fun rotateComparator() : Comparator<Edge>{
-    return Comparator{
-        a,b -> a.orientationTo(b)
-    }
-}*/
-
-/*
-fun ArrayList<Edge>.search(point: PointD) : Int{
-    var left = 0
-    var right = size
-
-    while(left < right){
-        val middlePos = (right + left) / 2
-        val middle = this[middlePos]
-        val orientation = middle.orientationTo(point)
-
-        if(orientation == 0){
-            return middlePos
-        }else if( orientation > 0 ){
-            right = middlePos
-        }else{
-            left = middlePos + 1
-        }
-    }
-
-    return left
-}
-*/
-
-/*
-fun findFaces(arr2: List<LineD>): List<PolygonFace> {
-    val arr = removeIntersections(arr2)
-
-    val ordered = mutableListOf<LineD>()
-    for(line in arr){
-        ordered.add(if (line.p0.x > line.p1.x) {
-            LineD(line.p1, line.p0)
-        }else{
-            line
-        })
-    }
-
-    val pointMap = HashMap<PointD, Corner>()
-    val edges = HashSet<Edge>()
-
-    for (line in ordered) {
-        val left = pointMap.computeIfAbsent(line.p0){ Corner(Node(it)) }
-        val right = pointMap.computeIfAbsent(line.p1){ Corner(Node(it)) }
-
-        val a = Edge(left, right)
-        val b = Edge(right, left)
-
-        a.twin = b
-        b.twin = a
-
-        left.edges.add(a)
-        right.edges.add(b)
-        edges.add(a)
-        edges.add(b)
-    }
-
-    for(node in pointMap.values){
-        node.edges.sortBy {
-            val aDirection = it.target.p - it.source.p
-            atan2(aDirection.x, aDirection.y)
-        }
-
-        for(i in node.edges.indices){
-            val top = node.edges[i]
-            val bottom = node.edges[(i+1)%node.edges.size]
-            top.twin.next = bottom
-        }
-    }
-
-    val faces = mutableListOf<PolygonFace>()
-
-    val queue = edges.toMutableList()
-    while(queue.isNotEmpty()){
-        val next = queue.first()
-        queue.remove(next)
-
-        var area = 0.0
-        val points = mutableListOf<PointD>()
-        var current = next
-        val face = PolygonFace(points)
-        while(true){
-            points.add(current.target.p)
-            current.polygonFace = face
-            area += current.source.p.x * current.target.p.y -  current.target.p.x * current.source.p.y
-            if(current.target === next.source){
-                break
-            }
-
-            current = current.next!!
-            queue.remove(current)
-        }
-
-        area /= 2
-
-        face.area = abs(area)
-        face.clockwise = area.sign < 0
-        face.leftmost = getLeftmostPoint(face)
-        println(area)
-        faces.add(face)
-    }
-
-    val outers = mutableListOf<PolygonFace>()
-    val inners = mutableListOf<PolygonFace>()
-
-    for( face in faces ){
-        if(!face.clockwise){
-            outers.add(face)
-        }else{
-            inners.add(face)
-        }
-    }
-
-    outers.sortByDescending { it.leftmost!!.x }
-
-    val receivers = edges.filter { it.source.p.y > it.target.p.y }.sortedBy { min(it.source.p.x, it.target.p.x) }
-
-    inners.sortBy { it.leftmost!!.x }
-
-    for( inner in inners ){
-        val leftmost = inner.leftmost!!
-
-        var minValue: Double? = null
-        var minEdge : Edge? = null
-        for(edge in receivers){
-            if(edge.source.p.y >= leftmost.y && edge.target.p.y <= leftmost.y){
-                val pos = leftmost.x - (edge.target.p.x - (leftmost.y - edge.target.p.y) * (edge.target.p.x - edge.source.p.x) / (edge.source.p.y - edge.target.p.y))
-
-                if( ( minValue == null || pos < minValue ) && pos > 0 ){
-                    minValue = pos
-                    minEdge = edge
-                }
-            }
-        }
-
-        val outer = minEdge?.polygonFace
-
-        if(outer != null){
-            val target = outer.parent ?: outer
-            inner.parent = target
-            target.children.add(inner)
-        }
-    }
-
-    return outers
-}
-
-fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
-    var leftMost: PointD? = null
-    for( point in polygonFace.points ){
-        if(leftMost == null || leftMost.x > point.x){
-            leftMost = point
-        }
-    }
-    return leftMost!!
-}
-
-*/
 fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
     val faces = findFaces(segments)
 

@@ -1,5 +1,7 @@
-package com.codecad.core
+package com.codecad.core.optimizer
 
+import com.codecad.core.AdamOptimizer
+import com.codecad.core.Tracker
 import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.parser.ast.primitive.ParamExpr
 import com.codecad.core.sketch.Constraint
@@ -54,8 +56,6 @@ class Solver(val tracker: Tracker) {
         var iter = 0
 
         val optimizer = AdamOptimizer(x)
-
-        val start = System.currentTimeMillis()
         while ((errorChange > minErrorChange && error > accuracy ) && iter < 20000) {
             tracker.addEntry(x, errorTerm)
 
@@ -69,11 +69,6 @@ class Solver(val tracker: Tracker) {
             errorChange = abs(error - lastError)
             lastError = error
             iter++
-
-            if(System.currentTimeMillis() - start > 1000){
-                //return false
-            }
-
         }
 
         println("iterations: $iter")

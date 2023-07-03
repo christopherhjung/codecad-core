@@ -1,6 +1,5 @@
 package com.codecad.core.parser.ast.complex
 
-import com.codecad.core.Project
 import com.codecad.core.Sketch
 import com.codecad.core.parser.ast.primitive.Expr
 import com.codecad.core.scope.NestedScope
@@ -15,7 +14,7 @@ class SketchExpr(
 
     override fun eval(scope: Scope): Any? {
         val project = scope.project
-        val sketch = Sketch(project)
+        val sketch = Sketch(project, name)
         project.sketches.add(sketch)
         val nestedScope = NestedScope.mutual(scope)
         nestedScope.sketch = sketch

@@ -1,6 +1,11 @@
-package com.codecad.core
+package com.codecad.core.env
 
 import com.codecad.common.LineError
+import com.codecad.core.CircleLike
+import com.codecad.core.Segment2
+import com.codecad.core.Vec2
+import com.codecad.core.env.Project
+import com.codecad.core.exception.LineException
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.parser.ast.primitive.Expr
@@ -18,13 +23,13 @@ class ExecutionResult(val output: String, val project: Project)
 
 class Executor{
     companion object{
-        private val LOGGER = LoggerFactory.getLogger(Controller::class.java)
+        private val LOGGER = LoggerFactory.getLogger(Executor::class.java)
         fun execute(code: String) : ExecutionResult {
             return Executor().execute(code)
         }
     }
 
-    fun run(expr: Expr) : Project{
+    fun run(expr: Expr) : Project {
         val scope = MutualScope()
 
         val project = Project()
@@ -57,6 +62,12 @@ class Executor{
             val lhs = args[0] as Vec2
             val rhs = args[1] as Vec2
             return@ObjectFunction sketch.line(lhs, rhs)
+        }, true)
+        scope.setObject("cline", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val lhs = args[0] as Vec2
+            val rhs = args[1] as Vec2
+            return@ObjectFunction sketch.cline(lhs, rhs)
         }, true)
         scope.setObject("circle", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
@@ -106,8 +117,14 @@ class Executor{
             val line = args[1] as Segment2
             return@ObjectFunction sketch.tangent(circle, line)
         }, true)
+        scope.setObject("extrude", ObjectFunction{ scope, args ->
+            val project = scope.project
+            val name = args[0] as String
+            val sketch = project.sketches.find { it.name == name }!!
+            val height = Expr.orLiteral(scope.world, args[1])
+            return@ObjectFunction project.extrude(sketch, height)
+        }, true)
         scope.setObject("origin", world.ORIGIN, true)
-
 
         scope.setObject("fit", ObjectFunction{ scope, args ->
             val sketch = scope.sketch

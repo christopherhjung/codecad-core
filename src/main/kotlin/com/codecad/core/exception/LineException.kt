@@ -1,4 +1,4 @@
-package com.codecad.core
+package com.codecad.core.exception
 
 import com.codecad.common.LineError
 

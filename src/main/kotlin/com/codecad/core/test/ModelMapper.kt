@@ -3,6 +3,8 @@ package com.codecad.core.test
 import com.codecad.common.Model
 import com.codecad.common.Path
 import com.codecad.core.*
+import com.codecad.core.env.Project
+import com.codecad.core.mesh.MeshGenerator
 
 fun mapModel(project: Project) : Model{
     val model = Model()
