@@ -88,9 +88,7 @@ class ShareRewriter(val world: World) : Rewriter(){
     fun rewrite(expr: Expr) : Expr{
         val scanner = MultiUseScanner()
         val scanExprs = scanner.scan(expr)
-        if(scanExprs.isEmpty()){
-            return expr
-        }
+        if(scanExprs.isEmpty()) return expr
 
         nodes.clear()
         exprs.clear()

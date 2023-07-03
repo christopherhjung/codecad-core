@@ -16,20 +16,18 @@ class Solver(val tracker: Tracker) {
 
     fun solve(world: World, params: List<ParamExpr>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
         val errorTerm = constraints.map { it.equation }
-            .reduceOrNull{a : Expr,b : Expr -> a + b} ?: world.ZERO
+            .reduceOrNull{a : Expr,b : Expr -> a + b} ?: return true
         val gradients = params.map { errorTerm.derivative(it) }
         var tangent = world.tuple(*gradients.toTypedArray(), errorTerm)
         val rewriter = ShareRewriter(world)
         tangent = rewriter.rewrite(tangent)
 
-        val result = solveImpl(params, tangent, accuracy)
-
-        return result
+        return solveImpl(params, tangent, accuracy)
     }
 
     fun solveImpl(x: List<ParamExpr>, tangent: Expr, accuracy: Double = targetError): Boolean{
         var error = Double.MAX_VALUE
-        var lastError = -1.0
+        var lastError = Double.MAX_VALUE
         var errorChange = 1.0
         var iter = 0
 
