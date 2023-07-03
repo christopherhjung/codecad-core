@@ -4,7 +4,7 @@ import com.codecad.core.exception.InterpreterException
 
 interface Scope {
     fun getObject(key: String?): Any? {
-        val slot = getValue(key);
+        val slot = getValue(key)
         val value = slot ?: throw InterpreterException("Expected value of $key")
         return value.value
     }

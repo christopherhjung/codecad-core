@@ -1,11 +1,9 @@
 package com.codecad.core
 
-import com.codecad.common.ExecutionResult
 import com.codecad.common.LineError
-import com.codecad.core.env.Executor
+import com.codecad.core.part.Executor
 import com.codecad.core.exception.LineException
 import com.codecad.core.test.mapModel
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -13,9 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-class Wrapper(val errors: List<LineError> = mutableListOf()){
-
-}
+class Wrapper(val errors: List<LineError> = mutableListOf())
 
 @RestController
 @RequestMapping("api")

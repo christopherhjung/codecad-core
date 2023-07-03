@@ -1,7 +1,6 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.primitive.ParamExpr
-import com.codecad.core.sketch.World
+import com.codecad.core.ast.primitive.ParamExpr
 import kotlin.math.cos
 import kotlin.math.sin
 

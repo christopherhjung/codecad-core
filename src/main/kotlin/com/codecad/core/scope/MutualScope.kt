@@ -1,7 +1,7 @@
 package com.codecad.core.scope
 
 class MutualScope @JvmOverloads constructor(private val map: MutableMap<String?, Slot?> = HashMap()) : Scope {
-    constructor(global: Scope?) : this(HashMap<String?, Slot?>()) {}
+    constructor(global: Scope?) : this(HashMap<String?, Slot?>())
 
     fun toStatic(): StaticScope {
         return StaticScope(HashMap(map))

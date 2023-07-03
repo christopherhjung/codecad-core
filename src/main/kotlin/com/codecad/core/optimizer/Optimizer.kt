@@ -1,6 +1,6 @@
-package com.codecad.core
+package com.codecad.core.optimizer
 
-import com.codecad.core.parser.ast.primitive.ParamExpr
+import com.codecad.core.ast.primitive.ParamExpr
 import kotlin.math.sqrt
 
 interface Optimizer {

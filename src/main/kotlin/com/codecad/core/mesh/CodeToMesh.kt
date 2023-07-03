@@ -2,7 +2,7 @@ package com.codecad.core.mesh
 
 import com.codecad.common.Mesh
 import com.codecad.core.Extrude
-import com.codecad.core.env.Executor
+import com.codecad.core.part.Executor
 
 class CodeToMesh {
     fun transform(code : String) : List<Mesh>{

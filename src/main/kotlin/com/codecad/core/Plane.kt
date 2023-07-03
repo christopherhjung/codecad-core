@@ -1,8 +1,8 @@
 package com.codecad.core
 
 import com.codecad.core.Point3.Companion.times
-import com.codecad.core.parser.ast.primitive.Expr
-import com.codecad.core.parser.ast.primitive.minus
+import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.primitive.minus
 
 class Line(val origin: Point3, val direction: Point3){
     companion object{

@@ -2,9 +2,9 @@ package com.codecad.core.sketch
 
 import com.codecad.core.Circle
 import com.codecad.core.CircleLike
-import com.codecad.core.Vec2
 import com.codecad.core.Segment2
-import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.Vec2
+import com.codecad.core.ast.primitive.Expr
 
 abstract class Constraint {
     var cache: Expr? = null
@@ -106,7 +106,7 @@ fun pointAlongLine(line: Segment2, r: Expr): Vec2 {
 fun projectionFactorBetween(line: Segment2, point: Vec2): Expr {
     val dx = line.p0.x - line.p1.x
     val dy = line.p0.y - line.p1.y
-    val len2 = dx * dx + dy * dy;
+    val len2 = dx * dx + dy * dy
     return -((point.x - line.p0.x) * dx + (point.y - line.p0.y) * dy) / len2
 }
 
@@ -116,9 +116,9 @@ fun projectOntoLine(line: Segment2, point: Vec2): Vec2 {
 }
 
 fun distanceBetweenPoints(p0: Vec2, p1: Vec2): Expr {
-    val dx = p0.x - p1.x;
-    val dy = p0.y - p1.y;
-    return (dx * dx + dy * dy).sqrt();
+    val dx = p0.x - p1.x
+    val dy = p0.y - p1.y
+    return (dx * dx + dy * dy).sqrt()
 }
 
 class Perpendicular(val line1: Segment2, val line2: Segment2) : Constraint() {

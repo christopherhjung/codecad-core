@@ -1,11 +1,10 @@
 package com.codecad.core.optimizer
 
-import com.codecad.core.AdamOptimizer
 import com.codecad.core.Tracker
-import com.codecad.core.parser.ast.primitive.Expr
-import com.codecad.core.parser.ast.primitive.ParamExpr
+import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.sketch.Constraint
-import com.codecad.core.sketch.World
+import com.codecad.core.World
 import kotlin.math.abs
 
 val minErrorChange = 1e-10

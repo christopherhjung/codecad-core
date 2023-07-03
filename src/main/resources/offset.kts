@@ -1,7 +1,8 @@
 import com.codecad.core.*
 import com.codecad.core.Expr.Companion.cos
 import com.codecad.core.Expr.Companion.sin
-import com.codecad.core.SketchScope.Companion.ORIGIN
+import com.codecad.core.part.SketchScope
+import com.codecad.core.part.SketchScope.Companion.ORIGIN
 
 
 

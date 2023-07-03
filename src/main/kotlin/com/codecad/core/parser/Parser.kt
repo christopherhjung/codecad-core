@@ -1,13 +1,13 @@
 package com.codecad.core.parser
 
+import com.codecad.core.ast.primitive.*
 import com.codecad.core.exception.ParseException
 import com.codecad.core.lexer.Lexer
 import com.codecad.core.lexer.Token
-import com.codecad.core.parser.ast.complex.SketchExpr
-import com.codecad.core.parser.ast.primitive.*
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.StaticScope
-import com.codecad.core.sketch.World
+import com.codecad.core.World
+import com.codecad.core.ast.controlflow.*
 
 class Parser private constructor(private val lexer: Lexer, private val world: World) {
     private var lastOp: Op? = null
@@ -125,7 +125,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         expect(Token.Kind.Sketch)
         val name = parseIdent()
         val body = parseBlock()
-        return SketchExpr(world, name, body)
+        return com.codecad.core.ast.complex.SketchExpr(world, name, body)
     }
 
     private fun parseItem(): Expr {
@@ -143,7 +143,10 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
                 else -> exprs.add(parseExpr())
             }
         }
-        val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(world, exprs.toTypedArray())
+        val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(
+            world,
+            exprs.toTypedArray()
+        )
         return if (functions.isEmpty()) {
             expr
         } else {
@@ -199,7 +202,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         if (op == Op.Chain) {
             return if (accept(Token.Kind.LeftParen)) {
                 val arg: TupleExpr = TupleExpr.asTuple(parseTuple())
-                CallExpr(world, lhs, arg, true)
+                com.codecad.core.ast.primitive.CallExpr(world, lhs, arg, true)
             } else {
                 FieldExpr(world, lhs, parseIdent(), true)
             }
@@ -281,7 +284,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return when (op) {
             Op.LeftParen -> {
                 val arg = parseTuple()
-                CallExpr(world, lhs, TupleExpr.asTuple(arg))
+                com.codecad.core.ast.primitive.CallExpr(world, lhs, TupleExpr.asTuple(arg))
             }
             Op.Inc, Op.Dec -> PostfixExpr(world, lhs, op)
             else -> throw ParseException("Postfix Expr not yet implemented")

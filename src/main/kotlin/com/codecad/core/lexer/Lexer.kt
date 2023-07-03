@@ -38,7 +38,7 @@ class Lexer(code: String) {
     fun ahead(offset: Int): Int {
         return if (idx + offset + 1 >= chars.size) {
             -1
-        } else chars[idx].toInt()
+        } else chars[idx].code
     }
 
     fun `is`(cha: Int, offset: Int): Boolean {

@@ -1,10 +1,10 @@
 package com.codecad.core
 
-import com.codecad.core.parser.ast.primitive.Expr
-import com.codecad.core.parser.ast.primitive.ParamExpr
+import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.primitive.ParamExpr
 
 
-class Tracker() {
+class Tracker {
     val entries = mutableListOf<MutableMap<ParamExpr, Double>>()
     val params = mutableListOf<ParamExpr>()
     val errors = mutableListOf<Double>()

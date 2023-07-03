@@ -1,10 +1,13 @@
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.parser.ast.primitive.Expr
-import com.codecad.core.parser.ast.primitive.LiteralExpr
-import com.codecad.core.parser.ast.primitive.ParamExpr
-import com.codecad.core.sketch.World
+import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.primitive.LiteralExpr
+import com.codecad.core.ast.primitive.ParamExpr
+import com.codecad.core.World
+import com.codecad.core.part.Rect
+import com.codecad.core.part.RoundRect
+import com.codecad.core.part.SketchScope
 import com.codecad.core.test.DirectedPlane
 import com.codecad.core.test.Node
 import com.codecad.core.test.addVolumes

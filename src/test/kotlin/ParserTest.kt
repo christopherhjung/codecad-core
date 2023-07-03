@@ -1,8 +1,8 @@
 import com.codecad.core.*
-import com.codecad.core.env.Project
+import com.codecad.core.part.Project
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
-import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.*
 import org.junit.jupiter.api.Test

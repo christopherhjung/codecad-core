@@ -1,8 +1,8 @@
 package com.codecad.core.scope
 
-import com.codecad.core.env.Project
-import com.codecad.core.Sketch
-import com.codecad.core.sketch.World
+import com.codecad.core.part.Sketch
+import com.codecad.core.part.Project
+import com.codecad.core.World
 
 
 var Scope.project : Project

@@ -1,7 +1,7 @@
 package com.codecad.core
 
 import com.codecad.common.PointD
-import com.codecad.core.parser.ast.primitive.Expr
+import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
 
@@ -9,7 +9,7 @@ enum class LineType(val prio: Int){
     Normal(2), Construction(3)
 }
 
-abstract class Figure()
+abstract class Figure
 
 class Segment2(val p0: Vec2, val p1: Vec2) : Figure(){
     val squaredLength : Expr
@@ -55,9 +55,7 @@ class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
     }
 }
 
-class FunctionFigure( val function: (Expr) -> Vec2) : Figure(){
-
-}
+class FunctionFigure( val function: (Expr) -> Vec2) : Figure()
 
 class Vec2(val x: Expr, val y: Expr) : Figure() {
 

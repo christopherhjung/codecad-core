@@ -2,8 +2,10 @@ package com.codecad.core.test
 
 import com.codecad.common.Model
 import com.codecad.common.Path
-import com.codecad.core.*
-import com.codecad.core.env.Project
+import com.codecad.core.FacedVolume
+import com.codecad.core.Vec2
+import com.codecad.core.part.Project
+import com.codecad.core.part.figureToPoints
 import com.codecad.core.mesh.MeshGenerator
 
 fun mapModel(project: Project) : Model{
