@@ -15,7 +15,6 @@ open class ConvexFace( val positions: List<PointD> ) : Face(), HasSide {
         return result
     }
 
-    override fun toPlane() : Plane {
-        return Plane.fromPoints(positions[0], positions[1], positions[2])
-    }
+    override val plane: Plane
+        get() = Plane.fromPoints(positions[0], positions[1], positions[2])
 }

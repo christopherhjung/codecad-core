@@ -15,7 +15,7 @@ enum class FaceType{
 
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
-    abstract fun toPlane() : Plane
+    abstract val plane : Plane
 }
 
 interface HasSide{
