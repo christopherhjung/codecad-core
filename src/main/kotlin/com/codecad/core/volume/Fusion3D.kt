@@ -324,14 +324,6 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             val direction = endCorner.point - startCorner.point
             val test = direction.cross(slice.plane.normal).dot(slice.face.plane.normal)
 
-            if(test > 0){
-                edge.side = Side.Outside
-                twin.side = Side.Inside
-            }else{
-                edge.side = Side.Inside
-                twin.side = Side.Outside
-            }
-
             //hit edge split queueing
             if(slice.start != null){
                 if(slice.start?.target !== startCorner && slice.start?.source !== startCorner){
@@ -565,8 +557,8 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
     estimateSides(faceAssignment.toolFaces )
     estimateSides(faceAssignment.baseFaces)
 
-    val baseFaces = faceAssignment.baseFaces.filter { if(it is HasSide) it.side != Side.Inside else false }
-    val toolFaces = faceAssignment.toolFaces.filter { if(it is HasSide) it.side == Side.Inside else false }
+    val baseFaces = faceAssignment.baseFaces.filter { it.type != FaceType.Surface }
+    val toolFaces = faceAssignment.toolFaces.filter { it.type == FaceType.Surface }
 
     return FacedVolume(baseFaces + toolFaces.map {
         when (it) {

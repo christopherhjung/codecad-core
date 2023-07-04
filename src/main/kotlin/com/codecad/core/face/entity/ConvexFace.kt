@@ -3,9 +3,7 @@ package com.codecad.core.face.entity
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 
-open class ConvexFace( val positions: List<PointD> ) : Face(), HasSide {
-    override var side: Side = Side.Unknown
-
+open class ConvexFace( val positions: List<PointD> ) : Face() {
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
         for( i in 0 until positions.size - 2 ){

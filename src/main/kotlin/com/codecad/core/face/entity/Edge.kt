@@ -3,14 +3,9 @@ package com.codecad.core.face.entity
 import com.codecad.common.PointD
 
 
-enum class Side{
-    Unknown, Outside, Inside
-}
-
 data class Edge(val source: Corner, val target : Corner){
     var next: Edge? = null
     lateinit var twin : Edge
-    var side : Side = Side.Unknown
 
     companion object{
         fun withAdd(source: Corner, target: Corner) : Edge {

@@ -51,18 +51,13 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
         corner.edges.sortWith(comparator)
 
         for((top, bottom) in corner.edges.rollover()){
-            if( top.twin.target === bottom.source ){
-                top.twin.next = bottom
-            }else{
-                //throw Error("not matching")
-            }
+            assert(top.twin.target === bottom.source)
+            top.twin.next = bottom
         }
     }
 }
 
 fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
-    val sideMap = mutableMapOf<PolygonFace, Side>()
-
     finishCorners(corners, plane)
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
@@ -73,8 +68,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
         var area = PointD.ZERO
         val points = mutableListOf<PointD>()
         var current = next
-
-        var side = Side.Unknown
 
         val edges = mutableListOf<Edge>()
         while(true){
@@ -87,17 +80,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
                 break
             }
 
-            if(current.side != Side.Unknown){
-                if(side != Side.Unknown ) {
-                    if(side != current.side){
-                        println("upps")
-                        //throw RuntimeException("ss")
-                    }
-                }else{
-                    side = current.side
-                }
-            }
-
             current = current.next!!
             queue.remove(current)
         }
@@ -105,9 +87,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
         val type = if(area.dot(plane.normal) < 0) FaceType.Hole else FaceType.Surface
         val face = PolygonFace(points, type, plane)
         face.area = area.length() / 2
-        face.side = side
-        sideMap[face] = side
-
         faces.add(face)
     }
 

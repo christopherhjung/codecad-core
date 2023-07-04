@@ -2,9 +2,6 @@ package com.codecad.core.face.entity
 
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.face.entity.ConvexFace
-import com.codecad.core.face.entity.DirectedPlane
-import com.codecad.core.face.entity.Side
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint
@@ -16,11 +13,9 @@ enum class FaceType{
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
     abstract val plane : Plane
+    open val type : FaceType = FaceType.Surface
 }
 
-interface HasSide{
-    var side : Side
-}
 
 class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
     override fun generateTriangles()  : List<TriangleFace>{
