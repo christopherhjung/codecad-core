@@ -5,11 +5,16 @@ import com.codecad.core.face.entity.DirectedPlane
 import com.codecad.core.face.entity.Edge
 import kotlin.math.atan2
 
-class RotaryComparator(plane: Plane) : (Edge) -> Double{
+
+class RotaryComparator(plane: Plane) : Comparator<Edge>{
     private val directedPlane = DirectedPlane.from(plane)
 
-    override fun invoke(p1: Edge): Double {
-        val aDirection = (p1.target.point - p1.source.point)//.normalized()
+    private fun absoluteAngle(p1: Edge): Double {
+        val aDirection = p1.target.point - p1.source.point
         return atan2(aDirection.dot(directedPlane.first), aDirection.dot(directedPlane.second))
+    }
+
+    override fun compare(lhs: Edge, rhs: Edge): Int {
+        return absoluteAngle(lhs).compareTo(absoluteAngle(rhs))
     }
 }

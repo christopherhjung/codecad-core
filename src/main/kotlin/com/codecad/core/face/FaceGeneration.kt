@@ -75,15 +75,10 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
 
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
-    var comparator: RotaryComparator? = null
+    val comparator = RotaryComparator(plane)
 
     for(corner in corners){
-        if(corner.edges.size > 2){
-            if(comparator == null){
-                comparator = RotaryComparator(plane)
-            }
-            corner.edges.sortBy(comparator)
-        }
+        corner.edges.sortWith(comparator)
 
         for((top, bottom) in corner.edges.rollover()){
             if( top.twin.target === bottom.source ){
