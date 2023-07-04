@@ -4,6 +4,7 @@ import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.face.*
+import com.codecad.core.rollover
 import java.util.*
 
 
@@ -38,7 +39,6 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
 
 val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
 fun cutLines(lines: List<LineD>): List<LineD> {
-    val lines = lines.map { normalizeLine(it) }
     val events = events(lines)
 
     val sectionMap = HashMap<LineD, MutableList<PointD>>()
@@ -66,13 +66,12 @@ fun cutLines(lines: List<LineD>): List<LineD> {
     for( line in lines ){
         val sections = sectionMap[line]
         if( sections != null ){
+            sections.add(line.p0)
+            sections.add(line.p1)
             sections.sortWith(Comp2D)
-            var left = line.p0
-            for( split in sections ){
-                result.add(LineD(left, split))
-                left = split
+            for((lhs, rhs) in sections.zipWithNext()){
+                result.add(LineD(lhs, rhs))
             }
-            result.add(LineD(left, line.p1))
         }else{
             result.add(line)
         }

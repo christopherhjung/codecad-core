@@ -27,12 +27,10 @@ fun normalizeLine(line : LineD) : LineD {
 }
 
 fun isForward(line: LineD) : Boolean{
-    return if(line.p0.x < line.p1.x){
-        true
-    }else if(line.p0.x > line.p1.x){
-        false
-    }else{
-        line.p0.y < line.p1.y
+    return when{
+        line.p0.x < line.p1.x -> true
+        line.p0.x > line.p1.x -> false
+        else -> line.p0.y < line.p1.y
     }
 }
 
