@@ -1,6 +1,7 @@
-package com.codecad.core
+package com.codecad.core.test
 
 import com.codecad.common.PointD
+import com.codecad.core.TriangleFace
 import kotlin.math.abs
 import kotlin.math.sign
 

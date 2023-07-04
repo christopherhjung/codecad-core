@@ -3,9 +3,7 @@ package com.codecad.core
 import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.test.Corner
-import com.codecad.core.test.Edge
-import com.codecad.core.test.generateFaces
+import com.codecad.core.test.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -39,38 +37,6 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     return null
 }
 
-data class Event(
-    val p: PointD,
-    val line: LineD,
-    val origin: Boolean
-) : Comparable<Event> {
-    override fun compareTo(other: Event): Int {
-        return when{
-            origin != other.origin -> other.origin.compareTo(origin)
-            p.x == other.p.x -> p.y.compareTo(other.p.y)
-            else -> p.x.compareTo(other.p.x)
-        }
-    }
-}
-
-fun normalizeLine(line : LineD) : LineD{
-    return if (line.p0.x > line.p1.x) {
-        LineD(line.p1, line.p0)
-    }else{
-        line
-    }
-}
-
-fun events(lines: List<LineD>) : List<Event>{
-    val lines = lines.map { normalizeLine(it) }
-    val events = ArrayList<Event>()
-    for (line in lines) {
-        events.add(Event(line.p0, line, true))
-        events.add(Event(line.p1, line, false))
-    }
-    events.sort()
-    return events
-}
 
 val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
 fun cutLines(lines: List<LineD>): List<LineD> {

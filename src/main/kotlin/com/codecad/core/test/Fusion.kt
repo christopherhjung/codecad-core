@@ -26,8 +26,7 @@ enum class Side{
     Unknown, Outside, Inside
 }
 
-data class Edge(val source: Corner,
-           val target : Corner){
+data class Edge(val source: Corner, val target : Corner){
     var next: Edge? = null
     lateinit var twin : Edge
     var side : Side = Side.Unknown

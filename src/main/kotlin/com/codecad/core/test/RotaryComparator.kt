@@ -7,7 +7,7 @@ class RotaryComparator(plane: Plane) : (Edge) -> Double{
     private val directedPlane = DirectedPlane.from(plane)
 
     override fun invoke(p1: Edge): Double {
-        val aDirection = (p1.target.point.point - p1.source.point.point)//.normalized()
+        val aDirection = (p1.target.point - p1.source.point)//.normalized()
         return atan2(aDirection.dot(directedPlane.first), aDirection.dot(directedPlane.second))
     }
 }
