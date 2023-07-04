@@ -1,6 +1,8 @@
-package com.codecad.core.test
+package com.codecad.core.face
 
 import com.codecad.common.Plane
+import com.codecad.core.face.entity.DirectedPlane
+import com.codecad.core.face.entity.Edge
 import kotlin.math.atan2
 
 class RotaryComparator(plane: Plane) : (Edge) -> Double{

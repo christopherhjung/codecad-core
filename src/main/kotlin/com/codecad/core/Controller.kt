@@ -3,7 +3,7 @@ package com.codecad.core
 import com.codecad.common.LineError
 import com.codecad.core.part.Executor
 import com.codecad.core.exception.LineException
-import com.codecad.core.test.mapModel
+import com.codecad.core.face.mapModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

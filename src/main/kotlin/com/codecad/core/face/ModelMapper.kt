@@ -1,11 +1,10 @@
-package com.codecad.core.test
+package com.codecad.core.face
 
 import com.codecad.common.Model
 import com.codecad.common.Path
 import com.codecad.core.FacedVolume
 import com.codecad.core.Vec2
 import com.codecad.core.part.Project
-import com.codecad.core.part.figureToPoints
 import com.codecad.core.mesh.MeshGenerator
 
 fun mapModel(project: Project) : Model{
@@ -33,7 +32,8 @@ fun mapModel(project: Project) : Model{
         result = if(result == null){
             FacedVolume.from(volume)
         }else{
-            addVolumes(result, volume)
+            throw Error("no addition supported")
+            //addVolumes(result, volume)
         }
     }
 

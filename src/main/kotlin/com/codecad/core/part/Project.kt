@@ -3,8 +3,10 @@ package com.codecad.core.part
 import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.World
-import com.codecad.core.test.DirectedPlane
-import com.codecad.core.test.FaceType
+import com.codecad.core.face.entity.DirectedPlane
+import com.codecad.core.face.entity.FaceType
+import com.codecad.core.face.findFace
+import com.codecad.core.face.findFaces
 
 class Project {
     val sketches: MutableList<Sketch> = mutableListOf()

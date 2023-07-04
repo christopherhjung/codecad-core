@@ -1,4 +1,4 @@
-package com.codecad.core.test
+package com.codecad.core.face.entity
 
 import com.codecad.common.Plane
 import com.codecad.common.PointD
@@ -23,7 +23,7 @@ class DirectedPlane(val undirected: Plane, val first: PointD, val second: PointD
     }
 
     companion object{
-        fun from(plane: Plane) : DirectedPlane{
+        fun from(plane: Plane) : DirectedPlane {
             val normal = plane.normal
             val first = if(normal.y != 0.0 || normal.x != 0.0){
                 PointD(-normal.y, normal.x, 0.0)
@@ -36,7 +36,7 @@ class DirectedPlane(val undirected: Plane, val first: PointD, val second: PointD
             return from(plane, first.normalized())
         }
 
-        fun from(plane: Plane, first: PointD) : DirectedPlane{
+        fun from(plane: Plane, first: PointD) : DirectedPlane {
             val second = plane.normal.cross(first)
             return DirectedPlane(plane, first, second)
         }

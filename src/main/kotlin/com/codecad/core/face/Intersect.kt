@@ -3,9 +3,8 @@ package com.codecad.core
 import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.test.*
+import com.codecad.core.face.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 fun findIntersection(line1: LineD, line2: LineD): PointD? {
@@ -80,64 +79,4 @@ fun cutLines(lines: List<LineD>): List<LineD> {
     }
 
     return result
-}
-
-
-
-fun findFaces(lines: List<LineD>): List<PolygonFace> {
-    val sections = cutLines(lines)
-
-    val pointMap = HashMap<PointD, Corner>()
-    val edges = HashSet<Edge>()
-
-    fun corner(point: PointD) : Corner{
-        return pointMap.computeIfAbsent(point) { Corner(it) }
-    }
-
-    for (section in sections) {
-        val left = corner(section.p0)
-        val right = corner(section.p1)
-
-        val a = Edge(left, right)
-        val b = Edge(right, left)
-
-        a.twin = b
-        b.twin = a
-
-        left.edges.add(a)
-        right.edges.add(b)
-        edges.add(a)
-        edges.add(b)
-    }
-
-    return generateFaces(pointMap.values, edges, Plane.XY)
-}
-
-fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
-    val faces = findFaces(segments)
-
-    for( face in faces ){
-        val triangles = face.generateTriangles()
-
-        for( triangle in triangles ){
-            val points = triangle.positions
-
-            var found = true
-            for( i in 0 until 3 ){
-                val a = points[i]
-                val b = points[(i + 1) % points.size]
-
-                if((point - a).crossZ(b - a) > 0){
-                    found = false
-                    break
-                }
-            }
-
-            if( found ){
-                return face
-            }
-        }
-    }
-
-    return null
 }

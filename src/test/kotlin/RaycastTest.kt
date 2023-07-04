@@ -2,11 +2,9 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.test.Node
+import com.codecad.core.face.Node
 import org.junit.jupiter.api.Test
 import java.util.*
-import kotlin.Comparator
-import kotlin.collections.HashMap
 
 class RaycastTest {
 

@@ -1,5 +1,7 @@
 package com.codecad.core.part
 
+import com.codecad.common.LineD
+import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.LiteralExpr
@@ -264,89 +266,34 @@ class Sketch(val project: Project, val name: String) {
 }
 
 
-abstract class Component{
-    abstract fun build(sketch: Sketch)
-}
+fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
+    val list = mutableListOf<LineD>()
+    for(figure in sketch.figures){
+        if(ignoreConstruction && sketch.lineType[figure] == LineType.Construction){
+            continue
+        }
 
-class RoundRect : Component(){
-    lateinit var center: Vec2
-    lateinit var width: Expr
-    lateinit var height: Expr
+        val plotter = figure.plotter()
 
-    override fun build(sketch: Sketch) {
-        with(sketch){
-            val topLine = line(point(0.0, 1.0),point(1.0,1.0))
-            val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
-
-            val vertLine = cline(topLine.p0, bottomLine.p0)
-            val vertLine2 = cline(topLine.p1, bottomLine.p1)
-
-            val leftArc = arc(vertLine.p0, vertLine.p1, param(0.2))
-            val rightArc = arc(vertLine2.p1, vertLine2.p0, param(0.2))
-
-            val centerLine = cline(leftArc.center, rightArc.center)
-
-            eq(topLine.length, bottomLine.length)
-
-            perp(topLine, vertLine)
-
-            eq(leftArc.radius, rightArc.radius)
-            eq(vertLine.length, vertLine2.length)
-
-            eq(topLine.p0.y, topLine.p1.y)
-
-            eq(leftArc.center, vertLine.midPoint )
-            eq(rightArc.center, vertLine2.midPoint )
-
-            center = centerLine.midPoint
-            width = centerLine.length
-            height = vertLine.length
+        var last = plotter.next()
+        while( plotter.hasNext() ){
+            val next = plotter.next()
+            list.add(LineD(last.fixed(), next.fixed()))
+            last = next
         }
     }
-
+    return list
 }
 
-class Rect : Component() {
-    lateinit var a: Vec2
-    lateinit var b: Vec2
-    lateinit var c: Vec2
-    lateinit var d: Vec2
+fun figureToPoints(figure: Figure) : List<PointD>{
+    val list = mutableListOf<PointD>()
 
-    lateinit var center: Vec2
-
-    lateinit var top: Segment2
-    lateinit var right: Segment2
-    lateinit var bottom: Segment2
-    lateinit var left: Segment2
-
-    lateinit var width: Expr
-    lateinit var height: Expr
-
-    fun names(): List<String> {
-        return listOf("width", "height", "top", "bottom")
+    val plotter = figure.plotter()
+    while( plotter.hasNext() ){
+        list.add(plotter.next().fixed())
     }
 
-    override fun build(sketch: Sketch) {
-        with(sketch){
-            a = point(0.0,0.0)
-            b = point(1.0,0.0)
-            c = point(1.0,1.0)
-            d = point(0.0,1.0)
-
-            top = line(a,b)
-            right = line(b,c)
-            bottom = line(c,d)
-            left = line(d,a)
-
-            width = top.length
-            height = right.length
-            center = (a + b + c + d) / 4.0
-
-            eq((c-a).length(), (d - b).length())
-            eq(top.length , bottom.length)
-            eq(left.length , right.length)
-        }
-    }
+    return list
 }
 
 /*

@@ -8,10 +8,10 @@ import com.codecad.core.World
 import com.codecad.core.part.Rect
 import com.codecad.core.part.RoundRect
 import com.codecad.core.part.SketchScope
-import com.codecad.core.test.DirectedPlane
-import com.codecad.core.test.Node
-import com.codecad.core.test.addVolumes
-import com.codecad.core.test.mapModel
+import com.codecad.core.face.entity.DirectedPlane
+import com.codecad.core.face.Node
+import com.codecad.core.face.addVolumes
+import com.codecad.core.face.mapModel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit

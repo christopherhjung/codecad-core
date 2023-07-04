@@ -1,0 +1,86 @@
+package com.codecad.core.face.entity
+
+import com.codecad.common.Plane
+import com.codecad.common.PointD
+import com.codecad.core.face.entity.ConvexFace
+import com.codecad.core.face.entity.DirectedPlane
+import com.codecad.core.face.entity.Side
+import org.poly2tri.Poly2Tri
+import org.poly2tri.geometry.polygon.PolygonPoint
+import org.poly2tri.triangulation.TriangulationPoint
+
+enum class FaceType{
+    Surface, Hole
+}
+
+abstract class Face{
+    abstract fun generateTriangles() : List<TriangleFace>
+    abstract fun toPlane() : Plane
+}
+
+interface HasSide{
+    var side : Side
+}
+
+class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
+    override fun generateTriangles()  : List<TriangleFace>{
+        return listOf(this)
+    }
+}
+
+fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{
+    if(outline.size < 3){
+        return listOf()
+    }
+
+    val plane = Plane.fromPoints(outline)
+    val directedPlane = DirectedPlane.from(plane)
+
+    fun createPoint(point: PointD) : PolygonPoint{
+        val xy = directedPlane.extractXY(point)
+        return PolygonPoint(xy.x, xy.y , 0.0)
+    }
+
+    fun pointsToPolygon(points: List<PointD>) : org.poly2tri.geometry.polygon.Polygon{
+        val list = mutableListOf<PolygonPoint>()
+        for( point in points ){
+            list.add(createPoint(point))
+        }
+        return org.poly2tri.geometry.polygon.Polygon(list)
+    }
+
+    val parent = pointsToPolygon(outline)
+
+    for( child in holes ){
+        if(outline.size < 3){
+            continue
+        }
+
+        parent.addHole(pointsToPolygon(child))
+    }
+
+    try{
+        Poly2Tri.triangulate(parent)
+    }catch (e: Exception){
+        e.printStackTrace()
+        throw e
+    }
+
+    val triangles = mutableListOf<TriangleFace>()
+
+    fun createPoint(trianglePoint: TriangulationPoint) : PointD {
+        return directedPlane.projectXYTo(trianglePoint.x, trianglePoint.y)
+    }
+
+    val offset = 0//if(inverted) 1 else 0
+
+    for( triangle in parent.triangles ){
+        val points = triangle.points
+        triangles.add(TriangleFace(
+            createPoint(points[0]),
+            createPoint(points[1 + offset]),
+            createPoint(points[2 - offset])))
+    }
+
+    return triangles
+}

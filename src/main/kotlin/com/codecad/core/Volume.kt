@@ -1,9 +1,9 @@
 package com.codecad.core
 
-import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.test.*
+import com.codecad.core.face.*
+import com.codecad.core.face.entity.*
 
 abstract class Volume
 
@@ -42,7 +42,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
 
         fun from(polygonVolume: FacedVolume) : RoutedVolume{
             val faces = mutableListOf<RoutedFace>()
-            fun generateEdges(points : List<PointD>) : Edge{
+            fun generateEdges(points : List<PointD>) : Edge {
                 val edges = points.map { Corner(it) }.rollover().map { (left,right) ->
                     val forward = Edge(left,right)
                     forward.twin = Edge(right,left)

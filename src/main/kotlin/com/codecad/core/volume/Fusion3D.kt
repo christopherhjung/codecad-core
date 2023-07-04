@@ -1,11 +1,14 @@
 //@file:Suppress("KotlinDeprecation")
 
-package com.codecad.core.test
+package com.codecad.core.volume
 
 import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
+import com.codecad.core.face.RoutedFace
+import com.codecad.core.face.entity.*
+import com.codecad.core.face.generateFaces
 import java.util.*
 import kotlin.math.abs
 
@@ -279,7 +282,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             nodeMap[corner.point] = corner
         }
 
-        fun getOrCreateCorner(node: PointD) : Corner{
+        fun getOrCreateCorner(node: PointD) : Corner {
             return nodeMap.computeIfAbsent(node){
                 val corner = Corner(node)
                 ops.corners.add(corner)
@@ -287,7 +290,7 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
             }
         }
 
-        fun createEdge(source: Corner, target: Corner) : Edge{
+        fun createEdge(source: Corner, target: Corner) : Edge {
             if(abs(face.plane.distanceTo(target.point)) > 1e-8 ){
                 println("error")
             }

@@ -1,109 +1,78 @@
 //@file:Suppress("KotlinDeprecation")
 
-package com.codecad.core.test
+package com.codecad.core.face
 
+import com.codecad.common.LineD
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
+import com.codecad.core.face.entity.*
+import java.util.HashMap
+import java.util.HashSet
 
-data class Corner(val point: PointD){
-    val edges = mutableListOf<Edge>()
 
-    fun addEdge(edge: Edge){
-        if(edge.source.point !== point){
-            throw RuntimeException("ss")
-        }
 
-        edges.add(edge)
-    }
-}
 
-enum class FaceType{
-    Surface, Hole
-}
 
-enum class Side{
-    Unknown, Outside, Inside
-}
+fun findFaces(lines: List<LineD>): List<PolygonFace> {
+    val sections = cutLines(lines)
 
-data class Edge(val source: Corner, val target : Corner){
-    var next: Edge? = null
-    lateinit var twin : Edge
-    var side : Side = Side.Unknown
+    val pointMap = HashMap<PointD, Corner>()
+    val edges = HashSet<Edge>()
 
-    companion object{
-        fun withAdd(source: Corner, target: Corner) : Edge{
-            val edge = Edge(source, target)
-            source.addEdge(edge)
-            return edge
-        }
-
-        fun withAdd(source: PointD, target: PointD) : Edge{
-            return withAdd(Corner(source), Corner(target))
-        }
-
-        fun twinEachOther(left: Edge, right: Edge){
-            left.twin = right
-            right.twin = left
-        }
+    fun corner(point: PointD) : Corner {
+        return pointMap.computeIfAbsent(point) { Corner(it) }
     }
 
-    fun points() : Iterable<PointD>{
-        return Iterable {
-            var start : Edge = this
-            var current : Edge = this
-            var first = true
-            object : Iterator<PointD>{
-                override fun hasNext(): Boolean {
-                    return first || current != start
-                }
+    for (section in sections) {
+        val left = corner(section.p0)
+        val right = corner(section.p1)
 
-                override fun next(): PointD {
-                    first = false
-                    val result =  current.source.point
-                    current = current.next!!
-                    return result
+        val a = Edge(left, right)
+        val b = Edge(right, left)
+
+        a.twin = b
+        b.twin = a
+
+        left.edges.add(a)
+        right.edges.add(b)
+        edges.add(a)
+        edges.add(b)
+    }
+
+    return generateFaces(pointMap.values, edges, Plane.XY)
+}
+
+fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
+    val faces = findFaces(segments)
+
+    for( face in faces ){
+        val triangles = face.generateTriangles()
+
+        for( triangle in triangles ){
+            val points = triangle.positions
+
+            var found = true
+            for( i in 0 until 3 ){
+                val a = points[i]
+                val b = points[(i + 1) % points.size]
+
+                if((point - a).crossZ(b - a) > 0){
+                    found = false
+                    break
                 }
+            }
+
+            if( found ){
+                return face
             }
         }
     }
 
-    fun corners() : Iterable<Corner>{
-        return Iterable {
-            var start : Edge = this
-            var current : Edge = this
-            var first = true
-            object : Iterator<Corner>{
-                override fun hasNext(): Boolean {
-                    return first || current != start
-                }
-
-                override fun next(): Corner {
-                    first = false
-                    val result = current.source
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Edge) return false
-
-        if (source != other.source) return false
-        if (target != other.target) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = source.hashCode()
-        result = 31 * result + target.hashCode()
-        return result
-    }
+    return null
 }
+
+
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
     var comparator: RotaryComparator? = null
