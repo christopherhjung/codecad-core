@@ -24,7 +24,7 @@ class Project {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val faces = findFaces(lines)
 
-        faces.filter { it.type == FaceType.Surface }.minByOrNull { it.positions.minOf { it.point.x } }?.let {
+        faces.filter { it.type == FaceType.Surface }.minByOrNull { it.positions.minOf { it.x } }?.let {
             volumes.add(Extrude(it, plane,  height).extrude())
         }
     }

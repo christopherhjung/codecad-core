@@ -19,8 +19,8 @@ class Ray(val origin : PointD, val direction : PointD){
 
 class Raycast {
     fun raycast(triangle: TriangleFace, ray: Ray): RaycastResult {
-        val edge1 = triangle.positions[1].point - triangle.positions[0].point
-        val edge2 = triangle.positions[2].point - triangle.positions[0].point
+        val edge1 = triangle.positions[1] - triangle.positions[0]
+        val edge2 = triangle.positions[2] - triangle.positions[0]
 
         val normal = edge1.cross(edge2)
 
@@ -32,7 +32,7 @@ class Raycast {
 
         //Calculate diatance between ray origin and triangle a point
 
-        val diff = ray.origin - triangle.positions[0].point
+        val diff = ray.origin - triangle.positions[0]
 
         //Check if Ray pass the triangle
        /*val check1 = sign * ray.direction.dot(diff.cross(edge2, edge2))

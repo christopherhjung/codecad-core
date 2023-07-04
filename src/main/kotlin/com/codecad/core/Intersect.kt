@@ -5,9 +5,9 @@ import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.test.Corner
 import com.codecad.core.test.Edge
-import com.codecad.core.test.Node
 import com.codecad.core.test.generateFaces
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 fun findIntersection(line1: LineD, line2: LineD): PointD? {
@@ -61,16 +61,20 @@ fun normalizeLine(line : LineD) : LineD{
     }
 }
 
-val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
-fun cutLines(lines: List<LineD>): List<LineD> {
+fun events(lines: List<LineD>) : List<Event>{
     val lines = lines.map { normalizeLine(it) }
-
-    val events = LinkedList<Event>()
+    val events = ArrayList<Event>()
     for (line in lines) {
         events.add(Event(line.p0, line, true))
         events.add(Event(line.p1, line, false))
     }
     events.sort()
+    return events
+}
+
+val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
+fun cutLines(lines: List<LineD>): List<LineD> {
+    val events = events(lines)
 
     val sectionMap = HashMap<LineD, MutableList<PointD>>()
     fun addSection(line: LineD, pos : PointD ){
@@ -121,7 +125,7 @@ fun findFaces(lines: List<LineD>): List<PolygonFace> {
     val edges = HashSet<Edge>()
 
     fun corner(point: PointD) : Corner{
-        return pointMap.computeIfAbsent(point) { Corner(Node(it)) }
+        return pointMap.computeIfAbsent(point) { Corner(it) }
     }
 
     for (section in sections) {
@@ -157,7 +161,7 @@ fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
                 val a = points[i]
                 val b = points[(i + 1) % points.size]
 
-                if((point - a.point).crossZ(b.point - a.point) > 0){
+                if((point - a).crossZ(b - a) > 0){
                     found = false
                     break
                 }

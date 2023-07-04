@@ -13,13 +13,13 @@ abstract class Face{
     abstract fun toPlane() : Plane
 }
 
-class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
+class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
     override fun generateTriangles()  : List<TriangleFace>{
         return listOf(this)
     }
 }
 
-open class ConvexFace( val positions: List<Node> ) : Face(), HasSide {
+open class ConvexFace( val positions: List<PointD> ) : Face(), HasSide {
     override var side: Side = Side.Unknown
 
     override fun generateTriangles()  : List<TriangleFace>{
@@ -32,7 +32,7 @@ open class ConvexFace( val positions: List<Node> ) : Face(), HasSide {
     }
 
     override fun toPlane() : Plane{
-        return Plane.fromPoints(positions[0].point, positions[1].point, positions[2].point)
+        return Plane.fromPoints(positions[0], positions[1], positions[2])
     }
 }
 
@@ -40,18 +40,14 @@ interface HasSide{
     var side : Side
 }
 
-class PolygonFace( val positions: List<Node>, val plane: Plane) : Face(), HasSide {
+class PolygonFace( val positions: List<PointD>, val type: FaceType, val plane: Plane) : Face(), HasSide {
     var parent: PolygonFace? = null
     val holes = mutableSetOf<PolygonFace>()
-    var clockwise: Boolean = false
     var area: Double = 0.0
     override var side: Side = Side.Unknown
 
-    val type: FaceType
-        get() = if(!clockwise) FaceType.Surface else FaceType.Hole
-
     override fun generateTriangles()  : List<TriangleFace>{
-        return generateTriangles(positions.map { it.point }, holes.map { it.positions.map { it.point } })
+        return generateTriangles(positions, holes.map { it.positions })
     }
 
     override fun toPlane() : Plane{
@@ -103,8 +99,8 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
 
     val triangles = mutableListOf<TriangleFace>()
 
-    fun createPoint(trianglePoint: TriangulationPoint) : Node {
-        return Node( directedPlane.projectXYTo(trianglePoint.x, trianglePoint.y) )
+    fun createPoint(trianglePoint: TriangulationPoint) : PointD {
+        return directedPlane.projectXYTo(trianglePoint.x, trianglePoint.y)
     }
 
     val offset = 0//if(inverted) 1 else 0
@@ -150,7 +146,7 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val o
 
                 override fun next(): PointD {
                     first = false
-                    val result =  current.source.node.point
+                    val result =  current.source.point
                     current = current.next!!
                     return result
                 }
@@ -158,18 +154,18 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, val plane: Plane, val o
         }
     }
 
-    fun nodes() : Iterable<Node>{
+    fun nodes() : Iterable<PointD>{
         return Iterable {
             var current : Edge = root
             var first = true
-            object : Iterator<Node>{
+            object : Iterator<PointD>{
                 override fun hasNext(): Boolean {
                     return first || current != root
                 }
 
-                override fun next(): Node {
+                override fun next(): PointD {
                     first = false
-                    val result =  current.source.node
+                    val result =  current.source.point
                     current = current.next!!
                     return result
                 }
