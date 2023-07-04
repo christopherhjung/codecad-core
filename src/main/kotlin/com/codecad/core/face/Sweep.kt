@@ -1,5 +1,6 @@
-package com.codecad.core
+package com.codecad.core.face
 
+import com.codecad.core.*
 import com.codecad.core.ast.primitive.ParamExpr
 import kotlin.math.cos
 import kotlin.math.sin
@@ -59,7 +60,7 @@ abstract class SegmentedSweep(val segments : Int) : Sweep{
     }
 }
 
-class CircleSweep(val circle: Circle) : SegmentedSweep(5) {
+class CircleSweep(val circle: Circle) : SegmentedSweep(100) {
     private val root = circle.center + Vec2(circle.radius, circle.radius.world.ZERO)
 
     override fun eval(t: Double): Vec2 {
@@ -76,7 +77,7 @@ class CircleSweep(val circle: Circle) : SegmentedSweep(5) {
     }
 }
 
-class ArcSweep(val arc: Arc) : SegmentedSweep(3) {
+class ArcSweep(val arc: Arc) : SegmentedSweep(50) {
     val start : Double
     val diff: Double
     val p0: Vec2

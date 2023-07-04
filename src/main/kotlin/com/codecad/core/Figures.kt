@@ -2,6 +2,7 @@ package com.codecad.core
 
 import com.codecad.common.PointD
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.face.*
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
 import kotlin.math.atan2

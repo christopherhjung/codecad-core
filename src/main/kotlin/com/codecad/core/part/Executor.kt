@@ -10,6 +10,8 @@ import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.partStudio
 import com.codecad.core.scope.sketch
 import com.codecad.core.scope.world
+import com.codecad.core.shape.Rect
+import com.codecad.core.shape.RoundRect
 import org.slf4j.LoggerFactory
 
 class ExecutionResult(val output: String, val partStudio: PartStudio)
@@ -76,8 +78,12 @@ class Executor private constructor(){
             val p1 = args[1] as Vec2
             return@ObjectFunction sketch.arc(p0, p1, sketch.param(-1.0))
         }, true)
-
-
+        scope.setObject("rect", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val rect = Rect()
+            rect.build(sketch)
+            return@ObjectFunction rect
+        }, true)
         scope.setObject("eq", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world

@@ -1,11 +1,11 @@
-package com.codecad.core.face
+package com.codecad.core.postprocess
 
 import com.codecad.common.Model
 import com.codecad.common.Path
-import com.codecad.core.FacedVolume
 import com.codecad.core.Vec2
 import com.codecad.core.part.PartStudio
 import com.codecad.core.mesh.MeshGenerator
+import com.codecad.core.volume.FacedVolume
 
 fun mapModel(partStudio: PartStudio) : Model{
     val model = Model()

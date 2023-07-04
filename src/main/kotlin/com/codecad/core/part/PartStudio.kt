@@ -6,6 +6,8 @@ import com.codecad.core.World
 import com.codecad.core.face.entity.DirectedPlane
 import com.codecad.core.face.entity.FaceType
 import com.codecad.core.face.findFaces
+import com.codecad.core.volume.Extrude
+import com.codecad.core.volume.Volume
 
 class PartStudio {
     val sketches: MutableList<Sketch> = mutableListOf()

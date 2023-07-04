@@ -2,8 +2,8 @@ package com.codecad.core.mesh
 
 import com.codecad.common.Mesh
 import com.codecad.common.PointD
-import com.codecad.core.Extrude
-import com.codecad.core.FacedVolume
+import com.codecad.core.volume.Extrude
+import com.codecad.core.volume.FacedVolume
 
 class MeshGenerator {
     fun generate(extrude: Extrude) : Mesh {

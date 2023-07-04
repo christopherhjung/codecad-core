@@ -5,7 +5,7 @@ import com.codecad.core.Vec2
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.part.Sketch
 
-class Rect : Shape() {
+class Rect() : Shape() {
     lateinit var a: Vec2
     lateinit var b: Vec2
     lateinit var c: Vec2

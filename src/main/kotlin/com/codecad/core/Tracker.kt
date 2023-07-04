@@ -17,5 +17,4 @@ class Tracker {
             entry[param] = param.value
         }
     }
-
 }

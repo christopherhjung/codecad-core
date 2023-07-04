@@ -1,4 +1,4 @@
-package com.codecad.core
+package com.codecad.core.volume
 
 class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int) : Comparator<T> {
     override fun compare(o1: T, o2: T): Int {
@@ -17,12 +17,12 @@ class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int)
         val comparators: MutableList<Comparator<T>> = mutableListOf()
         var default : Int = 0
 
-        fun withComparator(comp : Comparator<T>) : Builder<T>{
+        fun withComparator(comp : Comparator<T>) : Builder<T> {
             comparators.add(comp)
             return this
         }
 
-        fun withComparable(invert: Boolean = false, supplier: (T) -> Comparable<*>) : Builder<T>{
+        fun withComparable(invert: Boolean = false, supplier: (T) -> Comparable<*>) : Builder<T> {
             val supplier = supplier as (T) -> Comparable<Any?>
             if(invert){
                 comparators.add{ a,b ->
@@ -37,12 +37,12 @@ class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int)
             return this
         }
 
-        fun withDefault( default: Int) : Builder<T>{
+        fun withDefault( default: Int) : Builder<T> {
             this.default = default
             return this
         }
 
-        fun build() : ChainComparator<T>{
+        fun build() : ChainComparator<T> {
             return ChainComparator(comparators, default)
         }
     }

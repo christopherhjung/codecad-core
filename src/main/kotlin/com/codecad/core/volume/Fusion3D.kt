@@ -254,10 +254,7 @@ fun computePlaneSlices( base : RoutedVolume, tool : RoutedVolume ) :  PlaneSlice
 }
 
 class FaceAssignment(val baseFaces : MutableList<Face> = mutableListOf(), val toolFaces : MutableList<Face> = mutableListOf())
-
-
 class FaceOperations(val slices: MutableList<PlaneSlice> = mutableListOf(), val corners: MutableList<Corner> = mutableListOf(), val edges: MutableList<Edge> = mutableListOf())
-
 class SpliceOp(val face: RoutedFace, val corners : MutableList<Corner> = mutableListOf())
 
 fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace, Owner>) : FaceAssignment{
