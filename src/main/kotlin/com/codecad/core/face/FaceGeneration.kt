@@ -43,36 +43,6 @@ fun findFaces(lines: List<LineD>): List<PolygonFace> {
     return generateFaces(pointMap.values, edges, Plane.XY)
 }
 
-fun findFace(segments: List<LineD>, point: PointD) : PolygonFace?{
-    val faces = findFaces(segments)
-
-    for( face in faces ){
-        val triangles = face.generateTriangles()
-
-        for( triangle in triangles ){
-            val points = triangle.positions
-
-            var found = true
-            for( i in 0 until 3 ){
-                val a = points[i]
-                val b = points[(i + 1) % points.size]
-
-                if((point - a).crossZ(b - a) > 0){
-                    found = false
-                    break
-                }
-            }
-
-            if( found ){
-                return face
-            }
-        }
-    }
-
-    return null
-}
-
-
 
 fun finishCorners(corners : Collection<Corner>, plane: Plane){
     val comparator = RotaryComparator(plane)
