@@ -20,7 +20,7 @@ class Controller {
     fun eval(@RequestBody code: String) : ResponseEntity<Any>{
         try{
             val result = Executor.execute(code)
-            val project = result.project
+            val project = result.partStudio
             val model = mapModel(project)
             return ResponseEntity(model, HttpStatus.OK)
         }catch (e: LineException){

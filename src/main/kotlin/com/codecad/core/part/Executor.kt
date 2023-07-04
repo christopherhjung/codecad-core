@@ -1,25 +1,18 @@
 package com.codecad.core.part
 
-import com.codecad.common.LineError
 import com.codecad.core.CircleLike
 import com.codecad.core.Segment2
 import com.codecad.core.Vec2
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.exception.LineException
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.scope.MutualScope
-import com.codecad.core.scope.project
+import com.codecad.core.scope.partStudio
 import com.codecad.core.scope.sketch
 import com.codecad.core.scope.world
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.io.PrintWriter
-import javax.script.ScriptException
-import javax.script.SimpleScriptContext
 
-class ExecutionResult(val output: String, val project: Project)
+class ExecutionResult(val output: String, val partStudio: PartStudio)
 
 class Executor private constructor(){
     companion object{
@@ -29,12 +22,12 @@ class Executor private constructor(){
         }
     }
 
-    fun run(expr: Expr) : Project {
+    fun run(expr: Expr) : PartStudio {
         val scope = MutualScope()
 
-        val project = Project()
-        scope.project = project
-        val world = project.world
+        val partStudio = PartStudio()
+        scope.partStudio = partStudio
+        val world = partStudio.world
         scope.world = world
         scope.setObject("println", ObjectFunction{ _, args ->
             LOGGER.info(args[0].toString())
@@ -118,7 +111,7 @@ class Executor private constructor(){
             return@ObjectFunction sketch.tangent(circle, line)
         }, true)
         scope.setObject("extrude", ObjectFunction{ scope, args ->
-            val project = scope.project
+            val project = scope.partStudio
             val name = args[0] as String
             val sketch = project.sketches.find { it.name == name }!!
             val height = Expr.orLiteral(scope.world, args[1])
@@ -133,7 +126,7 @@ class Executor private constructor(){
 
         val result = expr.eval(scope)
 
-        return project
+        return partStudio
     }
 
     fun execute(code: String) : ExecutionResult {

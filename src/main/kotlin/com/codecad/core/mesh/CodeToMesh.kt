@@ -7,7 +7,7 @@ import com.codecad.core.part.Executor
 class CodeToMesh {
     fun transform(code : String) : List<Mesh>{
         var executionResult = Executor.execute(code)
-        val project = executionResult.project
+        val project = executionResult.partStudio
 
         val objects = mutableListOf<Mesh>()
 

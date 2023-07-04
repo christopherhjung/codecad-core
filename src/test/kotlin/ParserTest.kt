@@ -1,5 +1,5 @@
 import com.codecad.core.*
-import com.codecad.core.part.Project
+import com.codecad.core.part.PartStudio
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.ast.primitive.Expr
@@ -39,9 +39,9 @@ class ParserTest {
 
         val scope = MutualScope()
 
-        val project = Project()
-        scope.project = project
-        val world = project.world
+        val partStudio = PartStudio()
+        scope.partStudio = partStudio
+        val world = partStudio.world
         scope.world = world
         scope.setObject("println", ObjectFunction{ _, args ->
             println(args[0])

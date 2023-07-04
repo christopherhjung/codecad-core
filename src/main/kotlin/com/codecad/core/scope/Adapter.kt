@@ -1,12 +1,12 @@
 package com.codecad.core.scope
 
 import com.codecad.core.part.Sketch
-import com.codecad.core.part.Project
+import com.codecad.core.part.PartStudio
 import com.codecad.core.World
 
 
-var Scope.project : Project
-    get() = getObject("\$project") as Project
+var Scope.partStudio : PartStudio
+    get() = getObject("\$project") as PartStudio
     set(value) {setObject("\$project", value, true)}
 
 var Scope.sketch : Sketch

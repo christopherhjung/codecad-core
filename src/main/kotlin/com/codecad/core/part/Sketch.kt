@@ -10,16 +10,16 @@ import com.codecad.core.optimizer.Solver
 import com.codecad.core.sketch.*
 import java.util.*
 
-class Sketch(val project: Project, val name: String) {
+class Sketch(val partStudio: PartStudio, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val figures = ArrayList<Figure>()
     val lineType = HashMap<Figure, LineType>()
-    val world: World = project.world
+    val world: World = partStudio.world
 
     fun param(value: Double = 0.0): ParamExpr {
         val param = ParamExpr( world, value )
-        project.tracker.params.add(param)
+        partStudio.tracker.params.add(param)
         params.add(param)
         return param
     }
@@ -225,7 +225,7 @@ class Sketch(val project: Project, val name: String) {
     }
 
     fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
-        val solver = Solver(project.tracker)
+        val solver = Solver(partStudio.tracker)
         val result = solver.solve(world, params.flatten(), ArrayList(constraints),accuracy)
         return result
     }

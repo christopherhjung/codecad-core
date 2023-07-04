@@ -8,7 +8,7 @@ import com.codecad.core.face.entity.FaceType
 import com.codecad.core.face.findFace
 import com.codecad.core.face.findFaces
 
-class Project {
+class PartStudio {
     val sketches: MutableList<Sketch> = mutableListOf()
     val tracker: Tracker = Tracker()
     val volumes = mutableListOf<Volume>()
