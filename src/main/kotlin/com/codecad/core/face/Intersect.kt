@@ -38,6 +38,7 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
 
 val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
 fun cutLines(lines: List<LineD>): List<LineD> {
+    val lines = lines.map { normalizeLine(it) }
     val events = events(lines)
 
     val sectionMap = HashMap<LineD, MutableList<PointD>>()

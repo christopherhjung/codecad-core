@@ -93,62 +93,43 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
     return combineFaces(faces)
 }
 
-fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
-    return polygonFace.positions.minByOrNull { it.x }!!
-}
+
 
 //TODO
 fun combineFaces(faces: List<PolygonFace>) : List<PolygonFace>{
-
-    val leftMostMap = mutableMapOf<PolygonFace, PointD>()
-    fun getLeftmost(face: PolygonFace) : PointD{
-        return leftMostMap.computeIfAbsent(face) {getLeftmostPoint(face)}
+    fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
+        return polygonFace.positions.minByOrNull { it.x }!!
     }
 
-    val faces = faces.sortedBy { getLeftmost(it).x }
-    val holes = faces.filter { it.type == FaceType.Hole }
     val surfaces = faces.filter { it.type == FaceType.Surface }
-/*
-    val events = events(surfaces.flatMap { it.positions })
 
-    for(hole in holes) {
-        var maxUnitOffset: Double = -Double.MAX_VALUE
-        var closestFace: PolygonFace? = null
+    val map = HashMap<LineD, PolygonFace>()
+    val lines = surfaces.flatMap { surface -> surface.positions.rollover().map {
+        val line = LineD(it.first, it.second)
+        map[line] = surface
+        line
+    } }
+    val events = events(lines)
 
-        val holePoint = hole.positions.first().point
+    faces.filter { it.type == FaceType.Hole }.forEach { hole ->
+        val holePos = getLeftmostPoint(hole)
 
-        for (surface in surfaces) {
-            for ((source, target) in surface.positions.rollover()) {
-                val toSource = holePoint - source.point
-                val toTarget = holePoint - target.point
+        var line : LineD? = null
+        for(event in events){
+            if(event.pos.x > holePos.x){
+                break
+            }
 
-                val c = directedPlane.first.cross(toSource).dot(directedPlane.normal)
-                val d = directedPlane.first.cross(toTarget).dot(directedPlane.normal)
-
-                if (c * d > 0) {
-                    continue
-                }
-
-                val sourceUnitOffset = source.point.dot(directedPlane.first)
-                val targetUnitOffset = target.point.dot(directedPlane.first)
-
-                val minCurrentUnitOffset = min(sourceUnitOffset, targetUnitOffset)
-                if (minCurrentUnitOffset + 1e-8 >= holePoint) {
-                    continue
-                }
-
-                val maxCurrentUnitOffset = max(sourceUnitOffset, targetUnitOffset)
-
-                if (maxCurrentUnitOffset > maxUnitOffset) {
-                    closestFace = surface
-                    maxUnitOffset = maxCurrentUnitOffset
-                }
+            val currLine = event.line
+            if(event.origin && (currLine.p0.y > holePos.y) == (currLine.p1.y < holePos.y) && currLine.p0 !== holePos && currLine.p1 !== holePos){
+                line = currLine
             }
         }
 
+        if(line != null && line.p0.y > line.p1.y){
+            map[line]?.holes?.add(hole)
+        }
+    }
 
-    }*/
-
-   // return faces.filter { it.type == FaceType.Surface }
-    return arrayListOf()
+    return surfaces
 }

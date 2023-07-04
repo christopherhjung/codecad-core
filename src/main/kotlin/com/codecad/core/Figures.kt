@@ -4,6 +4,7 @@ import com.codecad.common.PointD
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
+import kotlin.math.atan2
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
@@ -71,6 +72,8 @@ class Arc(val p0: Vec2, val p1: Vec2, val h: Expr) : Figure(), CircleLike{
     }
 }
 
+
+
 class FunctionFigure( val function: (Expr) -> Vec2) : Figure(){
     override fun plotter(): Sweep {
         return FunctionSweep(this)
@@ -85,7 +88,7 @@ class Vec2(val x: Expr, val y: Expr) : Figure() {
 
     fun absoluteAngle(target: Vec2) : Double{
         val b = (target - this).eval()
-        return kotlin.math.atan2(
+        return atan2(
             b.y.evalDouble(),
             b.x.evalDouble(),
         )
