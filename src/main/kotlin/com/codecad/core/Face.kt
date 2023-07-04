@@ -19,7 +19,7 @@ class TriangleFace(vararg points: Node) : ConvexFace(points.toList()){
     }
 }
 
-open class ConvexFace( val positions: List<Node>) : Face(), HasSide {
+open class ConvexFace( val positions: List<Node> ) : Face(), HasSide {
     override var side: Side = Side.Unknown
 
     override fun generateTriangles()  : List<TriangleFace>{
@@ -56,6 +56,10 @@ class PolygonFace( val positions: List<Node>, val plane: Plane) : Face(), HasSid
 
     override fun toPlane() : Plane{
         return plane
+    }
+
+    override fun toString(): String {
+        return "PolygonFace(positions=$positions)"
     }
 }
 

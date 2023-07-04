@@ -45,7 +45,6 @@ class PatternScope(project: Project, val count: Int, val center: Vec2) : SketchS
                             rotatePoint(element.p1, angle)
                         )
                     }else if(element is Circle){
-
                         Circle(
                             rotatePoint(element.center, angle),
                             element.radius
@@ -269,11 +268,11 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
     }
     return list
 }
+
 fun figureToPoints(figure: Figure) : List<PointD>{
     val list = mutableListOf<PointD>()
 
     val plotter = figure.plotter()
-
     while( plotter.hasNext() ){
         list.add(plotter.next().fixed())
     }

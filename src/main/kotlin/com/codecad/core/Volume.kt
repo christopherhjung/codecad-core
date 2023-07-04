@@ -93,21 +93,18 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         val offsetVector = directedPlane.normal * height
         val plane = directedPlane.undirected
 
-        fun getOrAdd(new: PointD): Node {
+        fun node(new: PointD) : Node {
             return map.computeIfAbsent(new) { Node(new) }
         }
 
-        fun test(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
-            var basePoints =
-                face.positions.map { Node(directedPlane.projectXYTo(it.point) ) }
-            var topPoints = basePoints.map { getOrAdd(it.point + offsetVector) }
+        fun addSideFace(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
+            val basePoints = face.positions.map { Node(directedPlane.projectXYTo(it.point) ) }
+            val topPoints = basePoints.map { node(it.point + offsetVector) }
 
             for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {
                 val list = mutableListOf(
-                    base.first,
-                    top.first,
-                    top.second,
-                    base.second
+                    base.first, top.first,
+                    top.second, base.second
                 )
 
                 if (inverted) {
@@ -129,17 +126,16 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
                 PolygonFace(topPoints.reversed(), plane.flip().move(height))
             }
 
-            faces.add(basePolygon)
-            faces.add(topPolygon)
-
             return Pair(basePolygon, topPolygon)
         }
 
+        val (basePolygon, topPolygon) = addSideFace(polygonFace)
 
-        val (basePolygon, topPolygon) = test(polygonFace)
+        faces.add(basePolygon)
+        faces.add(topPolygon)
 
         for (child in polygonFace.holes) {
-            val (baseHole, topHole) = test(child)
+            val (baseHole, topHole) = addSideFace(child)
 
             basePolygon.holes.add(baseHole)
             topPolygon.holes.add(topHole)
@@ -147,32 +143,6 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
 
         return FacedVolume(faces)
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     fun extrudeRoutedFace(): FacedVolume {

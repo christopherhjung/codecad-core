@@ -4,6 +4,7 @@ import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.World
 import com.codecad.core.test.DirectedPlane
+import com.codecad.core.test.FaceType
 
 class Project {
     val sketches: MutableList<Sketch> = mutableListOf()
@@ -23,8 +24,8 @@ class Project {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val faces = findFaces(lines)
 
-        for(face in faces){
-            volumes.add(Extrude(face, plane,  height))
+        faces.filter { it.type == FaceType.Surface }.minByOrNull { it.positions.minOf { it.point.x } }?.let {
+            volumes.add(Extrude(it, plane,  height).extrude())
         }
     }
 }

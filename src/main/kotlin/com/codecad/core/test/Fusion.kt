@@ -17,29 +17,9 @@ data class Node(val point : PointD)
 data class Corner(val node: Node){
     val edges = mutableListOf<Edge>()
 
-    fun containsTarget(corner: Corner) : Edge?{
-        for(cornerEdge in edges){
-            if(cornerEdge.target === corner){
-                return cornerEdge
-            }
-        }
-        return null
-    }
-
     fun addEdge(edge: Edge){
         if(edge.source.node !== node){
             throw RuntimeException("ss")
-        }
-
-        if(edge.source.node.point.distanceTo(PointD(0.5,0.2, 0.0)) < 0.01 &&
-            edge.target.node.point.distanceTo(PointD(0.2,0.2, 0.0)) < 0.01){
-            println("sss")
-        }
-
-        for(cornerEdge in edges){
-            if(cornerEdge.target === edge.target){
-                throw RuntimeException("ss")
-            }
         }
 
         edges.add(edge)
@@ -575,7 +555,7 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
             if( top.twin.target === bottom.source ){
                 top.twin.next = bottom
             }else{
-                println("test")
+                //throw Error("not matching")
             }
         }
     }
@@ -588,7 +568,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
-        println("-----------------------")
         val next = queue.first()
         queue.remove(next)
 
@@ -598,8 +577,6 @@ fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: P
 
         var side = Side.Unknown
 
-        println(System.identityHashCode(next.source))
-        println("--------")
         val edges = mutableListOf<Edge>()
         while(true){
             edges.add(current)
@@ -783,7 +760,7 @@ fun addVolumes(base: Volume, tool: Volume) : FacedVolume{
         }
     })
 }
-
+//TODO
 fun combineFaces(faces: List<PolygonFace>, plane: Plane) : List<PolygonFace>{
     val directedPlane = DirectedPlane.from(plane)
 

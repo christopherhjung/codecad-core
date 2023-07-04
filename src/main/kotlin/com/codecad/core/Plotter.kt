@@ -59,10 +59,12 @@ abstract class SegmentedPlotter(val segments : Int) : Plotter{
     }
 }
 
-class CirclePlotter(val circle: Circle) : SegmentedPlotter(500) {
+class CirclePlotter(val circle: Circle) : SegmentedPlotter(5) {
+    private val root = circle.center + Vec2(circle.radius, circle.radius.world.ZERO)
+
     override fun eval(t: Double): Vec2 {
         return when(t){
-            0.0, 1.0 -> circle.center + Vec2(circle.radius, circle.radius.world.ZERO)
+            0.0, 1.0 -> root
             else -> {
                 val currentAngle = 2 * Math.PI * t
                 val x = (circle.center.x.evalDouble() + circle.radius.evalDouble() * cos(currentAngle))
@@ -74,7 +76,7 @@ class CirclePlotter(val circle: Circle) : SegmentedPlotter(500) {
     }
 }
 
-class ArcPlotter(val arc: Arc) : SegmentedPlotter(200) {
+class ArcPlotter(val arc: Arc) : SegmentedPlotter(3) {
     val start : Double
     val diff: Double
     val p0: Vec2

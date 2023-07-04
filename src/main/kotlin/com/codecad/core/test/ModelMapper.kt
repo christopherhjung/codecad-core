@@ -17,11 +17,10 @@ fun mapModel(project: Project) : Model{
             if(figure is Vec2){
                 model.points.add(figure.fixed())
             }else{
-                val points = figureToPoints(figure)
+                val plotter = figure.plotter()
                 val path = Path()
-
-                for(point in points){
-                    path.points.add(point)
+                while( plotter.hasNext() ){
+                    path.points.add(plotter.next().fixed())
                 }
 
                 model.faces.add(path)
@@ -30,7 +29,6 @@ fun mapModel(project: Project) : Model{
     }
 
     var result: FacedVolume? = null
-
     for(volume in project.volumes){
         result = if(result == null){
             FacedVolume.from(volume)

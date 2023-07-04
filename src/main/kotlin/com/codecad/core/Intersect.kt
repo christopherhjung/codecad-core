@@ -39,65 +39,67 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     return null
 }
 
-class Event(
+data class Event(
     val p: PointD,
     val line: LineD,
-    val isLeft: Boolean
+    val origin: Boolean
 ) : Comparable<Event> {
-
     override fun compareTo(other: Event): Int {
-        if (p.x == other.p.x) return p.y.compareTo(other.p.y)
-        return p.x.compareTo(other.p.x)
+        return when{
+            origin != other.origin -> other.origin.compareTo(origin)
+            p.x == other.p.x -> p.y.compareTo(other.p.y)
+            else -> p.x.compareTo(other.p.x)
+        }
     }
 }
 
+fun normalizeLine(line : LineD) : LineD{
+    return if (line.p0.x > line.p1.x) {
+        LineD(line.p1, line.p0)
+    }else{
+        line
+    }
+}
 
-fun removeIntersections(arr: List<LineD>): List<LineD> {
+val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
+fun cutLines(lines: List<LineD>): List<LineD> {
+    val lines = lines.map { normalizeLine(it) }
 
     val events = LinkedList<Event>()
-
-    val ordered = mutableListOf<LineD>()
-    for(line in arr){
-        if (line.p0.x > line.p1.x) {
-            ordered.add(LineD(line.p1, line.p0))
-        }else{
-            ordered.add(line)
-        }
-    }
-
-    for (line in ordered) {
+    for (line in lines) {
         events.add(Event(line.p0, line, true))
         events.add(Event(line.p1, line, false))
     }
-
     events.sort()
 
-    val active = HashMap<LineD, Event>()
-    val splittingPoints = HashMap<LineD, MutableList<PointD>>()
+    val sectionMap = HashMap<LineD, MutableList<PointD>>()
+    fun addSection(line: LineD, pos : PointD ){
+        sectionMap.computeIfAbsent(line){ mutableListOf() }.add(pos)
+    }
+
+    val actives = HashMap<LineD, Event>()
     for (event in events) {
-        if (event.isLeft) {
-            for (other in active.values) {
-                val intersection = findIntersection(other.line, event.line)
-                if (intersection != null) {
-                    splittingPoints.computeIfAbsent(event.line){ mutableListOf()}.add(intersection)
-                    splittingPoints.computeIfAbsent(other.line){ mutableListOf()}.add(intersection)
+        if (event.origin) {
+            for (active in actives.values) {
+                findIntersection(active.line, event.line)?.let {
+                    addSection(event.line, it)
+                    addSection(active.line, it)
                 }
             }
 
-            active[event.line] = event
+            actives[event.line] = event
         } else {
-            active.remove(event.line)
+            actives.remove(event.line)
         }
     }
 
     val result = mutableListOf<LineD>()
-
-    for( line in ordered ){
-        val splits = splittingPoints[line]
-        if( splits != null ){
-            splits.sortBy { it.x }
+    for( line in lines ){
+        val sections = sectionMap[line]
+        if( sections != null ){
+            sections.sortWith(Comp2D)
             var left = line.p0
-            for( split in splits ){
+            for( split in sections ){
                 result.add(LineD(left, split))
                 left = split
             }
@@ -110,26 +112,21 @@ fun removeIntersections(arr: List<LineD>): List<LineD> {
     return result
 }
 
-fun findFaces(arr2: List<LineD>): List<PolygonFace> {
-    val ordered = removeIntersections(arr2)
-/*
-    val ordered = mutableListOf<LineD>()
-    for (line in arr) {
-        ordered.add(
-            if (line.p0.x > line.p1.x) {
-                LineD(line.p1, line.p0)
-            } else {
-                line
-            }
-        )
-    }*/
+
+
+fun findFaces(lines: List<LineD>): List<PolygonFace> {
+    val sections = cutLines(lines)
 
     val pointMap = HashMap<PointD, Corner>()
     val edges = HashSet<Edge>()
 
-    for (line in ordered) {
-        val left = pointMap.computeIfAbsent(line.p0) { Corner(Node(it)) }
-        val right = pointMap.computeIfAbsent(line.p1) { Corner(Node(it)) }
+    fun corner(point: PointD) : Corner{
+        return pointMap.computeIfAbsent(point) { Corner(Node(it)) }
+    }
+
+    for (section in sections) {
+        val left = corner(section.p0)
+        val right = corner(section.p1)
 
         val a = Edge(left, right)
         val b = Edge(right, left)
