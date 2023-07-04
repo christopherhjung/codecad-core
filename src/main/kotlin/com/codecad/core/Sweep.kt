@@ -5,12 +5,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 
-interface Plotter{
+interface Sweep{
     fun hasNext() : Boolean
     fun next(): Vec2
 }
 
-class PointPlotter(val vec: Vec2) : Plotter {
+class PointSweep(val vec: Vec2) : Sweep {
     var first = true
 
     override fun hasNext(): Boolean {
@@ -23,7 +23,7 @@ class PointPlotter(val vec: Vec2) : Plotter {
     }
 }
 
-class LinePlotter(val line: Segment2) : Plotter {
+class LineSweep(val line: Segment2) : Sweep {
     var count = 0
 
     override fun hasNext(): Boolean {
@@ -39,7 +39,7 @@ class LinePlotter(val line: Segment2) : Plotter {
     }
 }
 
-abstract class SegmentedPlotter(val segments : Int) : Plotter{
+abstract class SegmentedSweep(val segments : Int) : Sweep{
     var count : Int = 0
     private val diff = 1.0 / segments
 
@@ -59,7 +59,7 @@ abstract class SegmentedPlotter(val segments : Int) : Plotter{
     }
 }
 
-class CirclePlotter(val circle: Circle) : SegmentedPlotter(5) {
+class CircleSweep(val circle: Circle) : SegmentedSweep(5) {
     private val root = circle.center + Vec2(circle.radius, circle.radius.world.ZERO)
 
     override fun eval(t: Double): Vec2 {
@@ -76,7 +76,7 @@ class CirclePlotter(val circle: Circle) : SegmentedPlotter(5) {
     }
 }
 
-class ArcPlotter(val arc: Arc) : SegmentedPlotter(3) {
+class ArcSweep(val arc: Arc) : SegmentedSweep(3) {
     val start : Double
     val diff: Double
     val p0: Vec2
@@ -119,7 +119,7 @@ class ArcPlotter(val arc: Arc) : SegmentedPlotter(3) {
     }
 }
 
-class FunctionPlotter(func: FunctionFigure) : SegmentedPlotter(500) {
+class FunctionSweep(func: FunctionFigure) : SegmentedSweep(500) {
     private val t = ParamExpr(World(), 0.0)
     private val formula: Vec2 = func.function(t)
 
