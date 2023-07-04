@@ -1,4 +1,4 @@
-package com.codecad.core
+package com.codecad.core.face
 
 import com.codecad.common.LineD
 import com.codecad.common.Plane
@@ -35,7 +35,6 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
 
     return null
 }
-
 
 val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
 fun cutLines(lines: List<LineD>): List<LineD> {
