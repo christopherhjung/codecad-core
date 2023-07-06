@@ -27,19 +27,12 @@ fun mapModel(partStudio: PartStudio) : Model{
         }
     }
 
-    var result: FacedVolume? = null
     for(volume in partStudio.volumes){
-        result = if(result == null){
-            FacedVolume.from(volume)
-        }else{
-            throw Error("no addition supported")
-            //addVolumes(result, volume)
+        if(volume is FacedVolume){
+            meshGenerator.add(volume)
         }
     }
 
-    if(result != null){
-        model.volumes.add(meshGenerator.generate(result))
-    }
-
+    model.volumes.add(meshGenerator.build())
     return model
 }

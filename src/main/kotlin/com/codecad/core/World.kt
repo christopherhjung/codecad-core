@@ -45,7 +45,9 @@ class World {
             Op.AssignSub -> infix(lhs, add(lhs, rhs), Op.Assign)
             Op.AssignMul -> infix(lhs, add(lhs, rhs), Op.Assign)
             Op.AssignDiv -> infix(lhs, add(lhs, rhs), Op.Assign)
-            Op.Lt, Op.Le, Op.Gt, Op.Ge -> cmp(lhs, rhs, op)
+            Op.Lt, Op.Le -> cmp(lhs, rhs, op)
+            Op.Gt -> cmp(rhs, lhs, Op.Le)
+            Op.Ge -> cmp(rhs, lhs, Op.Lt)
             Op.Assign -> unify(InfixExpr(this, lhs, rhs, op))
             else -> throw NotImplementedError()
         }
@@ -82,6 +84,14 @@ class World {
             lhs
         }else if(lhs === rhs){
             mul(TWO, rhs)
+        }else if(rhs is PrefixExpr && rhs.op == Op.Sub){
+            if(lhs is PrefixExpr && lhs.op == Op.Sub){
+                prefix(add(lhs.expr, rhs.expr), Op.Sub)
+            }else{
+                sub(lhs, rhs.expr)
+            }
+        }else if(lhs is PrefixExpr && lhs.op == Op.Sub){
+            sub(rhs, lhs.expr)
         }else if(rhs is LiteralExpr){
             if(lhs is LiteralExpr){
                 literal(lhs.evalDouble() + rhs.evalDouble())
@@ -102,9 +112,11 @@ class World {
             lhs
         } else if (lhs === rhs) {
             ZERO
+        }else if(rhs is PrefixExpr && rhs.op == Op.Sub){
+            add(lhs, rhs.expr)
         }else if(lhs is LiteralExpr && rhs is LiteralExpr){
             literal(lhs.evalDouble() - rhs.evalDouble())
-        } else {
+        }else {
             unify(InfixExpr(this, lhs, rhs, Op.Sub))
         }
     }
@@ -118,6 +130,8 @@ class World {
             lhs
         }else if(lhs === rhs){
             pow(lhs, TWO)
+        }else if(lhs is PrefixExpr && rhs is PrefixExpr && lhs.op == Op.Sub && rhs.op == Op.Sub){
+            mul(lhs.expr, rhs.expr)
         }else if(rhs is LiteralExpr){
             if(lhs is LiteralExpr){
                 literal(lhs.evalDouble() * rhs.evalDouble())
@@ -138,6 +152,8 @@ class World {
             lhs
         }else if (lhs === rhs){
             ONE
+        }else if(rhs is InfixExpr && rhs.op == Op.Div){
+            div(mul(lhs, rhs.rhs), rhs.lhs)
         }else if (rhs is LiteralExpr) {
             if(lhs is LiteralExpr){
                 literal(lhs.evalDouble() / rhs.evalDouble())

@@ -11,44 +11,36 @@ import java.util.HashMap
 import java.util.HashSet
 
 
-
-
-
 fun findFaces(lines: List<LineD>): List<PolygonFace> {
-    val sections = cutLines(lines)
-
     val pointMap = HashMap<PointD, Corner>()
-    val edges = HashSet<Edge>()
-
     fun corner(point: PointD) : Corner {
         return pointMap.computeIfAbsent(point) { Corner(it) }
     }
 
+    val sections = cutLines(lines)
+    val edges = HashSet<Edge>()
     for (section in sections) {
         val left = corner(section.p0)
         val right = corner(section.p1)
-
         val a = Edge(left, right)
         val b = Edge(right, left)
 
         a.twin = b
         b.twin = a
-
         left.edges.add(a)
         right.edges.add(b)
         edges.add(a)
         edges.add(b)
     }
 
-    return generateFaces(pointMap.values, edges, Plane.XY)
+    finalizeCorners(pointMap.values)
+    return generateFaces(edges)
 }
 
 
-fun finishCorners(corners : Collection<Corner>, plane: Plane){
-    val comparator = RotaryComparator(plane)
-
+fun finalizeCorners(corners : Collection<Corner>){
     for(corner in corners){
-        corner.edges.sortWith(comparator)
+        corner.edges.sortWith(RotaryComparator)
 
         for((top, bottom) in corner.edges.rollover()){
             assert(top.twin.target === bottom.source)
@@ -57,56 +49,48 @@ fun finishCorners(corners : Collection<Corner>, plane: Plane){
     }
 }
 
-fun generateFaces(corners: Collection<Corner>, edges: Collection<Edge>, plane: Plane) : List<PolygonFace>{
-    finishCorners(corners, plane)
+fun generateFaces(edges: Collection<Edge>) : List<PolygonFace>{
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
         val next = queue.first()
         queue.remove(next)
 
-        var area = PointD.ZERO
+        var area = 0.0
         val points = mutableListOf<PointD>()
         var current = next
 
-        val edges = mutableListOf<Edge>()
         while(true){
-            edges.add(current)
-            points.add(current.target.point)
-
-            area = area + current.source.point.cross(current.target.point)
-
-            if(current.target === next.source){
-                break
-            }
+            val pos = current.target.point
+            points.add(pos)
+            area += current.source.point.crossZ(pos)
+            if(current.target === next.source) break
 
             current = current.next!!
             queue.remove(current)
         }
 
-        val type = if(area.dot(plane.normal) < 0) FaceType.Hole else FaceType.Surface
-        val face = PolygonFace(points, type, plane)
-        face.area = area.length() / 2
+        val type = if(area < 0) FaceType.Hole else FaceType.Surface
+        val face = PolygonFace(points, type, Plane.UNKNOWN)
+        face.area = area / 2
         faces.add(face)
     }
 
-    return combineFaces(faces)
+    return nestFaces(faces)
 }
 
 
-
-//TODO
-fun combineFaces(faces: List<PolygonFace>) : List<PolygonFace>{
+fun nestFaces(faces: List<PolygonFace>) : List<PolygonFace>{
     fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
         return polygonFace.positions.minByOrNull { it.x }!!
     }
 
     val surfaces = faces.filter { it.type == FaceType.Surface }
 
-    val map = HashMap<LineD, PolygonFace>()
+    val line2face = HashMap<LineD, PolygonFace>()
     val lines = surfaces.flatMap { surface -> surface.positions.rollover().map {
         val line = LineD(it.first, it.second)
-        map[line] = surface
+        line2face[line] = surface
         line
     } }
     val events = events(lines)
@@ -127,9 +111,17 @@ fun combineFaces(faces: List<PolygonFace>) : List<PolygonFace>{
         }
 
         if(line != null && line.p0.y > line.p1.y){
-            map[line]?.holes?.add(hole)
+            val face = line2face[line]
+            face?.let {
+                it.area -= hole.area
+                it.holes.add(hole)
+            }
         }
     }
 
     return surfaces
+}
+
+fun unionFaces(faces: List<PolygonFace>) : List<PolygonFace>{
+    return faces
 }

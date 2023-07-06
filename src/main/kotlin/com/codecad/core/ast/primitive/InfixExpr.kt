@@ -162,15 +162,29 @@ class InfixExpr(world: World, val lhs: Expr, val rhs: Expr, val op: Op) : Expr(w
         }
     }
 
+    private val isCommutative : Boolean
+        get(){
+            return when(op){
+                Op.Add, Op.Mul -> true
+                else -> false
+            }
+        }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is InfixExpr) return false
-        return lhs === other.lhs && rhs === other.rhs && op === other.op
+
+        return op === other.op && (lhs === other.lhs && rhs === other.rhs ||
+                isCommutative && lhs === other.rhs && rhs === other.lhs)
     }
 
     override fun hashCode(): Int {
         var result = lhs.hashCode()
-        result = 31 * result + rhs.hashCode()
+        result = if(isCommutative){
+            result xor rhs.hashCode()
+        }else{
+            31 * result + rhs.hashCode()
+        }
         result = 31 * result + op.hashCode()
         return result
     }

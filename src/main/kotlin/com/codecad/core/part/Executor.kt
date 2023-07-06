@@ -116,12 +116,25 @@ class Executor private constructor(){
             val line = args[1] as Segment2
             return@ObjectFunction sketch.tangent(circle, line)
         }, true)
+        scope.setObject("minimize", ObjectFunction{ scope, args ->
+            val sketch = scope.sketch
+            val expr = Expr.orLiteral(world, args[0])
+            return@ObjectFunction sketch.minimize(expr)
+        }, true)
+
         scope.setObject("extrude", ObjectFunction{ scope, args ->
             val project = scope.partStudio
             val name = args[0] as String
             val sketch = project.sketches.find { it.name == name }!!
             val height = Expr.orLiteral(scope.world, args[1])
             return@ObjectFunction project.extrude(sketch, height)
+        }, true)
+        scope.setObject("extrudeAll", ObjectFunction{ scope, args ->
+            val project = scope.partStudio
+            val name = args[0] as String
+            val sketch = project.sketches.find { it.name == name }!!
+            val height = Expr.orLiteral(scope.world, args[1])
+            return@ObjectFunction project.extrudeAll(sketch, height)
         }, true)
         scope.setObject("origin", world.ORIGIN, true)
 

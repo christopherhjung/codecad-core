@@ -146,6 +146,10 @@ abstract class Expr(val world: World) {
             return expr.world.log(expr)
         }
 
+        fun exp(expr: Expr) : Expr {
+            return expr.world.exp(expr)
+        }
+
         fun ifExpr(condition: Expr, left: Expr, right: Expr) : Expr {
             return condition.world.ifExpr(condition, left, right)
         }

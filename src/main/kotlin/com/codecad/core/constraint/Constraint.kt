@@ -1,4 +1,4 @@
-package com.codecad.core.sketch
+package com.codecad.core.constraint
 
 import com.codecad.core.Circle
 import com.codecad.core.CircleLike
@@ -13,15 +13,20 @@ abstract class Constraint {
 
     val equation: Expr
         get() {
-            if(cache == null) {
-                cache = equationImpl()
+            return cache ?: run{
+                val eq = equationImpl()
+                cache = eq
+                eq
             }
-
-            return cache!!
         }
 }
 
-//class com.codecad.core.Arc(val center: com.codecad.core.Point, val rad: com.codecad.core.Expr, val start: com.codecad.core.Expr, val end: com.codecad.core.Expr) : Element
+
+class Minimize(val expr: Expr) : Constraint() {
+    override fun equationImpl() : Expr {
+        return expr
+    }
+}
 
 class PointOnPoint(val a: Vec2, val b: Vec2) : Constraint() {
     override fun equationImpl() : Expr {
@@ -34,43 +39,6 @@ class PointToPointDistance(val a: Vec2, val b: Vec2, val distance: Expr) : Const
         return (a.x - b.x).pow(2) + (a.y - b.y).pow(2) - distance.pow(2)
     }
 }
-/*
-class com.codecad.core.PointOnLine(val point: com.codecad.core.Point, val line: com.codecad.core.Line) : com.codecad.core.Constraint() {
-    /*override fun error(): Double {
-        val dx = line.b.x.value - line.a.x.value
-        val dy = line.b.y.value - line.a.y.value
-
-        val m = dy / dx
-        val n = dx / dy
-
-        return if (m <= 1 && m >= -1) {
-            //Calculate the expected y point given the x coordinate of the point
-            val Ey = line.a.y.value + m * (point.x.value - line.a.x.value)
-            (Ey - point.y.value).com.codecad.core.pow(2)
-        } else {
-            //Calculate the expected x point given the y coordinate of the point
-            val Ex = line.a.x.value + n * (point.y.value - line.a.y.value)
-            (Ex - point.x.value).com.codecad.core.pow(2)
-        }
-    }*/
-
-    override fun equationImpl(): com.codecad.core.Expr {
-        TODO("Not yet implemented")
-    }
-}
-*/
-/*
-class LineLength(val line: Segment2, val length: Expr) : Constraint() {
-    override fun equationImpl(): Expr {
-        return Expr.abs(line.length - length)
-    }
-}
-
-class EqualLength(val line1: Segment2, val line2: Segment2) : Constraint() {
-    override fun equationImpl(): Expr {
-        return Expr.abs(line1.length - line2.length)
-    }
-}*/
 
 class Horizontal(val line: Segment2) : Constraint() {
     override fun equationImpl(): Expr {

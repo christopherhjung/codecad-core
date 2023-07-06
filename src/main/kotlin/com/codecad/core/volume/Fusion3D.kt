@@ -413,13 +413,13 @@ fun applyPlaneSlices(slices: List<PlaneSlice> , assignmentTable : Map<RoutedFace
 
         println("ss")
     }
-
+/*
     for( (face, ops) in map ){
         val face = generateFaces(ops.corners, ops.edges, face.plane)
 
         val test = face
     }
-
+*/
 
     return result
 }

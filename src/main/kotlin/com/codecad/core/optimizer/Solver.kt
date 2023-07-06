@@ -3,7 +3,7 @@ package com.codecad.core.optimizer
 import com.codecad.core.Tracker
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.sketch.Constraint
+import com.codecad.core.constraint.Constraint
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.evalDoubleArray
 import com.codecad.core.rewrite.ShareRewriter

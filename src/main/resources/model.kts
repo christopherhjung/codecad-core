@@ -1,5 +1,5 @@
 import com.codecad.core.project
-import com.codecad.core.sketch.Expr
+import com.codecad.core.constraint.Expr
 
 
 project {

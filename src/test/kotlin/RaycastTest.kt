@@ -2,7 +2,9 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
-import com.codecad.core.face.Node
+import com.codecad.core.face.Ray
+import com.codecad.core.face.Raycast
+import com.codecad.core.face.entity.TriangleFace
 import org.junit.jupiter.api.Test
 import java.util.*
 
@@ -16,9 +18,9 @@ class RaycastTest {
         )
 
         val triangle = TriangleFace(
-            Node(PointD(-0.4,0.0,-1.0)),
-            Node(PointD(0.4,0.4,-1.0)),
-            Node(PointD(0.4,-0.4,-1.0))
+            PointD(-0.4,0.0,-1.0),
+            PointD(0.4,0.4,-1.0),
+            PointD(0.4,-0.4,-1.0)
         )
 
         val raycast = Raycast()
@@ -26,7 +28,6 @@ class RaycastTest {
 
         print("s")
     }
-
 
 
     @Test

@@ -1,7 +1,7 @@
 import com.codecad.core.*
 import com.codecad.core.part.PartStudio
 import com.codecad.core.part.Sketch
-import com.codecad.core.sketch.*
+import com.codecad.core.constraint.*
 import org.junit.jupiter.api.Test
 import kotlin.math.sqrt
 import kotlin.test.assertEquals
@@ -13,7 +13,7 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromAbove(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio)
+        val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
         val center = Vec2(x, y)
@@ -28,7 +28,7 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromAboveLarge(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio)
+        val sketch = Sketch(partStudio, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
         val center = Vec2(x, y)
@@ -43,7 +43,7 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromBelow(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio)
+        val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(-1.0)
         val center = Vec2(x, y)
@@ -58,7 +58,7 @@ class ConstraintTest {
     @Test
     fun tangentSolveDiagonal(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio)
+        val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
         val center = Vec2(x, y)
@@ -76,7 +76,7 @@ class ConstraintTest {
     @Test
     fun pointOnPointSimple(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio)
+        val sketch = Sketch(partStudio, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
         val current = sketch.point(x,y)

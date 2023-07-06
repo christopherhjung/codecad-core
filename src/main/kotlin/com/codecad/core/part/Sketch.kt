@@ -4,10 +4,9 @@ import com.codecad.common.LineD
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.ast.primitive.LiteralExpr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.optimizer.Solver
-import com.codecad.core.sketch.*
+import com.codecad.core.constraint.*
 import java.util.*
 
 class Sketch(val partStudio: PartStudio, val name: String) {
@@ -91,137 +90,71 @@ class Sketch(val partStudio: PartStudio, val name: String) {
     }
 
     fun tangent(circle: CircleLike, line: Segment2) {
-        addConstraintImpl(CircleTangent(circle, line))
+        addConstraint(CircleTangent(circle, line))
     }
 
     fun pointOnLineMidpoint(point: Vec2, line: Segment2) {
-        addConstraintImpl(PointOnLineMidpoint(point, line))
+        addConstraint(PointOnLineMidpoint(point, line))
     }
 
     fun pointOnLine(point: Vec2, line: Segment2) {
-        addConstraintImpl(PointOnLine(point, line))
+        addConstraint(PointOnLine(point, line))
     }
 
     fun horizontal(line: Segment2) {
-        addConstraintImpl(Horizontal(line))
+        addConstraint(Horizontal(line))
     }
 
     fun vertical(line: Segment2) {
-        addConstraintImpl(Vertical(line))
+        addConstraint(Vertical(line))
     }
 
     fun pointOnCircle(point: Vec2, circle: Circle) {
-        addConstraintImpl(PointOnCircle(point, circle))
+        addConstraint(PointOnCircle(point, circle))
     }
 
     fun equalLength(line1: Segment2, line2: Segment2) {
-        addConstraintImpl(Equals(line1.length, line2.length))
+        addConstraint(Equals(line1.length, line2.length))
     }
 
     fun len(line1: Segment2, length: Expr) {
-        addConstraintImpl(Equals(line1.length, length))
+        addConstraint(Equals(line1.length, length))
     }
 
     fun angle(line1: Segment2, line2: Segment2, angle: Expr) {
-        addConstraintImpl(InternalAngle(line1, line2, angle))
-    }
-
-    fun addConstraint(constraint: Constraint) {
-        addConstraintImpl(constraint)
+        addConstraint(InternalAngle(line1, line2, angle))
     }
 
     fun perp(line1: Segment2, line2: Segment2){
-        addConstraintImpl(Perpendicular(line1, line2))
+        addConstraint(Perpendicular(line1, line2))
     }
 
     fun parallel(line1: Segment2, line2: Segment2){
-        addConstraintImpl(Parallel(line1, line2))
+        addConstraint(Parallel(line1, line2))
     }
 
     fun pointOnPoint(point1: Vec2, vec2: Vec2) {
-        addConstraintImpl(PointOnPoint(point1, vec2))
+        addConstraint(PointOnPoint(point1, vec2))
     }
 
     fun eq(point1: Vec2, vec2: Vec2) {
-        addConstraintImpl(PointOnPoint(point1, vec2))
+        addConstraint(PointOnPoint(point1, vec2))
     }
 
     fun eq(value1 : Expr, value2: Expr) {
-        addConstraintImpl(Equals(value1, value2))
+        addConstraint(Equals(value1, value2))
     }
 
     fun radius(circle: Circle, value: Expr) {
-        addConstraintImpl(Equals(circle.radius, value))
+        addConstraint(Equals(circle.radius, value))
     }
 
-    fun addConstraintImpl(constraint: Constraint){
-        constraints.add(constraint)
+    fun minimize(expr: Expr) {
+        addConstraint(Minimize(expr))
     }
 
-    fun addConstraint(constraint: Constraint, tryBest: Boolean = false) : Constraint {
-        println(constraint::class.simpleName)
+    fun addConstraint(constraint: Constraint){
         constraints.add(constraint)
-
-        val constraintLookup = mutableMapOf<Constraint, HashSet<ParamExpr>>()
-        val paramLookup = mutableMapOf<ParamExpr, HashSet<Constraint>>()
-
-        for( con in constraints ){
-            for(param in params){
-                val derivate = con.equation.derivative(param)
-                if(derivate !is LiteralExpr){
-                    constraintLookup.computeIfAbsent(con){ HashSet() }.add(param)
-                    paramLookup.computeIfAbsent(param){ HashSet() }.add(con)
-                }
-            }
-        }
-
-        class Test(var level: Int, val param : ParamExpr) : Comparable<Test>{
-            override fun compareTo(other: Test): Int {
-                return level.compareTo(other.level)
-            }
-        }
-
-        val priorityQueue = PriorityQueue<Test>()
-        val visited = mutableSetOf<ParamExpr>()
-        val stages = mutableListOf<MutableSet<ParamExpr>>()
-
-        stages.add( mutableSetOf())
-
-        constraintLookup[constraint]?.forEach {
-            visited.add(it)
-            priorityQueue.offer(Test(0, it))
-            stages[0].add(it)
-        }
-
-        try{
-            while(priorityQueue.isNotEmpty()){
-                val test = priorityQueue.poll()
-
-                paramLookup[test.param]!!.forEach { con ->
-                    constraintLookup[con]!!.forEach { param ->
-                        if(visited.add(param)){
-                            priorityQueue.offer(Test(test.level + 1, param))
-                            if(test.level + 1 >= stages.size){
-                                stages.add(mutableSetOf())
-                            }
-                            stages[test.level + 1].add(param)
-                        }
-                    }
-                }
-            }
-
-            if(tryBest){
-                solveImpl(10e-8, stages)
-            }else{
-                solve(10e-8, stages)
-            }
-            //TODO
-            //constraint.prune(this)
-        }catch (e: Exception){
-            throw e
-        }
-
-        return constraint
     }
 
     fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
@@ -232,26 +165,7 @@ class Sketch(val partStudio: PartStudio, val name: String) {
 
     fun solve(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) {
         val start = System.currentTimeMillis()
-
         val result = solveImpl(accuracy, params)
-
-        /*
-        if(!result){
-            var error = 0.0
-            val locations = mutableListOf<LineError>()
-            for(constraint in constraints){
-                val constraintError = constraint.equation
-                val value = constraintError.evalDouble()
-                error += value
-                if(value > accuracy){
-                    //locations.add(LineError("constraint could not be resolved", constraint.lineNumber, 0))
-                    //println("$constraint: line: ${constraint.lineNumber}  $constraintError > $accuracy")
-                }
-            }
-
-            throw LineException(locations)
-        }*/
-
         val end = System.currentTimeMillis()
         println("time: ${end - start}ms")
     }

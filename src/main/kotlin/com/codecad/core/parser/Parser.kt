@@ -47,6 +47,10 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return peek().kind == kind
     }
 
+    private fun isa(idx: Int, kind: Token.Kind): Boolean {
+        return ahead(idx).kind == kind
+    }
+
     private fun accept(kind: Token.Kind): Boolean {
         if (isa(kind)) {
             shift()
@@ -132,7 +136,8 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         val functions = ArrayList<FunctionExpr>()
         val exprs = ArrayList<Expr>()
         while (!isa(Token.Kind.EOL)) {
-            when (peek().kind) {
+            val kind = peek().kind
+            when (kind) {
                 Token.Kind.Semi -> {
                     next()
                     continue
@@ -140,7 +145,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
                 Token.Kind.Fn -> functions.add(parseFunction())
                 Token.Kind.Let -> exprs.add(parseLetExpr())
                 Token.Kind.Sketch -> exprs.add(parseSketchExpr())
-                else -> exprs.add(parseExpr())
+                else -> exprs.add(parseDeclOrExpr())
             }
         }
         val expr : Expr = if (exprs.size == 1) exprs[0] else BlockExpr(
@@ -158,11 +163,23 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         }
     }
 
+    private fun parseDeclOrExpr() : Expr {
+        return if(isa(Token.Kind.Ident) && isa(1, Token.Kind.Ident)){
+            val callee = parseIdentExpr()
+            val ident = parseIdentExpr()
+            expect(Token.Kind.LeftParen)
+            val arg = parseArg()
+            LetExpr(world, ident, CallExpr(world, callee, arg, false))
+        }else{
+            parseExpr()
+        }
+    }
+
     private fun parseStmt(): Expr {
         while (!isa(Token.Kind.EOL)) {
             return when (peek().kind) {
                 Token.Kind.Let -> parseLetExpr()
-                else -> parseExpr()
+                else -> parseDeclOrExpr()
             }
         }
         throw ParseException("Expected let or expr")
@@ -204,7 +221,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
     private fun parseInfixExpr(lhs: Expr, op: Op): Expr {
         if (op == Op.Chain) {
             return if (accept(Token.Kind.LeftParen)) {
-                val arg: TupleExpr = TupleExpr.asTuple(parseTuple())
+                val arg = parseArg()
                 CallExpr(world, lhs, arg, true)
             } else {
                 FieldExpr(world, lhs, parseIdent(), true)
@@ -214,6 +231,10 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         }
         val rhs = parseExpr(op.prec().next())
         return world.infix(lhs, rhs, op)
+    }
+
+    private fun parseArg() : TupleExpr{
+        return TupleExpr.asTuple(parseTuple())
     }
 
     private fun parseTuple(): Expr {

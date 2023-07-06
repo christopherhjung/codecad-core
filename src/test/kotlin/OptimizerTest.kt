@@ -1,7 +1,7 @@
-import com.codecad.core.Solver
 import com.codecad.core.Tracker
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.World
+import com.codecad.core.optimizer.Solver
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -15,7 +15,7 @@ class OptimizerTest {
         val target = world.literal(Math.PI)
         val current = ParamExpr(world, 100.0)
         val errorTerm = (current - target).pow(2)
-        val success = solver.solveImpl(listOf(current), errorTerm, listOf(errorTerm.derivative(current)), 1e-6)
+        val success = solver.solveImpl(listOf(current), world.tuple(errorTerm.derivative(current), errorTerm), 1e-6)
 
         assertEquals(target.evalDouble(), current.evalDouble(), 1e-3)
         assertTrue(success)
