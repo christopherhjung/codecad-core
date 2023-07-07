@@ -17,7 +17,7 @@ class CacheTest {
         assertSame(a * b, a * b)
         assertSame(a / b, a / b)
         assertSame(a.pow(b), a.pow(b))
-        assertSame(a.smaller(b), a.smaller(b))
+        assertSame(a.lt(b), a.lt(b))
     }
 
     @Test
@@ -29,7 +29,7 @@ class CacheTest {
         assertSame(a * b, b * a)
         assertNotSame(a / b, b / a)
         assertNotSame(a.pow(b), b.pow(a))
-        assertNotSame(a.smaller(b), b.smaller(a))
+        assertNotSame(a.lt(b), b.lt(a))
     }
 
     @Test

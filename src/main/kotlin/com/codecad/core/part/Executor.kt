@@ -140,7 +140,7 @@ class Executor private constructor(){
 
         scope.setObject("fit", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            sketch.solve(1e-7)
+            sketch.solve(1e-10)
         }, true)
 
         val result = expr.eval(scope)

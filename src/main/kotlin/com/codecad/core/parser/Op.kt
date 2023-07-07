@@ -38,9 +38,50 @@ enum class Op {
             else -> false
         }
 
+    val isAssociative: Boolean
+        get() = when (this) {
+            Add, Mul -> true
+            else -> false
+        }
+
+    val isCommutative: Boolean
+        get() = when (this) {
+            Add, Mul -> true
+            else -> false
+        }
+
     val isPostfix: Boolean
         get() = when (this) {
             LeftParen, Inc, Dec -> true
             else -> false
+        }
+
+    val sign: String
+        get() = when (this) {
+            Eq -> "=="
+            Ne -> "!="
+            Lt -> "<"
+            Le -> "<="
+            Gt -> ">"
+            Ge -> ">="
+            Add -> "+"
+            Sub -> "-"
+            Mul -> "*"
+            Div -> "/"
+            And -> "&&"
+            Or -> "||"
+            Assign -> "="
+            AssignAdd -> "+="
+            AssignSub -> "-="
+            AssignMul -> "*="
+            AssignDiv -> "/="
+            BitAnd -> "&"
+            BitOr -> "|"
+            BitXor -> "^"
+            Spread -> "..."
+            Not -> "+="
+            Dec -> "--"
+            Inc -> "++"
+            else -> "?"
         }
 }

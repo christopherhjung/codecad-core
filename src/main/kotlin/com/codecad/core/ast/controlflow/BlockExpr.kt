@@ -5,7 +5,7 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 
-class BlockExpr(world: World, private val exprs: Array<Expr>) : Expr(world) {
+class BlockExpr(world: World, val exprs: Array<Expr>) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         var nestedScope = NestedScope.mutual(scope)
         var result = null as Any?

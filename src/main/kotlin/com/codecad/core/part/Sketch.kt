@@ -7,6 +7,7 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.optimizer.Solver
 import com.codecad.core.constraint.*
+import com.codecad.core.optimizer.AdamOptimizer
 import java.util.*
 
 class Sketch(val partStudio: PartStudio, val name: String) {
@@ -159,7 +160,7 @@ class Sketch(val partStudio: PartStudio, val name: String) {
 
     fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
         val solver = Solver(partStudio.tracker)
-        val result = solver.solve(world, params.flatten(), ArrayList(constraints),accuracy)
+        val result = solver.solve(world, params.flatten(), constraints, accuracy)
         return result
     }
 

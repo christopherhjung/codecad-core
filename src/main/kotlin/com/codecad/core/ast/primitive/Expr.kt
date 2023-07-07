@@ -125,7 +125,7 @@ abstract class Expr(val world: World) {
         return pow(0.5)
     }
 
-    fun smaller(other: Expr) : Expr {
+    fun lt(other: Expr) : Expr {
         return world.lt(this, other)
     }
 
@@ -155,11 +155,11 @@ abstract class Expr(val world: World) {
         }
 
         fun min(left: Expr, right: Expr) : Expr {
-            return ifExpr(left.smaller(right), left, right)
+            return ifExpr(left.lt(right), left, right)
         }
 
         fun max(left: Expr, right: Expr) : Expr {
-            return ifExpr(left.smaller(right), right, left)
+            return ifExpr(left.lt(right), right, left)
         }
 
         fun abs(expr: Expr) : Expr {

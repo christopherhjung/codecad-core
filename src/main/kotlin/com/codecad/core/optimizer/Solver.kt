@@ -7,21 +7,22 @@ import com.codecad.core.constraint.Constraint
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.evalDoubleArray
 import com.codecad.core.rewrite.ShareRewriter
+import com.codecad.core.visitor.Printer
 import kotlin.math.abs
 
-val minErrorChange = 1e-10
-val targetError = 1e-8
+val minErrorChange = 1e-12
+val targetError = 1e-10
 
 class Solver(val tracker: Tracker) {
 
-    fun solve(world: World, params: List<ParamExpr>, constraints: List<Constraint>, accuracy: Double = targetError): Boolean {
+    fun solve(world: World, params: List<ParamExpr>, constraints: Collection<Constraint>, accuracy: Double = targetError): Boolean {
         val errorTerm = constraints.map { it.equation }
-            .reduceOrNull{a : Expr,b : Expr -> a + b} ?: return true
+            .reduceOrNull{a,b -> a + b} ?: return true
         val gradients = params.map { errorTerm.derivative(it) }
         var tangent = world.tuple(*gradients.toTypedArray(), errorTerm)
+
         val rewriter = ShareRewriter(world)
         tangent = rewriter.rewrite(tangent)
-
         return solveImpl(params, tangent, accuracy)
     }
 

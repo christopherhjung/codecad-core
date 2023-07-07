@@ -84,24 +84,10 @@ class World {
             lhs
         }else if(lhs === rhs){
             mul(TWO, rhs)
-        }else if(rhs is PrefixExpr && rhs.op == Op.Sub){
-            if(lhs is PrefixExpr && lhs.op == Op.Sub){
-                prefix(add(lhs.expr, rhs.expr), Op.Sub)
-            }else{
-                sub(lhs, rhs.expr)
-            }
-        }else if(lhs is PrefixExpr && lhs.op == Op.Sub){
-            sub(rhs, lhs.expr)
-        }else if(rhs is LiteralExpr){
-            if(lhs is LiteralExpr){
-                literal(lhs.evalDouble() + rhs.evalDouble())
-            }else if(lhs is InfixExpr && lhs.op == Op.Add && lhs.rhs is LiteralExpr){
-                add(lhs.lhs, add(lhs.rhs, rhs))
-            }else{
-                unify(InfixExpr(this, lhs, rhs, Op.Add))
-            }
+        }else if(rhs is LiteralExpr && lhs is LiteralExpr){
+            literal(lhs.evalDouble() + rhs.evalDouble())
         }else{
-            unify(InfixExpr(this, rhs, lhs, Op.Add))
+            reassociate(lhs, rhs, Op.Add)
         }
     }
 
@@ -114,10 +100,14 @@ class World {
             ZERO
         }else if(rhs is PrefixExpr && rhs.op == Op.Sub){
             add(lhs, rhs.expr)
-        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
-            literal(lhs.evalDouble() - rhs.evalDouble())
+        }else if(rhs is LiteralExpr){
+            if(lhs is LiteralExpr){
+                literal(lhs.evalDouble() - rhs.evalDouble())
+            }else{
+                add(lhs, literal(-rhs.evalDouble()))
+            }
         }else {
-            unify(InfixExpr(this, lhs, rhs, Op.Sub))
+            reassociate(lhs, rhs, Op.Sub)
         }
     }
 
@@ -132,16 +122,41 @@ class World {
             pow(lhs, TWO)
         }else if(lhs is PrefixExpr && rhs is PrefixExpr && lhs.op == Op.Sub && rhs.op == Op.Sub){
             mul(lhs.expr, rhs.expr)
-        }else if(rhs is LiteralExpr){
-            if(lhs is LiteralExpr){
-                literal(lhs.evalDouble() * rhs.evalDouble())
-            }else if(lhs is InfixExpr && lhs.op == Op.Mul && lhs.rhs is LiteralExpr){
-                mul(lhs.lhs,  mul(lhs.rhs, rhs))
-            }else{
-                unify(InfixExpr(this, lhs, rhs, Op.Mul))
+        }else if(lhs is LiteralExpr && rhs is LiteralExpr){
+            literal(lhs.evalDouble() * rhs.evalDouble())
+        }else{
+            reassociate(lhs, rhs, Op.Mul)
+        }
+    }
+
+    /// (1)     la    op (lz op w) -> (la op lz) op w
+    /// (2) (lx op y) op (lz op w) -> (lx op lz) op (y op w)
+    /// (3)      a    op (lz op w) ->  lz op (a op w)
+    /// (4) (lx op y) op      b    ->  lx op (y op b)
+    fun reassociate(a : Expr, b: Expr, op: Op ) : Expr{
+        if( op.isAssociative ){
+            var lx : LiteralExpr? = null
+            val y = if(a is InfixExpr && a.op == op){
+                lx = a.lhs as? LiteralExpr
+                a.rhs
+            }else null
+
+            var lz : LiteralExpr? = null
+            val w = if(b is InfixExpr && b.op == op){
+                lz = b.lhs as? LiteralExpr
+                b.rhs
+            }else null
+
+            return when{
+                a is LiteralExpr && lz != null -> infix(infix(a, lz, op), w!!, op)            // (1)
+                lx != null && lz != null -> infix(infix(lx, lz, op), infix(y!!, w!!, op), op) // (2)
+                lz != null -> infix(lz, infix(a, w!!, op), op)                                // (3)
+                lx != null -> infix(lx, infix(y!!, b, op), op)                                // (4)
+                b is LiteralExpr -> infix(b, a, op)
+                else -> unify(InfixExpr(this, a, b, op))
             }
         }else{
-            unify(InfixExpr(this, rhs, lhs, Op.Mul))
+            return unify(InfixExpr(this, a, b, op))
         }
     }
 
@@ -154,14 +169,14 @@ class World {
             ONE
         }else if(rhs is InfixExpr && rhs.op == Op.Div){
             div(mul(lhs, rhs.rhs), rhs.lhs)
-        }else if (rhs is LiteralExpr) {
-            if(lhs is LiteralExpr){
+        }else if (lhs is LiteralExpr) {
+            if(rhs is LiteralExpr){
                 literal(lhs.evalDouble() / rhs.evalDouble())
             }else{
                 mul(lhs, literal(1.0 / rhs.evalDouble()))
             }
         }else {
-            unify(InfixExpr(this, lhs, rhs, Op.Div))
+            reassociate(lhs, rhs, Op.Div)
         }
     }
 
