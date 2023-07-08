@@ -177,7 +177,13 @@ abstract class Expr(val world: World) {
 }
 
 fun Expr.evalDoubleArray() : DoubleArray{
-    return ( eval() as Array<Object> ).map { it as Double }.toDoubleArray()
+    val arr = eval() as Array<*>
+    val doubleArr = DoubleArray(arr.size)
+    for( idx in arr.indices ){
+        doubleArr[idx] = arr[idx] as Double
+    }
+
+    return doubleArr
 }
 
 operator fun Double.minus(right: Expr) : Expr {

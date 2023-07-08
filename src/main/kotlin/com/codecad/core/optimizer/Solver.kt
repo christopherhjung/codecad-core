@@ -45,7 +45,6 @@ class Solver(val tracker: Tracker) {
 
         println("iterations: $iter")
         println("error: $error")
-
         return error < accuracy
     }
 }
