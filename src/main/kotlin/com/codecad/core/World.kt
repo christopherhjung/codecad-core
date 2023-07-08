@@ -31,7 +31,8 @@ class World {
         }else if(expr is LiteralExpr){
             literal(-expr.evalDouble())
         }else{
-            unify(PrefixExpr(this, expr, Op.Sub))
+            mul(literal(-1.0), expr)
+            //unify(PrefixExpr(this, expr, Op.Sub))
         }
     }
 
@@ -207,8 +208,17 @@ class World {
             ZERO
         }else if(base is PowExpr){
             pow(base.base, mul(base.exp, exp))
-        }else if (base is LiteralExpr && exp is LiteralExpr) {
-            literal(base.evalDouble().pow(exp.evalDouble()))
+        }else if (exp is LiteralExpr) {
+            if(base is LiteralExpr){
+                literal(base.evalDouble().pow(exp.evalDouble()))
+            }else{
+                val expValue = exp.evalDouble()
+                if(expValue < 0.0){
+                    div(ONE, pow(base, literal(-expValue)))
+                }else{
+                    unify(PowExpr(this, base, exp))
+                }
+            }
         }else{
             unify(PowExpr(this, base, exp))
         }

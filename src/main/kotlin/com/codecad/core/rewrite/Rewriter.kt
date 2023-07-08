@@ -36,18 +36,15 @@ abstract class Rewriter {
 }
 
 class MultiUseScanner(){
-    data class Counter(var count: Int)
-    private val slots = HashMap<Expr, Counter>()
+    private val slots = HashMap<Expr, Int>()
 
     private fun inc(expr: Expr) : Boolean{
-        val counter = slots.computeIfAbsent(expr){Counter(0)}
-        counter.count++
-        return counter.count > 1
+        return slots.merge(expr, 1){ a, b -> a + b}!! > 1
     }
 
-    fun scan(expr : Expr) : List<Expr>{
+    fun scan(expr : Expr) : Map<Expr, Int>{
         scanImpl(expr)
-        return slots.entries.filter { it.value.count > 1 }.map { it.key }
+        return slots.filter { it.value > 1 }
     }
 
     private fun scanImpl(expr : Expr){
@@ -92,7 +89,7 @@ class ShareRewriter(val world: World) : Rewriter(){
 
         nodes.clear()
         exprs.clear()
-        scanExprs.forEach { nodes[it] = Node(world.ref(Slot(0.0))) }
+        scanExprs.forEach { nodes[it.key] = Node(world.ref(Slot(0.0))) }
         val result = rewriteImpl(expr)
         exprs.add(result)
         return BlockExpr(world, exprs.toTypedArray())
