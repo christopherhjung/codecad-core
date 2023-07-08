@@ -26,7 +26,7 @@ data class Edge(val source: Corner, val target : Corner){
 
     fun points() : Iterable<PointD>{
         return Iterable {
-            var start : Edge = this
+            val start : Edge = this
             var current : Edge = this
             var first = true
             object : Iterator<PointD>{

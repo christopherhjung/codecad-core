@@ -53,21 +53,20 @@ fun generateFaces(edges: Collection<Edge>) : List<PolygonFace>{
     val faces = mutableListOf<PolygonFace>()
     val queue = edges.toMutableSet()
     while(queue.isNotEmpty()){
-        val next = queue.first()
-        queue.remove(next)
+        val start = queue.first()
+        queue.remove(start)
 
         var area = 0.0
         val points = mutableListOf<PointD>()
-        var current = next
+        var curr = start
 
         while(true){
-            val pos = current.target.point
-            points.add(pos)
-            area += current.source.point.crossZ(pos)
-            if(current.target === next.source) break
-
-            current = current.next!!
-            queue.remove(current)
+            val currPos = curr.target.point
+            points.add(currPos)
+            area += curr.source.point.crossZ(currPos)
+            if(curr.target === start.source) break
+            curr = curr.next!!
+            queue.remove(curr)
         }
 
         val type = if(area < 0) FaceType.Hole else FaceType.Surface
@@ -86,42 +85,48 @@ fun nestFaces(faces: List<PolygonFace>) : List<PolygonFace>{
     }
 
     val surfaces = faces.filter { it.type == FaceType.Surface }
-
-    val line2face = HashMap<LineD, PolygonFace>()
-    val lines = surfaces.flatMap { surface -> surface.positions.rollover().map {
-        val line = LineD(it.first, it.second)
-        line2face[line] = surface
-        line
-    } }
-    val events = events(lines)
+    val finder = FaceFinder(surfaces)
 
     faces.filter { it.type == FaceType.Hole }.forEach { hole ->
         val holePos = getLeftmostPoint(hole)
 
-        var line : LineD? = null
-        for(event in events){
-            if(event.pos.x > holePos.x){
-                break
-            }
-
-            val currLine = event.line
-            if(event.origin && (currLine.p0.y > holePos.y) == (currLine.p1.y < holePos.y) && currLine.p0 !== holePos && currLine.p1 !== holePos){
-                line = currLine
-            }
-        }
-
-        if(line != null && line.p0.y > line.p1.y){
-            val face = line2face[line]
-            face?.let {
-                it.area -= hole.area
-                it.holes.add(hole)
-            }
+        finder.find(holePos)?.let {
+            it.area -= hole.area
+            it.holes.add(hole)
         }
     }
 
     return surfaces
 }
 
-fun unionFaces(faces: List<PolygonFace>) : List<PolygonFace>{
-    return faces
+class FaceFinder(surfaces: List<PolygonFace>){
+    private val line2face = HashMap<LineD, PolygonFace>()
+    private val lines = run{
+        surfaces.flatMap { surface -> surface.positions.rollover().map {
+            val line = LineD(it.first, it.second)
+            line2face[line] = surface
+            line
+        }}
+    }
+
+    private val events = events(lines)
+
+    fun find(pos : PointD) : PolygonFace?{
+        var line : LineD? = null
+        for(event in events){
+            if(event.pos.x > pos.x){
+                break
+            }
+
+            val currLine = event.line
+            if(event.origin && (currLine.p0.y > pos.y) == (currLine.p1.y < pos.y) && currLine.p0 !== pos && currLine.p1 !== pos){
+                line = currLine
+            }
+        }
+
+        return if(line != null && line.p0.y > line.p1.y){
+            line2face[line]
+        }else null
+    }
 }
+

@@ -18,14 +18,6 @@ data class Event(
     }
 }
 
-fun normalizeLine(line : LineD) : LineD {
-    return if (line.p0.x > line.p1.x) {
-        LineD(line.p1, line.p0)
-    }else{
-        line
-    }
-}
-
 fun isForward(line: LineD) : Boolean{
     return when{
         line.p0.x < line.p1.x -> true
