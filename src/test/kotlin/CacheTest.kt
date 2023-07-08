@@ -21,6 +21,17 @@ class CacheTest {
     }
 
     @Test
+    fun testsss(){
+        val world = World()
+
+        val param = ParamExpr(world, 1.0)
+        val expr = world.pow(world.negate(param), world.literal(2.0))
+        val diff = expr.derivative(param)
+        println(expr)
+        println(diff)
+    }
+
+    @Test
     fun commuTest(){
         val world = World();
         val a = ParamExpr(world, 2.0)

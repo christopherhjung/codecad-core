@@ -5,6 +5,7 @@ import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
 import com.codecad.core.World
+import com.codecad.core.visitor.Printer
 import java.util.function.Consumer
 
 abstract class Expr(val world: World) {
@@ -50,12 +51,6 @@ abstract class Expr(val world: World) {
     open fun derivative(expr: Expr) : Expr {
         throw RuntimeException("not implemented")
     }
-
-
-
-
-
-
 
     operator fun unaryMinus() : Expr {
         return world.negate(this)
@@ -127,6 +122,11 @@ abstract class Expr(val world: World) {
 
     fun lt(other: Expr) : Expr {
         return world.lt(this, other)
+    }
+
+    override fun toString(): String {
+        val printer = Printer()
+        return printer.print(this)
     }
 
     companion object{
