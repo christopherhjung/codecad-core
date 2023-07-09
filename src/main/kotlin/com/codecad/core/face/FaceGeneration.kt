@@ -111,9 +111,6 @@ fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
     holes.sortByDescending { it.area }
 
     val rootHoles = arrayListOf<RoutedFace>()
-    val firstRoot = holes.removeFirst()
-    rootHoles.add(firstRoot)
-
     for( hole in holes ){
         nestHoles(hole, rootHoles)
     }
