@@ -7,11 +7,10 @@ import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.face.entity.*
-import java.util.HashMap
-import java.util.HashSet
+import java.util.*
 
 
-fun findFaces(lines: List<LineD>): List<PolygonFace> {
+fun findFaces(lines: List<LineD>): List<RoutedFace> {
     val pointMap = HashMap<PointD, Corner>()
     fun corner(point: PointD) : Corner {
         return pointMap.computeIfAbsent(point) { Corner(it) }
@@ -49,84 +48,174 @@ fun finalizeCorners(corners : Collection<Corner>){
     }
 }
 
-fun generateFaces(edges: Collection<Edge>) : List<PolygonFace>{
-    val faces = mutableListOf<PolygonFace>()
-    val queue = edges.toMutableSet()
-    while(queue.isNotEmpty()){
-        val start = queue.first()
-        queue.remove(start)
-
-        var area = 0.0
-        val points = mutableListOf<PointD>()
-        var curr = start
-
-        while(true){
-            val currPos = curr.target.point
-            points.add(currPos)
-            area += curr.source.point.crossZ(currPos)
-            if(curr.target === start.source) break
-            curr = curr.next!!
-            queue.remove(curr)
-        }
-
-        val type = if(area < 0) FaceType.Hole else FaceType.Surface
-        val face = PolygonFace(points, type, Plane.UNKNOWN)
-        face.area = area / 2
-        faces.add(face)
+fun computeArea(start : Edge) : Double{
+    var curr = start
+    var area = 0.0
+    while(true){
+        val currPos = curr.target.point
+        area += curr.source.point.crossZ(currPos)
+        if(curr.target === start.source) break
+        curr = curr.next!!
     }
 
-    return nestFaces(faces)
+    return area / 2
 }
 
+fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
+    val visited = hashSetOf<Edge>()
 
-fun nestFaces(faces: List<PolygonFace>) : List<PolygonFace>{
-    fun getLeftmostPoint(polygonFace: PolygonFace) : PointD {
-        return polygonFace.positions.minByOrNull { it.x }!!
+    val holes = arrayListOf<RoutedFace>()
+    for( root in edges ){
+        if(visited.contains(root)) continue
+
+        var hole : RoutedFace? = null
+        val surfaces = arrayListOf<RoutedFace>()
+        val queue = LinkedList<Edge>()
+
+        queue.add(root)
+        while( queue.isNotEmpty() ){
+            val start = queue.pollFirst()
+            if(!visited.add(start)) continue
+
+            val area = computeArea(start)
+            val routedFace = RoutedFace(start, mutableListOf(), area, Plane.UNKNOWN)
+
+            if(area > 0){
+                surfaces.add(routedFace)
+            }else if(hole == null){
+                hole = routedFace
+            }else{
+                throw Error("error!!")
+            }
+
+            for( curr in start.loop() ){
+                visited.add(curr)
+            }
+
+            for( curr in start.loop() ){
+                val twin = curr.twin
+                queue.add(twin)
+            }
+        }
+
+        if(hole == null) throw Error("No hole found")
+        hole.children = surfaces
+        holes.add(hole)
     }
 
-    val surfaces = faces.filter { it.type == FaceType.Surface }
-    val finder = FaceFinder(surfaces)
+    return nestHoles(holes)
+}
 
-    faces.filter { it.type == FaceType.Hole }.forEach { hole ->
-        val holePos = getLeftmostPoint(hole)
+class FaceTree(val face: RoutedFace, val children: MutableList<FaceTree>)
+fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
+    holes.sortBy { -it.area }
 
-        finder.find(holePos)?.let {
-            it.area -= hole.area
-            it.holes.add(hole)
+    val rootHoles = arrayListOf<FaceTree>()
+    val firstRoot = holes.removeFirst()
+    rootHoles.add(FaceTree(firstRoot, firstRoot.children.map { FaceTree( it, mutableListOf() ) }.toMutableList()))
+
+    for( hole in holes ){
+        nestHoles(hole, rootHoles)
+    }
+
+    return collectSurfaces(rootHoles)
+}
+
+fun nestHoles(hole : RoutedFace, rootHoles: MutableList<FaceTree>){
+    for( rootHole in rootHoles ){
+        if(rootHole.face.area <= hole.area) continue
+
+        for( surface in rootHole.children ){
+            if(surface.face.area <= hole.area) continue
+
+            if(FaceFinder.isPointInPolygon(hole.root.source.point, surface.face.points())){
+                nestHoles(hole, surface.children)
+                return
+            }
         }
     }
 
+    rootHoles.add(FaceTree(hole, hole.children.map { FaceTree( it, mutableListOf() ) }.toMutableList()))
+}
+
+fun collectSurfaces(holes : List<FaceTree>) : List<RoutedFace>{
+    val surfaces = mutableListOf<RoutedFace>()
+    collectSurfaces(holes, surfaces)
     return surfaces
 }
 
-class FaceFinder(surfaces: List<PolygonFace>){
-    private val line2face = HashMap<LineD, PolygonFace>()
-    private val lines = run{
-        surfaces.flatMap { surface -> surface.positions.rollover().map {
-            val line = LineD(it.first, it.second)
-            line2face[line] = surface
-            line
-        }}
+fun collectSurfaces(holes : List<FaceTree>, surfaces : MutableList<RoutedFace>){
+    for( hole in holes ){
+        for( surface in hole.children ){
+            surfaces.add(surface.face)
+            collectSurfaces(surface.children, surfaces)
+        }
+    }
+}
+
+
+fun RoutedFace.toPolygonFace() : PolygonFace{
+    val points = mutableListOf<PointD>()
+    var curr = this.root
+
+    while(true){
+        val currPos = curr.target.point
+        points.add(currPos)
+        if(curr.target === this.root.source) break
+        curr = curr.next!!
     }
 
-    private val events = events(lines)
+    val type = if(area < 0) FaceType.Hole else FaceType.Surface
+    val face = PolygonFace(points, type, Plane.UNKNOWN)
+    face.area = area
 
-    fun find(pos : PointD) : PolygonFace?{
-        var line : LineD? = null
-        for(event in events){
-            if(event.pos.x > pos.x){
-                break
-            }
+    val list = arrayListOf<PolygonFace>()
+    face.holesTest = list
+    for( hole in children ){
+        list.add(hole.toPolygonFace())
+    }
+    return face
+}
 
-            val currLine = event.line
-            if(event.origin && (currLine.p0.y > pos.y) == (currLine.p1.y < pos.y) && currLine.p0 !== pos && currLine.p1 !== pos){
-                line = currLine
+class FaceFinder(val faces: List<Face>){
+    fun find(pos : PointD) : Face?{
+        for( face in faces ){
+            if(isPointInPolygon(pos, face.points)){
+                for( hole in face.holes ){
+                    if(isPointInPolygon(pos, hole.points)){
+                        continue
+                    }
+                }
+
+                return face
             }
         }
 
-        return if(line != null && line.p0.y > line.p1.y){
-            line2face[line]
-        }else null
+        return null
+    }
+
+    companion object{
+        public fun isPointInPolygon(point: PointD, polygon: Iterable<PointD>): Boolean {
+            var windingNumber = 0
+
+            for ((p1, p2) in polygon.rollover()) {
+                if (p1.y <= point.y) {
+                    if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
+                        windingNumber++
+                    }
+                } else {
+                    if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
+                        windingNumber--
+                    }
+                }
+            }
+
+            return windingNumber != 0
+        }
+
+        private fun isLeft(p0: PointD, p1: PointD, p2: PointD): Double {
+            return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
+        }
     }
 }
 

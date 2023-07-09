@@ -3,10 +3,13 @@ package com.codecad.core.part
 import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.World
+import com.codecad.core.face.FaceFinder
+import com.codecad.core.face.RoutedFace
 import com.codecad.core.face.entity.DirectedPlane
 import com.codecad.core.face.entity.FaceType
 import com.codecad.core.face.entity.PolygonFace
 import com.codecad.core.face.findFaces
+import com.codecad.core.face.toPolygonFace
 import com.codecad.core.volume.Extrude
 import com.codecad.core.volume.Volume
 
@@ -20,17 +23,29 @@ class PartStudio {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val faces = findFaces(lines)
 
+        val rootFaces = faces.first()
+        volumes.add(Extrude(rootFaces.toPolygonFace(), plane,  height).extrude())
+
+        /*
         faces.filter { it.type == FaceType.Surface }.minByOrNull { it.positions.minOf { it.x } }?.let {
             volumes.add(Extrude(it, plane,  height).extrude())
-        }
+        }*/
     }
 
-    fun extrudeAll(sketch: Sketch, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {
+    fun extrudePos(sketch: Sketch, pos : Vec2, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val faces = findFaces(lines)
-
-        for(face in faces){
-            volumes.add(Extrude(face, plane,  height).extrude())
+        val faceFinder = FaceFinder(faces)
+        faceFinder.find(pos.fixed())?.let {
+            volumes.add(Extrude((it as RoutedFace).toPolygonFace(), plane,  height).extrude())
         }
+
+
+        /*
+
+        faceFinder.find(pos.fixed())?.let {
+            volumes.add(Extrude(it, plane,  height).extrude())
+        }*/
+
     }
 }

@@ -129,12 +129,14 @@ class Executor private constructor(){
             val height = Expr.orLiteral(scope.world, args[1])
             return@ObjectFunction project.extrude(sketch, height)
         }, true)
-        scope.setObject("extrudeAll", ObjectFunction{ scope, args ->
+        scope.setObject("extrudePos", ObjectFunction{ scope, args ->
             val project = scope.partStudio
             val name = args[0] as String
+            val posX = Expr.orLiteral(world, args[1])
+            val posY = Expr.orLiteral(world, args[2])
             val sketch = project.sketches.find { it.name == name }!!
-            val height = Expr.orLiteral(scope.world, args[1])
-            return@ObjectFunction project.extrudeAll(sketch, height)
+            val height = Expr.orLiteral(scope.world, args[3])
+            return@ObjectFunction project.extrudePos(sketch, Vec2(posX, posY), height)
         }, true)
         scope.setObject("origin", world.ORIGIN, true)
 

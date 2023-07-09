@@ -1,8 +1,6 @@
 package com.codecad.core.volume
 
-import com.codecad.common.PointD
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.face.*
 import com.codecad.core.face.entity.*
 import com.codecad.core.rollover
 
@@ -11,9 +9,7 @@ abstract class Volume
 class FacedVolume(val faces: List<Face>) : Volume() {
     companion object {
         fun from(volume: Volume): FacedVolume {
-            return if (volume is RoutedVolume) {
-                TODO("not yet implemented")
-            } else if (volume is FacedVolume) {
+            return if (volume is FacedVolume) {
                 return volume
             } else if (volume is Extrude) {
                 volume.extrudeRoutedFace()
@@ -25,7 +21,7 @@ class FacedVolume(val faces: List<Face>) : Volume() {
 }
 
 class PolygonVolume(val faces: List<PolygonFace>) : Volume()
-
+/*
 class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     companion object{
 
@@ -78,7 +74,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
             return RoutedVolume(faces)
         }
     }
-}
+}*/
 
 class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
     fun extrude(): FacedVolume {
@@ -127,11 +123,11 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         faces.add(basePolygon)
         faces.add(topPolygon)
 
-        for (child in polygonFace.holes) {
+        for (child in polygonFace.holesTest) {
             val (baseHole, topHole) = addSideFace(child)
 
-            basePolygon.holes.add(baseHole)
-            topPolygon.holes.add(topHole)
+            basePolygon.holesTest.add(baseHole)
+            topPolygon.holesTest.add(topHole)
         }
 
         return FacedVolume(faces)

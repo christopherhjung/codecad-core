@@ -5,7 +5,15 @@ import com.codecad.common.PointD
 import com.codecad.core.face.entity.*
 
 
-class RoutedFace(val root : Edge, val holes: List<Edge>, override val plane: Plane, val original: Face? = null) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge, var children: MutableList<RoutedFace>, val area : Double, override val plane: Plane) : Face(), Iterable<Edge>{
+
+
+    override val points: Iterable<PointD>
+        get() = points()
+
+    override val holes: Iterable<Face>
+        get() = children
+
     override fun iterator(): Iterator<Edge> {
         var current : Edge = root
         var first = true
@@ -82,6 +90,6 @@ class RoutedFace(val root : Edge, val holes: List<Edge>, override val plane: Pla
     }
 
     override fun generateTriangles(): List<TriangleFace> {
-        return generateTriangles(root.points().toList(), holes.map { it.points().toList() })
+        return generateTriangles(root.pointsIter().toList(), children.map { it.points().toList() })
     }
 }

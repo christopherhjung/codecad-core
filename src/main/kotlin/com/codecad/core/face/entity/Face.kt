@@ -7,13 +7,15 @@ import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint
 
 enum class FaceType{
-    Surface, Hole
+    Root, Surface, Hole
 }
 
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
     abstract val plane : Plane
     open val type : FaceType = FaceType.Surface
+    abstract val points : Iterable<PointD>
+    abstract val holes : Iterable<Face>
 }
 
 
@@ -21,6 +23,12 @@ class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
     override fun generateTriangles()  : List<TriangleFace>{
         return listOf(this)
     }
+
+    override val points: Iterable<PointD>
+        get() = points
+
+    override val holes: Iterable<Face>
+        get() = emptyList()
 }
 
 fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{

@@ -24,7 +24,41 @@ data class Edge(val source: Corner, val target : Corner){
         }
     }
 
-    fun points() : Iterable<PointD>{
+    fun points() : List<PointD>{
+        val points = arrayListOf<PointD>()
+        var curr = this
+
+        while(true){
+            val currPos = curr.target.point
+            points.add(currPos)
+            if(curr.target === this.source) break
+            curr = curr.next!!
+        }
+
+        return points
+    }
+
+    fun loop() : Iterable<Edge>{
+        return Iterable {
+            val start : Edge = this
+            var current : Edge = this
+            var first = true
+            object : Iterator<Edge>{
+                override fun hasNext(): Boolean {
+                    return first || current != start
+                }
+
+                override fun next(): Edge {
+                    first = false
+                    val result =  current
+                    current = current.next!!
+                    return result
+                }
+            }
+        }
+    }
+
+    fun pointsIter() : Iterable<PointD>{
         return Iterable {
             val start : Edge = this
             var current : Edge = this
