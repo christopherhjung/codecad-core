@@ -70,25 +70,6 @@ class RoutedFace(val root : Edge, var children: MutableList<RoutedFace>, val are
         }
     }
 
-    fun edges() : Iterable<Edge>{
-        return Iterable {
-            var current : Edge = root
-            var first = true
-            object : Iterator<Edge>{
-                override fun hasNext(): Boolean {
-                    return first || current != root
-                }
-
-                override fun next(): Edge {
-                    first = false
-                    val result =  current
-                    current = current.next!!
-                    return result
-                }
-            }
-        }
-    }
-
     override fun generateTriangles(): List<TriangleFace> {
         return generateTriangles(root.pointsIter().toList(), children.map { it.points().toList() })
     }

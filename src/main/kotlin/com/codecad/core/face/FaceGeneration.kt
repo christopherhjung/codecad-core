@@ -129,7 +129,7 @@ fun nestHoles(hole : RoutedFace, rootHoles: MutableList<RoutedFace>){
         for( surface in rootHole.children ){
             if(surface.area <= hole.area) continue
 
-            if(FaceFinder.isPointInPolygon(hole.root.source.point, surface.points())){
+            if(isPointInPolygon(hole.root.source.point, surface.points())){
                 nestHoles(hole, surface.children)
                 return
             }
@@ -181,42 +181,34 @@ fun RoutedFace.toPolygonFace() : PolygonFace{
 class FaceFinder(val faces: List<Face>){
     fun find(pos : PointD) : Face?{
         for( face in faces ){
-            if(isPointInPolygon(pos, face.points)){
-                for( hole in face.holes ){
-                    if(isPointInPolygon(pos, hole.points)){
-                        continue
-                    }
-                }
-
+            if(face.isInside(pos)){
                 return face
             }
         }
 
         return null
     }
+}
 
-    companion object{
-        public fun isPointInPolygon(point: PointD, polygon: Iterable<PointD>): Boolean {
-            var windingNumber = 0
+fun isPointInPolygon(point: PointD, polygon: Iterable<PointD>): Boolean {
+    var windingNumber = 0
 
-            for ((p1, p2) in polygon.rollover()) {
-                if (p1.y <= point.y) {
-                    if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
-                        windingNumber++
-                    }
-                } else {
-                    if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
-                        windingNumber--
-                    }
-                }
+    for ((p1, p2) in polygon.rollover()) {
+        if (p1.y <= point.y) {
+            if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
+                windingNumber++
             }
-
-            return windingNumber != 0
-        }
-
-        private fun isLeft(p0: PointD, p1: PointD, p2: PointD): Double {
-            return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
+        } else {
+            if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
+                windingNumber--
+            }
         }
     }
+
+    return windingNumber != 0
+}
+
+private fun isLeft(p0: PointD, p1: PointD, p2: PointD): Double {
+    return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
 

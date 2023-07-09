@@ -2,6 +2,7 @@ package com.codecad.core.face.entity
 
 import com.codecad.common.Plane
 import com.codecad.common.PointD
+import com.codecad.core.face.isPointInPolygon
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint
 import org.poly2tri.triangulation.TriangulationPoint
@@ -16,6 +17,18 @@ abstract class Face{
     open val type : FaceType = FaceType.Surface
     abstract val points : Iterable<PointD>
     abstract val holes : Iterable<Face>
+
+    fun isInside(pos : PointD) : Boolean{
+        return if(isPointInPolygon(pos, points)){
+            for( hole in holes ){
+                if(isPointInPolygon(pos, hole.points)){
+                    return false
+                }
+            }
+
+            true
+        }else false
+    }
 }
 
 
