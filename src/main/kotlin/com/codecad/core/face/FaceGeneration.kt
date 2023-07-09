@@ -107,9 +107,8 @@ fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
     return nestHoles(holes)
 }
 
-class FaceTree(val face: RoutedFace, val children: MutableList<FaceTree>)
 fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
-    holes.sortBy { -it.area }
+    holes.sortByDescending { it.area }
 
     val rootHoles = arrayListOf<RoutedFace>()
     val firstRoot = holes.removeFirst()

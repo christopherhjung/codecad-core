@@ -19,9 +19,12 @@ class Controller {
     @PostMapping("eval")
     fun eval(@RequestBody code: String) : ResponseEntity<Any>{
         try{
+            var start = System.currentTimeMillis()
             val result = Executor.execute(code)
             val project = result.partStudio
             val model = mapModel(project)
+            var end = System.currentTimeMillis()
+            println("needed ${end - start}ms")
             return ResponseEntity(model, HttpStatus.OK)
         }catch (e: LineException){
             e.printStackTrace()
