@@ -81,8 +81,10 @@ fun generateFaces(edges: Collection<Edge>) : RoutedFace{
             routedFace.area = abs(area)
 
             if(area > 0){
+                routedFace.type = FaceType.Surface
                 surfaces.add(routedFace)
             }else if(hole == null){
+                routedFace.type = FaceType.Hole
                 hole = routedFace
             }else{
                 throw Error("double hole!")
@@ -107,6 +109,7 @@ fun nestHoles(holes : MutableList<RoutedFace>) : RoutedFace{
     holes.sortByDescending { it.area }
 
     val rootSurface = RoutedFace(Edge.ZERO)
+    rootSurface.type = FaceType.Root
     for( hole in holes ){
         nestHoles(hole, rootSurface)
     }
@@ -151,7 +154,10 @@ fun collectSurfaces(parentSurface : Face, surfaces : MutableList<Face>){
 fun Face.toPolygonFace() : PolygonFace{
     if(this is PolygonFace) return this
 
-    val points = points.toList()
+    val points = when (type) {
+        FaceType.Root -> emptyList()
+        else -> points.toList()
+    }
 
     val result = PolygonFace(points)
     result.type = type
