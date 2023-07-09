@@ -31,7 +31,6 @@ abstract class Face{
     }
 }
 
-
 class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
     override fun generateTriangles()  : List<TriangleFace>{
         return listOf(this)

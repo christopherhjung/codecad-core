@@ -10,8 +10,7 @@ import com.codecad.core.face.entity.*
 import java.util.*
 import kotlin.math.abs
 
-
-fun findFaces(lines: List<LineD>): List<RoutedFace> {
+fun createFaceTree(lines: List<LineD>): RoutedFace {
     val pointMap = HashMap<PointD, Corner>()
     fun corner(point: PointD) : Corner {
         return pointMap.computeIfAbsent(point) { Corner(it) }
@@ -62,7 +61,7 @@ fun computeArea(start : Edge) : Double{
     return area / 2
 }
 
-fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
+fun generateFaces(edges: Collection<Edge>) : RoutedFace{
     val visited = hashSetOf<Edge>()
 
     val holes = arrayListOf<RoutedFace>()
@@ -86,14 +85,11 @@ fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
             }else if(hole == null){
                 hole = routedFace
             }else{
-                throw Error("error!!")
+                throw Error("double hole!")
             }
 
             for( curr in start.loop() ){
                 visited.add(curr)
-            }
-
-            for( curr in start.loop() ){
                 val twin = curr.twin
                 queue.add(twin)
             }
@@ -107,7 +103,7 @@ fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
     return nestHoles(holes)
 }
 
-fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
+fun nestHoles(holes : MutableList<RoutedFace>) : RoutedFace{
     holes.sortByDescending { it.area }
 
     val rootSurface = RoutedFace(Edge.ZERO, mutableListOf(), 0.0, Plane.UNKNOWN)
@@ -115,7 +111,7 @@ fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
         nestHoles(hole, rootSurface)
     }
 
-    return collectSurfaces(rootSurface)
+    return rootSurface
 }
 
 fun nestHoles(hole : RoutedFace, parentSurface: RoutedFace){
@@ -174,6 +170,26 @@ fun RoutedFace.toPolygonFace() : PolygonFace{
     }
     return face
 }
+/*
+fun unionFaces(faces: List<PolygonFace>) : List<PolygonFace>{
+    val pointMap = HashMap<PointD, Corner>()
+    fun corner(point: PointD) : Corner {
+        return pointMap.computeIfAbsent(point) { Corner(it) }
+    }
+
+    val edges = mutableListOf<Edge>()
+
+    val test = hashSetOf<String>()
+
+
+    for(face in faces){
+        for((p0, p1) in face.positions.rollover() ){
+            val edge = Edge(corner(p0), corner(p1))
+
+            edges.add(edge)
+        }
+    }
+}*/
 
 class FaceFinder(val faces: List<Face>){
     fun find(pos : PointD) : Face?{
