@@ -8,6 +8,7 @@ import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.face.entity.*
 import java.util.*
+import kotlin.math.abs
 
 
 fun findFaces(lines: List<LineD>): List<RoutedFace> {
@@ -78,7 +79,7 @@ fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
             if(!visited.add(start)) continue
 
             val area = computeArea(start)
-            val routedFace = RoutedFace(start, mutableListOf(), area, Plane.UNKNOWN)
+            val routedFace = RoutedFace(start, mutableListOf(), abs(area), Plane.UNKNOWN)
 
             if(area > 0){
                 surfaces.add(routedFace)
@@ -110,9 +111,9 @@ class FaceTree(val face: RoutedFace, val children: MutableList<FaceTree>)
 fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
     holes.sortBy { -it.area }
 
-    val rootHoles = arrayListOf<FaceTree>()
+    val rootHoles = arrayListOf<RoutedFace>()
     val firstRoot = holes.removeFirst()
-    rootHoles.add(FaceTree(firstRoot, firstRoot.children.map { FaceTree( it, mutableListOf() ) }.toMutableList()))
+    rootHoles.add(firstRoot)
 
     for( hole in holes ){
         nestHoles(hole, rootHoles)
@@ -121,33 +122,33 @@ fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
     return collectSurfaces(rootHoles)
 }
 
-fun nestHoles(hole : RoutedFace, rootHoles: MutableList<FaceTree>){
+fun nestHoles(hole : RoutedFace, rootHoles: MutableList<RoutedFace>){
     for( rootHole in rootHoles ){
-        if(rootHole.face.area <= hole.area) continue
+        if(rootHole.area <= hole.area) continue
 
         for( surface in rootHole.children ){
-            if(surface.face.area <= hole.area) continue
+            if(surface.area <= hole.area) continue
 
-            if(FaceFinder.isPointInPolygon(hole.root.source.point, surface.face.points())){
+            if(FaceFinder.isPointInPolygon(hole.root.source.point, surface.points())){
                 nestHoles(hole, surface.children)
                 return
             }
         }
     }
 
-    rootHoles.add(FaceTree(hole, hole.children.map { FaceTree( it, mutableListOf() ) }.toMutableList()))
+    rootHoles.add(hole)
 }
 
-fun collectSurfaces(holes : List<FaceTree>) : List<RoutedFace>{
+fun collectSurfaces(holes : List<RoutedFace>) : List<RoutedFace>{
     val surfaces = mutableListOf<RoutedFace>()
     collectSurfaces(holes, surfaces)
     return surfaces
 }
 
-fun collectSurfaces(holes : List<FaceTree>, surfaces : MutableList<RoutedFace>){
+fun collectSurfaces(holes : List<RoutedFace>, surfaces : MutableList<RoutedFace>){
     for( hole in holes ){
         for( surface in hole.children ){
-            surfaces.add(surface.face)
+            surfaces.add(surface)
             collectSurfaces(surface.children, surfaces)
         }
     }
