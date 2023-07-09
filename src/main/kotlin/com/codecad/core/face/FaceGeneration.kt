@@ -171,7 +171,7 @@ fun RoutedFace.toPolygonFace() : PolygonFace{
     face.area = area
 
     val list = arrayListOf<PolygonFace>()
-    face.holesTest = list
+    face.children = list
     for( hole in children ){
         list.add(hole.toPolygonFace())
     }

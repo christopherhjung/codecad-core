@@ -19,6 +19,6 @@ open class ConvexFace( val positions: List<PointD> ) : Face() {
     override val points: Iterable<PointD>
         get() = positions
 
-    override val holes: Iterable<Face>
+    override val children: List<Face>
         get() = emptyList()
 }

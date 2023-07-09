@@ -16,11 +16,11 @@ abstract class Face{
     abstract val plane : Plane
     open val type : FaceType = FaceType.Surface
     abstract val points : Iterable<PointD>
-    abstract val holes : Iterable<Face>
+    abstract val children : List<Face>
 
     fun isInside(pos : PointD) : Boolean{
         return if(isPointInPolygon(pos, points)){
-            for( hole in holes ){
+            for( hole in children ){
                 if(isPointInPolygon(pos, hole.points)){
                     return false
                 }
@@ -40,7 +40,7 @@ class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
     override val points: Iterable<PointD>
         get() = points
 
-    override val holes: Iterable<Face>
+    override val children: List<Face>
         get() = emptyList()
 }
 

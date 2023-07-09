@@ -123,11 +123,11 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         faces.add(basePolygon)
         faces.add(topPolygon)
 
-        for (child in polygonFace.holesTest) {
+        for (child in polygonFace.children) {
             val (baseHole, topHole) = addSideFace(child)
 
-            basePolygon.holesTest.add(baseHole)
-            topPolygon.holesTest.add(topHole)
+            basePolygon.children.add(baseHole)
+            topPolygon.children.add(topHole)
         }
 
         return FacedVolume(faces)
