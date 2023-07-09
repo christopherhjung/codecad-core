@@ -22,6 +22,8 @@ data class Edge(val source: Corner, val target : Corner){
             left.twin = right
             right.twin = left
         }
+
+        val ZERO = Edge(Corner(PointD.ZERO), Corner(PointD.ZERO))
     }
 
     fun points() : List<PointD>{

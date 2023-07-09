@@ -110,29 +110,30 @@ fun generateFaces(edges: Collection<Edge>) : List<RoutedFace>{
 fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
     holes.sortByDescending { it.area }
 
-    val rootHoles = arrayListOf<RoutedFace>()
+    val rootSurface = RoutedFace(Edge.ZERO, mutableListOf(), 0.0, Plane.UNKNOWN)
     for( hole in holes ){
-        nestHoles(hole, rootHoles)
+        nestHoles(hole, rootSurface)
     }
 
-    return collectSurfaces(rootHoles)
+    return collectSurfaces(rootSurface.children)
 }
 
-fun nestHoles(hole : RoutedFace, rootHoles: MutableList<RoutedFace>){
-    for( rootHole in rootHoles ){
+fun nestHoles(hole : RoutedFace, parent: RoutedFace){
+    for( rootHole in parent.children){
         if(rootHole.area <= hole.area) continue
 
         for( surface in rootHole.children ){
             if(surface.area <= hole.area) continue
 
             if(isPointInPolygon(hole.root.source.point, surface.points())){
-                nestHoles(hole, surface.children)
+                nestHoles(hole, surface)
                 return
             }
         }
     }
 
-    rootHoles.add(hole)
+    parent.area -= hole.area
+    parent.children.add(hole)
 }
 
 fun collectSurfaces(holes : List<RoutedFace>) : List<RoutedFace>{
