@@ -76,7 +76,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     }
 }*/
 
-class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
+class Extrude(val polygonFace: Face, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
     fun extrude(): FacedVolume {
         val height = height.evalDouble()
 
@@ -86,8 +86,8 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
         val offsetVector = directedPlane.normal * height
         val plane = directedPlane.undirected
 
-        fun addSideFace(face: PolygonFace): Pair<PolygonFace, PolygonFace> {
-            val basePoints = face.positions.map { directedPlane.projectXYTo(it) }
+        fun addSideFace(face: Face): Pair<Face, Face> {
+            val basePoints = face.points.map { directedPlane.projectXYTo(it) }
             val topPoints = basePoints.map { it + offsetVector }
 
             for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {
@@ -104,15 +104,15 @@ class Extrude(val polygonFace: PolygonFace, val directedPlane: DirectedPlane, va
             }
 
             val basePolygon = if (inverted) {
-                PolygonFace(basePoints.reversed(), FaceType.Surface, plane.flip())
+                PolygonFace(basePoints.reversed())
             } else {
-                PolygonFace(basePoints, FaceType.Surface, plane)
+                PolygonFace(basePoints)
             }
 
             val topPolygon = if (inverted) {
-                PolygonFace(topPoints, FaceType.Surface, plane.move(height))
+                PolygonFace(topPoints)
             } else {
-                PolygonFace(topPoints.reversed(), FaceType.Surface, plane.flip().move(height))
+                PolygonFace(topPoints.reversed())
             }
 
             return Pair(basePolygon, topPolygon)

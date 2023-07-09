@@ -3,7 +3,6 @@
 package com.codecad.core.face
 
 import com.codecad.common.LineD
-import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.face.entity.*
@@ -69,7 +68,7 @@ fun generateFaces(edges: Collection<Edge>) : RoutedFace{
         if(visited.contains(root)) continue
 
         var hole : RoutedFace? = null
-        val surfaces = arrayListOf<RoutedFace>()
+        val surfaces = arrayListOf<Face>()
         val queue = LinkedList<Edge>()
 
         queue.add(root)
@@ -78,7 +77,8 @@ fun generateFaces(edges: Collection<Edge>) : RoutedFace{
             if(!visited.add(start)) continue
 
             val area = computeArea(start)
-            val routedFace = RoutedFace(start, mutableListOf(), abs(area), Plane.UNKNOWN)
+            val routedFace = RoutedFace(start)
+            routedFace.area = abs(area)
 
             if(area > 0){
                 surfaces.add(routedFace)
@@ -106,7 +106,7 @@ fun generateFaces(edges: Collection<Edge>) : RoutedFace{
 fun nestHoles(holes : MutableList<RoutedFace>) : RoutedFace{
     holes.sortByDescending { it.area }
 
-    val rootSurface = RoutedFace(Edge.ZERO, mutableListOf(), 0.0, Plane.UNKNOWN)
+    val rootSurface = RoutedFace(Edge.ZERO)
     for( hole in holes ){
         nestHoles(hole, rootSurface)
     }
@@ -114,14 +114,14 @@ fun nestHoles(holes : MutableList<RoutedFace>) : RoutedFace{
     return rootSurface
 }
 
-fun nestHoles(hole : RoutedFace, parentSurface: RoutedFace){
+fun nestHoles(hole : RoutedFace, parentSurface: Face){
     for( rootHole in parentSurface.children){
         if(rootHole.area <= hole.area) continue
 
         for( surface in rootHole.children ){
             if(surface.area <= hole.area) continue
 
-            if(isPointInPolygon(hole.root.source.point, surface.points())){
+            if(isPointInPolygon(hole.root.source.point, surface.points)){
                 nestHoles(hole, surface)
                 return
             }
@@ -132,13 +132,13 @@ fun nestHoles(hole : RoutedFace, parentSurface: RoutedFace){
     parentSurface.children.add(hole)
 }
 
-fun collectSurfaces(rootSurface: RoutedFace) : List<RoutedFace>{
-    val surfaces = mutableListOf<RoutedFace>()
+fun collectSurfaces(rootSurface: Face) : List<Face>{
+    val surfaces = mutableListOf<Face>()
     collectSurfaces(rootSurface, surfaces)
     return surfaces
 }
 
-fun collectSurfaces(parentSurface : RoutedFace, surfaces : MutableList<RoutedFace>){
+fun collectSurfaces(parentSurface : Face, surfaces : MutableList<Face>){
     for( hole in parentSurface.children ){
         surfaces.addAll(hole.children)
         for( surface in hole.children ){
@@ -148,27 +148,21 @@ fun collectSurfaces(parentSurface : RoutedFace, surfaces : MutableList<RoutedFac
 }
 
 
-fun RoutedFace.toPolygonFace() : PolygonFace{
-    val points = mutableListOf<PointD>()
-    var curr = this.root
+fun Face.toPolygonFace() : PolygonFace{
+    if(this is PolygonFace) return this
 
-    while(true){
-        val currPos = curr.target.point
-        points.add(currPos)
-        if(curr.target === this.root.source) break
-        curr = curr.next!!
-    }
+    val points = points.toList()
 
-    val type = if(area < 0) FaceType.Hole else FaceType.Surface
-    val face = PolygonFace(points, type, Plane.UNKNOWN)
-    face.area = area
+    val result = PolygonFace(points)
+    result.type = type
+    result.area = area
 
-    val list = arrayListOf<PolygonFace>()
-    face.children = list
+    val list = arrayListOf<Face>()
+    result.children = list
     for( hole in children ){
         list.add(hole.toPolygonFace())
     }
-    return face
+    return result
 }
 /*
 fun unionFaces(faces: List<PolygonFace>) : List<PolygonFace>{

@@ -13,12 +13,6 @@ open class ConvexFace( val positions: List<PointD> ) : Face() {
         return result
     }
 
-    override val plane: Plane
-        get() = Plane.fromPoints(positions[0], positions[1], positions[2])
-
     override val points: Iterable<PointD>
         get() = positions
-
-    override val children: List<Face>
-        get() = emptyList()
 }

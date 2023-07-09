@@ -23,7 +23,12 @@ data class Edge(val source: Corner, val target : Corner){
             right.twin = left
         }
 
-        val ZERO = Edge(Corner(PointD.ZERO), Corner(PointD.ZERO))
+        val ZERO = run{
+            val corner = Corner(PointD.ZERO)
+            val edge = Edge(corner, corner)
+            edge.next = edge
+            edge
+        }
     }
 
     fun points() : List<PointD>{

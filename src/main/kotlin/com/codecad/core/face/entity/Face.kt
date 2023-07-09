@@ -13,12 +13,12 @@ enum class FaceType{
 
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
-    abstract val plane : Plane
-    open val type : FaceType = FaceType.Surface
+    open var type : FaceType = FaceType.Surface
     abstract val points : Iterable<PointD>
-    abstract val children : List<Face>
+    var children : MutableList<Face> = mutableListOf()
+    var area: Double = 0.0
 
-    fun isInside(pos : PointD) : Boolean{
+    open fun isInside(pos : PointD) : Boolean{
         return if(isPointInPolygon(pos, points)){
             for( hole in children ){
                 if(isPointInPolygon(pos, hole.points)){
@@ -31,16 +31,10 @@ abstract class Face{
     }
 }
 
-class TriangleFace(vararg points: PointD) : ConvexFace(points.toList()){
+class TriangleFace(a: PointD, b: PointD, c : PointD) : ConvexFace(listOf(a,b,c)){
     override fun generateTriangles()  : List<TriangleFace>{
         return listOf(this)
     }
-
-    override val points: Iterable<PointD>
-        get() = points
-
-    override val children: List<Face>
-        get() = emptyList()
 }
 
 fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{

@@ -20,12 +20,7 @@ class PartStudio {
         val surfaces = collectSurfaces(rootHole)
 
         val rootFaces = surfaces.first()
-        volumes.add(Extrude(rootFaces.toPolygonFace(), plane,  height).extrude())
-
-        /*
-        faces.filter { it.type == FaceType.Surface }.minByOrNull { it.positions.minOf { it.x } }?.let {
-            volumes.add(Extrude(it, plane,  height).extrude())
-        }*/
+        volumes.add(Extrude(rootFaces, plane,  height).extrude())
     }
 
     fun extrudePos(sketch: Sketch, pos : Vec2, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {
@@ -34,15 +29,7 @@ class PartStudio {
         val surfaces = collectSurfaces(rootHole)
         val faceFinder = FaceFinder(surfaces)
         faceFinder.find(pos.fixed())?.let {
-            volumes.add(Extrude((it as RoutedFace).toPolygonFace(), plane,  height).extrude())
-        }
-
-
-        /*
-
-        faceFinder.find(pos.fixed())?.let {
             volumes.add(Extrude(it, plane,  height).extrude())
-        }*/
-
+        }
     }
 }

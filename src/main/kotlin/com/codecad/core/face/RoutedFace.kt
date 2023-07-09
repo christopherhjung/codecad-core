@@ -5,7 +5,7 @@ import com.codecad.common.PointD
 import com.codecad.core.face.entity.*
 
 
-class RoutedFace(val root : Edge, override var children: MutableList<RoutedFace>, var area : Double, override val plane: Plane) : Face(), Iterable<Edge>{
+class RoutedFace(val root : Edge) : Face(), Iterable<Edge>{
 
     override val points: Iterable<PointD>
         get() = points()
@@ -67,6 +67,6 @@ class RoutedFace(val root : Edge, override var children: MutableList<RoutedFace>
     }
 
     override fun generateTriangles(): List<TriangleFace> {
-        return generateTriangles(root.pointsIter().toList(), children.map { it.points().toList() })
+        return generateTriangles(root.pointsIter().toList(), children.map { it.points.toList() })
     }
 }
