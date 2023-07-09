@@ -143,8 +143,8 @@ fun collectSurfaces(holes : List<RoutedFace>) : List<RoutedFace>{
 
 fun collectSurfaces(holes : List<RoutedFace>, surfaces : MutableList<RoutedFace>){
     for( hole in holes ){
+        surfaces.addAll(hole.children)
         for( surface in hole.children ){
-            surfaces.add(surface)
             collectSurfaces(surface.children, surfaces)
         }
     }
