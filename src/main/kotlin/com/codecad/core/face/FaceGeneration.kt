@@ -115,11 +115,11 @@ fun nestHoles(holes : MutableList<RoutedFace>) : List<RoutedFace>{
         nestHoles(hole, rootSurface)
     }
 
-    return collectSurfaces(rootSurface.children)
+    return collectSurfaces(rootSurface)
 }
 
-fun nestHoles(hole : RoutedFace, parent: RoutedFace){
-    for( rootHole in parent.children){
+fun nestHoles(hole : RoutedFace, parentSurface: RoutedFace){
+    for( rootHole in parentSurface.children){
         if(rootHole.area <= hole.area) continue
 
         for( surface in rootHole.children ){
@@ -132,21 +132,21 @@ fun nestHoles(hole : RoutedFace, parent: RoutedFace){
         }
     }
 
-    parent.area -= hole.area
-    parent.children.add(hole)
+    parentSurface.area -= hole.area
+    parentSurface.children.add(hole)
 }
 
-fun collectSurfaces(holes : List<RoutedFace>) : List<RoutedFace>{
+fun collectSurfaces(rootSurface: RoutedFace) : List<RoutedFace>{
     val surfaces = mutableListOf<RoutedFace>()
-    collectSurfaces(holes, surfaces)
+    collectSurfaces(rootSurface, surfaces)
     return surfaces
 }
 
-fun collectSurfaces(holes : List<RoutedFace>, surfaces : MutableList<RoutedFace>){
-    for( hole in holes ){
+fun collectSurfaces(parentSurface : RoutedFace, surfaces : MutableList<RoutedFace>){
+    for( hole in parentSurface.children ){
         surfaces.addAll(hole.children)
         for( surface in hole.children ){
-            collectSurfaces(surface.children, surfaces)
+            collectSurfaces(surface, surfaces)
         }
     }
 }
