@@ -10,9 +10,9 @@ import java.util.*
 import kotlin.math.abs
 
 fun createFaceTree(lines: List<LineD>): RoutedFace {
-    val pointMap = HashMap<PointD, Corner>()
-    fun corner(point: PointD) : Corner {
-        return pointMap.computeIfAbsent(point) { Corner(it) }
+    val pointMap = HashMap<PointD, Vertex>()
+    fun corner(point: PointD) : Vertex {
+        return pointMap.computeIfAbsent(point) { Vertex(it) }
     }
 
     val sections = cutLines(lines)
@@ -36,8 +36,8 @@ fun createFaceTree(lines: List<LineD>): RoutedFace {
 }
 
 
-fun finalizeCorners(corners : Collection<Corner>){
-    for(corner in corners){
+fun finalizeCorners(vertices : Collection<Vertex>){
+    for(corner in vertices){
         corner.edges.sortWith(RotaryComparator)
 
         for((top, bottom) in corner.edges.rollover()){

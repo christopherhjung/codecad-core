@@ -1,6 +1,5 @@
 package com.codecad.core.face
 
-import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.face.entity.*
 
@@ -47,16 +46,16 @@ class RoutedFace(val root : Edge) : Face(), Iterable<Edge>{
         }
     }
 
-    fun corners() : Iterable<Corner>{
+    fun corners() : Iterable<Vertex>{
         return Iterable {
             var current : Edge = root
             var first = true
-            object : Iterator<Corner>{
+            object : Iterator<Vertex>{
                 override fun hasNext(): Boolean {
                     return first || current != root
                 }
 
-                override fun next(): Corner {
+                override fun next(): Vertex {
                     first = false
                     val result = current.source
                     current = current.next!!

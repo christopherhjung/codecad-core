@@ -13,6 +13,7 @@ enum class FaceType{
 
 abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
+    var surface = PlaneSurface()
     open var type : FaceType = FaceType.Surface
     abstract val points : Iterable<PointD>
     var children : MutableList<Face> = mutableListOf()

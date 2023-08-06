@@ -3,8 +3,9 @@ package com.codecad.core.face.entity
 import com.codecad.common.PointD
 
 
-data class Edge(val source: Corner, val target : Corner){
+data class Edge(val source: Vertex, val target : Vertex){
     var next: Edge? = null
+    var curve: Curve = StraightCurve()
     lateinit var twin : Edge
 
     companion object{
@@ -15,8 +16,8 @@ data class Edge(val source: Corner, val target : Corner){
         }
 
         val ZERO = run{
-            val corner = Corner(PointD.ZERO)
-            val edge = Edge(corner, corner)
+            val vertex = Vertex(PointD.ZERO)
+            val edge = Edge(vertex, vertex)
             edge.next = edge
             edge
         }
@@ -76,17 +77,17 @@ data class Edge(val source: Corner, val target : Corner){
         }
     }
 
-    fun corners() : Iterable<Corner>{
+    fun vertices() : Iterable<Vertex>{
         return Iterable {
             var start : Edge = this
             var current : Edge = this
             var first = true
-            object : Iterator<Corner>{
+            object : Iterator<Vertex>{
                 override fun hasNext(): Boolean {
                     return first || current != start
                 }
 
-                override fun next(): Corner {
+                override fun next(): Vertex {
                     first = false
                     val result = current.source
                     current = current.next!!
