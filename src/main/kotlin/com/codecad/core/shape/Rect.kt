@@ -1,22 +1,22 @@
 package com.codecad.core.shape
 
-import com.codecad.core.Segment2
-import com.codecad.core.Vec2
+import com.codecad.core.SketchSegment
+import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.part.Sketch
 
 class Rect() : Shape() {
-    lateinit var a: Vec2
-    lateinit var b: Vec2
-    lateinit var c: Vec2
-    lateinit var d: Vec2
+    lateinit var a: Vec2Expr
+    lateinit var b: Vec2Expr
+    lateinit var c: Vec2Expr
+    lateinit var d: Vec2Expr
 
-    lateinit var center: Vec2
+    lateinit var center: Vec2Expr
 
-    lateinit var top: Segment2
-    lateinit var right: Segment2
-    lateinit var bottom: Segment2
-    lateinit var left: Segment2
+    lateinit var top: SketchSegment
+    lateinit var right: SketchSegment
+    lateinit var bottom: SketchSegment
+    lateinit var left: SketchSegment
 
     lateinit var width: Expr
     lateinit var height: Expr

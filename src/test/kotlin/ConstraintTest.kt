@@ -1,4 +1,4 @@
-import com.codecad.core.*
+import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.part.PartStudio
 import com.codecad.core.part.Sketch
 import com.codecad.core.constraint.*
@@ -16,7 +16,8 @@ class ConstraintTest {
         val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
-        val center = Vec2(x, y)
+        val world = sketch.world
+        val center = Vec2Expr(world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
         val circle =  sketch.circle(center, sketch.createLiteral(0.5))
         sketch.addConstraint(CircleTangent(circle, line))
@@ -31,7 +32,8 @@ class ConstraintTest {
         val sketch = Sketch(partStudio, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
-        val center = Vec2(x, y)
+        val world = sketch.world
+        val center = Vec2Expr(world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
         val circle =  sketch.circle(center, sketch.createLiteral(0.5))
         sketch.addConstraint(CircleTangent(circle, line))
@@ -46,7 +48,7 @@ class ConstraintTest {
         val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(-1.0)
-        val center = Vec2(x, y)
+        val center = Vec2Expr(sketch.world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
         val circle =  sketch.circle(center, sketch.createLiteral(0.5))
         sketch.tangent(circle, line)
@@ -61,13 +63,14 @@ class ConstraintTest {
         val sketch = Sketch(partStudio, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
-        val center = Vec2(x, y)
+        val world = sketch.world
+        val center = Vec2Expr(world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,1.0))
         val circle =  sketch.circle(center, sketch.createLiteral(0.5))
         sketch.tangent(circle, line)
         val success = sketch.solveImpl(1e-8)
         val offset = sketch.createLiteral(0.5 / sqrt(2.0))
-        val target = line.midPoint + Vec2(-offset, offset)
+        val target = line.midPoint + Vec2Expr(world, -offset, offset)
         assertEquals(target.x.evalDouble(), center.x.evalDouble(), 1e-3)
         assertEquals(target.y.evalDouble(), center.y.evalDouble(), 1e-3)
         assertTrue(success)

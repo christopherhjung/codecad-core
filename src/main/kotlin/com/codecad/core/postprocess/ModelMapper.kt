@@ -2,7 +2,7 @@ package com.codecad.core.postprocess
 
 import com.codecad.common.Model
 import com.codecad.common.Path
-import com.codecad.core.Vec2
+import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.part.PartStudio
 import com.codecad.core.mesh.MeshGenerator
 import com.codecad.core.volume.FacedVolume
@@ -13,7 +13,7 @@ fun mapModel(partStudio: PartStudio) : Model{
     val meshGenerator = MeshGenerator()
     for(sketch in partStudio.sketches){
         for(figure in sketch.figures){
-            if(figure is Vec2){
+            if(figure is Vec2Expr){
                 model.points.add(figure.fixed())
             }else{
                 val plotter = figure.plotter()

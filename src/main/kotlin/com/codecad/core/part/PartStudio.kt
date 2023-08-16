@@ -5,6 +5,7 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.World
 import com.codecad.core.face.*
 import com.codecad.core.face.entity.DirectedPlane
+import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.volume.Extrude
 import com.codecad.core.volume.Volume
 
@@ -23,7 +24,7 @@ class PartStudio {
         volumes.add(Extrude(rootFaces, plane,  height).extrude())
     }
 
-    fun extrudePos(sketch: Sketch, pos : Vec2, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {
+    fun extrudePos(sketch: Sketch, pos : Vec2Expr, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {
         val lines = sketchToLines(sketch, ignoreConstruction = true)
         val rootHole = createFaceTree(lines)
         val surfaces = collectSurfaces(rootHole)

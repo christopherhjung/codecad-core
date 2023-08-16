@@ -12,7 +12,7 @@ class FunctionExpr(
     world: World,
     var name: String,
     var params: Expr?,
-    var body: Expr?) : Expr(world) {
+    var body: Expr?) : ScalarExpr(world) {
 
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val mutual = MutualScope()

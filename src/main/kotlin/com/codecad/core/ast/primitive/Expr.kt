@@ -52,55 +52,55 @@ abstract class Expr(val world: World) {
         throw RuntimeException("not implemented")
     }
 
-    operator fun unaryMinus() : Expr {
+    open operator fun unaryMinus() : Expr {
         return world.negate(this)
     }
 
-    operator fun minus(right: Expr) : Expr {
+    open operator fun minus(right: Expr) : Expr {
         return world.sub(this, right)
     }
 
-    operator fun minus(right: Double) : Expr {
+    open operator fun minus(right: Double) : Expr {
         return world.sub(this, world.literal(right))
     }
 
-    operator fun minus(right: Int) : Expr {
+    open operator fun minus(right: Int) : Expr {
         return minus(right.toDouble())
     }
 
-    operator fun plus(right: Expr) : Expr {
+    open operator fun plus(right: Expr) : Expr {
         return world.add(this, right)
     }
 
-    operator fun plus(right: Double) : Expr {
+    open operator fun plus(right: Double) : Expr {
         return world.add(this, world.literal(right))
     }
 
-    operator fun plus(right: Int) : Expr {
+    open operator fun plus(right: Int) : Expr {
         return plus(right.toDouble())
     }
 
-    operator fun times(right: Expr) : Expr {
+    open operator fun times(right: Expr) : Expr {
         return world.mul(this, right)
     }
 
-    operator fun times(right: Double) : Expr {
+    open operator fun times(right: Double) : Expr {
         return world.mul(this, world.literal(right))
     }
 
-    operator fun times(right: Int) : Expr {
+    open operator fun times(right: Int) : Expr {
         return times(right.toDouble())
     }
 
-    operator fun div(right: Expr) : Expr {
+    open operator fun div(right: Expr) : Expr {
         return world.div(this, right)
     }
 
-    operator fun div(right: Double) : Expr {
+    open operator fun div(right: Double) : Expr {
         return world.div(this, world.literal(right))
     }
 
-    operator fun div(right: Int) : Expr {
+    open operator fun div(right: Int) : Expr {
         return div(right.toDouble())
     }
 

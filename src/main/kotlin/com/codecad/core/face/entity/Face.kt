@@ -2,6 +2,7 @@ package com.codecad.core.face.entity
 
 import com.codecad.common.Plane
 import com.codecad.common.PointD
+import com.codecad.core.face.entity.surface.PlaneSurface
 import com.codecad.core.face.isPointInPolygon
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint
@@ -15,6 +16,7 @@ abstract class Face{
     abstract fun generateTriangles() : List<TriangleFace>
     var surface = PlaneSurface()
     open var type : FaceType = FaceType.Surface
+    var edgeBound : EdgeBound = EdgeBound()
     abstract val points : Iterable<PointD>
     var children : MutableList<Face> = mutableListOf()
     var area: Double = 0.0

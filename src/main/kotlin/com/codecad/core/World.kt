@@ -1,6 +1,8 @@
 package com.codecad.core
 
 import com.codecad.core.ast.primitive.*
+import com.codecad.core.ast.vec.Vec2Expr
+import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Slot
@@ -11,18 +13,18 @@ class World {
     val ONE = LiteralExpr(this, 1.0)
     val TWO = LiteralExpr(this, 2.0)
 
-    val ORIGIN = Vec2(ZERO, ZERO)
-    val AXIS_X = Segment2(ORIGIN, Vec2(ONE, ZERO))
-    val AXIS_Y = Segment2(ORIGIN, Vec2(ZERO, ONE))
+    val ORIGIN = Vec2Expr(this, ZERO, ZERO)
+    val AXIS_X = SketchSegment(ORIGIN, Vec2Expr(this, ONE, ZERO))
+    val AXIS_Y = SketchSegment(ORIGIN, Vec2Expr(this, ZERO, ONE))
 
-    val XY = Plane(Point3(ZERO,ZERO,ONE), ZERO)
-    val YZ = Plane(Point3(ONE,ZERO,ZERO), ZERO)
-    val ZX = Plane(Point3(ZERO,ONE,ZERO), ZERO)
+    val XY = Plane(Vec3Expr(this, ZERO,ZERO,ONE), ZERO)
+    val YZ = Plane(Vec3Expr(this, ONE,ZERO,ZERO), ZERO)
+    val ZX = Plane(Vec3Expr(this, ZERO,ONE,ZERO), ZERO)
 
     private val sea = HashMap<Expr, Expr>()
 
-    private fun unify(expr: Expr) : Expr {
-        return sea.putIfAbsent(expr, expr) ?: expr
+    private inline fun <reified T : Expr> unify(expr: T) : T {
+        return sea.putIfAbsent(expr, expr) as? T ?: expr
     }
 
     fun negate(expr : Expr) : Expr {
@@ -253,41 +255,35 @@ class World {
 
     fun log(expr : Expr) : Expr {
         val log = LogExpr(this, expr)
-        return if(expr is LiteralExpr){
-            log.evalLiteral()
-        }else if(expr is ExpExpr){
-            expr.arg
-        }else{
-            unify(log)
+        return when(expr){
+            is LiteralExpr -> log.evalLiteral()
+            is ExpExpr -> expr.arg
+            else -> unify(log)
         }
     }
 
     fun exp(expr : Expr) : Expr {
         val exp = ExpExpr(this, expr)
-        return if(expr is LiteralExpr){
-            exp.evalLiteral()
-        }else if(expr is LogExpr){
-            expr.arg
-        }else{
-            unify(exp)
+        return when(expr){
+            is LiteralExpr -> exp.evalLiteral()
+            is LogExpr -> expr.arg
+            else -> unify(exp)
         }
     }
 
     fun abs(expr: Expr) : Expr {
         val abs = AbsExpr(this, expr)
-        return if(expr is LiteralExpr){
-            abs.evalLiteral()
-        }else{
-            unify(abs)
+        return when(expr){
+            is LiteralExpr -> abs.evalLiteral()
+            else -> unify(abs)
         }
     }
 
     fun sign(expr: Expr) : Expr {
         val sign = SignExpr(this, expr)
-        return if(expr is LiteralExpr){
-            sign.evalLiteral()
-        }else{
-            unify(sign)
+        return when(expr){
+            is LiteralExpr -> sign.evalLiteral()
+            else -> unify(sign)
         }
     }
 
@@ -306,5 +302,13 @@ class World {
 
     fun ref(slot : Slot) : Expr{
         return unify(RefExpr(this, slot))
+    }
+
+    fun vec2(x: Expr, y: Expr) : Vec2Expr {
+        return unify(Vec2Expr(this, x, y))
+    }
+
+    fun vec3(x: Expr, y: Expr, z: Expr) : Vec3Expr {
+        return unify(Vec3Expr(this, x, y, z))
     }
 }

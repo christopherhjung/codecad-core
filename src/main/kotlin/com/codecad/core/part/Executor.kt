@@ -1,9 +1,9 @@
 package com.codecad.core.part
 
-import com.codecad.core.CircleLike
-import com.codecad.core.Segment2
-import com.codecad.core.Vec2
+import com.codecad.core.SketchSegment
+import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.face.entity.curve.Circle
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.scope.MutualScope
@@ -11,7 +11,6 @@ import com.codecad.core.scope.partStudio
 import com.codecad.core.scope.sketch
 import com.codecad.core.scope.world
 import com.codecad.core.shape.Rect
-import com.codecad.core.shape.RoundRect
 import org.slf4j.LoggerFactory
 
 class ExecutionResult(val output: String, val partStudio: PartStudio)
@@ -54,28 +53,28 @@ class Executor private constructor(){
         }, true)
         scope.setObject("line", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val lhs = args[0] as Vec2
-            val rhs = args[1] as Vec2
+            val lhs = args[0] as Vec2Expr
+            val rhs = args[1] as Vec2Expr
             return@ObjectFunction sketch.line(lhs, rhs)
         }, true)
         scope.setObject("cline", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val lhs = args[0] as Vec2
-            val rhs = args[1] as Vec2
+            val lhs = args[0] as Vec2Expr
+            val rhs = args[1] as Vec2Expr
             return@ObjectFunction sketch.cline(lhs, rhs)
         }, true)
         scope.setObject("circle", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
-            val lhs = args[0] as Vec2
+            val lhs = args[0] as Vec2Expr
             val rhs = Expr.orLiteral(world, args[1])
             return@ObjectFunction sketch.circle(lhs, rhs)
         }, true)
         scope.setObject("arc", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
-            val p0 = args[0] as Vec2
-            val p1 = args[1] as Vec2
+            val p0 = args[0] as Vec2Expr
+            val p1 = args[1] as Vec2Expr
             return@ObjectFunction sketch.arc(p0, p1, sketch.param(-1.0))
         }, true)
         scope.setObject("rect", ObjectFunction{ scope, args ->
@@ -89,7 +88,7 @@ class Executor private constructor(){
             val world = scope.world
             var lhs = args[0]
             var rhs = args[1]
-            if( lhs is Vec2 && rhs is Vec2 ){
+            if( lhs is Vec2Expr && rhs is Vec2Expr){
                 return@ObjectFunction sketch.eq(lhs, rhs)
             }
 
@@ -100,20 +99,20 @@ class Executor private constructor(){
         scope.setObject("len", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
-            val lhs = args[0] as Segment2
+            val lhs = args[0] as SketchSegment
             val rhs = Expr.orLiteral(world, args[1])
             return@ObjectFunction sketch.len(lhs, rhs)
         }, true)
         scope.setObject("perp", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val seg0 = args[0] as Segment2
-            val seg1 = args[1] as Segment2
+            val seg0 = args[0] as SketchSegment
+            val seg1 = args[1] as SketchSegment
             return@ObjectFunction sketch.perp(seg0, seg1)
         }, true)
         scope.setObject("tangent", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val circle = args[0] as CircleLike
-            val line = args[1] as Segment2
+            val circle = args[0] as Circle
+            val line = args[1] as SketchSegment
             return@ObjectFunction sketch.tangent(circle, line)
         }, true)
         scope.setObject("minimize", ObjectFunction{ scope, args ->
@@ -136,7 +135,7 @@ class Executor private constructor(){
             val posY = Expr.orLiteral(world, args[2])
             val sketch = project.sketches.find { it.name == name }!!
             val height = Expr.orLiteral(scope.world, args[3])
-            return@ObjectFunction project.extrudePos(sketch, Vec2(posX, posY), height)
+            return@ObjectFunction project.extrudePos(sketch, Vec2Expr(posX, posY), height)
         }, true)
         scope.setObject("origin", world.ORIGIN, true)
 

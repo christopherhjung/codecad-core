@@ -1,11 +1,11 @@
 package com.codecad.core.shape
 
-import com.codecad.core.Vec2
+import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.part.Sketch
 
 class RoundRect : Shape(){
-    lateinit var center: Vec2
+    lateinit var center: Vec2Expr
     lateinit var width: Expr
     lateinit var height: Expr
 
@@ -20,7 +20,7 @@ class RoundRect : Shape(){
             val leftArc = arc(vertLine.p0, vertLine.p1, param(0.2))
             val rightArc = arc(vertLine2.p1, vertLine2.p0, param(0.2))
 
-            val centerLine = cline(leftArc.center, rightArc.center)
+            val centerLine = cline(leftArc.position, rightArc.position)
 
             eq(topLine.length, bottomLine.length)
 
@@ -31,8 +31,8 @@ class RoundRect : Shape(){
 
             eq(topLine.p0.y, topLine.p1.y)
 
-            eq(leftArc.center, vertLine.midPoint )
-            eq(rightArc.center, vertLine2.midPoint )
+            eq(leftArc.position, vertLine.midPoint )
+            eq(rightArc.position, vertLine2.midPoint )
 
             center = centerLine.midPoint
             width = centerLine.length

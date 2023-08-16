@@ -5,9 +5,10 @@ import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import com.codecad.core.ast.controlflow.exception.ReturnException
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.primitive.ScalarExpr
 import com.codecad.core.ast.primitive.ScopedExpr
 
-class LambdaExpr(world: World, private val param: Expr?, private val body: Expr?) : Expr(world) {
+class LambdaExpr(world: World, private val param: Expr?, private val body: Expr?) : ScalarExpr(world) {
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val nestedScope = NestedScope.mutual(scope)
         param!!.assign(nestedScope, args, true)

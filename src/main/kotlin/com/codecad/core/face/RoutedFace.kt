@@ -2,23 +2,24 @@ package com.codecad.core.face
 
 import com.codecad.common.PointD
 import com.codecad.core.face.entity.*
+import com.codecad.core.face.entity.sketch.SketchVertex
 
 
-class RoutedFace(val root : Edge) : Face(), Iterable<Edge>{
+class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
 
     override val points: Iterable<PointD>
         get() = points()
 
-    override fun iterator(): Iterator<Edge> {
-        var current : Edge = root
+    override fun iterator(): Iterator<SketchEdge> {
+        var current : SketchEdge = root
         var first = true
 
-        return object : Iterator<Edge>{
+        return object : Iterator<SketchEdge>{
             override fun hasNext(): Boolean {
                 return first || current != root
             }
 
-            override fun next(): Edge {
+            override fun next(): SketchEdge {
                 first = false
                 val result =  current//.source!!//.node.p
                 current = current.next!!
@@ -29,7 +30,7 @@ class RoutedFace(val root : Edge) : Face(), Iterable<Edge>{
 
     fun points() : Iterable<PointD>{
         return Iterable {
-            var current : Edge = root
+            var current : SketchEdge = root
             var first = true
             object : Iterator<PointD>{
                 override fun hasNext(): Boolean {
@@ -46,16 +47,16 @@ class RoutedFace(val root : Edge) : Face(), Iterable<Edge>{
         }
     }
 
-    fun corners() : Iterable<Vertex>{
+    fun corners() : Iterable<SketchVertex>{
         return Iterable {
-            var current : Edge = root
+            var current : SketchEdge = root
             var first = true
-            object : Iterator<Vertex>{
+            object : Iterator<SketchVertex>{
                 override fun hasNext(): Boolean {
                     return first || current != root
                 }
 
-                override fun next(): Vertex {
+                override fun next(): SketchVertex {
                     first = false
                     val result = current.source
                     current = current.next!!

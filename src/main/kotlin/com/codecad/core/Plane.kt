@@ -1,14 +1,12 @@
 package com.codecad.core
 
-import com.codecad.core.Point3.Companion.times
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.ast.primitive.minus
+import com.codecad.core.face.entity.Vec3Expr
 
 
-
-class Plane(val normal : Point3, val distance: Expr){
+class Plane(val normal : Vec3Expr, val distance: Expr){
     companion object{
-        fun fromPoints(a: Point3, b: Point3, c: Point3) : Plane {
+        fun fromPoints(a: Vec3Expr, b: Vec3Expr, c: Vec3Expr) : Plane {
             val ab = b - a
             val ac = c - a
             val normal = ab.cross(ac).normalized()
@@ -16,19 +14,19 @@ class Plane(val normal : Point3, val distance: Expr){
             return Plane(normal, distance)
         }
 
-        fun fromPoints(points : List<Point3>) : Plane {
+        fun fromPoints(points : List<Vec3Expr>) : Plane {
             return fromPoints(points[0], points[1], points[2])
         }
 
-        fun fromConvexPoints(points : Iterable<Point3>) : Plane {
+        fun fromConvexPoints(points : Iterable<Vec3Expr>) : Plane {
             return fromConvexPoints(points.iterator())
         }
 
-        fun fromConvexPoints(points : Iterator<Point3>) : Plane {
+        fun fromConvexPoints(points : Iterator<Vec3Expr>) : Plane {
             return fromPoints(getNextOr(points), getNextOr(points), getNextOr(points))
         }
 
-        fun getNextOr(points : Iterator<Point3>) : Point3{
+        fun getNextOr(points : Iterator<Vec3Expr>) : Vec3Expr {
             return points.next()
         }
     }
@@ -46,11 +44,11 @@ class Plane(val normal : Point3, val distance: Expr){
         return Plane(normal, distance + offset)
     }
 
-    fun distanceTo(p: Point3) : Expr {
+    fun distanceTo(p: Vec3Expr) : Expr {
         return normal.dot(p) - distance
     }
 
-    fun projectTo(p: Point3) : Point3 {
+    fun projectTo(p: Vec3Expr) : Vec3Expr {
         return p - normal * distanceTo(p)
     }
 }

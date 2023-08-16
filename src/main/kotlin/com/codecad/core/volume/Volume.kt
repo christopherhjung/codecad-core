@@ -20,7 +20,7 @@ class FacedVolume(val faces: List<Face>) : Volume() {
     }
 }
 
-class PolygonVolume(val faces: List<PolygonFace>) : Volume()
+class PolygonVolume(val shells: List<Shell>) : Volume()
 /*
 class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     companion object{

@@ -11,7 +11,7 @@ import com.codecad.core.World
 class SketchExpr(
     world: World,
     var name: String,
-    var body: Expr) : Expr(world) {
+    var body: Expr) : ScalarExpr(world) {
 
     override fun eval(scope: Scope): Any? {
         val project = scope.partStudio
