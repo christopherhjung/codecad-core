@@ -3,7 +3,7 @@ import com.codecad.core.part.PartStudio
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.face.entity.Vec2Expr
+import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.*
 import org.junit.jupiter.api.Test
@@ -85,8 +85,6 @@ class ParserTest {
             val p1 = args[1] as Vec2Expr
             return@ObjectFunction sketch.arc(p0, p1, sketch.param(1.0))
         }, true)
-
-
         scope.setObject("eq", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world

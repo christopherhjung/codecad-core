@@ -1,10 +1,10 @@
 package com.codecad.core.ast.primitive
 
+import com.codecad.core.World
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.Range
 import com.codecad.core.scope.Scope
-import com.codecad.core.World
 import kotlin.math.pow
 
 class InfixExpr(world: World, val lhs: Expr, val rhs: Expr, val op: Op) : Expr(world) {

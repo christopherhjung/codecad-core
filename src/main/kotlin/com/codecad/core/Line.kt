@@ -1,11 +1,10 @@
 package com.codecad.core
 
-import com.codecad.core.ast.primitive.minus
 import com.codecad.core.ast.vec.Vec3Expr
 
 class Line(val origin: Vec3Expr, val direction: Vec3Expr){
     companion object{
-        private fun projectPlane(a: Plane, b: Plane) : Vec3Expr {
+        /*private fun projectPlane(a: Plane, b: Plane) : Vec3Expr {
             return (a.distance - b.distance * ( a.normal.dot(b.normal) ))/
                     (1.0 - a.normal.dot(b.normal).pow(2.0)) * a.normal
         }
@@ -21,6 +20,6 @@ class Line(val origin: Vec3Expr, val direction: Vec3Expr){
             val direction = a.normal.cross(b.normal)
             val origin = projectPlane(a,b) + projectPlane(b,a)
             return Line(origin, direction)
-        }
+        }*/
     }
 }

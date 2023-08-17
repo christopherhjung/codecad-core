@@ -1,10 +1,10 @@
 package com.codecad.core.ast.primitive
 
+import com.codecad.core.World
+import com.codecad.core.ast.controlflow.FunctionExpr
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
-import com.codecad.core.World
-import com.codecad.core.ast.controlflow.FunctionExpr
 
 class ScopedExpr(world: World, private val scope: Scope, private val expr: Expr) : Expr(world) {
     override fun eval(scope: Scope): Any? {

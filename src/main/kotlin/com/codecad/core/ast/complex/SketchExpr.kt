@@ -1,17 +1,17 @@
 package com.codecad.core.ast.complex
 
-import com.codecad.core.part.Sketch
+import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.part.Sketch
 import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
 import com.codecad.core.scope.partStudio
 import com.codecad.core.scope.sketch
-import com.codecad.core.World
 
 class SketchExpr(
     world: World,
     var name: String,
-    var body: Expr) : ScalarExpr(world) {
+    var body: Expr) : Expr(world) {
 
     override fun eval(scope: Scope): Any? {
         val project = scope.partStudio
@@ -27,6 +27,6 @@ class SketchExpr(
     override fun bind(scope: Scope, define: Boolean): Expr {
         val fnScope: Scope = NestedScope.mutual(scope)
         val newBody = body.bind(fnScope, false)
-        return com.codecad.core.ast.complex.SketchExpr(world, name, newBody)
+        return SketchExpr(world, name, newBody)
     }
 }

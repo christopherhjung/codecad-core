@@ -2,6 +2,7 @@ import com.codecad.common.Line
 import com.codecad.common.Plane
 import com.codecad.common.PointD
 import com.codecad.core.*
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.face.Ray
 import com.codecad.core.face.Raycast
 import com.codecad.core.face.entity.TriangleFace
@@ -13,14 +14,14 @@ class RaycastTest {
     @Test
     fun cacheTest(){
         val ray = Ray(
-            PointD(0.0,0.0,0.0),
-            PointD(0.0,0.0,1.0)
+            Vec3(0.0,0.0,0.0),
+            Vec3(0.0,0.0,1.0)
         )
 
         val triangle = TriangleFace(
-            PointD(-0.4,0.0,-1.0),
-            PointD(0.4,0.4,-1.0),
-            PointD(0.4,-0.4,-1.0)
+            Vec3(-0.4,0.0,-1.0),
+            Vec3(0.4,0.4,-1.0),
+            Vec3(0.4,-0.4,-1.0)
         )
 
         val raycast = Raycast()

@@ -1,19 +1,17 @@
 package com.codecad.core.optimizer
 
-import com.codecad.core.Tracker
+import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.constraint.Constraint
-import com.codecad.core.World
 import com.codecad.core.ast.primitive.evalDoubleArray
+import com.codecad.core.constraint.Constraint
 import com.codecad.core.rewrite.ShareRewriter
-import com.codecad.core.visitor.Printer
 import kotlin.math.abs
 
 val minErrorChange = 1e-12
 val targetError = 1e-10
 
-class Solver(val tracker: Tracker) {
+class Solver() {
 
     fun solve(world: World, params: List<ParamExpr>, constraints: Collection<Constraint>, accuracy: Double = targetError): Boolean {
         val errorTerm = constraints.map { it.equation }

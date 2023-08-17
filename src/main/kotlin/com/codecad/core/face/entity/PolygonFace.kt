@@ -1,9 +1,7 @@
 package com.codecad.core.face.entity
 
-import com.codecad.common.Plane
-import com.codecad.common.PointD
-
-class PolygonFace(val positions: List<PointD> ) : Face() {
+/*
+class PolygonFace(val positions: List<Vec2> ) : Face() {
 
     override fun generateTriangles()  : List<TriangleFace>{
         return generateTriangles(positions, children.map { it.points.toList() })
@@ -13,6 +11,7 @@ class PolygonFace(val positions: List<PointD> ) : Face() {
         return "PolygonFace(positions=$positions)"
     }
 
-    override val points: Iterable<PointD>
+    override val points: Iterable<Vec2>
         get() = positions
 }
+*/

@@ -10,7 +10,7 @@ class OptimizerTest {
 
     @Test
     fun tangentConstraint(){
-        val solver = Solver(Tracker())
+        val solver = Solver()
         val world = World()
         val target = world.literal(Math.PI)
         val current = ParamExpr(world, 100.0)

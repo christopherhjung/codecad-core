@@ -1,6 +1,7 @@
 package com.codecad.core.constraint
 
-import com.codecad.core.*
+import com.codecad.core.SketchConic
+import com.codecad.core.SketchSegment
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2Expr
 

@@ -1,8 +1,8 @@
 package com.codecad.core.ast.primitive
 
+import com.codecad.core.World
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.Scope
-import com.codecad.core.World
 
 class PostfixExpr(world: World, private val expr: Expr, private val op: Op) : Expr(world) {
     override fun eval(scope: Scope): Any? {

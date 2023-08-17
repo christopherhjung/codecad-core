@@ -6,8 +6,6 @@ import com.codecad.core.part.SketchScope
 import com.codecad.core.part.SketchScope.Companion.ORIGIN
 
 
-
-
 fun SketchScope.cycloid(bR: Expr, sR: Expr): FunctionFigure {
     return func { t ->
         val r = t*Math.PI*2

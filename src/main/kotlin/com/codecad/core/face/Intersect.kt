@@ -1,11 +1,7 @@
 package com.codecad.core.face
 
 import com.codecad.common.LineD
-import com.codecad.common.Plane
 import com.codecad.common.PointD
-import com.codecad.core.face.*
-import com.codecad.core.rollover
-import java.util.*
 
 
 fun findIntersection(line1: LineD, line2: LineD): PointD? {

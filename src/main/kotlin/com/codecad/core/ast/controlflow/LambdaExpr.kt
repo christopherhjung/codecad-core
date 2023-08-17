@@ -1,14 +1,13 @@
 package com.codecad.core.ast.controlflow
 
-import com.codecad.core.scope.NestedScope
-import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import com.codecad.core.ast.controlflow.exception.ReturnException
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.ast.primitive.ScalarExpr
 import com.codecad.core.ast.primitive.ScopedExpr
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
 
-class LambdaExpr(world: World, private val param: Expr?, private val body: Expr?) : ScalarExpr(world) {
+class LambdaExpr(world: World, private val param: Expr?, private val body: Expr?) : Expr(world) {
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val nestedScope = NestedScope.mutual(scope)
         param!!.assign(nestedScope, args, true)

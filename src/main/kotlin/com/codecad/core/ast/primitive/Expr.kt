@@ -1,10 +1,10 @@
 package com.codecad.core.ast.primitive
 
 import com.codecad.core.Utils
+import com.codecad.core.World
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Scope
-import com.codecad.core.World
 import com.codecad.core.visitor.Printer
 import java.util.function.Consumer
 

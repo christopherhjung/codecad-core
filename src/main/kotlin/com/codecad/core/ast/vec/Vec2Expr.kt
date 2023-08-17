@@ -5,7 +5,11 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
 import kotlin.math.atan2
 
-class Vec2(val x: Double, val y: Double)
+data class Vec2(val x: Double, val y: Double){
+    companion object{
+        val ZERO = Vec2(0.0, 0.0)
+    }
+}
 
 class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
 
@@ -95,7 +99,7 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
 
     override fun equals(right: Any?): Boolean {
         return this === right ||
-                right is Vec3Expr &&
+                right is Vec2Expr &&
                 x == right.x &&
                 y == right.y
     }

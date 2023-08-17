@@ -176,8 +176,10 @@ class World {
             if(rhs is LiteralExpr){
                 literal(lhs.evalDouble() / rhs.evalDouble())
             }else{
-                mul(lhs, literal(1.0 / rhs.evalDouble()))
+                mul(literal(1.0 / rhs.evalDouble()), lhs)
             }
+        }else if(rhs is LiteralExpr){
+            mul(literal(1.0 / rhs.evalDouble()), lhs)
         }else {
             reassociate(lhs, rhs, Op.Div)
         }
@@ -294,6 +296,10 @@ class World {
             2.0 -> TWO
             else -> unify(LiteralExpr(this, value))
         }
+    }
+
+    fun param(value: Double) : Expr {
+        return ParamExpr(this, value)
     }
 
     fun tuple(vararg expr: Expr) : Expr{

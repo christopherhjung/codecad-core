@@ -1,12 +1,9 @@
 package com.codecad.core.face.entity
 
-import com.codecad.common.Plane
-import com.codecad.common.PointD
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.face.entity.surface.PlaneSurface
 import com.codecad.core.face.isPointInPolygon
-import org.poly2tri.Poly2Tri
-import org.poly2tri.geometry.polygon.PolygonPoint
-import org.poly2tri.triangulation.TriangulationPoint
 
 enum class FaceType{
     Root, Surface, Hole
@@ -17,11 +14,11 @@ abstract class Face{
     var surface = PlaneSurface()
     open var type : FaceType = FaceType.Surface
     var edgeBound : EdgeBound = EdgeBound()
-    abstract val points : Iterable<PointD>
+    abstract val points : Iterable<Vec3>
     var children : MutableList<Face> = mutableListOf()
     var area: Double = 0.0
 
-    open fun isInside(pos : PointD) : Boolean{
+    open fun isInside(pos : Vec3) : Boolean{
         return if(isPointInPolygon(pos, points)){
             for( hole in children ){
                 if(isPointInPolygon(pos, hole.points)){
@@ -34,13 +31,13 @@ abstract class Face{
     }
 }
 
-class TriangleFace(a: PointD, b: PointD, c : PointD) : ConvexFace(listOf(a,b,c)){
+class TriangleFace(a: Vec3, b: Vec3, c : Vec3) : ConvexFace(listOf(a,b,c)){
     override fun generateTriangles()  : List<TriangleFace>{
         return listOf(this)
     }
 }
-
-fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<TriangleFace>{
+/*
+fun generateTriangles(placement: AxisPlacement, outline: List<Vec2>, holes: List<List<Vec2>>) : List<TriangleFace>{
     if(outline.size < 3){
         return listOf()
     }
@@ -48,12 +45,12 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
     val plane = Plane.fromPoints(outline)
     val directedPlane = DirectedPlane.from(plane)
 
-    fun createPoint(point: PointD) : PolygonPoint{
+    fun createPoint(point: Vec2) : PolygonPoint{
         val xy = directedPlane.extractXY(point)
         return PolygonPoint(xy.x, xy.y , 0.0)
     }
 
-    fun pointsToPolygon(points: List<PointD>) : org.poly2tri.geometry.polygon.Polygon{
+    fun pointsToPolygon(points: List<Vec2>) : org.poly2tri.geometry.polygon.Polygon{
         val list = mutableListOf<PolygonPoint>()
         for( point in points ){
             list.add(createPoint(point))
@@ -80,7 +77,7 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
 
     val triangles = mutableListOf<TriangleFace>()
 
-    fun createPoint(trianglePoint: TriangulationPoint) : PointD {
+    fun createPoint(trianglePoint: TriangulationPoint) : Vec2 {
         return directedPlane.projectXYTo(trianglePoint.x, trianglePoint.y)
     }
 
@@ -96,3 +93,4 @@ fun generateTriangles(outline: List<PointD>, holes: List<List<PointD>>) : List<T
 
     return triangles
 }
+*/

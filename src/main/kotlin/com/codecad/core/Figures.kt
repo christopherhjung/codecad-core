@@ -2,19 +2,18 @@ package com.codecad.core
 
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2Expr
-import com.codecad.core.face.*
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
 }
-
+/*
 interface Figure{
     fun plotter() : Sweep{
         throw NotImplementedError("Not implemented plotter")
     }
-}
+}*/
 
-class SketchSegment(val p0: Vec2Expr, val p1: Vec2Expr) : Figure{
+class SketchSegment(val p0: Vec2Expr, val p1: Vec2Expr) {
     val squaredLength : Expr
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
 
@@ -30,9 +29,10 @@ class SketchSegment(val p0: Vec2Expr, val p1: Vec2Expr) : Figure{
     val direction : Vec2Expr
         get() = difference.normalized()
 
+    /*
     override fun plotter(): Sweep {
         return LineSweep(this)
-    }
+    }*/
 }
 
 interface SketchConic{
@@ -61,10 +61,10 @@ class SketchArc(val p0: Vec2Expr, val p1: Vec2Expr, val h: Expr) : SketchConic{
         middle + positive * (h - radiusSign)
     }
 }
-
+/*
 class FunctionFigure( val function: (Expr) -> Vec2Expr) : Figure{
     override fun plotter(): Sweep {
         return FunctionSweep(this)
     }
-}
+}*/
 

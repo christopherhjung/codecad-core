@@ -1,8 +1,7 @@
 package com.codecad.core
 
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.face.entity.Vec3Expr
-
+import com.codecad.core.ast.vec.Vec3Expr
 
 class Plane(val normal : Vec3Expr, val distance: Expr){
     companion object{
@@ -16,18 +15,6 @@ class Plane(val normal : Vec3Expr, val distance: Expr){
 
         fun fromPoints(points : List<Vec3Expr>) : Plane {
             return fromPoints(points[0], points[1], points[2])
-        }
-
-        fun fromConvexPoints(points : Iterable<Vec3Expr>) : Plane {
-            return fromConvexPoints(points.iterator())
-        }
-
-        fun fromConvexPoints(points : Iterator<Vec3Expr>) : Plane {
-            return fromPoints(getNextOr(points), getNextOr(points), getNextOr(points))
-        }
-
-        fun getNextOr(points : Iterator<Vec3Expr>) : Vec3Expr {
-            return points.next()
         }
     }
 

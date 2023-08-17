@@ -1,9 +1,9 @@
 package com.codecad.core.part
 
+import com.codecad.core.SketchConic
 import com.codecad.core.SketchSegment
-import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.face.entity.curve.Circle
+import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.parser.Parser
 import com.codecad.core.scope.MutualScope
@@ -111,7 +111,7 @@ class Executor private constructor(){
         }, true)
         scope.setObject("tangent", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val circle = args[0] as Circle
+            val circle = args[0] as SketchConic
             val line = args[1] as SketchSegment
             return@ObjectFunction sketch.tangent(circle, line)
         }, true)
@@ -121,6 +121,7 @@ class Executor private constructor(){
             return@ObjectFunction sketch.minimize(expr)
         }, true)
 
+        /*
         scope.setObject("extrude", ObjectFunction{ scope, args ->
             val project = scope.partStudio
             val name = args[0] as String
@@ -135,8 +136,8 @@ class Executor private constructor(){
             val posY = Expr.orLiteral(world, args[2])
             val sketch = project.sketches.find { it.name == name }!!
             val height = Expr.orLiteral(scope.world, args[3])
-            return@ObjectFunction project.extrudePos(sketch, Vec2Expr(posX, posY), height)
-        }, true)
+            return@ObjectFunction project.extrudePos(sketch, world.vec2(posX, posY), height)
+        }, true)*/
         scope.setObject("origin", world.ORIGIN, true)
 
         scope.setObject("fit", ObjectFunction{ scope, args ->
@@ -145,7 +146,6 @@ class Executor private constructor(){
         }, true)
 
         val result = expr.eval(scope)
-
         return partStudio
     }
 

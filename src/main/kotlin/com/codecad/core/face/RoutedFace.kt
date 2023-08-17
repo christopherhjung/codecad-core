@@ -1,10 +1,7 @@
 package com.codecad.core.face
 
-import com.codecad.common.PointD
-import com.codecad.core.face.entity.*
+/*
 import com.codecad.core.face.entity.sketch.SketchVertex
-
-
 class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
 
     override val points: Iterable<PointD>
@@ -69,4 +66,4 @@ class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
     override fun generateTriangles(): List<TriangleFace> {
         return generateTriangles(root.pointsIter().toList(), children.map { it.points.toList() })
     }
-}
+}*/

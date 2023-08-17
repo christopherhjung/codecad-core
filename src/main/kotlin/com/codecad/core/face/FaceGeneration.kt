@@ -2,14 +2,12 @@
 
 package com.codecad.core.face
 
-import com.codecad.common.LineD
-import com.codecad.common.PointD
-import com.codecad.core.*
-import com.codecad.core.face.entity.*
-import com.codecad.core.face.entity.sketch.SketchVertex
-import java.util.*
-import kotlin.math.abs
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
+import com.codecad.core.rollover
 
+/*
+import com.codecad.core.face.entity.sketch.SketchVertex
 data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
     var next: SketchEdge? = null
     lateinit var twin : SketchEdge
@@ -21,7 +19,7 @@ data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
         }
 
         val ZERO = run{
-            val vertex = SketchVertex(PointD.ZERO)
+            val vertex = SketchVertex(Vec2.ZERO)
             val edge = SketchEdge(vertex, vertex)
             edge.next = edge
             edge
@@ -29,7 +27,7 @@ data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
     }
 
     fun points() : List<PointD>{
-        val points = arrayListOf<PointD>()
+        val points = arrayListOf<Vec2>()
         var curr = this
 
         while(true){
@@ -62,17 +60,17 @@ data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
         }
     }
 
-    fun pointsIter() : Iterable<PointD>{
+    fun pointsIter() : Iterable<Vec2>{
         return Iterable {
             val start : SketchEdge = this
             var current : SketchEdge = this
             var first = true
-            object : Iterator<PointD>{
+            object : Iterator<Vec2>{
                 override fun hasNext(): Boolean {
                     return first || current != start
                 }
 
-                override fun next(): PointD {
+                override fun next(): Vec2 {
                     first = false
                     val result =  current.source.point
                     current = current.next!!
@@ -120,8 +118,8 @@ data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
 }
 
 fun createFaceTree(lines: List<LineD>): RoutedFace {
-    val pointMap = HashMap<PointD, SketchVertex>()
-    fun corner(point: PointD) : SketchVertex {
+    val pointMap = HashMap<Vec2, SketchVertex>()
+    fun corner(point: Vec2) : SketchVertex {
         return pointMap.computeIfAbsent(point) { SketchVertex(it) }
     }
 
@@ -302,7 +300,7 @@ fun unionFaces(faces: List<PolygonFace>) : List<PolygonFace>{
 }*/
 
 class FaceFinder(val faces: List<Face>){
-    fun find(pos : PointD) : Face?{
+    fun find(pos : Vec2) : Face?{
         for( face in faces ){
             if(face.isInside(pos)){
                 return face
@@ -311,9 +309,9 @@ class FaceFinder(val faces: List<Face>){
 
         return null
     }
-}
+}*/
 
-fun isPointInPolygon(point: PointD, polygon: Iterable<PointD>): Boolean {
+fun isPointInPolygon(point: Vec3, polygon: Iterable<Vec3>): Boolean {
     var windingNumber = 0
 
     for ((p1, p2) in polygon.rollover()) {
@@ -321,17 +319,15 @@ fun isPointInPolygon(point: PointD, polygon: Iterable<PointD>): Boolean {
             if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
                 windingNumber++
             }
-        } else {
-            if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
-                windingNumber--
-            }
+        } else if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
+            windingNumber--
         }
     }
 
     return windingNumber != 0
 }
 
-private fun isLeft(p0: PointD, p1: PointD, p2: PointD): Double {
+private fun isLeft(p0: Vec3, p1: Vec3, p2: Vec3): Double {
     return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
 

@@ -1,10 +1,10 @@
 package com.codecad.core.ast.controlflow
 
-import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import com.codecad.core.ast.controlflow.exception.BreakException
 import com.codecad.core.ast.controlflow.exception.ContinueException
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.scope.Scope
 
 class WhileExpr(
     world: World,

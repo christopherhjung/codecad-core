@@ -2,14 +2,13 @@ package com.codecad.core.mesh
 
 import com.codecad.common.Mesh
 import com.codecad.common.PointD
-import com.codecad.core.volume.Extrude
-import com.codecad.core.volume.FacedVolume
-
+import com.codecad.core.ast.vec.Vec3
+/*
 class MeshGenerator {
 
     private val faces = mutableListOf<Int>()
-    private val map = HashMap<PointD, Int>()
-    private fun index(point: PointD) : Int{
+    private val map = HashMap<Vec3, Int>()
+    private fun index(point: Vec3) : Int{
         return map.computeIfAbsent(point){map.size}
     }
 
@@ -39,4 +38,4 @@ class MeshGenerator {
         mesh.indices = faces.toIntArray()
         return mesh
     }
-}
+}*/

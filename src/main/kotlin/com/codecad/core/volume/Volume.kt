@@ -5,7 +5,7 @@ import com.codecad.core.face.entity.*
 import com.codecad.core.rollover
 
 abstract class Volume
-
+/*
 class FacedVolume(val faces: List<Face>) : Volume() {
     companion object {
         fun from(volume: Volume): FacedVolume {
@@ -18,7 +18,7 @@ class FacedVolume(val faces: List<Face>) : Volume() {
             }
         }
     }
-}
+}*/
 
 class PolygonVolume(val shells: List<Shell>) : Volume()
 /*
@@ -75,7 +75,7 @@ class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
         }
     }
 }*/
-
+/*
 class Extrude(val polygonFace: Face, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
     fun extrude(): FacedVolume {
         val height = height.evalDouble()
@@ -138,3 +138,4 @@ class Extrude(val polygonFace: Face, val directedPlane: DirectedPlane, val heigh
         throw Error("not implemented")
     }
 }
+*/

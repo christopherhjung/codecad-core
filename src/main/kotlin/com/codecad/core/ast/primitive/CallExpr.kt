@@ -1,15 +1,15 @@
 package com.codecad.core.ast.primitive
 
+import com.codecad.core.World
 import com.codecad.core.exception.InterpreterException
 import com.codecad.core.parser.ObjectFunction
 import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
-import com.codecad.core.World
 
 class CallExpr(world: World,
-               private val callee: Expr,
-               private val arg: Expr,
-               private val optional: Boolean = false
+    private val callee: Expr,
+    private val arg: Expr,
+    private val optional: Boolean = false
 ) : Expr(world) {
     override fun eval(scope: Scope): Any? {
         val callee = callee.eval(scope)

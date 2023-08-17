@@ -1,7 +1,7 @@
 package com.codecad.core.ast.primitive
 
-import com.codecad.core.scope.Scope
 import com.codecad.core.World
+import com.codecad.core.scope.Scope
 import kotlin.math.*
 
 abstract class MathExpr(world: World) : Expr(world){
@@ -63,9 +63,10 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : MathExpr(world){
         return if(exp is LiteralExpr){
             exp * base.pow(exp - 1) * base.derivative(expr)
         }else{
-            world.exp(world.log(exp) * base).derivative(expr)
+            world.exp(world.log(base) * exp).derivative(expr)
         }
     }
+
 
     override fun arg(): Expr {
         return world.tuple(base, exp)
@@ -79,8 +80,9 @@ class PowExpr(world: World, val base: Expr, val exp: Expr) : MathExpr(world){
     }
 
     override fun hashCode(): Int {
-        val result = 31 * base.hashCode()
-        return 31 * result + exp.hashCode()
+        var result = base.hashCode()
+        result = 31 * result + exp.hashCode()
+        return result
     }
 }
 

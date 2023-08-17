@@ -1,18 +1,20 @@
 package com.codecad.core.face
 
 import com.codecad.common.PointD
+import com.codecad.core.ast.vec.Vec3
+import com.codecad.core.ast.vec.times
 import com.codecad.core.face.entity.TriangleFace
 import kotlin.math.abs
 import kotlin.math.sign
 
-class RaycastResult(val hit: PointD, val distance: Double, val valid: Boolean = true){
-    constructor(valid: Boolean) : this(PointD.ZERO, 0.0, valid)
+class RaycastResult(val hit: Vec3, val distance: Double, val valid: Boolean = true){
+    constructor(valid: Boolean) : this(Vec3.ZERO, 0.0, valid)
 }
 
-class Ray(val origin : PointD, val direction : PointD){
+class Ray(val origin : Vec3, val direction : Vec3){
     fun at(ratio: Double): RaycastResult {
         return RaycastResult(
-             direction * ratio + origin,
+            ratio * direction + origin,
             direction.length() * ratio
         )
     }

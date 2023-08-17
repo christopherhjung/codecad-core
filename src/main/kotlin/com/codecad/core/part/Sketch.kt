@@ -1,39 +1,40 @@
 package com.codecad.core.part
 
-import com.codecad.common.LineD
-import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.vec.Vec2Expr
-import com.codecad.core.optimizer.Solver
 import com.codecad.core.constraint.*
+import com.codecad.core.face.entity.Workplane
+import com.codecad.core.face.entity.BoundedEdge
+import com.codecad.core.face.entity.Edge
+import com.codecad.core.face.entity.Vertex
 import com.codecad.core.face.entity.curve.Circle
-import com.codecad.core.face.entity.curve.Conic
+import com.codecad.core.face.entity.curve.Line
+import com.codecad.core.optimizer.Solver
 import java.util.*
 
-class Sketch(val partStudio: PartStudio, val name: String) {
+class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
-    val figures = ArrayList<Figure>()
-    val lineType = HashMap<Figure, LineType>()
+    //val figures = ArrayList<Figure>()
+    //val lineType = HashMap<Figure, LineType>()
     val world: World = partStudio.world
+
 
     fun param(value: Double = 0.0): ParamExpr {
         val param = ParamExpr( world, value )
-        partStudio.tracker.params.add(param)
         params.add(param)
         return param
     }
 
-
-    fun createLiteral(value: Double = 0.0) : Expr {
+    fun literal(value: Double = 0.0) : Expr {
         return world.literal(value)
     }
 
     fun constPoint(x: Double = 0.0, y: Double = 0.0): Vec2Expr {
-        val a = createLiteral(x)
-        val b = createLiteral(y)
+        val a = literal(x)
+        val b = literal(y)
         val point = world.vec2(a, b)
         return point
     }
@@ -50,8 +51,16 @@ class Sketch(val partStudio: PartStudio, val name: String) {
     }
 
     fun line(a: Vec2Expr, b: Vec2Expr, type: LineType = LineType.Normal): SketchSegment {
+        val origin = workplane.projectTo(a);
+
+        val lineNew = BoundedEdge(
+            Vertex(origin),
+            Vertex(workplane.projectTo(b)),
+            Line(origin, workplane.projectTo(b - a))
+        )
+
         val line = SketchSegment(a, b)
-        lineType.putIfAbsent(line, type)
+        //lineType.putIfAbsent(line, type)
         return line
     }
 
@@ -60,6 +69,10 @@ class Sketch(val partStudio: PartStudio, val name: String) {
     }
 
     fun circle(center: Vec2Expr, radius: Expr): SketchCircle {
+        val projCenter = workplane.projectTo(center)
+
+
+
         val circle = SketchCircle(center, radius)
         return circle
     }
@@ -67,12 +80,6 @@ class Sketch(val partStudio: PartStudio, val name: String) {
     fun arc(p0: Vec2Expr, p1: Vec2Expr, radius: Expr): SketchArc {
         val arc = SketchArc(p0,p1,radius)
         return arc
-    }
-
-    fun func(function : (Expr) -> Vec2Expr) : FunctionFigure {
-        val function = FunctionFigure(function)
-        figures.add(function)
-        return function
     }
 
     fun circle(): SketchCircle {
@@ -156,8 +163,7 @@ class Sketch(val partStudio: PartStudio, val name: String) {
     }
 
     fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
-        val solver = Solver(partStudio.tracker)
-        val result = solver.solve(world, params.flatten(), constraints, accuracy)
+        val result = Solver().solve(world, params.flatten(), constraints, accuracy)
         return result
     }
 
@@ -167,16 +173,16 @@ class Sketch(val partStudio: PartStudio, val name: String) {
         val end = System.currentTimeMillis()
         println("time: ${end - start}ms")
     }
-
+/*
     override fun toString(): String {
         val sb = StringBuilder()
         for (element in figures) {
             sb.append(element).append("\n")
         }
         return sb.toString()
-    }
+    }*/
 }
-
+/*
 
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
     val list = mutableListOf<LineD>()
@@ -206,7 +212,7 @@ fun figureToPoints(figure: Figure) : List<PointD>{
     }
 
     return list
-}
+}*/
 
 /*
 * fun Canvas.line(line: com.codecad.core.Line){

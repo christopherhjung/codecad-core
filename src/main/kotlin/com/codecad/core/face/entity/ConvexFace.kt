@@ -1,9 +1,9 @@
 package com.codecad.core.face.entity
 
-import com.codecad.common.Plane
-import com.codecad.common.PointD
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 
-open class ConvexFace( val positions: List<PointD> ) : Face() {
+open class ConvexFace( val positions: List<Vec3> ) : Face() {
     override fun generateTriangles()  : List<TriangleFace>{
         val result = mutableListOf<TriangleFace>()
         for( i in 0 until positions.size - 2 ){
@@ -13,6 +13,6 @@ open class ConvexFace( val positions: List<PointD> ) : Face() {
         return result
     }
 
-    override val points: Iterable<PointD>
+    override val points: Iterable<Vec3>
         get() = positions
 }

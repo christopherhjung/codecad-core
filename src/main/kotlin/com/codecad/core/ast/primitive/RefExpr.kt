@@ -1,8 +1,8 @@
 package com.codecad.core.ast.primitive
 
+import com.codecad.core.World
 import com.codecad.core.scope.Scope
 import com.codecad.core.scope.Slot
-import com.codecad.core.World
 
 class RefExpr(world: World, val slot: Slot) : Expr(world) {
     override fun eval(scope: Scope): Any? {

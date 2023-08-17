@@ -1,9 +1,8 @@
 package com.codecad.core
 
 import com.codecad.common.LineError
-import com.codecad.core.part.Executor
 import com.codecad.core.exception.LineException
-import com.codecad.core.postprocess.mapModel
+import com.codecad.core.part.Executor
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -22,10 +21,10 @@ class Controller {
             var start = System.currentTimeMillis()
             val result = Executor.execute(code)
             val project = result.partStudio
-            val model = mapModel(project)
-            var end = System.currentTimeMillis()
-            println("needed ${end - start}ms")
-            return ResponseEntity(model, HttpStatus.OK)
+            //val model = mapModel(project)
+            //var end = System.currentTimeMillis()
+            //println("needed ${end - start}ms")
+            return ResponseEntity(null, HttpStatus.OK)
         }catch (e: LineException){
             e.printStackTrace()
             return ResponseEntity(Wrapper(e.locations), HttpStatus.INTERNAL_SERVER_ERROR)

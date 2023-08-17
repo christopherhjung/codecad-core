@@ -3,8 +3,6 @@ package com.codecad.core.visitor
 import com.codecad.core.ast.controlflow.BlockExpr
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.scope.Slot
-import org.apache.commons.lang3.StringUtils
-import org.apache.tomcat.util.buf.HexUtils
 
 
 class Printer() : Visitor(){
@@ -47,9 +45,11 @@ class Printer() : Visitor(){
     }
 
     override fun visitInfix(expr: InfixExpr){
+        sb.append("(")
         visit(expr.lhs)
         sb.append(" ").append(expr.op.sign).append(" ")
         visit(expr.rhs)
+        sb.append(")")
     }
 
     override fun visitPrefix(expr: PrefixExpr){

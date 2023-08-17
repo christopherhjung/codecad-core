@@ -1,8 +1,8 @@
 package com.codecad.core.scope
 
-import com.codecad.core.part.Sketch
-import com.codecad.core.part.PartStudio
 import com.codecad.core.World
+import com.codecad.core.part.PartStudio
+import com.codecad.core.part.Sketch
 
 
 var Scope.partStudio : PartStudio

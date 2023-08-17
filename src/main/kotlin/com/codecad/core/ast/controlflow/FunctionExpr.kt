@@ -1,18 +1,18 @@
 package com.codecad.core.ast.controlflow
 
-import com.codecad.core.scope.MutualScope
-import com.codecad.core.scope.NestedScope
-import com.codecad.core.scope.Scope
 import com.codecad.core.World
 import com.codecad.core.ast.controlflow.exception.ReturnException
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ScopedExpr
+import com.codecad.core.scope.MutualScope
+import com.codecad.core.scope.NestedScope
+import com.codecad.core.scope.Scope
 
 class FunctionExpr(
     world: World,
     var name: String,
     var params: Expr?,
-    var body: Expr?) : ScalarExpr(world) {
+    var body: Expr?) : Expr(world) {
 
     override fun call(scope: Scope, args: Array<Any?>): Any? {
         val mutual = MutualScope()

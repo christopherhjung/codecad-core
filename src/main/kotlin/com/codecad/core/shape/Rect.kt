@@ -1,8 +1,8 @@
 package com.codecad.core.shape
 
 import com.codecad.core.SketchSegment
-import com.codecad.core.face.entity.Vec2Expr
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.part.Sketch
 
 class Rect() : Shape() {

@@ -1,12 +1,6 @@
 package com.codecad.core.face
 
-import com.codecad.core.*
-import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.face.entity.Vec2Expr
-import com.codecad.core.face.entity.curve.Circle
-import kotlin.math.cos
-import kotlin.math.sin
-
+/*
 
 interface Sweep{
     fun hasNext() : Boolean
@@ -131,3 +125,4 @@ class FunctionSweep(func: FunctionFigure) : SegmentedSweep(500) {
         return formula.eval()
     }
 }
+*/

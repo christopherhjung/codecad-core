@@ -5,7 +5,7 @@ class EdgeBound {
 }
 
 class BoundEdge{
-    private lateinit var edge : Edge
+    private lateinit var edge : BoundedEdge
     private var orientation : Boolean = false
     private lateinit var twin : BoundEdge
 

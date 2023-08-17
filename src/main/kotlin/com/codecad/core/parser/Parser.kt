@@ -1,13 +1,13 @@
 package com.codecad.core.parser
 
+import com.codecad.core.World
+import com.codecad.core.ast.controlflow.*
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.exception.ParseException
 import com.codecad.core.lexer.Lexer
 import com.codecad.core.lexer.Token
 import com.codecad.core.scope.MutualScope
 import com.codecad.core.scope.StaticScope
-import com.codecad.core.World
-import com.codecad.core.ast.controlflow.*
 
 class Parser private constructor(private val lexer: Lexer, private val world: World) {
     private var lastOp: Op? = null
