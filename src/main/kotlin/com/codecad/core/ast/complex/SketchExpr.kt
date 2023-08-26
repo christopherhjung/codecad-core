@@ -15,12 +15,13 @@ class SketchExpr(
 
     override fun eval(scope: Scope): Any? {
         val project = scope.partStudio
-        val sketch = Sketch(project, name)
+        val sketch = Sketch(project, world.WorkplaneXY, name)
         project.sketches.add(sketch)
         val nestedScope = NestedScope.mutual(scope)
         nestedScope.sketch = sketch
         val result = body.eval(nestedScope)
-        //sketch.solve(1e-6)
+        sketch.solve(1e-6)
+        sketch.generate()
         return result
     }
 

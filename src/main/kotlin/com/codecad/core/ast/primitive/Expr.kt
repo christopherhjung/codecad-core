@@ -9,6 +9,20 @@ import com.codecad.core.visitor.Printer
 import java.util.function.Consumer
 
 abstract class Expr(val world: World) {
+    private var type : Int = 0
+
+    fun opt(type : Int, block : () -> Expr) : Expr{
+        if(this.type == type) return this
+        val result = block()
+        result.type = type
+        return result
+    }
+
+    fun isType(type : Int) : Boolean{
+        return type == this.type
+    }
+
+
     abstract fun eval(scope: Scope = EmptyScope): Any?
 
     fun evalBoolean(scope: Scope = EmptyScope): Boolean {
@@ -130,6 +144,8 @@ abstract class Expr(val world: World) {
     }
 
     companion object{
+        const val NormalizedVec = 1
+
         fun cos(expr: Expr) : Expr {
             return expr.world.cos(expr)
         }

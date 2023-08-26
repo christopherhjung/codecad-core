@@ -9,7 +9,7 @@ class LiteralExpr(world: World, val value: Any?) : Expr(world) {
     }
 
     override fun derivative(expr: Expr): Expr {
-        return world.ZERO
+        return world.Zero
     }
 
     override fun equals(other: Any?): Boolean {

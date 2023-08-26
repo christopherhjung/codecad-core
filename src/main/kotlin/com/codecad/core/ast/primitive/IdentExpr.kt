@@ -33,9 +33,9 @@ class IdentExpr(
 
     override fun derivative(expr: Expr): Expr {
         return if(this === expr){
-            world.ONE
+            world.One
         }else{
-            world.ZERO
+            world.Zero
         }
     }
 }

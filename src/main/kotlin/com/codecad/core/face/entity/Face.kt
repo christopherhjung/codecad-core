@@ -1,41 +1,21 @@
 package com.codecad.core.face.entity
 
-import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.face.entity.surface.PlaneSurface
+import com.codecad.core.face.entity.surface.Surface
 import com.codecad.core.face.isPointInPolygon
 
 enum class FaceType{
     Root, Surface, Hole
 }
 
-abstract class Face{
-    abstract fun generateTriangles() : List<TriangleFace>
-    var surface = PlaneSurface()
-    open var type : FaceType = FaceType.Surface
-    var edgeBound : EdgeBound = EdgeBound()
-    abstract val points : Iterable<Vec3>
-    var children : MutableList<Face> = mutableListOf()
-    var area: Double = 0.0
+class Face(var surface : Surface, var bounds : List<FaceBound>){
 
-    open fun isInside(pos : Vec3) : Boolean{
-        return if(isPointInPolygon(pos, points)){
-            for( hole in children ){
-                if(isPointInPolygon(pos, hole.points)){
-                    return false
-                }
-            }
-
-            true
-        }else false
-    }
+    //open var type : FaceType = FaceType.Surface
+    //var children : MutableList<Face> = mutableListOf()
+    //var area: Double = 0.0
 }
 
-class TriangleFace(a: Vec3, b: Vec3, c : Vec3) : ConvexFace(listOf(a,b,c)){
-    override fun generateTriangles()  : List<TriangleFace>{
-        return listOf(this)
-    }
-}
 /*
 fun generateTriangles(placement: AxisPlacement, outline: List<Vec2>, holes: List<List<Vec2>>) : List<TriangleFace>{
     if(outline.size < 3){

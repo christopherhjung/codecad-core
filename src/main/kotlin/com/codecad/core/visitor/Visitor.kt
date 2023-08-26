@@ -30,7 +30,7 @@ abstract class Visitor {
             is TupleExpr -> visitTuple(expr)
             is MathExpr -> visitMath(expr)
             is RefExpr -> visitRef(expr)
-            else -> throw NotImplementedError("$expr not yet implemented visitor")
+            else -> throw NotImplementedError("${expr.javaClass} not yet implemented visitor")
         }
     }
 }

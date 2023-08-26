@@ -13,7 +13,7 @@ val targetError = 1e-10
 
 class Solver() {
 
-    fun solve(world: World, params: List<ParamExpr>, constraints: Collection<Constraint>, accuracy: Double = targetError): Boolean {
+    fun solve(world: World, params: Collection<ParamExpr>, constraints: Collection<Constraint>, accuracy: Double = targetError): Boolean {
         val errorTerm = constraints.map { it.equation }
             .reduceOrNull{a,b -> a + b} ?: return true
         val gradients = params.map { errorTerm.derivative(it) }
@@ -24,7 +24,7 @@ class Solver() {
         return solveImpl(params, tangent, accuracy)
     }
 
-    fun solveImpl(x: List<ParamExpr>, tangent: Expr, accuracy: Double = targetError): Boolean{
+    fun solveImpl(x: Collection<ParamExpr>, tangent: Expr, accuracy: Double = targetError): Boolean{
         var error = Double.MAX_VALUE
         var lastError = Double.MAX_VALUE
         var errorChange = 1.0

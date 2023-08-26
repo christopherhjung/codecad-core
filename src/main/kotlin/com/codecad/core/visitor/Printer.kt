@@ -36,7 +36,7 @@ class Printer() : Visitor(){
     }
 
     fun print(expr: Expr) : String{
-        visit(expr);
+        visit(expr)
         return sb.toString()
     }
 
@@ -98,11 +98,14 @@ class Printer() : Visitor(){
         val name = when(expr){
             is AbsExpr -> "abs"
             is PowExpr -> "pow"
+            is SinExpr -> "sin"
+            is CosExpr -> "cos"
             else -> throw Error("xx")
         }
 
-        sb.append(name)
+        sb.append(name).append("(")
         visit(expr.arg())
+        sb.append(")")
     }
 
     override fun visitParam(expr: ParamExpr) {

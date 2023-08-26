@@ -4,13 +4,11 @@ import com.codecad.common.PointD
 import com.codecad.core.*
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.face.Ray
-import com.codecad.core.face.Raycast
-import com.codecad.core.face.entity.TriangleFace
 import org.junit.jupiter.api.Test
 import java.util.*
 
 class RaycastTest {
-
+/*
     @Test
     fun cacheTest(){
         val ray = Ray(
@@ -73,5 +71,5 @@ class RaycastTest {
 
     }
 
-
+*/
 }

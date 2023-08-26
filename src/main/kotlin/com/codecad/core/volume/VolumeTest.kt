@@ -1,10 +1,10 @@
 package com.codecad.core.volume
 
-import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.face.entity.*
-import com.codecad.core.rollover
 
-abstract class Volume
+class Volume(val shells : List<Shell>)
+
+abstract class VolumeTest
 /*
 class FacedVolume(val faces: List<Face>) : Volume() {
     companion object {
@@ -20,7 +20,8 @@ class FacedVolume(val faces: List<Face>) : Volume() {
     }
 }*/
 
-class PolygonVolume(val shells: List<Shell>) : Volume()
+
+class PolygonVolume(val shells: List<Shell>) : VolumeTest()
 /*
 class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
     companion object{

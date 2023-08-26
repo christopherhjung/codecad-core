@@ -1,13 +1,13 @@
 package com.codecad.core.export
 
-import com.codecad.common.Mesh
+import com.codecad.core.mesh.Mesh
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class StlExport : ModelExport{
     override fun export(mesh: Mesh): ByteArray{
-        val positions = mesh.points
         val indices = mesh.indices
+        val vertices = mesh.vertices
 
         val count = indices.size / 3
         val buffer = ByteBuffer.allocate(84 + (4 * 4 * 3 + 2) * count)
@@ -21,7 +21,7 @@ class StlExport : ModelExport{
             buffer.putFloat(0.0f)
             for(j in 0 until 3){
                 for(k in 0 until 3){
-                    buffer.putFloat(positions[indices[i * 3 + j] * 3 + k])
+                    buffer.putFloat(vertices[indices[i * 3 + j] * 3 + k])
                 }
             }
             buffer.putShort(0.toShort())

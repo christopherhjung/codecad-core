@@ -57,12 +57,6 @@ class Executor private constructor(){
             val rhs = args[1] as Vec2Expr
             return@ObjectFunction sketch.line(lhs, rhs)
         }, true)
-        scope.setObject("cline", ObjectFunction{ scope, args ->
-            val sketch = scope.sketch
-            val lhs = args[0] as Vec2Expr
-            val rhs = args[1] as Vec2Expr
-            return@ObjectFunction sketch.cline(lhs, rhs)
-        }, true)
         scope.setObject("circle", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
@@ -75,7 +69,7 @@ class Executor private constructor(){
             val world = scope.world
             val p0 = args[0] as Vec2Expr
             val p1 = args[1] as Vec2Expr
-            return@ObjectFunction sketch.arc(p0, p1, sketch.param(-1.0))
+            return@ObjectFunction sketch.arc(p0, p1)
         }, true)
         scope.setObject("rect", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
@@ -109,12 +103,6 @@ class Executor private constructor(){
             val seg1 = args[1] as SketchSegment
             return@ObjectFunction sketch.perp(seg0, seg1)
         }, true)
-        scope.setObject("tangent", ObjectFunction{ scope, args ->
-            val sketch = scope.sketch
-            val circle = args[0] as SketchConic
-            val line = args[1] as SketchSegment
-            return@ObjectFunction sketch.tangent(circle, line)
-        }, true)
         scope.setObject("minimize", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val expr = Expr.orLiteral(world, args[0])
@@ -138,7 +126,7 @@ class Executor private constructor(){
             val height = Expr.orLiteral(scope.world, args[3])
             return@ObjectFunction project.extrudePos(sketch, world.vec2(posX, posY), height)
         }, true)*/
-        scope.setObject("origin", world.ORIGIN, true)
+        scope.setObject("origin", world.ZeroVec2, true)
 
         scope.setObject("fit", ObjectFunction{ scope, args ->
             val sketch = scope.sketch

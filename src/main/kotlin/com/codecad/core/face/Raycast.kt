@@ -3,7 +3,6 @@ package com.codecad.core.face
 import com.codecad.common.PointD
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.times
-import com.codecad.core.face.entity.TriangleFace
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -19,7 +18,7 @@ class Ray(val origin : Vec3, val direction : Vec3){
         )
     }
 }
-
+/*
 class Raycast {
     fun raycast(triangle: TriangleFace, ray: Ray): RaycastResult {
         val edge1 = triangle.positions[1] - triangle.positions[0]
@@ -49,3 +48,4 @@ class Raycast {
         return if (r < 0) RaycastResult(false) else ray.at(r / d)
     }
 }
+*/

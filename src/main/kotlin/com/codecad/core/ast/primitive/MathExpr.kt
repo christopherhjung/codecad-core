@@ -15,7 +15,7 @@ class AbsExpr(world: World, val arg: Expr) : MathExpr(world){
 
     override fun derivative(expr: Expr): Expr {
         val derivative = arg.derivative(expr)
-        return ifExpr(arg.lt(world.ZERO), -derivative, derivative)
+        return ifExpr(arg.lt(world.Zero), -derivative, derivative)
     }
 
     override fun arg(): Expr {
@@ -37,7 +37,7 @@ class SignExpr(world: World, val arg: Expr) : MathExpr(world ){
     }
 
     override fun derivative(expr: Expr): Expr {
-        return world.ZERO
+        return world.Zero
     }
 
     override fun arg(): Expr {

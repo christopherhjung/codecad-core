@@ -1,24 +1,15 @@
 package com.codecad.core.part
 
 import com.codecad.core.*
-import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.ast.vec.Vec2Expr
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.constraint.*
-import com.codecad.core.face.*
-import com.codecad.core.face.entity.DirectedPlane
-import com.codecad.core.face.entity.Vertex
-import com.codecad.core.face.entity.curve.Circle
-import com.codecad.core.optimizer.Solver
-import com.codecad.core.volume.Volume
 
-class PartStudio {
+class PartStudio(val world : World = World()){
     val sketches: MutableList<Sketch> = mutableListOf()
-    val world = World()
-
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
+
+
 /*
     val volumes = mutableListOf<Volume>()
     fun extrude(sketch: Sketch, height: Expr, plane: DirectedPlane = DirectedPlane.XY) {

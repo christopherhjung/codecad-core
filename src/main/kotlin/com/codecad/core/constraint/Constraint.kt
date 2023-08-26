@@ -43,7 +43,7 @@ class Horizontal(val line: SketchSegment) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
         val angle = Expr.asin(direction.y / direction.length())
-        return Expr.abs(angle)
+        return angle.pow(2.0)
     }
 }
 
@@ -51,7 +51,7 @@ class Vertical(val line: SketchSegment) : Constraint() {
     override fun equationImpl(): Expr {
         val direction = line.p1 - line.p0
         val angle = Expr.asin(direction.x / direction.length())
-        return Expr.abs(angle)
+        return angle.pow(2.0)
     }
 }
 
@@ -59,10 +59,8 @@ class CircleTangent(val circle: SketchConic, val line : SketchSegment) : Constra
     override fun equationImpl(): Expr {
         val lineDirection = line.p1 - line.p0
         val centerLineDirection = circle.center - line.p0
-        val offset = Expr.abs(lineDirection.cross(centerLineDirection)) / lineDirection.length()
-        val test = Expr.abs(offset - circle.radius)
-
-        return test
+        val offset = Expr.abs(lineDirection.crossZ(centerLineDirection)) / lineDirection.length()
+        return (offset - circle.radius).pow(2.0)
     }
 }
 
@@ -117,42 +115,14 @@ fun lineCross(line1: com.codecad.core.Line, line2: com.codecad.core.Line, cross:
 
 class Parallel(val line1: SketchSegment, val line2: SketchSegment) : Constraint() {
     override fun equationImpl(): Expr {
-        return line1.direction.cross(line2.direction).pow(2)
+        return line1.direction.crossZ(line2.direction).pow(2)
     }
 }
 
 class Colinear(val line1: SketchSegment, val line2: SketchSegment) : Constraint() {
-    /*override fun error(): Double {
-        var error = 0.0
-        val dx = line1.b.x.value - line1.a.x.value
-        val dy = line1.b.y.value - line1.a.y.value
-
-        val m = dy / dx
-        val n = dx / dy
-        // Calculate the error between the expected intersection point
-        // and the true point of the second lines two end points on the
-        // first line
-        if (m <= 1 && m > -1) {
-            //Calculate the expected y point given the x coordinate of the point
-            var Ey = line1.a.y.value + m * (line2.a.x.value - line1.a.x.value)
-            error += (Ey - line2.a.y.value).com.codecad.core.pow(2.0)
-
-            Ey = line1.a.y.value + m * (line2.b.x.value - line1.a.x.value)
-            error += (Ey - line2.b.y.value).com.codecad.core.pow(2.0)
-        } else {
-            //Calculate the expected x point given the y coordinate of the point
-            var Ex = line1.a.x.value + n * (line2.a.y.value - line1.a.y.value)
-            error += (Ex - line2.a.x.value).com.codecad.core.pow(2.0)
-
-            Ex = line1.a.x.value + n * (line2.b.y.value - line1.a.y.value)
-            error += (Ex - line2.b.x.value).com.codecad.core.pow(2.0)
-        }
-
-        return error
-    }*/
-
     override fun equationImpl(): Expr {
-        TODO("Not yet implemented")
+        return line1.direction.crossZ(line2.p0 - line2.p0).pow(2) +
+                line2.direction.crossZ(line1.p1 - line1.p1).pow(2)
     }
 }
 
@@ -167,7 +137,7 @@ class PointOnCircle(val point: Vec2Expr, val circle: SketchConic) : Constraint()
 class PointOnLine(val point: Vec2Expr, val line: SketchSegment) : Constraint() {
 
     override fun equationImpl(): Expr {
-        return (line.p0 - point).normalized().cross(line.direction).pow(2)
+        return (line.p0 - point).normalized().crossZ(line.direction).pow(2)
     }
 }
 

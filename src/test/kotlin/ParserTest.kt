@@ -12,12 +12,13 @@ class ParserTest {
 
     @Test
     fun cacheTest(){
-        var expr = Parser.parse("""
+        val world = World()
+        val expr = Parser.parse("""
             sketch test{               
-                let topLine = line(param2(0.0, 1.0), param2(1.0, 1.0))
-                let bottomLine = line(origin, param2(1.0, 0.0))
-                let vertLine = line(topLine.p0, bottomLine.p0)
-                let vertLine2 = line(topLine.p1, bottomLine.p1)
+                line topLine(param2(0.0, 1.0), param2(1.0, 1.0))
+                line bottomLine(origin, param2(1.0, 0.0))
+                line vertLine(topLine.p0, bottomLine.p0)
+                line vertLine2(topLine.p1, bottomLine.p1)
                 
                 eq(topLine.p0.y, topLine.p1.y)
                 eq(bottomLine.p0.y, bottomLine.p1.y)
@@ -32,17 +33,15 @@ class ParserTest {
                 perp(topLine, vertLine)
                 
                 fit()
-                println("test----")
             }
                
-        """.trimIndent())
+        """.trimIndent(), world)
 
 
         val scope = MutualScope()
 
-        val partStudio = PartStudio()
+        val partStudio = PartStudio(world)
         scope.partStudio = partStudio
-        val world = partStudio.world
         scope.world = world
         scope.setObject("println", ObjectFunction{ _, args ->
             println(args[0])
@@ -83,7 +82,7 @@ class ParserTest {
             val world = scope.world
             val p0 = args[0] as Vec2Expr
             val p1 = args[1] as Vec2Expr
-            return@ObjectFunction sketch.arc(p0, p1, sketch.param(1.0))
+            return@ObjectFunction sketch.arc(p0, p1)
         }, true)
         scope.setObject("eq", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
@@ -111,8 +110,7 @@ class ParserTest {
             val seg1 = args[1] as SketchSegment
             return@ObjectFunction sketch.perp(seg0, seg1)
         }, true)
-        scope.setObject("origin", world.ORIGIN, true)
-
+        scope.setObject("origin", world.ZeroVec2, true)
 
         scope.setObject("fit", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
@@ -120,9 +118,6 @@ class ParserTest {
         }, true)
 
         val result = expr.eval(scope)
-
-
-        println(expr)
     }
 
 }

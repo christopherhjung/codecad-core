@@ -13,13 +13,17 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromAbove(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio, "")
+        val world = partStudio.world
+        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
-        val world = sketch.world
-        val center = Vec2Expr(world, x, y)
-        val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
-        val circle =  sketch.circle(center, sketch.literal(0.5))
+        val center = world.vec2(x, y)
+        val a = sketch.constPoint(0.0,0.0)
+        val b = sketch.constPoint(1.0,0.0)
+        val radius = sketch.literal(0.5)
+
+        val line = sketch.line(a, b)
+        val circle = sketch.circle(center, radius)
         sketch.addConstraint(CircleTangent(circle, line))
         sketch.solve(1e-6)
         assertEquals(0.5, y.evalDouble(), 1e-3)
@@ -29,14 +33,14 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromAboveLarge(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio, "")
+        val world = partStudio.world
+        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
-        val world = sketch.world
         val center = Vec2Expr(world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
-        val circle =  sketch.circle(center, sketch.literal(0.5))
-        sketch.addConstraint(CircleTangent(circle, line))
+        val circle = sketch.circle(center, sketch.literal(0.5))
+        sketch.tangent(circle, line)
         sketch.solve(1e-6)
         assertEquals(0.5, y.evalDouble(), 1e-3)
         assertEquals(10.0, x.evalDouble(), 1e-3)
@@ -45,10 +49,11 @@ class ConstraintTest {
     @Test
     fun tangentSolveFromBelow(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio, "")
+        val world = partStudio.world
+        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(-1.0)
-        val center = Vec2Expr(sketch.world, x, y)
+        val center = Vec2Expr(world, x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,0.0))
         val circle =  sketch.circle(center, sketch.literal(0.5))
         sketch.tangent(circle, line)
@@ -60,17 +65,17 @@ class ConstraintTest {
     @Test
     fun tangentSolveDiagonal(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio, "")
+        val world = partStudio.world
+        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
-        val world = sketch.world
-        val center = Vec2Expr(world, x, y)
+        val center = world.vec2(x, y)
         val line = sketch.line(sketch.constPoint(0.0,0.0), sketch.constPoint(1.0,1.0))
         val circle =  sketch.circle(center, sketch.literal(0.5))
         sketch.tangent(circle, line)
         val success = sketch.solveImpl(1e-8)
         val offset = sketch.literal(0.5 / sqrt(2.0))
-        val target = line.midPoint + Vec2Expr(world, -offset, offset)
+        val target = line.midPoint + world.vec2(-offset, offset)
         assertEquals(target.x.evalDouble(), center.x.evalDouble(), 1e-3)
         assertEquals(target.y.evalDouble(), center.y.evalDouble(), 1e-3)
         assertTrue(success)
@@ -79,7 +84,8 @@ class ConstraintTest {
     @Test
     fun pointOnPointSimple(){
         val partStudio = PartStudio()
-        val sketch = Sketch(partStudio, "")
+        val world = partStudio.world
+        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
         val current = sketch.point(x,y)
@@ -90,5 +96,4 @@ class ConstraintTest {
         assertEquals(2 * Math.PI, y.evalDouble(), 1e-3)
         println(success)
     }
-
 }

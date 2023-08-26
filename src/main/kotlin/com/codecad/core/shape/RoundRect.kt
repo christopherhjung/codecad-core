@@ -11,6 +11,7 @@ class RoundRect : Shape(){
 
     override fun build(sketch: Sketch) {
         with(sketch){
+            /*
             val topLine = line(point(0.0, 1.0),point(1.0,1.0))
             val bottomLine = line(point(0.0,0.0),point(1.0,0.0))
 
@@ -36,7 +37,7 @@ class RoundRect : Shape(){
 
             center = centerLine.midPoint
             width = centerLine.length
-            height = vertLine.length
+            height = vertLine.length*/
         }
     }
 

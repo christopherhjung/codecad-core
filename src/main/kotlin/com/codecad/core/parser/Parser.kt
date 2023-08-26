@@ -328,10 +328,10 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
                     IdentExpr(world, sym)
                 }
             }
-            Token.Kind.String -> LiteralExpr(world, next().symbol)
-            Token.Kind.Boolean -> LiteralExpr(world, java.lang.Boolean.parseBoolean(next().symbol))
-            Token.Kind.Number -> LiteralExpr(world, next().symbol!!.toInt())
-            Token.Kind.Real -> LiteralExpr(world, next().symbol!!.toDouble())
+            Token.Kind.String -> world.literal(next().symbol)
+            Token.Kind.Boolean -> world.literal(java.lang.Boolean.parseBoolean(next().symbol))
+            Token.Kind.Number -> world.literal(next().symbol!!.toInt())
+            Token.Kind.Real -> world.literal(next().symbol!!.toDouble())
             Token.Kind.Null -> {
                 next()
                 LiteralExpr(world, null)

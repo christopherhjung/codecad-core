@@ -15,14 +15,13 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
 
     fun absoluteAngle(target: Vec2Expr) : Double{
         val b = (target - this).eval()
-        return atan2(
-            b.y,
-            b.x,
-        )
+        return atan2(b.y, b.x)
     }
 
     fun normalized() : Vec2Expr {
-        return this / length()
+        return opt(NormalizedVec){
+            this / length()
+        } as Vec2Expr
     }
 
     fun rotate(center: Vec2Expr, angle: Expr) : Vec2Expr {
@@ -43,7 +42,7 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
         return x * right.x + y * right.y
     }
 
-    fun cross(right: Vec2Expr) : Expr {
+    fun crossZ(right: Vec2Expr) : Expr {
         return x * right.y - y * right.x
     }
 
@@ -86,6 +85,7 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
     }
 
     fun length(): Expr {
+        if(isType(NormalizedVec)) return world.One
         return squaredLength().sqrt()
     }
 

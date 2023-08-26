@@ -5,22 +5,52 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.constraint.*
-import com.codecad.core.face.entity.Workplane
-import com.codecad.core.face.entity.BoundedEdge
-import com.codecad.core.face.entity.Edge
-import com.codecad.core.face.entity.Vertex
+import com.codecad.core.face.entity.*
 import com.codecad.core.face.entity.curve.Circle
-import com.codecad.core.face.entity.curve.Line
 import com.codecad.core.optimizer.Solver
 import java.util.*
+
 
 class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
-    //val figures = ArrayList<Figure>()
-    //val lineType = HashMap<Figure, LineType>()
-    val world: World = partStudio.world
+    val world = partStudio.world
+    val figures = arrayListOf<Figure>()
 
+    fun generate(){
+        for( figure in figures ){
+            when(figure){
+                is SketchSegment -> {
+                    val projA = workplane.projectTo(figure.p0)
+                    val projB = workplane.projectTo(figure.p1)
+
+                    val lineNew = Edge(
+                        Line(projA, projB - projA),
+                        EdgeBound(Vertex(projA), Vertex(projB))
+                    )
+                }
+                is SketchCircle -> {
+                    val projCenter = workplane.projectTo(figure.center)
+                    val centerWorkplane = Workplane(projCenter, workplane.axisA, workplane.axisB )
+
+                    val circle = Edge(
+                        Circle(centerWorkplane, figure.radius)
+                    )
+                }
+                is SketchArc -> {
+                    val projCenter = workplane.projectTo(figure.center)
+                    val centerWorkplane = Workplane(projCenter, workplane.axisA, workplane.axisB )
+                    val arc = Edge(
+                        Circle(centerWorkplane, figure.radius),
+                        EdgeBound(
+                            Vertex(workplane.projectTo(figure.p0)),
+                            Vertex(workplane.projectTo(figure.p1))
+                        )
+                    )
+                }
+            }
+        }
+    }
 
     fun param(value: Double = 0.0): ParamExpr {
         val param = ParamExpr( world, value )
@@ -50,35 +80,23 @@ class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: St
         return point(a,b)
     }
 
-    fun line(a: Vec2Expr, b: Vec2Expr, type: LineType = LineType.Normal): SketchSegment {
-        val origin = workplane.projectTo(a);
-
-        val lineNew = BoundedEdge(
-            Vertex(origin),
-            Vertex(workplane.projectTo(b)),
-            Line(origin, workplane.projectTo(b - a))
-        )
-
-        val line = SketchSegment(a, b)
-        //lineType.putIfAbsent(line, type)
-        return line
-    }
-
-    fun cline(a: Vec2Expr, b: Vec2Expr) : SketchSegment {
-        return line(a,b, LineType.Construction)
+    fun line(a: Vec2Expr, b: Vec2Expr): SketchSegment {
+        val segment = SketchSegment(a, b)
+        figures.add(segment)
+        return segment
     }
 
     fun circle(center: Vec2Expr, radius: Expr): SketchCircle {
-        val projCenter = workplane.projectTo(center)
-
-
-
         val circle = SketchCircle(center, radius)
+        figures.add(circle)
         return circle
     }
 
-    fun arc(p0: Vec2Expr, p1: Vec2Expr, radius: Expr): SketchArc {
-        val arc = SketchArc(p0,p1,radius)
+    fun arc(p0: Vec2Expr, p1: Vec2Expr): SketchArc {
+        val h = param(1.0)
+
+        val arc = SketchArc(p0,p1,h)
+        figures.add(arc)
         return arc
     }
 
@@ -94,7 +112,7 @@ class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: St
         return line(constPoint(x, y), constPoint(x2, y2))
     }
 
-    fun tangent(circle: SketchConic, line: SketchSegment) {
+    fun tangent(circle: SketchConic, line : SketchSegment){
         addConstraint(CircleTangent(circle, line))
     }
 
@@ -162,12 +180,12 @@ class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: St
         constraints.add(constraint)
     }
 
-    fun solveImpl(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) : Boolean{
-        val result = Solver().solve(world, params.flatten(), constraints, accuracy)
+    fun solveImpl(accuracy: Double, params: Set<ParamExpr> = this.params) : Boolean{
+        val result = Solver().solve(world, params, constraints, accuracy)
         return result
     }
 
-    fun solve(accuracy: Double, params: List<Set<ParamExpr>> = listOf(this.params)) {
+    fun solve(accuracy: Double, params: Set<ParamExpr> = this.params) {
         val start = System.currentTimeMillis()
         val result = solveImpl(accuracy, params)
         val end = System.currentTimeMillis()

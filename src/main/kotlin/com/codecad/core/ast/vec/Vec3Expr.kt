@@ -58,8 +58,14 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
         return Vec3(x.evalDouble(scope), y.evalDouble(scope), z.evalDouble(scope))
     }
 
+    fun scaleTo(expr : Expr) : Vec3Expr{
+        return this * (expr / length())
+    }
+
     fun normalized() : Vec3Expr {
-        return this / length()
+        return opt(NormalizedVec){
+            this / length()
+        } as Vec3Expr
     }
 
     fun copy(): Vec3Expr {
@@ -71,9 +77,10 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     fun cross(other: Vec3Expr): Vec3Expr {
-        val x = y * other.z - z * other.y
-        val y = z * other.x - this.x * other.z
-        return world.vec3(this.x * other.y - this.y * other.x, x, y)
+        val x = this.y * other.z - this.z * other.y
+        val y = this.z * other.x - this.x * other.z
+        val z = this.x * other.y - this.y * other.x
+        return world.vec3(x, y, z)
     }
 
     override operator fun times(right: Expr) : Vec3Expr {
@@ -118,7 +125,7 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
         return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
     }
 
-    fun length(other: Vec2Expr): Expr {
+    fun distanceTo(other: Vec2Expr): Expr {
         return squaredLength(other).sqrt()
     }
 
@@ -138,7 +145,7 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     override fun toString(): String {
-        return "Vec3(x=$x, y=$y)"
+        return "Vec3(x=$x, y=$y, z=$z)"
     }
 
     companion object{

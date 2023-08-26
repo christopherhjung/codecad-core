@@ -3,37 +3,46 @@ package com.codecad.core
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.ast.vec.Vec3Expr
+import com.codecad.core.face.entity.Workplane
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Slot
 import kotlin.math.pow
 
 class World {
-    val ZERO = LiteralExpr(this, 0.0)
-    val ONE = LiteralExpr(this, 1.0)
-    val TWO = LiteralExpr(this, 2.0)
-
-    val ORIGIN = Vec2Expr(this, ZERO, ZERO)
-    val AXIS_X = SketchSegment(ORIGIN, Vec2Expr(this, ONE, ZERO))
-    val AXIS_Y = SketchSegment(ORIGIN, Vec2Expr(this, ZERO, ONE))
-
-    val XY = Plane(Vec3Expr(this, ZERO,ZERO,ONE), ZERO)
-    val YZ = Plane(Vec3Expr(this, ONE,ZERO,ZERO), ZERO)
-    val ZX = Plane(Vec3Expr(this, ZERO,ONE,ZERO), ZERO)
-
     private val sea = HashMap<Expr, Expr>()
+
+    val MinusOne = LiteralExpr(this, -1.0)
+    val Zero = LiteralExpr(this, 0.0)
+    val One = LiteralExpr(this, 1.0)
+    val Two = LiteralExpr(this, 2.0)
+
+    val ZeroVec2 = vec2(Zero, Zero)
+    val ZeroVec3 = vec3(Zero, Zero, Zero)
+
+    val DirectionX = vec3(One, Zero, Zero)
+    val DirectionY = vec3(Zero, One, Zero)
+    val DirectionZ = vec3(Zero, Zero, One)
+
+    val PlaneXY = Plane(DirectionZ, Zero)
+    val PlaneYZ = Plane(DirectionX, Zero)
+    val PlaneZX = Plane(DirectionY, Zero)
+
+    val WorkplaneXY = Workplane(ZeroVec3, DirectionX, DirectionY)
+    val WorkplaneYZ = Workplane(ZeroVec3, DirectionY, DirectionZ)
+    val WorkplaneZX = Workplane(ZeroVec3, DirectionX, DirectionZ)
 
     private inline fun <reified T : Expr> unify(expr: T) : T {
         return sea.putIfAbsent(expr, expr) as? T ?: expr
     }
 
     fun negate(expr : Expr) : Expr {
-        return if(expr === ZERO){
-            ZERO
+        return if(expr === Zero){
+            Zero
         }else if(expr is LiteralExpr){
             literal(-expr.evalDouble())
         }else{
-            mul(literal(-1.0), expr)
+            mul(MinusOne, expr)
             //unify(PrefixExpr(this, expr, Op.Sub))
         }
     }
@@ -81,26 +90,36 @@ class World {
     }
 
     fun add(lhs : Expr, rhs: Expr) : Expr {
-        return if(lhs === ZERO){
+        return if(lhs === Zero){
             rhs
-        }else if(rhs === ZERO){
+        }else if(rhs === Zero){
             lhs
         }else if(lhs === rhs){
-            mul(TWO, rhs)
+            mul(Two, rhs)
         }else if(rhs is LiteralExpr && lhs is LiteralExpr){
             literal(lhs.evalDouble() + rhs.evalDouble())
+        }else if(lhs is PowExpr && lhs.exp === Two && rhs is PowExpr && rhs.exp === Two){
+            val lhsBase = lhs.base
+            val rhsBase = rhs.base
+            if(lhsBase is SinExpr && rhsBase is CosExpr && lhsBase.arg === rhsBase.arg ){
+                One
+            }else if(lhsBase is CosExpr && rhsBase is SinExpr && lhsBase.arg === rhsBase.arg ){
+                One
+            }else{
+                reassociate(lhs, rhs, Op.Add)
+            }
         }else{
             reassociate(lhs, rhs, Op.Add)
         }
     }
 
     fun sub(lhs : Expr, rhs: Expr) : Expr {
-        return if (lhs === ZERO) {
+        return if (lhs === Zero) {
             negate(rhs)
-        } else if (rhs === ZERO) {
+        } else if (rhs === Zero) {
             lhs
         } else if (lhs === rhs) {
-            ZERO
+            Zero
         }else if(rhs is PrefixExpr && rhs.op == Op.Sub){
             add(lhs, rhs.expr)
         }else if(rhs is LiteralExpr){
@@ -115,18 +134,22 @@ class World {
     }
 
     fun mul(lhs : Expr, rhs: Expr) : Expr {
-        return if(lhs === ZERO || rhs === ZERO){
-            ZERO
-        }else if(lhs === ONE){
+        return if(lhs === Zero || rhs === Zero){
+            Zero
+        }else if(lhs === One){
             rhs
-        }else if(rhs === ONE){
+        }else if(rhs === One){
             lhs
         }else if(lhs === rhs){
-            pow(lhs, TWO)
+            pow(lhs, Two)
         }else if(lhs is PrefixExpr && rhs is PrefixExpr && lhs.op == Op.Sub && rhs.op == Op.Sub){
             mul(lhs.expr, rhs.expr)
         }else if(lhs is LiteralExpr && rhs is LiteralExpr){
             literal(lhs.evalDouble() * rhs.evalDouble())
+        }else if(lhs is SinExpr && rhs is CosExpr && lhs.arg === rhs.arg){
+            mul(literal(0.5), sin(mul(Two, lhs.arg)))
+        }else if(lhs is CosExpr && rhs is SinExpr && lhs.arg === rhs.arg){
+            mul(literal(0.5), sin(mul(Two, lhs.arg)))
         }else{
             reassociate(lhs, rhs, Op.Mul)
         }
@@ -164,12 +187,12 @@ class World {
     }
 
     fun div(lhs : Expr, rhs: Expr) : Expr {
-        return if (lhs === ZERO) {
-            ZERO
-        }else if (rhs === ONE){
+        return if (lhs === Zero) {
+            Zero
+        }else if (rhs === One){
             lhs
         }else if (lhs === rhs){
-            ONE
+            One
         }else if(rhs is InfixExpr && rhs.op == Op.Div){
             div(mul(lhs, rhs.rhs), rhs.lhs)
         }else if (lhs is LiteralExpr) {
@@ -204,12 +227,12 @@ class World {
     }
 
     fun pow(base : Expr, exp: Expr) : Expr {
-        return if(exp === ZERO){
-            ONE
-        }else if(exp === ONE){
+        return if(exp === Zero){
+            One
+        }else if(exp === One){
             base
-        }else if(base === ZERO){
-            ZERO
+        }else if(base === Zero){
+            Zero
         }else if(base is PowExpr){
             pow(base.base, mul(base.exp, exp))
         }else if (exp is LiteralExpr) {
@@ -218,7 +241,7 @@ class World {
             }else{
                 val expValue = exp.evalDouble()
                 if(expValue < 0.0){
-                    div(ONE, pow(base, literal(-expValue)))
+                    div(One, pow(base, literal(-expValue)))
                 }else{
                     unify(PowExpr(this, base, exp))
                 }
@@ -291,9 +314,10 @@ class World {
 
     fun literal(value: Any?) : Expr {
         return when(value){
-            0.0 -> ZERO
-            1.0 -> ONE
-            2.0 -> TWO
+            0.0 -> Zero
+            1.0 -> One
+            2.0 -> Two
+            -1.0 -> MinusOne
             else -> unify(LiteralExpr(this, value))
         }
     }
