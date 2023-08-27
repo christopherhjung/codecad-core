@@ -110,7 +110,7 @@ class CosExpr(world: World, val arg: Expr) : MathExpr(world){
     }
 }
 
-class AsinExpr(world: World, val arg: Expr) : MathExpr(world){
+class ASinExpr(world: World, val arg: Expr) : MathExpr(world){
     override fun eval(scope: Scope) : Any {
         return asin(arg.evalDouble(scope))
     }
@@ -125,12 +125,62 @@ class AsinExpr(world: World, val arg: Expr) : MathExpr(world){
 
     override fun equals(other: Any?): Boolean {
         return other === this ||
-                other is AsinExpr &&
+                other is ASinExpr &&
                 arg === other.arg
     }
 
     override fun hashCode(): Int {
         return 31 * arg.hashCode()
+    }
+}
+
+class ACosExpr(world: World, val arg: Expr) : MathExpr(world){
+    override fun eval(scope: Scope) : Any {
+        return acos(arg.evalDouble(scope))
+    }
+
+    override fun derivative(expr: Expr): Expr {
+        return -1.0 / (1.0 - arg.pow(2)).sqrt() * arg.derivative(expr)
+    }
+
+    override fun arg(): Expr {
+        return arg
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other === this ||
+                other is ACosExpr &&
+                arg === other.arg
+    }
+
+    override fun hashCode(): Int {
+        return 31 * arg.hashCode()
+    }
+}
+
+class ATan2Expr(world: World, val lhs: Expr, val rhs: Expr) : MathExpr(world){
+    override fun eval(scope: Scope) : Any {
+        return atan2(lhs.evalDouble(scope), rhs.evalDouble(scope))
+    }
+
+    override fun derivative(expr: Expr): Expr {
+        val denom = 1.0 / (lhs.pow(2) + rhs.pow(2))
+        return world.tuple(rhs * denom, - lhs * denom)
+    }
+
+    override fun arg(): Expr {
+        return world.tuple(lhs, rhs)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other === this ||
+                other is ATan2Expr &&
+                lhs === other.lhs &&
+                rhs === other.rhs
+    }
+
+    override fun hashCode(): Int {
+        return (31 * lhs.hashCode() + 11) * rhs.hashCode()
     }
 }
 

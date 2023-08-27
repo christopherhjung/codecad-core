@@ -1,5 +1,5 @@
 package com.codecad.core
-
+/*
 import com.codecad.common.LineError
 import com.codecad.core.exception.LineException
 import com.codecad.core.part.Executor
@@ -31,3 +31,4 @@ class Controller {
         }
     }
 }
+*/

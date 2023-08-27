@@ -9,19 +9,11 @@ import com.codecad.core.visitor.Printer
 import java.util.function.Consumer
 
 abstract class Expr(val world: World) {
-    private var type : Int = 0
-
-    fun opt(type : Int, block : () -> Expr) : Expr{
-        if(this.type == type) return this
-        val result = block()
-        result.type = type
-        return result
-    }
+    protected var type : Int = 0
 
     fun isType(type : Int) : Boolean{
         return type == this.type
     }
-
 
     abstract fun eval(scope: Scope = EmptyScope): Any?
 
@@ -30,7 +22,8 @@ abstract class Expr(val world: World) {
     }
 
     fun evalDouble(scope: Scope = EmptyScope): Double {
-        return eval(scope) as Double
+        val result = eval(scope)
+        return result as Double
     }
 
     fun evalLiteral(scope: Scope = EmptyScope): Expr {
@@ -156,6 +149,14 @@ abstract class Expr(val world: World) {
 
         fun asin(expr: Expr) : Expr {
             return expr.world.asin(expr)
+        }
+
+        fun acos(expr: Expr) : Expr {
+            return expr.world.acos(expr)
+        }
+
+        fun atan2(lhs: Expr, rhs: Expr) : Expr {
+            return lhs.world.atan2(lhs, rhs)
         }
 
         fun log(expr: Expr) : Expr {

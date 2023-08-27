@@ -4,24 +4,24 @@ import org.gradle.kotlin.dsl.execution.ProgramText.Companion.from
 
 plugins {
     java
-    kotlin("jvm") version "1.5.21"
+    kotlin("jvm") version "1.7.20"
     `maven-publish`
-    id("com.palantir.docker") version "0.27.0"
+    //id("com.palantir.docker") version "0.27.0"
     //id("com.palantir.docker-run") version "0.27.0"
 
-    id("org.springframework.boot") version "2.5.3"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    //id("org.springframework.boot") version "2.5.3"
+    //id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
 
 group = "com.codecad"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_16
 
-docker {
-    dependsOn(tasks.findByName("build"))
-    name = "${project.name}:${project.version}"
-    files( "build/libs/codecad-core-1.0-SNAPSHOT.jar")
-}
+//docker {
+//    dependsOn(tasks.findByName("build"))
+//    name = "${project.name}:${project.version}"
+//    files( "build/libs/codecad-core-1.0-SNAPSHOT.jar")
+//}
 
 
 publishing {
@@ -36,12 +36,12 @@ publishing {
 }
 
 
-tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    requiresUnpack("**/kotlin-compiler-*.jar")
+//tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    //requiresUnpack("**/kotlin-compiler-*.jar")
     //requiresUnpack("**/kotlin-daemon-*.jar")
     //requiresUnpack("**/kotlin-*.jar")
     //requiresUnpack("**/kotlinx-*.jar")
-}
+//}
 
 repositories {
     mavenCentral()
@@ -50,10 +50,10 @@ repositories {
 
 dependencies {
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    //implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation(kotlin("test-junit5"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
     implementation("com.codecad:codecad-common:1.0-SNAPSHOT")
     //implementation("de.lighti:Clipper:6.4.2")
     implementation(kotlin("stdlib"))

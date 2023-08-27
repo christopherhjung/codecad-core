@@ -1,7 +1,7 @@
 package com.codecad.core.face.entity.surface
 
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.face.entity.Workplane
+import com.codecad.core.face.entity.WorkplaneExpr
 
-class PlaneSurface(val workplane: Workplane) : Surface
-class CylindricalSurface(val workplane: Workplane, val radius: Expr) : Surface
+class PlaneSurface(val workplane: WorkplaneExpr) : Surface
+class CylindricalSurface(val workplane: WorkplaneExpr, val radius: Expr) : Surface

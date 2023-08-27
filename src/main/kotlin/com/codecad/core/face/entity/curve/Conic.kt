@@ -1,7 +1,7 @@
 package com.codecad.core.face.entity.curve
 
-import com.codecad.core.face.entity.Workplane
+import com.codecad.core.face.entity.WorkplaneExpr
 
-abstract class Conic(val workplane: Workplane) : Curve() {
+abstract class Conic(val workplane: WorkplaneExpr) : Curve() {
 
 }

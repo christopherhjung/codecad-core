@@ -121,7 +121,7 @@ class ShareRewriter(val world: World) : Rewriter(){
             is AbsExpr -> world.abs(rewriteImpl(expr.arg))
             is SinExpr -> world.sin(rewriteImpl(expr.arg))
             is CosExpr -> world.cos(rewriteImpl(expr.arg))
-            is AsinExpr -> world.asin(rewriteImpl(expr.arg))
+            is ASinExpr -> world.asin(rewriteImpl(expr.arg))
             is ExpExpr -> world.exp(rewriteImpl(expr.arg))
             is LogExpr -> world.log(rewriteImpl(expr.arg))
             else -> throw NotImplementedError("missing")

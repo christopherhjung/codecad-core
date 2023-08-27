@@ -8,24 +8,36 @@ import kotlin.math.sqrt
 
 data class Vec3(val x: Double, val y: Double, val z: Double)
 {
-    operator fun plus(rhs : Vec3) : Vec3{
-        return Vec3(x + rhs.x, y + rhs.y, z + rhs.z )
-    }
-
-    operator fun minus(rhs : Vec3) : Vec3{
-        return Vec3(x - rhs.x, y - rhs.y, z - rhs.z )
-    }
-
     fun dot(other: Vec3) : Double {
         return x * other.x + y * other.y + z * other.z
     }
 
     fun cross(other: Vec3): Vec3 {
-        val x = y * other.z - z * other.y
-        val y = z * other.x - this.x * other.z
-        return Vec3(this.x * other.y - this.y * other.x, x, y)
+        val x = this.y * other.z - this.z * other.y
+        val y = this.z * other.x - this.x * other.z
+        val z = this.x * other.y - this.y * other.x
+        return Vec3(x, y, z)
     }
 
+    operator fun times(value: Double) : Vec3 {
+        return Vec3(x * value, y * value, z * value)
+    }
+
+    operator fun div(right: Double) : Vec3 {
+        return Vec3(x / right, y / right, z / right)
+    }
+
+    operator fun plus(right: Vec3) : Vec3 {
+        return Vec3(x + right.x, y + right.y, z + right.z)
+    }
+
+    operator fun minus(right: Vec3) : Vec3 {
+        return Vec3(x - right.x, y - right.y, z - right.z)
+    }
+
+    operator fun minus(right: Double) : Vec3 {
+        return Vec3(x - right, y - right, z - right)
+    }
 
     fun squaredLength(): Double {
         return x.pow(2) + y.pow(2) + z.pow(2)
@@ -41,6 +53,10 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
 
     fun distance(other: Vec3): Double {
         return sqrt(squaredDistance(other))
+    }
+
+    fun toExpr(world: World) : Vec3Expr{
+        return world.vec3(world.literal(x), world.literal(y), world.literal(z))
     }
 
     companion object{
@@ -59,13 +75,14 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     fun scaleTo(expr : Expr) : Vec3Expr{
-        return this * (expr / length())
+        return this.normalized() * expr
     }
 
     fun normalized() : Vec3Expr {
-        return opt(NormalizedVec){
-            this / length()
-        } as Vec3Expr
+        return when (this.type) {
+            NormalizedVec -> this
+            else -> this / length()
+        }
     }
 
     fun copy(): Vec3Expr {
@@ -114,19 +131,25 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     fun squaredLength(): Expr {
-        return x.pow(2) + y.pow(2) + z.pow(2)
+        return when (type) {
+            NormalizedVec -> world.One
+            else -> x.pow(2) + y.pow(2) + z.pow(2)
+        }
     }
 
     fun length(): Expr {
-        return squaredLength().sqrt()
+        return when (type) {
+            NormalizedVec -> world.One
+            else -> squaredLength().sqrt()
+        }
     }
 
-    fun squaredLength(other: Vec2Expr): Expr {
-        return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
+    fun squaredDistanceTo(other: Vec3Expr): Expr {
+        return ( this - other ).squaredLength()
     }
 
-    fun distanceTo(other: Vec2Expr): Expr {
-        return squaredLength(other).sqrt()
+    fun distanceTo(other: Vec3Expr): Expr {
+        return squaredDistanceTo(other).sqrt()
     }
 
     override fun equals(other: Any?): Boolean {

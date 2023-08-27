@@ -3,34 +3,103 @@ package com.codecad.core.ast.vec
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
-import kotlin.math.atan2
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class Vec2(val x: Double, val y: Double){
     companion object{
         val ZERO = Vec2(0.0, 0.0)
     }
+
+    operator fun times(value: Double) : Vec2 {
+        return Vec2(x * value, y * value)
+    }
+
+    operator fun div(right: Double) : Vec2 {
+        return Vec2(x / right, y / right)
+    }
+
+    operator fun plus(right: Vec2) : Vec2 {
+        return Vec2(x + right.x, y + right.y)
+    }
+
+    operator fun minus(right: Vec2) : Vec2 {
+        return Vec2(x - right.x, y - right.y)
+    }
+
+    operator fun minus(right: Double) : Vec2 {
+        return Vec2(x - right, y - right)
+    }
+
+    fun squaredLength(): Double {
+        return x.pow(2) + y.pow(2)
+    }
+
+    fun length(): Double {
+        return sqrt(squaredLength())
+    }
+
+    fun squaredDistance(other: Vec3): Double {
+        return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
+    }
+
+    fun distance(other: Vec3): Double {
+        return sqrt(squaredDistance(other))
+    }
+
+    fun toExpr(world: World) : Vec2Expr{
+        return world.vec2(world.literal(x), world.literal(y))
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Vec2
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        return result
+    }
+
+
 }
 
 class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
 
-    fun absoluteAngle(target: Vec2Expr) : Double{
-        val b = (target - this).eval()
-        return atan2(b.y, b.x)
+    fun absoluteAngle() : Expr{
+        return atan2(y, x)
     }
 
     fun normalized() : Vec2Expr {
-        return opt(NormalizedVec){
-            this / length()
-        } as Vec2Expr
+        return when (this.type) {
+            NormalizedVec -> this
+            else -> {
+                val result = this / length()
+                result.type = NormalizedVec
+                result
+            }
+        }
     }
 
     fun rotate(center: Vec2Expr, angle: Expr) : Vec2Expr {
-        val a = sin(angle)
-        val b = cos(angle)
+        return rotate(this - center, angle) + center
+    }
+
+    fun rotate(angle: Expr) : Vec2Expr {
+        val s = sin(angle)
+        val c = cos(angle)
 
         return world.vec2(
-            b * (x - center.x) - a * (y - center.y) + center.x,
-            a * (x - center.x) + b * (y - center.y) + center.y
+            c * x - s * y,
+            s * x + c * y
         )
     }
 
@@ -38,7 +107,7 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
         return Vec2(x.evalDouble(scope), y.evalDouble(scope))
     }
 
-    fun scalar(right: Vec2Expr) : Expr {
+    fun dot(right: Vec2Expr) : Expr {
         return x * right.x + y * right.y
     }
 
@@ -81,12 +150,17 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
     }
 
     fun squaredLength(): Expr {
-        return x.pow(2) + y.pow(2)
+        return when (type) {
+            NormalizedVec -> world.One
+            else -> x.pow(2) + y.pow(2)
+        }
     }
 
     fun length(): Expr {
-        if(isType(NormalizedVec)) return world.One
-        return squaredLength().sqrt()
+        return when (type) {
+            NormalizedVec -> world.One
+            else -> squaredLength().sqrt()
+        }
     }
 
     fun squaredDistance(right: Vec2Expr): Expr {

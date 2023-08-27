@@ -1,21 +1,24 @@
 package com.codecad.core.mesh
 
 import com.codecad.core.ast.primitive.ParamExpr
+import com.codecad.core.ast.primitive.minus
+import com.codecad.core.ast.primitive.times
 import com.codecad.core.ast.vec.QuaternionExpr
+import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.face.entity.Edge
-import com.codecad.core.face.entity.EdgeLoop
-import com.codecad.core.face.entity.Face
-import com.codecad.core.face.entity.Shell
+import com.codecad.core.face.entity.*
 import com.codecad.core.face.entity.curve.Circle
 import com.codecad.core.face.entity.curve.Line
 import com.codecad.core.face.entity.surface.CylindricalSurface
 import com.codecad.core.face.entity.surface.PlaneSurface
 import com.codecad.core.volume.Volume
+import org.poly2tri.Poly2Tri
+import org.poly2tri.geometry.polygon.PolygonPoint
+import org.poly2tri.triangulation.TriangulationPoint
 
 
 class MeshGenerator {
-    val edgePoints = HashMap<Edge, List<Int>>()
+    val edgePoints = HashMap<Edge, List<Vec3>>()
     val map = HashMap<Vec3, Int>()
     val indices = arrayListOf<Int>()
     val vertices = arrayListOf<Float>()
@@ -40,77 +43,184 @@ class MeshGenerator {
         }
     }
 
+
     fun generate(face: Face){
         val surface = face.surface
+
         if(surface is PlaneSurface){
-            val bound = face.bounds.first()
-            val newIndices = indicesLoop(bound.edgeLoop)
+            val projector = PlaneProjector(surface.workplane.eval())
 
-            if(newIndices.size < 2) return
-            val first = newIndices[0]
-            var prev = newIndices[1]
-
-            for( current in newIndices.subList(2, newIndices.size) ){
-                indices.add(first)
-                indices.add(prev)
-                indices.add(current)
-                prev = current
+            var outline : List<Vec3>? = null
+            val holes = arrayListOf<List<Vec3>>()
+            for(bound in face.bounds){
+               val edgeLoop = bound.edgeLoop
+               if(bound.sense){
+                   outline = sweepVertices(edgeLoop)
+               }else{
+                   holes.add(sweepVertices(edgeLoop))
+               }
             }
+
+            addTriangles(generateTriangles(projector, outline!!, holes))
         }else if(surface is CylindricalSurface){
+/*
+            val projector = CylinderProjector(surface.workplane.eval(), surface.radius)
+
+            class CylindricalVertex(val edge: Edge, val vertexPoint : Vec3, val projPoint: Vec2) : Comparable<CylindricalVertex>{
+                lateinit var prev : CylindricalVertex
+                lateinit var next : CylindricalVertex
+                val nextList = arrayListOf<CylindricalVertex>()
+                val prevList = arrayListOf<CylindricalVertex>()
+
+                override fun compareTo(other: CylindricalVertex): Int {
+                    return when (projPoint.x) {
+                        other.projPoint.x -> projPoint.y.compareTo(other.projPoint.y)
+                        else -> projPoint.x.compareTo(other.projPoint.x)
+                    }
+                }
+            }
+
+            class CylindricalEvent(val vertex: CylindricalVertex) : Comparable<CylindricalEvent>{
+                override fun compareTo(other: CylindricalEvent): Int {
+                    val projPoint = vertex.projPoint
+                    val otherProjPoint = other.vertex.projPoint
+                    return when (projPoint.x) {
+                        otherProjPoint.x -> projPoint.y.compareTo(otherProjPoint.y)
+                        else -> projPoint.x.compareTo(otherProjPoint.x)
+                    }
+                }
+            }
+
+            val events = arrayListOf<CylindricalVertex>()
+            val helper = arrayListOf<CylindricalVertex>()
+
+            for(bound in face.bounds){
+                val edgeLoop = bound.edgeLoop
+
+                val loopVertices = arrayListOf<CylindricalVertex>()
+                for(current in edgeLoop){
+                    val vertices = sweepEdgeLoop(current)
+
+                    for( vertex in vertices ){
+                        val projPoint = projector.project(vertex)
+                        val cylVertex = CylindricalVertex(current.edge, vertex, projPoint)
+                        loopVertices.add(cylVertex)
+                    }
+                }
+
+                for( (lhsVertex, rhsVertex) in loopVertices.rollover() ){
+                    lhsVertex.next = rhsVertex
+                    rhsVertex.prev = lhsVertex
+
+                    val thetaDiff = abs(lhsVertex.projPoint.x - rhsVertex.projPoint.x)
+                    val jumping = thetaDiff > Math.PI
+                    val swap = (lhsVertex.projPoint.x > rhsVertex.projPoint.x) xor jumping
+
+                    val (lhs, rhs) = if(swap){
+                        Pair(rhsVertex, lhsVertex)
+                    }else{
+                        Pair(lhsVertex, rhsVertex)
+                    }
+
+                    if(jumping){
+                        helper.add(rhs)
+                    }
+
+                    lhs.nextList.add(rhs)
+                    rhs.prevList.add(lhs)
+                }
+
+                events.addAll(loopVertices)
+            }
+
+            events.sort()
+            helper.sortBy { it.projPoint.y }
+*/
+
+
+
             val firstBound = face.bounds.first()
             val lastBound = face.bounds.last()
-            val firstIndices = indicesLoop(firstBound.edgeLoop)
-            val secondIndices = indicesLoop(lastBound.edgeLoop)
+            val firstIndices = sweepVertices(firstBound.edgeLoop)
+            val secondIndices = sweepVertices(lastBound.edgeLoop)
 
             val size = firstIndices.size
             for( idx in firstIndices.indices ){
                 val nextIdx = (idx + 1) % size
-                indices.add(firstIndices[idx])
-                indices.add(secondIndices[idx])
-                indices.add(firstIndices[nextIdx])
 
-                indices.add(secondIndices[idx])
-                indices.add(firstIndices[nextIdx])
-                indices.add(secondIndices[nextIdx])
+                addTriangle(
+                    getIndex(firstIndices[idx]),
+                    getIndex(secondIndices[idx]),
+                    getIndex(firstIndices[nextIdx]),
+                )
+
+                addTriangle(
+                    getIndex(secondIndices[idx]),
+                    getIndex(firstIndices[nextIdx]),
+                    getIndex(secondIndices[nextIdx]),
+                )
             }
-        }
-    }
-
-    fun indicesLoop(edgeLoop: EdgeLoop) : List<Int>{
-        var current = edgeLoop
-
-        val indices = arrayListOf<Int>()
-        while(true){
-            indices.addAll(generate(current))
-
-            current = current.next
-            if(current === edgeLoop) break
-        }
-
-        return indices
-    }
-
-    fun generate(edgeLoop: EdgeLoop) : List<Int>{
-        val indices = edgePoints.computeIfAbsent(edgeLoop.edge){
-            generate(it)
-        }
-
-        return if(edgeLoop.orientation){
-            indices.reversed()
         }else{
-            indices
+            throw RuntimeException("No projector found")
         }
     }
 
-    fun generate(edge: Edge) : List<Int>{
-        val indices = arrayListOf<Int>()
-        val curve = edge.curve
-
-        fun addPoint(point: Vec3){
+    fun getIndex(point : Vec3) : Int{
+        return map.computeIfAbsent(point){
             vertices.add(point.x.toFloat())
             vertices.add(point.y.toFloat())
             vertices.add(point.z.toFloat())
-            indices.add(createVertex(point))
+            map.size
+        }
+    }
+
+    private fun addTriangle(a: Int, b: Int, c: Int){
+        indices.add(a)
+        indices.add(b)
+        indices.add(c)
+    }
+
+    private fun addTriangles(triangleFaces: List<TriangleFace>){
+        for(face in triangleFaces){
+            addTriangle(
+                getIndex(face.a),
+                getIndex(face.b),
+                getIndex(face.c)
+            )
+        }
+    }
+
+    fun sweepVertices(edgeLoop: EdgeLoop) : List<Vec3>{
+        val vertices = arrayListOf<Vec3>()
+        for(current in edgeLoop){
+            vertices.addAll(sweepEdgeLoop(current))
+        }
+
+        return vertices
+    }
+
+    fun sweepEdgeLoop(edgeLoop: EdgeLoop) : List<Vec3>{
+        val vertices = sweepEdge(edgeLoop.edge)
+
+        return if(edgeLoop.orientation){
+            vertices.reversed()
+        }else{
+            vertices
+        }
+    }
+
+    fun sweepEdge(edge: Edge) : List<Vec3>{
+        return edgePoints.computeIfAbsent(edge){
+            sweepEdgeImpl(it)
+        }
+    }
+
+    fun sweepEdgeImpl(edge: Edge) : List<Vec3>{
+        val vertices = arrayListOf<Vec3>()
+        val curve = edge.curve
+
+        fun addPoint(point: Vec3){
+            vertices.add(point)
         }
 
         when(curve){
@@ -118,21 +228,46 @@ class MeshGenerator {
                 val bound = edge.bound
                 if(bound != null){
                     addPoint(bound.start.point.eval())
-                    addPoint(bound.end.point.eval())
+                    //addPoint(bound.end.point.eval())
                 }
             }
 
             is Circle -> {
                 val workplane = curve.workplane
-                val axisUp = workplane.axisA.cross(workplane.axisB)
+                val axisUp = workplane.axisUp
 
+                val bound = edge.bound
                 val paramExpr = ParamExpr(axisUp.world, 0.0)
-                val quaternion = QuaternionExpr.fromNAxis(axisUp, paramExpr)
-                val somePoint = workplane.origin + workplane.axisA * curve.radius
-                val rotatedPoint = quaternion.rotate(workplane.origin, somePoint)
+                val world = workplane.world
+                val rotatedPoint = if(bound != null){
+                    val startPoint = bound.start.point.copy()
+                    val endPoint = bound.end.point.copy()
 
-                for( angle in 0 until 360 ){
-                    val theta = angle * (Math.PI / 180.0)
+                    val projStartPoint = workplane.project(startPoint)
+                    val projEndPoint = workplane.project(endPoint)
+
+                    val startTheta = projStartPoint.absoluteAngle()
+                    val offsetPoint = projEndPoint.rotate(-startTheta)
+                    val offsetTheta = offsetPoint.absoluteAngle()
+                    val theta = startTheta + paramExpr * when(bound.sense){
+                        Sense.CCW -> offsetTheta
+                        Sense.CW  -> (offsetTheta - 2.0 * Math.PI)
+                        else -> throw RuntimeException("Missing Sense")
+                    }
+
+                    val rotatedPoint2D = world.vec2(curve.radius, world.Zero)
+                    val rotatedPoint = rotatedPoint2D.rotate(theta)
+
+                    workplane.unproject(rotatedPoint)
+                }else{
+                    val quaternion = QuaternionExpr.fromAxis(axisUp, (2.0 * Math.PI) * paramExpr )
+                    val somePoint = workplane.unproject(curve.radius, workplane.world.Zero)
+                    quaternion.rotate(workplane.origin, somePoint)
+                }
+
+                val count = 10
+                for( angle in 0 until count ){
+                    val theta = angle / count.toDouble()
                     paramExpr.value = theta
                     val point = rotatedPoint.eval()
                     addPoint(point)
@@ -140,12 +275,9 @@ class MeshGenerator {
             }
         }
 
-        return indices
+        return vertices
     }
 }
-
-
-
 
 
 /*
@@ -184,3 +316,63 @@ class MeshGenerator {
         return mesh
     }
 }*/
+
+
+
+
+class TriangleFace(val a: Vec3, val b: Vec3, val c: Vec3)
+
+fun generateTriangles(projector: Projector, outline: List<Vec3>, holes: List<List<Vec3>>) : List<TriangleFace>{
+    if(outline.size < 3){
+        return listOf()
+    }
+
+    val pointMap = HashMap<Vec2, Vec3>()
+    fun createPoint(point: Vec3) : PolygonPoint {
+        val projectPoint = projector.project(point)
+        pointMap[projectPoint] = point
+        return PolygonPoint(projectPoint.x, projectPoint.y, 0.0)
+    }
+
+    fun pointsToPolygon(points: List<Vec3>) : org.poly2tri.geometry.polygon.Polygon{
+        val list = mutableListOf<PolygonPoint>()
+        for( point in points ){
+            list.add(createPoint(point))
+        }
+        return org.poly2tri.geometry.polygon.Polygon(list)
+    }
+
+    val parent = pointsToPolygon(outline)
+
+    for( child in holes ){
+        if(outline.size < 3){
+            continue
+        }
+
+        parent.addHole(pointsToPolygon(child))
+    }
+
+    try{
+        Poly2Tri.triangulate(parent)
+    }catch (e: Exception){
+        e.printStackTrace()
+        throw e
+    }
+
+    val triangles = mutableListOf<TriangleFace>()
+    fun createPoint(trianglePoint: TriangulationPoint) : Vec3 {
+        val point = Vec2(trianglePoint.x, trianglePoint.y)
+        return pointMap[point]!!
+    }
+
+    for( triangle in parent.triangles ){
+        val points = triangle.points
+        triangles.add(TriangleFace(
+            createPoint(points[0]),
+            createPoint(points[1]),
+            createPoint(points[2])))
+    }
+
+    return triangles
+}
+

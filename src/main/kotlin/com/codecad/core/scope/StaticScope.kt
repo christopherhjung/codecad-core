@@ -29,7 +29,7 @@ class StaticScope(private val map: Map<String?, Slot?>) : Scope {
             add(key, function)
             return this
         }
-
+/*
         fun addMethod(key: String?, obj: Any, methodName: String): Builder {
             val objClass: Class<*> = obj.javaClass
             val methods = Arrays.stream(objClass.declaredMethods)
@@ -55,7 +55,7 @@ class StaticScope(private val map: Map<String?, Slot?>) : Scope {
                 .filter { it: Method -> it.modifiers and Modifier.STATIC != 0 }
                 .toList().toTypedArray()
             return addMethodsByClass(null, className, staticMethods)
-        }
+        }*/
 
         fun addMethodsByClass(obj: Any?, className: String?, methods: Array<Method>): Builder {
             val resultMap = collectMethods(obj, methods)

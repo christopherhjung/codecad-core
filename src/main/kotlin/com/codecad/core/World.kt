@@ -3,7 +3,7 @@ package com.codecad.core
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.ast.vec.Vec3Expr
-import com.codecad.core.face.entity.Workplane
+import com.codecad.core.face.entity.WorkplaneExpr
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Slot
@@ -20,6 +20,9 @@ class World {
     val ZeroVec2 = vec2(Zero, Zero)
     val ZeroVec3 = vec3(Zero, Zero, Zero)
 
+    val Vec2X = vec2(One, Zero)
+    val Vec2Y = vec2(Zero, One)
+
     val DirectionX = vec3(One, Zero, Zero)
     val DirectionY = vec3(Zero, One, Zero)
     val DirectionZ = vec3(Zero, Zero, One)
@@ -28,9 +31,9 @@ class World {
     val PlaneYZ = Plane(DirectionX, Zero)
     val PlaneZX = Plane(DirectionY, Zero)
 
-    val WorkplaneXY = Workplane(ZeroVec3, DirectionX, DirectionY)
-    val WorkplaneYZ = Workplane(ZeroVec3, DirectionY, DirectionZ)
-    val WorkplaneZX = Workplane(ZeroVec3, DirectionX, DirectionZ)
+    val WorkplaneXY = WorkplaneExpr(ZeroVec3, DirectionX, DirectionY)
+    val WorkplaneYZ = WorkplaneExpr(ZeroVec3, DirectionY, DirectionZ)
+    val WorkplaneZX = WorkplaneExpr(ZeroVec3, DirectionX, DirectionZ)
 
     private inline fun <reified T : Expr> unify(expr: T) : T {
         return sea.putIfAbsent(expr, expr) as? T ?: expr
@@ -231,6 +234,8 @@ class World {
             One
         }else if(exp === One){
             base
+        }else if(base === One){
+            One
         }else if(base === Zero){
             Zero
         }else if(base is PowExpr){
@@ -270,11 +275,29 @@ class World {
     }
 
     fun asin(expr : Expr) : Expr {
-        val asinExpr = AsinExpr(this, expr)
+        val asinExpr = ASinExpr(this, expr)
         return if(expr is LiteralExpr){
             asinExpr.evalLiteral()
         }else{
             unify(asinExpr)
+        }
+    }
+
+    fun acos(expr : Expr) : Expr {
+        val acosExpr = ACosExpr(this, expr)
+        return if(expr is LiteralExpr){
+            acosExpr.evalLiteral()
+        }else{
+            unify(acosExpr)
+        }
+    }
+
+    fun atan2(lhs : Expr, rhs: Expr) : Expr {
+        val acosExpr = ATan2Expr(this, lhs, rhs)
+        return if(lhs is LiteralExpr && rhs is LiteralExpr){
+            acosExpr.evalLiteral()
+        }else{
+            unify(acosExpr)
         }
     }
 

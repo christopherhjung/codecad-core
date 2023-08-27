@@ -1,13 +1,10 @@
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.face.entity.Workplane
 import org.junit.jupiter.api.Test
 import kotlin.test.assertSame
 
 class NormalizeTest {
-
     val world = World()
-
 
     @Test
     fun first(){

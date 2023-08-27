@@ -3,76 +3,103 @@ package com.codecad.core.ast.vec
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.div
+import com.codecad.core.ast.primitive.minus
 import com.codecad.core.ast.primitive.times
 import com.codecad.core.scope.Scope
 
-data class Quaternion(val w: Double = 0.0, val vx:Double = 0.0, val vy:Double = 0.0, val vz:Double = 0.0)
+data class Quaternion(val w: Double = 0.0, val x:Double = 0.0, val y:Double = 0.0, val z:Double = 0.0)
 
 
-class QuaternionExpr(world: World, val w: Expr, val vx:Expr, val vy:Expr, val vz:Expr) : Expr(world){
+class QuaternionExpr(world: World, val w: Expr, val x:Expr, val y:Expr, val z:Expr) : Expr(world){
 
     override fun eval(scope: Scope): Quaternion {
         return Quaternion(
             w.evalDouble(scope),
-            vx.evalDouble(scope),
-            vy.evalDouble(scope),
-            vz.evalDouble(scope)
+            x.evalDouble(scope),
+            y.evalDouble(scope),
+            z.evalDouble(scope)
         )
     }
 
     fun rotate(center: Vec3Expr, point : Vec3Expr) : Vec3Expr{
+        return rotate(point - center) + center
+    }
+
+    fun rotate(point : Vec3Expr) : Vec3Expr{
         val w2 = w.pow(2)
-        val vx2 = vx.pow(2)
-        val vy2 = vy.pow(2)
-        val vz2 = vz.pow(2)
+        val vx2 = x.pow(2)
+        val vy2 = y.pow(2)
+        val vz2 = z.pow(2)
 
-        val sqrSum = w2 + vx2 + vy2 + vz2
-        val invSqrSum = 1.0 / sqrSum
-        val offset = point - center
+        val invSqrSum = 1.0 / (w2 + vx2 + vy2 + vz2)
+        val m = point.x
+        val n = point.y
+        val o = point.z
 
-        val m = offset.x
-        val n = offset.y
-        val o = offset.z
+        val tx = ( (w2+vx2-vy2-vz2)*m + 2.0*(w*z + x*y)*n  + 2.0*(x*z-w*y)*o )
+        val ty = ( 2.0*(x*y - w*z)*m  + (w2-vx2+vy2-vz2)*n + 2.0*(w*x+y*z)*o )
+        val tz = ( 2.0*(w*y + x*z)*m  + 2.0*(y*z - w*x)*n  + (w2-vx2-vy2+vz2)*o )
 
-        val x = center.x + invSqrSum * ( (w2+vx2-vy2-vz2)*m + 2.0*(w*vz+vx*vy)*n + 2.0*(vx*vz-w*vy)*o )
-        val y = center.y + invSqrSum * ( 2.0*(vx*vy-w*vz)*m + (w2-vx2+vy2-vz2)*n + 2.0*(w*vx+vy*vz)*o )
-        val z = center.z + invSqrSum * ( 2.0*(w*vy+vx*vz)*m + 2.0*(vy*vz-w*vx)*n + (w2-vx2-vy2+vz2)*o )
+        return world.vec3(tx,ty,tz) * invSqrSum
+    }
 
-        return world.vec3(x,y,z)
+    fun dotProduct(other: QuaternionExpr): Expr {
+        return w * other.w + x * other.x + y * other.y + z * other.z
     }
 
     fun inverse() : QuaternionExpr{
-        val sqrSum = w.pow(2) + vx.pow(2) + vy.pow(2) + vz.pow(2)
+        val sqrSum = w.pow(2) + x.pow(2) + y.pow(2) + z.pow(2)
         val minSqrSum = - sqrSum
-        return QuaternionExpr(world, w / sqrSum, vx / minSqrSum, vy / minSqrSum, vz / minSqrSum )
+        return QuaternionExpr(world, w / sqrSum, x / minSqrSum, y / minSqrSum, z / minSqrSum )
+    }
+
+    fun negate(): QuaternionExpr {
+        return QuaternionExpr(world, -w, -x, -y, -z)
     }
 
     override fun equals(other: Any?): Boolean {
         return this === other ||
-                other is QuaternionExpr &&
-                w == other.w &&
-                vx == other.vx &&
-                vy == other.vy &&
-                vz == other.vz
+            other is QuaternionExpr &&
+            w == other.w &&
+            x == other.x &&
+            y == other.y &&
+            z == other.z
     }
 
     override fun hashCode(): Int {
         var hash = 31 * w.hashCode()
-        hash = 31 * vx.hashCode() + 11 * hash
-        hash = 31 * vy.hashCode() + 11 * hash
-        hash = 31 * vz.hashCode() + 11 * hash
+        hash = 31 * x.hashCode() + 11 * hash
+        hash = 31 * y.hashCode() + 11 * hash
+        hash = 31 * z.hashCode() + 11 * hash
         return hash
     }
 
     override fun toString(): String {
-        return "Quaternion(w=$w, vx=$vx, vy=$vy, vz=$vz)"
+        return "Quaternion(w=$w, x=$x, y=$y, z=$z)"
     }
 
     companion object{
-        fun fromNAxis(axis : Vec3Expr, theta: Expr ) : QuaternionExpr{
-            val thetaHalf = theta / 2
-            val scaledAxis = axis * sin(thetaHalf)
+        fun fromAxis(axis : Vec3Expr, theta: Expr ) : QuaternionExpr{
+            val thetaHalf = theta * 0.5
+            val scaledAxis = axis.scaleTo(sin(thetaHalf))
             return QuaternionExpr(axis.world, cos(thetaHalf), scaledAxis.x, scaledAxis.y, scaledAxis.z)
+        }
+
+        fun slerp(q1: QuaternionExpr, q2: QuaternionExpr, t: Expr): QuaternionExpr {
+            val dot = q1.dotProduct(q2)
+            val theta = acos(dot)
+            val sinTheta = sin(theta)
+
+            val weight1 = sin((1.0 - t) * theta) / sinTheta
+            val weight2 = sin(t * theta) / sinTheta
+
+            return QuaternionExpr(
+                q1.world,
+                w = weight1 * q1.w + weight2 * q2.w,
+                x = weight1 * q1.x + weight2 * q2.x,
+                y = weight1 * q1.y + weight2 * q2.y,
+                z = weight1 * q1.z + weight2 * q2.z
+            )
         }
     }
 }

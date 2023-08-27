@@ -11,7 +11,7 @@ import com.codecad.core.optimizer.Solver
 import java.util.*
 
 
-class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: String) {
+class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val world = partStudio.world
@@ -21,30 +21,27 @@ class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: St
         for( figure in figures ){
             when(figure){
                 is SketchSegment -> {
-                    val projA = workplane.projectTo(figure.p0)
-                    val projB = workplane.projectTo(figure.p1)
+                    val projA = workplane.unproject(figure.p0)
+                    val projB = workplane.unproject(figure.p1)
 
-                    val lineNew = Edge(
-                        Line(projA, projB - projA),
-                        EdgeBound(Vertex(projA), Vertex(projB))
-                    )
+                    val lineNew = Edge.line(Vertex(projA), Vertex(projB))
                 }
                 is SketchCircle -> {
-                    val projCenter = workplane.projectTo(figure.center)
-                    val centerWorkplane = Workplane(projCenter, workplane.axisA, workplane.axisB )
+                    val projCenter = workplane.unproject(figure.center)
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.axisA, workplane.axisB )
 
                     val circle = Edge(
                         Circle(centerWorkplane, figure.radius)
                     )
                 }
                 is SketchArc -> {
-                    val projCenter = workplane.projectTo(figure.center)
-                    val centerWorkplane = Workplane(projCenter, workplane.axisA, workplane.axisB )
+                    val projCenter = workplane.unproject(figure.center)
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.axisA, workplane.axisB )
                     val arc = Edge(
                         Circle(centerWorkplane, figure.radius),
                         EdgeBound(
-                            Vertex(workplane.projectTo(figure.p0)),
-                            Vertex(workplane.projectTo(figure.p1))
+                            Vertex(workplane.unproject(figure.p0)),
+                            Vertex(workplane.unproject(figure.p1))
                         )
                     )
                 }

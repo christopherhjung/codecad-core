@@ -100,6 +100,8 @@ class Printer() : Visitor(){
             is PowExpr -> "pow"
             is SinExpr -> "sin"
             is CosExpr -> "cos"
+            is ASinExpr -> "asin"
+            is ACosExpr -> "acos"
             else -> throw Error("xx")
         }
 

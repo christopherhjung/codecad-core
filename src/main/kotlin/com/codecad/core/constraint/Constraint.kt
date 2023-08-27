@@ -20,7 +20,6 @@ abstract class Constraint {
         }
 }
 
-
 class Minimize(val expr: Expr) : Constraint() {
     override fun equationImpl() : Expr {
         return expr
@@ -88,30 +87,9 @@ fun distanceBetweenPoints(p0: Vec2Expr, p1: Vec2Expr): Expr {
 
 class Perpendicular(val line1: SketchSegment, val line2: SketchSegment) : Constraint() {
     override fun equationImpl(): Expr {
-        return (line1.direction.normalized().scalar(line2.direction.normalized())).pow(2)
+        return (line1.direction.normalized().dot(line2.direction.normalized())).pow(2)
     }
 }
-/*
-fun lineCross(line1: com.codecad.core.Line, line2: com.codecad.core.Line, cross: Boolean = true): com.codecad.core.Expr {
-    var dx = line1.p1.x - line1.p0.x
-    var dy = line1.p1.y - line1.p0.y
-    var dx2 = line2.p1.x - line2.p0.x
-    var dy2 = line2.p1.y - line2.p0.y
-
-    val hyp1 = line1.length
-    val hyp2 = line2.length
-
-    dx /= hyp1
-    dy /= hyp1
-    dx2 /= hyp2
-    dy2 /= hyp2
-
-    return if (cross) {
-        dx * dy2 - dy * dx2
-    } else {
-        dx * dx2 + dy * dy2
-    }
-}*/
 
 class Parallel(val line1: SketchSegment, val line2: SketchSegment) : Constraint() {
     override fun equationImpl(): Expr {
@@ -155,7 +133,7 @@ class PointOnLineMidpoint(val point: Vec2Expr, val line: SketchSegment) : Constr
 
 class InternalAngle(val line1: SketchSegment, val line2: SketchSegment, val angle: Expr) : Constraint() {
     override fun equationImpl(): Expr {
-        return (line1.direction.scalar(line2.direction) - Expr.cos(angle)).pow(2)
+        return (line1.direction.dot(line2.direction) - Expr.cos(angle)).pow(2)
     }
 }
 
