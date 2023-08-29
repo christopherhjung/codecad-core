@@ -47,6 +47,7 @@ class StepExport : ModelExport{
     private val data = StringBuilder()
     private val vertices = hashMapOf<Vertex, Id>()
     private val edges = hashMapOf<Edge, Id>()
+    private val circleSeam = hashMapOf<Edge, Vertex>()
     private var index = 10
 
     data class Id(val value : Int)
@@ -160,12 +161,23 @@ class StepExport : ModelExport{
         return edges.computeIfAbsent(edge){
             val bound = edge.bound
 
-            val start = bound?.start?.let { createVertexPoint(it) }
-            val end = bound?.end?.let { createVertexPoint(it) }
+            val edgeCurve = edge.curve
+            val curve = createCurve(edgeCurve)
+            if(bound != null){
+                val start = createVertexPoint(bound.start)
+                val end = createVertexPoint(bound.end)
+                val sense = bound.sense != Sense.CW
+                createEdgeCurve(start, end, curve, sense)
+            }else if(edgeCurve is Circle){
+                val vertex = circleSeam.computeIfAbsent(edge){
+                    val workplane = edgeCurve.workplane
+                    val somePoint = workplane.unproject(edgeCurve.radius, workplane.world.Zero)
+                    Vertex(somePoint)
+                }
 
-            val curve = createCurve(edge.curve)
-            val sense = (bound?.sense ?: Sense.CCW) != Sense.CW
-            createEdgeCurve(start!!, end!!, curve, sense)
+                val startEnd = createVertexPoint(vertex)
+                createEdgeCurve(startEnd, startEnd, curve, true)
+            }else throw RuntimeException("Bound not found")
         }
     }
 
@@ -257,7 +269,7 @@ class StepExport : ModelExport{
             createObject("SI_UNIT", "$", ".RADIAN.")
         )
 
-        val metreUnit = addSpecialObject(
+        val mmUnit = addSpecialObject(
             createObject("LENGTH_UNIT"),
             createObject("NAMED_UNIT", "*"),
             createObject("SI_UNIT", ".MILLI.", ".METRE.")
@@ -265,7 +277,7 @@ class StepExport : ModelExport{
 
         val uncertaintyMeasureWithUnit = addObject("UNCERTAINTY_MEASURE_WITH_UNIT",
             createObject("LENGTH_MEASURE", "5.E-6"),
-            metreUnit,
+            mmUnit,
             "'DISTANCE_ACCURACY_VALUE'",
             "'Maximum Tolerance applied to model'"
         )
@@ -273,7 +285,7 @@ class StepExport : ModelExport{
         val representationContext = addSpecialObject(
             createObject("GEOMETRIC_REPRESENTATION_CONTEXT", 3),
             createObject("GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT", tuple(uncertaintyMeasureWithUnit)),
-            createObject("GLOBAL_UNIT_ASSIGNED_CONTEXT", tuple(solidAngleUnit, radianUnit, metreUnit)),
+            createObject("GLOBAL_UNIT_ASSIGNED_CONTEXT", tuple(solidAngleUnit, radianUnit, mmUnit)),
             createObject("REPRESENTATION_CONTEXT", "'Part 1'", "'TOP_LEVEL_ASSEMBLY_PART'")
         )
 
@@ -300,6 +312,10 @@ class StepExport : ModelExport{
         val shapeRepresentation = addNamedObject("SHAPE_REPRESENTATION", tuple(axisPlacement), representationContext, name = "Part 1")
         val shapeDefinitionRepresentation = addObject("SHAPE_DEFINITION_REPRESENTATION", productDefinitionShape, shapeRepresentation)
         return shapeRepresentation
+    }
+
+    private fun createShapeRepresentationRelationship(shapeRepresentation: Id, shapeRep: Id){
+        addNamedObject("SHAPE_REPRESENTATION_RELATIONSHIP", "''", shapeRepresentation, shapeRep)
     }
 
     private fun createAxisPlacement(workplane: Workplane) : Id{
@@ -371,10 +387,6 @@ class StepExport : ModelExport{
         val openShell = createOpenShell(listOf(createAdvancedFace(face)))
         val surfaceModel = createShellSurface(openShell)
         return surfaceModel
-    }
-
-    private fun createShapeRepresentationRelationship(shapeRepresentation: Id, shapeRep: Id){
-        addNamedObject("SHAPE_REPRESENTATION_RELATIONSHIP", "''", shapeRepresentation, shapeRep)
     }
 
     override fun export(context: Context): ByteArray{

@@ -85,21 +85,9 @@ class MeshGenerator {
                 }
             }
 
-            class CylindricalEvent(val vertex: CylindricalVertex) : Comparable<CylindricalEvent>{
-                override fun compareTo(other: CylindricalEvent): Int {
-                    val projPoint = vertex.projPoint
-                    val otherProjPoint = other.vertex.projPoint
-                    return when (projPoint.x) {
-                        otherProjPoint.x -> projPoint.y.compareTo(otherProjPoint.y)
-                        else -> projPoint.x.compareTo(otherProjPoint.x)
-                    }
-                }
-            }
-
             val events = arrayListOf<CylindricalVertex>()
             val helper = arrayListOf<CylindricalVertex>()
 
-            println(Debugger().addFace(face).build())
             for(bound in face.bounds){
                 val edgeLoop = bound.edgeLoop
 
