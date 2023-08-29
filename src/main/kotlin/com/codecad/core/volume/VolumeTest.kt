@@ -27,7 +27,8 @@ class Debugger{
             faceBuilder.append("Face(")
             var sep = ""
             for(edgeLoop in faceBound.edgeLoop){
-                val edge = edgeLoop.edge
+                val orientedEdge = edgeLoop.edge
+                val edge = orientedEdge.edge
                 val bound = edge.bound
                 if(bound != null){
                     faceBuilder.append(sep).append(getVertexIndex(bound.start))

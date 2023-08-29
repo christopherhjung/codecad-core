@@ -1,7 +1,9 @@
 package com.codecad.core.brep.curve
 
+import com.codecad.core.ast.vec.Vec3Expr
 
-open class Curve(){
 
+abstract class Curve(){
+    abstract fun move(offset : Vec3Expr) : Curve
 }
 

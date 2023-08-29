@@ -7,8 +7,32 @@ enum class FaceBoundSense{
 }
 
 class FaceBound(var edgeLoop : EdgeLoop, var sense: FaceBoundSense)
+enum class EdgeOrientation{
+    Forward, Backward;
 
-class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
+    fun invert() : EdgeOrientation{
+        return when(this){
+            Forward -> Backward
+            Backward -> Forward
+        }
+    }
+}
+class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrientation.Forward){
+    override fun equals(other: Any?): Boolean {
+        return this === other ||
+                other is OrientedEdge &&
+                edge == other.edge &&
+                orientation == other.orientation
+    }
+
+    override fun hashCode(): Int {
+        var result = edge.hashCode()
+        result = 31 * result + orientation.hashCode()
+        return result
+    }
+}
+
+class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
     var orientation : Boolean = false
     lateinit var twin : EdgeLoop
 
@@ -21,17 +45,21 @@ class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
 
     companion object{
         fun of(edge: Edge) : EdgeLoop {
-            val loop = EdgeLoop(edge)
+            val loop = EdgeLoop(OrientedEdge(edge))
             loop.next = loop
             loop.prev = loop
             return loop
         }
 
-        fun of(vararg edges: Edge) : EdgeLoop {
+        fun forward(vararg edges: Edge) : EdgeLoop {
+            return of(edges.map { OrientedEdge(it, EdgeOrientation.Forward) })
+        }
+
+        fun of(vararg edges: OrientedEdge) : EdgeLoop {
             return of(edges.toList())
         }
 
-        fun of(edges: Iterable<Edge>) : EdgeLoop {
+        fun of(edges: Iterable<OrientedEdge>) : EdgeLoop {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
@@ -54,10 +82,18 @@ class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
         }
 
         fun polygon(vararg vertices: Vec3Expr) : EdgeLoop{
-            val edges = arrayListOf<Edge>()
+            return polygon(vertices.map { Vertex(it) })
+        }
 
-            for((lhs, rhs) in vertices.map { Vertex(it) }.rollover() ){
-                edges.add(Edge.line(lhs, rhs))
+        fun polygon(vararg vertices: Vertex) : EdgeLoop{
+            return polygon(vertices.asIterable())
+        }
+
+        fun polygon(vertices: Iterable<Vertex>) : EdgeLoop{
+            val edges = arrayListOf<OrientedEdge>()
+
+            for((lhs, rhs) in vertices.asIterable().rollover() ){
+                edges.add(OrientedEdge(Edge.line(lhs, rhs)))
             }
 
             return of(*edges.toTypedArray())

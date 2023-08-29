@@ -8,4 +8,8 @@ class Line(var point : Vec3Expr, var direction : Vec3Expr) : Curve(){
             return Line(start, end - start)
         }
     }
+
+    override fun move(offset: Vec3Expr): Curve {
+        return Line(point + offset, direction)
+    }
 }

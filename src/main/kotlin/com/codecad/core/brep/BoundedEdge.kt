@@ -18,8 +18,7 @@ enum class Sense{
 
 class EdgeBound(val start: Vertex, val end : Vertex, val sense: Sense = Sense.None)
 
-open class Edge(var curve: Curve, val bound : EdgeBound? = null){
-
+class Edge(var curve: Curve, val bound : EdgeBound? = null){
     companion object{
         fun line(start: Vertex, end: Vertex) : Edge {
             return Edge(Line.fromTo(start.point, end.point), EdgeBound(start, end))

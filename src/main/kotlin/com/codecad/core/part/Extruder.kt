@@ -33,19 +33,35 @@ class Extruder(){
         faces.add(topFace)
         faces.add(bottomFace)
 
+        val map = hashMapOf<Vertex, Edge>()
+        fun extrusionLine(start: Vertex, end: Vertex) : Edge {
+            return map.computeIfAbsent(start){ Edge.line(start, end) }
+        }
+
         for( (bottomBound, topBound) in bottomFace.bounds.zip(topFace.bounds) ){
             for((bottomEdgeLoop, topEdgeLoop) in bottomBound.edgeLoop.zip(topBound.edgeLoop)){
-                val bottomEdge = bottomEdgeLoop.edge
-                val topEdge = topEdgeLoop.edge
+                val bottomOrientedEdge = bottomEdgeLoop.edge
+                val topOrientedEdge = topEdgeLoop.edge
+                val bottomEdge = bottomOrientedEdge.edge
+                val topEdge = topOrientedEdge.edge
                 val bottomEdgeBound = bottomEdge.bound
                 val topEdgeBound = topEdge.bound
                 val curve = bottomEdge.curve
 
                 if(bottomEdgeBound != null && topEdgeBound != null){
-                    val startEdge = Edge.line(bottomEdgeBound.start, topEdgeBound.start)
-                    val endEdge = Edge.line(bottomEdgeBound.end, topEdgeBound.end)
+                    val startEdge = extrusionLine(bottomEdgeBound.start, topEdgeBound.start)
+                    val endEdge = extrusionLine(bottomEdgeBound.end, topEdgeBound.end)
 
-                    val bound = FaceBound(EdgeLoop.of(bottomEdge, endEdge, topEdge, startEdge), FaceBoundSense.Inside)
+                    val bound = FaceBound(
+                        EdgeLoop.of(
+                            bottomOrientedEdge,
+                            OrientedEdge(endEdge, bottomOrientedEdge.orientation),
+                            OrientedEdge(topEdge, bottomOrientedEdge.orientation.invert()),
+                            OrientedEdge(startEdge, bottomOrientedEdge.orientation.invert())
+                        ),
+                        FaceBoundSense.Inside
+                    )
+
                     val surface =  when(curve) {
                         is Line -> {
                             val up = curve.direction.cross(normal).cross(curve.direction).normalized()
@@ -76,11 +92,11 @@ class Extruder(){
         val faceBounds = arrayListOf<FaceBound>()
         for( faceBound in face.bounds ) {
 
-            val edges = arrayListOf<Edge>()
+            val edges = arrayListOf<OrientedEdge>()
             for (currentEdgeLoop in faceBound.edgeLoop) {
-                val edge = currentEdgeLoop.edge
+                val orientedEdge = currentEdgeLoop.edge
+                val edge = orientedEdge.edge
 
-                val curve = edge.curve
                 val bound = edge.bound
 
                 val newBound = bound?.let {
@@ -90,7 +106,9 @@ class Extruder(){
                         bound.sense
                     )
                 }
-                edges.add(Edge(curve, newBound))
+
+                val curve = edge.curve.move(offset)
+                edges.add(OrientedEdge(Edge(curve, newBound), orientedEdge.orientation))
             }
 
             faceBounds.add(FaceBound(EdgeLoop.of(edges), faceBound.sense))

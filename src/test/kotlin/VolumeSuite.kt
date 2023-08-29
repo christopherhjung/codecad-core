@@ -101,14 +101,8 @@ object VolumeSuite {
         val c = Vertex(origin + axisA * halfSize + axisB * halfSize)
         val d = Vertex(origin - axisA * halfSize + axisB * halfSize)
 
-        val abEdge = Edge.line(a, b)
-        val bcEdge = Edge.line(b, c)
-        val cdEdge = Edge.line(c, d)
-        val daEdge = Edge.line(d, a)
-
         val surface = PlaneSurface(workplane)
-
-        val edgeLoop = EdgeLoop.of(abEdge, bcEdge, cdEdge, daEdge)
+        val edgeLoop = EdgeLoop.polygon(a,b,c,d)
 
         val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
@@ -153,7 +147,7 @@ object VolumeSuite {
         val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.CCW)
 
         val surface = PlaneSurface(workplane)
-        val edgeLoop = EdgeLoop.of(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
+        val edgeLoop = EdgeLoop.forward(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
         val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
         return face
