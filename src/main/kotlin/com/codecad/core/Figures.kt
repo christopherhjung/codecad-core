@@ -1,15 +1,17 @@
 package com.codecad.core
 
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec2Expr
+import kotlin.math.pow
 
 enum class LineType(val prio: Int){
     Normal(2), Construction(3)
 }
 
-interface Figure
+abstract class Entity(vararg val params: Expr)
 
-class SketchSegment(val p0: Vec2Expr, val p1: Vec2Expr) : Figure {
+class LineSegmentExpr(val p0: Vec2Expr, val p1: Vec2Expr) : Entity(p0.x, p0.y, p1.x, p1.y) {
     val squaredLength : Expr
         get() = ((p1.x - p0.x).pow(2) + (p1.y - p0.y).pow(2))
 
@@ -24,22 +26,34 @@ class SketchSegment(val p0: Vec2Expr, val p1: Vec2Expr) : Figure {
 
     val direction : Vec2Expr
         get() = difference.normalized()
-
-    /*
-    override fun plotter(): Sweep {
-        return LineSweep(this)
-    }*/
 }
 
-interface SketchConic : Figure{
-    val center : Vec2Expr
-    val radius : Expr
+class LineSegment(var p0: Vec2, var p1: Vec2) {
+    val squaredLength : Double
+        get() = ((p1.x - p0.x).pow(2.0) + (p1.y - p0.y).pow(2.0))
+
+    val length : Double
+        get() = kotlin.math.sqrt(squaredLength)
+
+    val midPoint : Vec2
+        get() = (p0 + p1) / 2.0
+
+    val difference : Vec2
+        get() = p1 - p0
+
+    val direction : Vec2
+        get() = difference.normalized()
+}
+
+abstract class SketchConic(vararg params: Expr) : Entity(*params){
+    abstract val center : Vec2Expr
+    abstract val radius : Expr
 }
 
 open class SketchCircle(override val center: Vec2Expr, override val radius: Expr) :
-    SketchConic
+    SketchConic(center.x, center.y, radius)
 
-class SketchArc(val p0: Vec2Expr, val p1: Vec2Expr, private val h: Expr) : SketchConic{
+class SketchArc(val p0: Vec2Expr, val p1: Vec2Expr, private val h: Expr) : SketchConic(p0.x, p0.y, p1.x, p1.y, h){
     private val radiusSign: Expr = run{
         val s = (p1 - p0).length()
         (h.pow(2) * 4 + s.pow(2)) / (h * 8)
@@ -57,11 +71,4 @@ class SketchArc(val p0: Vec2Expr, val p1: Vec2Expr, private val h: Expr) : Sketc
         middle + positive * (h - radiusSign)
     }
 }
-
-/*
-class FunctionFigure( val function: (Expr) -> Vec2Expr) : Figure{
-    override fun plotter(): Sweep {
-        return FunctionSweep(this)
-    }
-}*/
 

@@ -59,7 +59,7 @@ class Parser private constructor(private val lexer: Lexer, private val world: Wo
         return false
     }
 
-    private fun expect(kind: Token.Kind): Token? {
+    private fun expect(kind: Token.Kind): Token {
         val curr = peek()
         if (!accept(kind)) {
             throw ParseException("Expected $kind")

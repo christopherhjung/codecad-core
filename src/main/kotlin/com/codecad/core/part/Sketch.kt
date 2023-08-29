@@ -4,10 +4,17 @@ import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.vec.Vec2Expr
+import com.codecad.core.brep.Edge
+import com.codecad.core.brep.EdgeBound
+import com.codecad.core.brep.Vertex
+import com.codecad.core.brep.WorkplaneExpr
 import com.codecad.core.constraint.*
-import com.codecad.core.face.entity.*
-import com.codecad.core.face.entity.curve.Circle
+import com.codecad.core.brep.curve.Circle
 import com.codecad.core.optimizer.Solver
+import com.codecad.core.sketch.collectSurfaces
+import com.codecad.core.sketch.createFaceTree
+import com.codecad.core.sketch.sketchToLines
+import com.codecad.core.sketch.toFace
 import java.util.*
 
 
@@ -15,41 +22,9 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val world = partStudio.world
-    val figures = arrayListOf<Figure>()
+    val entities = arrayListOf<Entity>()
 
-    fun generate(){
-        for( figure in figures ){
-            when(figure){
-                is SketchSegment -> {
-                    val projA = workplane.unproject(figure.p0)
-                    val projB = workplane.unproject(figure.p1)
-
-                    val lineNew = Edge.line(Vertex(projA), Vertex(projB))
-                }
-                is SketchCircle -> {
-                    val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.axisA, workplane.axisB )
-
-                    val circle = Edge(
-                        Circle(centerWorkplane, figure.radius)
-                    )
-                }
-                is SketchArc -> {
-                    val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.axisA, workplane.axisB )
-                    val arc = Edge(
-                        Circle(centerWorkplane, figure.radius),
-                        EdgeBound(
-                            Vertex(workplane.unproject(figure.p0)),
-                            Vertex(workplane.unproject(figure.p1))
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    fun param(value: Double = 0.0): ParamExpr {
+    fun param(value : Double = 0.0): ParamExpr {
         val param = ParamExpr( world, value )
         params.add(param)
         return param
@@ -77,55 +52,51 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         return point(a,b)
     }
 
-    fun line(a: Vec2Expr, b: Vec2Expr): SketchSegment {
-        val segment = SketchSegment(a, b)
-        figures.add(segment)
+    fun line(a: Vec2Expr, b: Vec2Expr): LineSegmentExpr {
+        val segment = LineSegmentExpr(a, b)
+        entities.add(segment)
         return segment
     }
 
     fun circle(center: Vec2Expr, radius: Expr): SketchCircle {
         val circle = SketchCircle(center, radius)
-        figures.add(circle)
+        entities.add(circle)
         return circle
     }
 
     fun arc(p0: Vec2Expr, p1: Vec2Expr): SketchArc {
-        val h = param(1.0)
+        val h = param()
 
         val arc = SketchArc(p0,p1,h)
-        figures.add(arc)
+        entities.add(arc)
         return arc
     }
 
     fun circle(): SketchCircle {
-        return circle(point(), param(1.0))
+        return circle(point(), param())
     }
 
-    fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): SketchSegment {
+    fun line(x: Double = 0.0, y: Double = 0.0, x2: Double = 1.0, y2: Double = 1.0): LineSegmentExpr {
         return line(point(x, y), point(x2, y2))
     }
 
-    fun constLine(x: Double = 0.0, y: Double = 0.0, x2: Double = 0.0, y2: Double = 0.0): SketchSegment {
-        return line(constPoint(x, y), constPoint(x2, y2))
-    }
-
-    fun tangent(circle: SketchConic, line : SketchSegment){
+    fun tangent(circle: SketchConic, line : LineSegmentExpr){
         addConstraint(CircleTangent(circle, line))
     }
 
-    fun pointOnLineMidpoint(point: Vec2Expr, line: SketchSegment) {
+    fun pointOnLineMidpoint(point: Vec2Expr, line: LineSegmentExpr) {
         addConstraint(PointOnLineMidpoint(point, line))
     }
 
-    fun pointOnLine(point: Vec2Expr, line: SketchSegment) {
+    fun pointOnLine(point: Vec2Expr, line: LineSegmentExpr) {
         addConstraint(PointOnLine(point, line))
     }
 
-    fun horizontal(line: SketchSegment) {
+    fun horizontal(line: LineSegmentExpr) {
         addConstraint(Horizontal(line))
     }
 
-    fun vertical(line: SketchSegment) {
+    fun vertical(line: LineSegmentExpr) {
         addConstraint(Vertical(line))
     }
 
@@ -133,23 +104,23 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         addConstraint(PointOnCircle(point, circle))
     }
 
-    fun equalLength(line1: SketchSegment, line2: SketchSegment) {
+    fun equalLength(line1: LineSegmentExpr, line2: LineSegmentExpr) {
         addConstraint(Equals(line1.length, line2.length))
     }
 
-    fun len(line1: SketchSegment, length: Expr) {
+    fun len(line1: LineSegmentExpr, length: Expr) {
         addConstraint(Equals(line1.length, length))
     }
 
-    fun angle(line1: SketchSegment, line2: SketchSegment, angle: Expr) {
+    fun angle(line1: LineSegmentExpr, line2: LineSegmentExpr, angle: Expr) {
         addConstraint(InternalAngle(line1, line2, angle))
     }
 
-    fun perp(line1: SketchSegment, line2: SketchSegment){
+    fun perp(line1: LineSegmentExpr, line2: LineSegmentExpr){
         addConstraint(Perpendicular(line1, line2))
     }
 
-    fun parallel(line1: SketchSegment, line2: SketchSegment){
+    fun parallel(line1: LineSegmentExpr, line2: LineSegmentExpr){
         addConstraint(Parallel(line1, line2))
     }
 
@@ -177,17 +148,67 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         constraints.add(constraint)
     }
 
-    fun solveImpl(accuracy: Double, params: Set<ParamExpr> = this.params) : Boolean{
-        val result = Solver().solve(world, params, constraints, accuracy)
+    fun init(entity: Entity, vararg values: Double){
+        for((index, param) in entity.params.withIndex()){
+            if(param is ParamExpr){
+                param.value = values[index]
+            }
+        }
+    }
+
+    fun solveImpl(accuracy: Double) : Boolean{
+        val result = Solver().solve(world, this.params, constraints, accuracy)
         return result
     }
 
-    fun solve(accuracy: Double, params: Set<ParamExpr> = this.params) {
+    fun solve(accuracy: Double) {
         val start = System.currentTimeMillis()
-        val result = solveImpl(accuracy, params)
+        val result = solveImpl(accuracy)
         val end = System.currentTimeMillis()
         println("time: ${end - start}ms")
+
+        val lines = sketchToLines(this, ignoreConstruction = true)
+        val rootHole = createFaceTree(lines)
+        val surfaces = collectSurfaces(rootHole)
+        for(surface in surfaces){
+            val face = surface.toFace(workplane)
+            partStudio.addFace(face)
+        }
     }
+
+    fun generate(){
+        for( figure in entities ){
+            when(figure){
+                is LineSegmentExpr -> {
+                    val projA = workplane.unproject(figure.p0)
+                    val projB = workplane.unproject(figure.p1)
+
+                    val lineNew = Edge.line(Vertex(projA), Vertex(projB))
+                }
+                is SketchCircle -> {
+                    val projCenter = workplane.unproject(figure.center)
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.xAxis, workplane.yAxis )
+
+                    val circle = Edge(
+                        Circle(centerWorkplane, figure.radius)
+                    )
+                }
+                is SketchArc -> {
+                    val projCenter = workplane.unproject(figure.center)
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.xAxis, workplane.yAxis )
+                    val arc = Edge(
+                        Circle(centerWorkplane, figure.radius),
+                        EdgeBound(
+                            Vertex(workplane.unproject(figure.p0)),
+                            Vertex(workplane.unproject(figure.p1))
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+
 /*
     override fun toString(): String {
         val sb = StringBuilder()
@@ -197,43 +218,3 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         return sb.toString()
     }*/
 }
-/*
-
-fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineD>{
-    val list = mutableListOf<LineD>()
-    for(figure in sketch.figures){
-        if(ignoreConstruction && sketch.lineType[figure] == LineType.Construction){
-            continue
-        }
-
-        val plotter = figure.plotter()
-
-        var last = plotter.next()
-        while( plotter.hasNext() ){
-            val next = plotter.next()
-            list.add(LineD(last.fixed(), next.fixed()))
-            last = next
-        }
-    }
-    return list
-}
-
-fun figureToPoints(figure: Figure) : List<PointD>{
-    val list = mutableListOf<PointD>()
-
-    val plotter = figure.plotter()
-    while( plotter.hasNext() ){
-        list.add(plotter.next().fixed())
-    }
-
-    return list
-}*/
-
-/*
-* fun Canvas.line(line: com.codecad.core.Line){
-    line(line.a.x.value,line.a.y.value, line.b.x.value,line.b.y.value)
-}
-fun Canvas.circle(circle: com.codecad.core.Circle){
-    circle(circle.center.x.value,circle.center.y.value, circle.rad.value)
-}
-* */

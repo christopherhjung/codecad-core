@@ -1,12 +1,12 @@
 package com.codecad.core.face
 
-import com.codecad.common.LineD
-import com.codecad.common.PointD
+import com.codecad.core.LineSegment
+import com.codecad.core.ast.vec.Vec2
 
 
 data class Event(
-    val pos: PointD,
-    val line: LineD,
+    val pos: Vec2,
+    val line: LineSegment,
     val origin: Boolean
 ) : Comparable<Event> {
     override fun compareTo(other: Event): Int {
@@ -18,7 +18,7 @@ data class Event(
     }
 }
 
-fun isForward(line: LineD) : Boolean{
+fun isForward(line: LineSegment) : Boolean{
     return when{
         line.p0.x < line.p1.x -> true
         line.p0.x > line.p1.x -> false
@@ -26,7 +26,7 @@ fun isForward(line: LineD) : Boolean{
     }
 }
 
-fun events(lines: List<LineD>) : List<Event>{
+fun events(lines: List<LineSegment>) : List<Event>{
     val events = ArrayList<Event>()
     for (line in lines) {
         val forwards = isForward(line)

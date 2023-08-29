@@ -1,6 +1,6 @@
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.face.entity.WorkplaneExpr
+import com.codecad.core.brep.WorkplaneExpr
 import org.junit.jupiter.api.Test
 import kotlin.test.assertSame
 
@@ -8,7 +8,7 @@ class WorkplaneTest {
 
     val world = World()
 
-    fun createPlacement() : WorkplaneExpr{
+    fun createPlacement() : WorkplaneExpr {
         val origin = world.vec3(world.literal(2.3), world.literal(3.4), world.literal(4.5))
         val axisA = world.vec3(world.literal(1.0), world.literal(1.0), world.literal(0.0))
         val axisB = world.vec3(world.literal(0.0), world.literal(0.0), world.literal(1.0))

@@ -1,7 +1,7 @@
 import com.codecad.core.*
 import com.codecad.core.Expr.Companion.cos
 import com.codecad.core.Expr.Companion.sin
-import com.codecad.core.face.entity.Vec2Expr
+import com.codecad.core.face.brep.Vec2Expr
 import com.codecad.core.part.SketchScope
 import com.codecad.core.part.SketchScope.Companion.ORIGIN
 

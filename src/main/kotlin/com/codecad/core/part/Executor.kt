@@ -1,7 +1,6 @@
 package com.codecad.core.part
 
-import com.codecad.core.SketchConic
-import com.codecad.core.SketchSegment
+import com.codecad.core.LineSegmentExpr
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.parser.ObjectFunction
@@ -42,20 +41,32 @@ class Executor private constructor(){
         }, true)
         scope.setObject("param", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val init = (args[0] as Number).toDouble()
-            return@ObjectFunction sketch.param(init)
+            return@ObjectFunction sketch.param()
         }, true)
         scope.setObject("param2", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val lhs = sketch.param(args[0] as Double)
-            val rhs = sketch.param(args[1] as Double)
-            return@ObjectFunction sketch.point(lhs, rhs)
+
+            if(args.size == 2){
+                val lhs = sketch.param(args[0] as Double)
+                val rhs = sketch.param(args[1] as Double)
+                return@ObjectFunction sketch.point(lhs, rhs)
+            }else{
+                return@ObjectFunction sketch.point()
+            }
         }, true)
         scope.setObject("line", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val lhs = args[0] as Vec2Expr
-            val rhs = args[1] as Vec2Expr
-            return@ObjectFunction sketch.line(lhs, rhs)
+            if(args.size == 4){
+                val a = args[0] as Double
+                val b = args[1] as Double
+                val c = args[2] as Double
+                val d = args[3] as Double
+                return@ObjectFunction sketch.line(a, b, c, d)
+            }else{
+                val lhs = args[0] as Vec2Expr
+                val rhs = args[1] as Vec2Expr
+                return@ObjectFunction sketch.line(lhs, rhs)
+            }
         }, true)
         scope.setObject("circle", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
@@ -93,14 +104,14 @@ class Executor private constructor(){
         scope.setObject("len", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
-            val lhs = args[0] as SketchSegment
+            val lhs = args[0] as LineSegmentExpr
             val rhs = Expr.orLiteral(world, args[1])
             return@ObjectFunction sketch.len(lhs, rhs)
         }, true)
         scope.setObject("perp", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val seg0 = args[0] as SketchSegment
-            val seg1 = args[1] as SketchSegment
+            val seg0 = args[0] as LineSegmentExpr
+            val seg1 = args[1] as LineSegmentExpr
             return@ObjectFunction sketch.perp(seg0, seg1)
         }, true)
         scope.setObject("minimize", ObjectFunction{ scope, args ->

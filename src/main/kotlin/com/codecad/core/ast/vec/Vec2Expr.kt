@@ -11,6 +11,14 @@ data class Vec2(val x: Double, val y: Double){
         val ZERO = Vec2(0.0, 0.0)
     }
 
+    fun dot(right: Vec2) : Double {
+        return x * right.x + y * right.y
+    }
+
+    fun crossZ(right: Vec2) : Double {
+        return x * right.y - y * right.x
+    }
+
     operator fun times(value: Double) : Vec2 {
         return Vec2(x * value, y * value)
     }
@@ -39,12 +47,16 @@ data class Vec2(val x: Double, val y: Double){
         return sqrt(squaredLength())
     }
 
-    fun squaredDistance(other: Vec3): Double {
+    fun squaredDistance(other: Vec2): Double {
         return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
     }
 
-    fun distance(other: Vec3): Double {
+    fun distance(other: Vec2): Double {
         return sqrt(squaredDistance(other))
+    }
+
+    fun normalized() : Vec2 {
+        return this / length()
     }
 
     fun toExpr(world: World) : Vec2Expr{

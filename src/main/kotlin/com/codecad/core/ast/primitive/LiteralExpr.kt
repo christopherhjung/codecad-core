@@ -22,6 +22,6 @@ class LiteralExpr(world: World, val value: Any?) : Expr(world) {
     }
 
     override fun toString(): String {
-        return "LiteralExpr(value=$value)"
+        return "$value"
     }
 }

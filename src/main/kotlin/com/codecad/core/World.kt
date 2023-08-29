@@ -3,7 +3,7 @@ package com.codecad.core
 import com.codecad.core.ast.primitive.*
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.ast.vec.Vec3Expr
-import com.codecad.core.face.entity.WorkplaneExpr
+import com.codecad.core.brep.WorkplaneExpr
 import com.codecad.core.parser.Op
 import com.codecad.core.scope.EmptyScope
 import com.codecad.core.scope.Slot
@@ -230,14 +230,10 @@ class World {
     }
 
     fun pow(base : Expr, exp: Expr) : Expr {
-        return if(exp === Zero){
+        return if(exp === Zero || base === One){
             One
-        }else if(exp === One){
+        }else if(exp === One || base === Zero){
             base
-        }else if(base === One){
-            One
-        }else if(base === Zero){
-            Zero
         }else if(base is PowExpr){
             pow(base.base, mul(base.exp, exp))
         }else if (exp is LiteralExpr) {

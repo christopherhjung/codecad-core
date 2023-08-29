@@ -1,7 +1,7 @@
-import com.codecad.core.face.entity.*
-import com.codecad.core.face.entity.curve.Circle
-import com.codecad.core.face.entity.surface.CylindricalSurface
-import com.codecad.core.face.entity.surface.PlaneSurface
+import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.surface.CylindricalSurface
+import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
 
 object VolumeSuite {
@@ -10,8 +10,8 @@ object VolumeSuite {
         val outerRadius = world.literal(outerRadius)
         val height = world.literal(height)
 
-        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.axisUp * height, bottomWorkplane.axisA, bottomWorkplane.axisB )
-        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.axisA, bottomWorkplane.axisB )
+        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.normal * height, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
+        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -22,14 +22,14 @@ object VolumeSuite {
         val topEdgeLoop = EdgeLoop.of(topEdge)
         val bottomEdgeLoop = EdgeLoop.of(bottomEdge)
 
-        val topFace = Face(topSurface, listOf(FaceBound(topEdgeLoop, true)))
-        val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomEdgeLoop, true)))
+        val topFace = Face(topSurface, listOf(FaceBound(topEdgeLoop, FaceBoundSense.Inside)))
+        val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomEdgeLoop, FaceBoundSense.Inside)))
 
         val outerCylindricalSurface = CylindricalSurface(zeroXYWorkplane, outerRadius)
         val outerCylindricalFace = Face(outerCylindricalSurface,
             listOf(
-                FaceBound(topEdgeLoop, true),
-                FaceBound(bottomEdgeLoop, true)
+                FaceBound(topEdgeLoop, FaceBoundSense.Inside),
+                FaceBound(bottomEdgeLoop, FaceBoundSense.Inside)
             )
         )
 
@@ -44,8 +44,8 @@ object VolumeSuite {
         val innerRadius = world.literal(innerRadius)
         val height = world.literal(height)
 
-        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.axisUp * height, bottomWorkplane.axisA, bottomWorkplane.axisB )
-        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.axisA, bottomWorkplane.axisB )
+        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.normal * height, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
+        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -62,22 +62,22 @@ object VolumeSuite {
         val topHoleEdgeLoop = EdgeLoop.of(topHoleEdge)
         val bottomHoleEdgeLoop = EdgeLoop.of(bottomHoleEdge)
 
-        val topFace = Face(topSurface, listOf(FaceBound(topEdgeLoop, true), FaceBound(topHoleEdgeLoop, false)))
-        val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomEdgeLoop, true), FaceBound(bottomHoleEdgeLoop, false)))
+        val topFace = Face(topSurface, listOf(FaceBound(topEdgeLoop, FaceBoundSense.Inside), FaceBound(topHoleEdgeLoop, FaceBoundSense.Outside)))
+        val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomEdgeLoop, FaceBoundSense.Inside), FaceBound(bottomHoleEdgeLoop, FaceBoundSense.Outside)))
 
         val outerCylindricalSurface = CylindricalSurface(zeroXYWorkplane, outerRadius)
         val outerCylindricalFace = Face(outerCylindricalSurface,
             listOf(
-                FaceBound(topEdgeLoop, true),
-                FaceBound(bottomEdgeLoop, true)
+                FaceBound(topEdgeLoop, FaceBoundSense.Inside),
+                FaceBound(bottomEdgeLoop, FaceBoundSense.Inside)
             )
         )
 
         val innerCylindricalSurface = CylindricalSurface(zeroXYWorkplane, innerRadius)
         val innerCylindricalFace = Face(innerCylindricalSurface,
             listOf(
-                FaceBound(topHoleEdgeLoop, true),
-                FaceBound(bottomHoleEdgeLoop, true)
+                FaceBound(topHoleEdgeLoop, FaceBoundSense.Inside),
+                FaceBound(bottomHoleEdgeLoop, FaceBoundSense.Inside)
             )
         )
 
@@ -93,8 +93,8 @@ object VolumeSuite {
         val size = world.literal(size)
         val halfSize = size / 2.0
 
-        val axisA = workplane.axisA
-        val axisB = workplane.axisB
+        val axisA = workplane.xAxis
+        val axisB = workplane.yAxis
 
         val a = Vertex(origin - axisA * halfSize - axisB * halfSize)
         val b = Vertex(origin + axisA * halfSize - axisB * halfSize)
@@ -110,14 +110,14 @@ object VolumeSuite {
 
         val edgeLoop = EdgeLoop.of(abEdge, bcEdge, cdEdge, daEdge)
 
-        val face = Face(surface, listOf(FaceBound(edgeLoop, true)))
+        val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
         val shell = Shell(listOf(face))
         val volume = Volume(listOf(shell))
         return volume
     }
 
-    fun roundedPlane(workplane: WorkplaneExpr, size: Double, radius: Double) : Volume {
+    fun roundedPlane(workplane: WorkplaneExpr, size: Double, radius: Double) : Face {
         val origin = workplane.origin
         val world = origin.world
         val size = world.literal(size)
@@ -154,10 +154,8 @@ object VolumeSuite {
 
         val surface = PlaneSurface(workplane)
         val edgeLoop = EdgeLoop.of(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
-        val face = Face(surface, listOf(FaceBound(edgeLoop, true)))
+        val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
-        val shell = Shell(listOf(face))
-        val volume = Volume(listOf(shell))
-        return volume
+        return face
     }
 }

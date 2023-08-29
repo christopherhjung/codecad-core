@@ -1,14 +1,29 @@
 package com.codecad.core.part
 
 import com.codecad.core.*
-import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.constraint.*
+import com.codecad.core.brep.Face
+import com.codecad.core.volume.Volume
+
+class Context{
+    val volumes = arrayListOf<Volume>()
+}
 
 class PartStudio(val world : World = World()){
     val sketches: MutableList<Sketch> = mutableListOf()
-    val params = HashSet<ParamExpr>()
-    val constraints = HashSet<Constraint>()
+    val faces = arrayListOf<Face>()
+    val volumes = arrayListOf<Volume>()
 
+    fun addFace(face: Face){
+        //faces.add(face)
+
+        val volume = Extruder()
+            .extrude(face, world.DirectionZ, world.literal(4.0))
+        addVolume(volume)
+    }
+
+    fun addVolume(volume: Volume){
+        volumes.add(volume)
+    }
 
 /*
     val volumes = mutableListOf<Volume>()

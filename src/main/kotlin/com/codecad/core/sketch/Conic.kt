@@ -1,4 +1,4 @@
-package com.codecad.core.face.entity.sketch
+package com.codecad.core.sketch
 
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2Expr

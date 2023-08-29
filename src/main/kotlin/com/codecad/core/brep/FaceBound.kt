@@ -1,6 +1,12 @@
-package com.codecad.core.face.entity
+package com.codecad.core.brep
 
-class FaceBound(var edgeLoop : EdgeLoop, var sense: Boolean)
+import com.codecad.core.ast.vec.Vec3Expr
+import com.codecad.core.rollover
+enum class FaceBoundSense{
+    Inside, Outside
+}
+
+class FaceBound(var edgeLoop : EdgeLoop, var sense: FaceBoundSense)
 
 class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
     var orientation : Boolean = false
@@ -14,14 +20,18 @@ class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
     }
 
     companion object{
-        fun of(edge: Edge) : EdgeLoop{
+        fun of(edge: Edge) : EdgeLoop {
             val loop = EdgeLoop(edge)
             loop.next = loop
             loop.prev = loop
             return loop
         }
 
-        fun of(vararg edges: Edge) : EdgeLoop{
+        fun of(vararg edges: Edge) : EdgeLoop {
+            return of(edges.toList())
+        }
+
+        fun of(edges: Iterable<Edge>) : EdgeLoop {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
@@ -41,6 +51,16 @@ class EdgeLoop(var edge : Edge) : Iterable<EdgeLoop>{
             firstLoop.prev = currentEdgeLoop
             currentEdgeLoop.next = firstLoop
             return firstLoop
+        }
+
+        fun polygon(vararg vertices: Vec3Expr) : EdgeLoop{
+            val edges = arrayListOf<Edge>()
+
+            for((lhs, rhs) in vertices.map { Vertex(it) }.rollover() ){
+                edges.add(Edge.line(lhs, rhs))
+            }
+
+            return of(*edges.toTypedArray())
         }
     }
 }

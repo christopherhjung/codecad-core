@@ -97,7 +97,11 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
         val x = this.y * other.z - this.z * other.y
         val y = this.z * other.x - this.x * other.z
         val z = this.x * other.y - this.y * other.x
-        return world.vec3(x, y, z)
+        val result = world.vec3(x, y, z)
+        /*if(type == NormalizedVec && other.type == NormalizedVec){
+            result.type = NormalizedVec
+        }*/
+        return result
     }
 
     override operator fun times(right: Expr) : Vec3Expr {

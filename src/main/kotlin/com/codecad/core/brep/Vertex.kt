@@ -1,4 +1,4 @@
-package com.codecad.core.face.entity
+package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3Expr
 

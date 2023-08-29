@@ -1,8 +1,5 @@
 package com.codecad.core
 
-import com.codecad.core.ast.vec.Vec3Expr
-import com.codecad.core.face.entity.curve.Curve
-
 //class Line(val origin: Vec3Expr, val direction: Vec3Expr) : Curve(){
   //  companion object{
         /*private fun projectPlane(a: Plane, b: Plane) : Vec3Expr {

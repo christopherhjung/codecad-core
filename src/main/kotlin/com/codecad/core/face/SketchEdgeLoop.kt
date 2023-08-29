@@ -1,10 +1,17 @@
 package com.codecad.core.face
 
-/*
-import com.codecad.core.face.entity.sketch.SketchVertex
-class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
 
-    override val points: Iterable<PointD>
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.sketch.FaceType
+import com.codecad.core.sketch.SketchEdge
+import com.codecad.core.sketch.SketchVertex
+
+class SketchEdgeLoop(val root : SketchEdge) : Iterable<SketchEdge>{
+    var type = FaceType.Surface
+    var children :  MutableList<SketchEdgeLoop> = arrayListOf()
+    var area = 0.0
+
+    val points: Iterable<Vec2>
         get() = points()
 
     override fun iterator(): Iterator<SketchEdge> {
@@ -25,16 +32,16 @@ class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
         }
     }
 
-    fun points() : Iterable<PointD>{
+    fun points() : Iterable<Vec2>{
         return Iterable {
             var current : SketchEdge = root
             var first = true
-            object : Iterator<PointD>{
+            object : Iterator<Vec2>{
                 override fun hasNext(): Boolean {
                     return first || current != root
                 }
 
-                override fun next(): PointD {
+                override fun next(): Vec2 {
                     first = false
                     val result =  current.source.point
                     current = current.next!!
@@ -62,8 +69,4 @@ class RoutedFace(val root : SketchEdge) : Face(), Iterable<SketchEdge>{
             }
         }
     }
-
-    override fun generateTriangles(): List<TriangleFace> {
-        return generateTriangles(root.pointsIter().toList(), children.map { it.points.toList() })
-    }
-}*/
+}

@@ -1,31 +1,16 @@
 import com.codecad.core.World
-import com.codecad.core.export.StlExport
-import com.codecad.core.face.entity.*
-import com.codecad.core.mesh.MeshGenerator
-import com.codecad.core.volume.Volume
+import com.codecad.core.brep.WorkplaneExpr
+import com.codecad.core.part.Extruder
 import org.junit.jupiter.api.Test
-import java.io.FileOutputStream
 
 class BrepTest {
-
-    fun saveStl(volume: Volume){
-        val meshGenerator = MeshGenerator()
-        val mesh = meshGenerator.generate(volume)
-
-        val stlExport = StlExport()
-        val byteArray = stlExport.export(mesh)
-
-        val outStream = FileOutputStream("test.stl")
-        outStream.write(byteArray)
-        outStream.close()
-    }
 
     @Test
     fun cylinderTest(){
         val world = World()
         val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
         val volume = VolumeSuite.createCylinder(bottomWorkplane, 50.0, 200.0)
-        saveStl(volume)
+        ExportHelper.saveStl(volume)
     }
 
     @Test
@@ -33,7 +18,7 @@ class BrepTest {
         val world = World()
         val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
-        saveStl(volume)
+        ExportHelper.saveStl(volume)
     }
 
     @Test
@@ -42,7 +27,7 @@ class BrepTest {
         val xzWorkplane = (world.DirectionX + world.DirectionZ).normalized()
         val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, xzWorkplane, world.DirectionY )
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
-        saveStl(volume)
+        ExportHelper.saveStl(volume)
     }
 
     @Test
@@ -50,14 +35,24 @@ class BrepTest {
         val world = World()
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
         val volume = VolumeSuite.createPlane(workplane, 50.0)
-        saveStl(volume)
+        ExportHelper.saveStl(volume)
     }
 
     @Test
     fun roundplanetest(){
         val world = World()
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
-        val volume = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
-        saveStl(volume)
+        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
+        ExportHelper.saveStl(face)
+    }
+
+    @Test
+    fun roundplaneextrudetest(){
+        val world = World()
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
+        val volume = Extruder()
+            .extrude(face, world.DirectionZ, world.literal(10.0))
+        ExportHelper.saveStl(volume)
     }
 }

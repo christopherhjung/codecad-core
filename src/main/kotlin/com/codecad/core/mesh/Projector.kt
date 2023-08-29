@@ -2,11 +2,8 @@ package com.codecad.core.mesh
 
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2
-import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
-import com.codecad.core.face.entity.Workplane
-import com.codecad.core.face.entity.WorkplaneExpr
+import com.codecad.core.brep.Workplane
 import kotlin.math.atan2
 
 interface Projector {

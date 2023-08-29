@@ -4,6 +4,8 @@ import com.codecad.core.World
 import com.codecad.core.scope.Scope
 
 class ParamExpr(world: World, var value: Double) : Expr(world) {
+    var subst = this
+
     override fun eval(scope: Scope): Any {
         return value
     }

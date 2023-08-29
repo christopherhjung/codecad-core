@@ -1,10 +1,12 @@
-package com.codecad.core.face
+package com.codecad.core.sketch
 
-import com.codecad.common.LineD
-import com.codecad.common.PointD
+import com.codecad.core.LineSegment
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.face.Event
+import com.codecad.core.face.events
 
 
-fun findIntersection(line1: LineD, line2: LineD): PointD? {
+fun findIntersection(line1: LineSegment, line2: LineSegment): Vec2? {
     val p0_x = line1.p0.x
     val p0_y = line1.p0.y
     val p1_x = line1.p1.x
@@ -19,7 +21,7 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     val s2_x = p3_x - p2_x
     val s2_y = p3_y - p2_y
 
-    val a = 1 / (-s2_x * s1_y + s1_x * s2_y)
+    val a = 1.0 / (s1_x * s2_y - s2_x * s1_y)
     val s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) * a
     val t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) * a
 
@@ -27,22 +29,22 @@ fun findIntersection(line1: LineD, line2: LineD): PointD? {
     if (s - epsilon > 0 && s + epsilon < 1 && t - epsilon > 0 && t + epsilon < 1) {
         val x = p0_x + (t * s1_x)
         val y = p0_y + (t * s1_y)
-        return PointD(x, y)
+        return Vec2(x, y)
     }
 
     return null
 }
 
-val Comp2D = Comparator.comparing<PointD, Double> { it.x }.then(Comparator.comparing { it.y });
-fun cutLines(lines: List<LineD>): List<LineD> {
+val Comp2D = Comparator.comparing<Vec2, Double> { it.x }.then(Comparator.comparing { it.y });
+fun cutLines(lines: List<LineSegment>): List<LineSegment> {
     val events = events(lines)
 
-    val sectionMap = HashMap<LineD, MutableList<PointD>>()
-    fun addSection(line: LineD, pos : PointD ){
+    val sectionMap = HashMap<LineSegment, MutableList<Vec2>>()
+    fun addSection(line: LineSegment, pos : Vec2 ){
         sectionMap.computeIfAbsent(line){ mutableListOf() }.add(pos)
     }
 
-    val actives = HashMap<LineD, Event>()
+    val actives = HashMap<LineSegment, Event>()
     for (event in events) {
         if (event.origin) {
             for (active in actives.values) {
@@ -58,7 +60,7 @@ fun cutLines(lines: List<LineD>): List<LineD> {
         }
     }
 
-    val result = mutableListOf<LineD>()
+    val result = mutableListOf<LineSegment>()
     for( line in lines ){
         val sections = sectionMap[line]
         if( sections != null ){
@@ -66,7 +68,7 @@ fun cutLines(lines: List<LineD>): List<LineD> {
             sections.add(line.p1)
             sections.sortWith(Comp2D)
             for((lhs, rhs) in sections.zipWithNext()){
-                result.add(LineD(lhs, rhs))
+                result.add(LineSegment(lhs, rhs))
             }
         }else{
             result.add(line)

@@ -1,7 +1,7 @@
-package com.codecad.core.face.entity.sketch
+package com.codecad.core.sketch
 
-/*
-import com.codecad.core.face.SketchEdge
+
+import com.codecad.core.ast.vec.Vec2
 
 data class SketchVertex(val point: Vec2){
     val edges = mutableListOf<SketchEdge>()
@@ -13,4 +13,4 @@ data class SketchVertex(val point: Vec2){
 
         edges.add(edge)
     }
-}*/
+}

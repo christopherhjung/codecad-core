@@ -1,142 +1,61 @@
 package com.codecad.core.volume
 
-import com.codecad.core.face.entity.*
+import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Vec3Expr
+import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
+import com.codecad.core.brep.surface.CylindricalSurface
+import com.codecad.core.brep.surface.PlaneSurface
 
-class Volume(val shells : List<Shell>)
+class Debugger{
+    var indent = 0
+    val vertices = hashMapOf<Vertex, Int>()
+    val vertexBuilder = StringBuilder()
+    val faceBuilder = StringBuilder()
 
-abstract class VolumeTest
-/*
-class FacedVolume(val faces: List<Face>) : Volume() {
-    companion object {
-        fun from(volume: Volume): FacedVolume {
-            return if (volume is FacedVolume) {
-                return volume
-            } else if (volume is Extrude) {
-                volume.extrudeRoutedFace()
-            } else {
-                TODO("not yet implemented")
-            }
+    fun getVertexIndex(vertex: Vertex) : Int{
+        return vertices.computeIfAbsent(vertex){
+            val nextIdx = vertices.size
+            vertexBuilder.append(nextIdx).append(" = ").append(vertex.point).append("\n")
+            nextIdx
         }
     }
-}*/
 
-
-class PolygonVolume(val shells: List<Shell>) : VolumeTest()
-/*
-class RoutedVolume(val faces: List<RoutedFace>) : Volume(){
-    companion object{
-
-        fun from(volume: Volume) : RoutedVolume{
-            return if(volume is RoutedVolume){
-                volume
-            }else if( volume is FacedVolume ){
-                from(volume)
-            }else if( volume is Extrude ){
-                from(volume.extrude())
-            }else{
-                TODO("not yet implemented")
-            }
-        }
-
-        fun from(polygonVolume: FacedVolume) : RoutedVolume{
-            val faces = mutableListOf<RoutedFace>()
-            fun generateEdges(points : List<PointD>) : Edge {
-                val edges = points.map { Corner(it) }.rollover().map { (left,right) ->
-                    val forward = Edge(left,right)
-                    forward.twin = Edge(right,left)
-                    forward.twin.twin = forward
-                    //forward.side = Side.Outside
-                    //forward.twin.side = Side.Outside
-                    left.addEdge(forward)
-                    right.addEdge(forward.twin)
-                    forward
-                }
-                edges.rollover().forEach{ (left, right) ->
-                    left.next = right
-                    right.twin.next = left
-                }
-
-                return edges.first()
-            }
-
-            for(face in polygonVolume.faces){
-                if(face is ConvexFace){
-                    val root = generateEdges(face.positions)
-                    faces.add(RoutedFace(root, listOf(), face.plane, face))
-                }else if(face is PolygonFace){
-                    val root = generateEdges(face.positions)
-                    val holeEdges = face.holes.map { generateEdges(it.positions) }
-                    faces.add(RoutedFace(root, holeEdges, face.plane, face))
-                }else if(face is RoutedFace){
-                    faces.add(face)
+    fun addFace(face: Face){
+        for(faceBound in face.bounds){
+            faceBuilder.append("Face(")
+            var sep = ""
+            for(edgeLoop in faceBound.edgeLoop){
+                val edge = edgeLoop.edge
+                val bound = edge.bound
+                if(bound != null){
+                    faceBuilder.append(sep).append(getVertexIndex(bound.start))
+                    sep = ", "
                 }
             }
-
-            return RoutedVolume(faces)
+            faceBuilder.append(")\n")
         }
     }
-}*/
-/*
-class Extrude(val polygonFace: Face, val directedPlane: DirectedPlane, val height: Expr) : Volume() {
-    fun extrude(): FacedVolume {
-        val height = height.evalDouble()
 
-        val faces = mutableListOf<Face>()
-        val inverted = height > 0
-
-        val offsetVector = directedPlane.normal * height
-        val plane = directedPlane.undirected
-
-        fun addSideFace(face: Face): Pair<Face, Face> {
-            val basePoints = face.points.map { directedPlane.projectXYTo(it) }
-            val topPoints = basePoints.map { it + offsetVector }
-
-            for ((base, top) in basePoints.rollover().zip(topPoints.rollover())) {
-                val list = mutableListOf(
-                    base.first, top.first,
-                    top.second, base.second
-                )
-
-                if (inverted) {
-                    list.reverse()
-                }
-
-                faces.add(ConvexFace(list))
-            }
-
-            val basePolygon = if (inverted) {
-                PolygonFace(basePoints.reversed())
-            } else {
-                PolygonFace(basePoints)
-            }
-
-            val topPolygon = if (inverted) {
-                PolygonFace(topPoints)
-            } else {
-                PolygonFace(topPoints.reversed())
-            }
-
-            return Pair(basePolygon, topPolygon)
-        }
-
-        val (basePolygon, topPolygon) = addSideFace(polygonFace)
-
-        faces.add(basePolygon)
-        faces.add(topPolygon)
-
-        for (child in polygonFace.children) {
-            val (baseHole, topHole) = addSideFace(child)
-
-            basePolygon.children.add(baseHole)
-            topPolygon.children.add(topHole)
-        }
-
-        return FacedVolume(faces)
-    }
-
-
-    fun extrudeRoutedFace(): FacedVolume {
-        throw Error("not implemented")
+    fun build() : String{
+        return vertexBuilder.toString() + faceBuilder.toString()
     }
 }
-*/
+
+
+class Volume(val shells : List<Shell>){
+
+    fun debug(debugger: Debugger){
+        for(shell in shells){
+            shell.debug(debugger)
+        }
+    }
+
+    override fun toString(): String {
+        val debugger = Debugger()
+        debug(debugger)
+        return debugger.build()
+    }
+}
+

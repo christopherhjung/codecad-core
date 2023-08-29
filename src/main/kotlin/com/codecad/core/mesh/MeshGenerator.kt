@@ -1,16 +1,15 @@
 package com.codecad.core.mesh
 
 import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.ast.primitive.minus
 import com.codecad.core.ast.primitive.times
 import com.codecad.core.ast.vec.QuaternionExpr
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.face.entity.*
-import com.codecad.core.face.entity.curve.Circle
-import com.codecad.core.face.entity.curve.Line
-import com.codecad.core.face.entity.surface.CylindricalSurface
-import com.codecad.core.face.entity.surface.PlaneSurface
+import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
+import com.codecad.core.brep.surface.CylindricalSurface
+import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint
@@ -29,12 +28,14 @@ class MeshGenerator {
         }
     }
 
-    fun generate(volume: Volume) : Mesh{
+    fun build() : Mesh{
+        return Mesh(indices.toIntArray(), vertices.toFloatArray())
+    }
+
+    fun generate(volume: Volume){
         for(shell in volume.shells){
             generate(shell)
         }
-
-        return Mesh(indices.toIntArray(), vertices.toFloatArray())
     }
 
     fun generate(shell: Shell){
@@ -42,7 +43,6 @@ class MeshGenerator {
             generate(face)
         }
     }
-
 
     fun generate(face: Face){
         val surface = face.surface
@@ -54,7 +54,7 @@ class MeshGenerator {
             val holes = arrayListOf<List<Vec3>>()
             for(bound in face.bounds){
                val edgeLoop = bound.edgeLoop
-               if(bound.sense){
+               if(bound.sense == FaceBoundSense.Inside){
                    outline = sweepVertices(edgeLoop)
                }else{
                    holes.add(sweepVertices(edgeLoop))
@@ -234,7 +234,7 @@ class MeshGenerator {
 
             is Circle -> {
                 val workplane = curve.workplane
-                val axisUp = workplane.axisUp
+                val axisUp = workplane.normal
 
                 val bound = edge.bound
                 val paramExpr = ParamExpr(axisUp.world, 0.0)
@@ -362,7 +362,8 @@ fun generateTriangles(projector: Projector, outline: List<Vec3>, holes: List<Lis
     val triangles = mutableListOf<TriangleFace>()
     fun createPoint(trianglePoint: TriangulationPoint) : Vec3 {
         val point = Vec2(trianglePoint.x, trianglePoint.y)
-        return pointMap[point]!!
+        val original = pointMap[point]
+        return original!!
     }
 
     for( triangle in parent.triangles ){
