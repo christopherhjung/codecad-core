@@ -34,11 +34,11 @@ class BrepTest {
     fun planetest(){
         val world = World()
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
-        val face = VolumeSuite.createPlane(workplane, 1000.0)
+        val face = VolumeSuite.createPlane(workplane, 50.0)
 
-        /*val volume = Extruder()
-            .extrude(face, world.DirectionZ, world.literal(10.0))*/
-        ExportHelper.saveStl(face)
+        val volume = Extruder()
+            .extrude(face, world.DirectionZ, world.literal(10.0))
+        ExportHelper.saveStl(volume)
     }
 
     @Test
@@ -56,6 +56,7 @@ class BrepTest {
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         val volume = Extruder()
             .extrude(face, world.DirectionZ, world.literal(10.0))
+        println(volume.toString())
         ExportHelper.saveStl(volume)
     }
 }

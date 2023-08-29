@@ -48,6 +48,7 @@ class StepExport : ModelExport{
     private val vertices = hashMapOf<Vertex, Id>()
     private val edges = hashMapOf<Edge, Id>()
     private var index = 10
+    private val scale = 0.001
 
     data class Id(val value : Int)
 
@@ -129,7 +130,7 @@ class StepExport : ModelExport{
     }
 
     private fun cartesianPoint(point : Vec3) : Id{
-        return addNamedObject("CARTESIAN_POINT", serialize(point * 0.001))
+        return addNamedObject("CARTESIAN_POINT", serialize(point * scale))
     }
 
     private fun direction(point : Vec3) : Id{
@@ -145,7 +146,7 @@ class StepExport : ModelExport{
     }
 
     private fun circle(axisPlacement: Id, radius: Double) : Id{
-        return addNamedObject("CIRCLE", axisPlacement, radius)
+        return addNamedObject("CIRCLE", axisPlacement, radius * scale)
     }
 
     private fun line(point: Id, direction: Id) : Id{
@@ -188,7 +189,7 @@ class StepExport : ModelExport{
     }
 
     private fun cylindricalSurface(axisPlacement: Id, radius: Double) : Id{
-        return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius)
+        return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius * scale)
     }
 
     private fun plane(axisPlacement: Id) : Id{
@@ -299,7 +300,7 @@ class StepExport : ModelExport{
 
         val shapeRepresentation = addNamedObject("SHAPE_REPRESENTATION", tuple(axisPlacement), representationContext, name = "Part 1")
         val shapeDefinitionRepresentation = addObject("SHAPE_DEFINITION_REPRESENTATION", productDefinitionShape, shapeRepresentation)
-        return shapeDefinitionRepresentation
+        return shapeRepresentation
     }
 
     private fun buildAxisPlacement(workplane: Workplane) : Id{

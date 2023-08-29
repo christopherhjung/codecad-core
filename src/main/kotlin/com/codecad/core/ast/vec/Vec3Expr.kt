@@ -134,6 +134,10 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
         return world.vec3(x - right, y - right, z - right)
     }
 
+    fun negate() : Vec3Expr{
+        return world.vec3(-x,-y,-z)
+    }
+
     fun squaredLength(): Expr {
         return when (type) {
             NormalizedVec -> world.One

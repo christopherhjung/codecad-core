@@ -36,6 +36,10 @@ class WorkplaneExpr(val origin : Vec3Expr, val xAxis: Vec3Expr, val yAxis : Vec3
     fun move(offset: Vec3Expr) : WorkplaneExpr{
         return WorkplaneExpr(origin + offset, xAxis, yAxis)
     }
+
+    fun invert() : WorkplaneExpr{
+        return WorkplaneExpr(origin, xAxis, yAxis.negate())
+    }
 }
 
 class Workplane(val origin : Vec3, val axisX: Vec3, val axisY : Vec3){

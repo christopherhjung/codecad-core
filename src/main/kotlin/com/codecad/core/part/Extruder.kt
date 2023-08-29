@@ -20,8 +20,8 @@ class Extruder(){
         val offset = normal * height
         val world = normal.world
 
-        val bottomFace = offsetFace(face, world.ZeroVec3)
-        val topFace = offsetFace(face, offset)
+        val bottomFace = offsetFace(face, world.ZeroVec3, true)
+        val topFace = offsetFace(face, offset, false)
 
         val faces = arrayListOf<Face>()
         faces.add(bottomFace)
@@ -82,7 +82,7 @@ class Extruder(){
         return volume
     }
 
-    fun offsetFace(face : Face, offset : Vec3Expr) : Face {
+    fun offsetFace(face : Face, offset : Vec3Expr, invert: Boolean) : Face {
         val map = hashMapOf<Vertex, Vertex>()
         fun remap(vertex: Vertex) : Vertex {
             return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
@@ -106,7 +106,8 @@ class Extruder(){
                     )
                 }
 
-                val curve = edge.curve.move(offset)
+                var curve = edge.curve.move(offset)
+                if(invert) curve = curve.invert()
                 edges.add(OrientedEdge(Edge(curve, newBound), orientedEdge.orientation))
             }
 

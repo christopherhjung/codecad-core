@@ -8,4 +8,8 @@ open class Circle(workplane: WorkplaneExpr, val radius: Expr) : Conic(workplane)
     override fun move(offset: Vec3Expr): Curve {
         return Circle(workplane.move(offset), radius)
     }
+
+    override fun invert(): Curve {
+        return Circle(workplane.invert(), radius)
+    }
 }
