@@ -48,7 +48,6 @@ class StepExport : ModelExport{
     private val vertices = hashMapOf<Vertex, Id>()
     private val edges = hashMapOf<Edge, Id>()
     private var index = 10
-    private val scale = 0.001
 
     data class Id(val value : Int)
 
@@ -130,7 +129,7 @@ class StepExport : ModelExport{
     }
 
     private fun cartesianPoint(point : Vec3) : Id{
-        return addNamedObject("CARTESIAN_POINT", serialize(point * scale))
+        return addNamedObject("CARTESIAN_POINT", serialize(point))
     }
 
     private fun direction(point : Vec3) : Id{
@@ -146,7 +145,7 @@ class StepExport : ModelExport{
     }
 
     private fun circle(axisPlacement: Id, radius: Double) : Id{
-        return addNamedObject("CIRCLE", axisPlacement, radius * scale)
+        return addNamedObject("CIRCLE", axisPlacement, radius)
     }
 
     private fun line(point: Id, direction: Id) : Id{
@@ -189,7 +188,7 @@ class StepExport : ModelExport{
     }
 
     private fun cylindricalSurface(axisPlacement: Id, radius: Double) : Id{
-        return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius * scale)
+        return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius)
     }
 
     private fun plane(axisPlacement: Id) : Id{
@@ -261,7 +260,7 @@ class StepExport : ModelExport{
         val metreUnit = addSpecialObject(
             createObject("LENGTH_UNIT"),
             createObject("NAMED_UNIT", "*"),
-            createObject("SI_UNIT", "$", ".METRE.")
+            createObject("SI_UNIT", ".MILLI.", ".METRE.")
         )
 
         val uncertaintyMeasureWithUnit = addObject("UNCERTAINTY_MEASURE_WITH_UNIT",
