@@ -70,7 +70,17 @@ class Extruder(){
                     faces.add(extrusionFace)
                 }else if(curve is Circle){
                     val surface = CylindricalSurface(faceSurface.workplane, curve.radius)
-                    faces.add(Face(surface, listOf()))
+
+                    val bottomBound = FaceBound(
+                        EdgeLoop.of(bottomOrientedEdge),
+                        FaceBoundSense.Outside
+                    )
+                    val topBound = FaceBound(
+                        EdgeLoop.of(topOrientedEdge),
+                        FaceBoundSense.Outside
+                    )
+
+                    faces.add(Face(surface, listOf(bottomBound, topBound)))
                 }else{
                     throw RuntimeException("Missing bounds!!")
                 }

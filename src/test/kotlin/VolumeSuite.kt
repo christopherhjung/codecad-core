@@ -87,6 +87,25 @@ object VolumeSuite {
     }
 
 
+    fun createCircleWithHole(bottomWorkplane: WorkplaneExpr, outerRadius: Double, innerRadius: Double, height: Double) : Face {
+        val world = bottomWorkplane.origin.world
+        val outerRadius = world.literal(outerRadius)
+        val innerRadius = world.literal(innerRadius)
+        val height = world.literal(height)
+
+        val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
+        val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))
+
+        val bottomSurface = PlaneSurface(bottomWorkplane)
+
+        val bottomEdgeLoop = EdgeLoop.of(bottomEdge)
+        val bottomHoleEdgeLoop = EdgeLoop.of(bottomHoleEdge)
+
+        val face = Face(bottomSurface, listOf(FaceBound(bottomEdgeLoop, FaceBoundSense.Inside), FaceBound(bottomHoleEdgeLoop, FaceBoundSense.Outside)))
+
+        return face
+    }
+
     fun createPlane(workplane: WorkplaneExpr, size: Double) : Face {
         val origin = workplane.origin
         val world = origin.world

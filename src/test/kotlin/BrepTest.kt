@@ -31,6 +31,17 @@ class BrepTest {
     }
 
     @Test
+    fun pipeTiltExtrudeTest(){
+        val world = World()
+        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0, 200.0)
+
+        val volume = Extruder()
+            .extrude(face, world.DirectionZ, world.literal(10.0))
+        ExportHelper.saveStl(volume)
+    }
+
+    @Test
     fun planetest(){
         val world = World()
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
