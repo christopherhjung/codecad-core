@@ -128,74 +128,74 @@ class StepExport : ModelExport{
         sb.append(postfix).append(")")
     }
 
-    private fun cartesianPoint(point : Vec3) : Id{
+    private fun createCartesianPoint(point : Vec3) : Id{
         return addNamedObject("CARTESIAN_POINT", serialize(point))
     }
 
-    private fun direction(point : Vec3) : Id{
+    private fun createDirection(point : Vec3) : Id{
         return addNamedObject("DIRECTION", serialize(point))
     }
 
-    private fun vector(point : Vec3) : Id{
-        return addNamedObject("VECTOR", direction(point), 1.0)
+    private fun createVector(point : Vec3) : Id{
+        return addNamedObject("VECTOR", createDirection(point), 1.0)
     }
 
-    private fun orientedEdge(edgeCurve: Id, orientation: Boolean) : Id{
+    private fun createOrientedEdge(edgeCurve: Id, orientation: Boolean) : Id{
         return addNamedObject("ORIENTED_EDGE", "*", "*", edgeCurve, orientation)
     }
 
-    private fun circle(axisPlacement: Id, radius: Double) : Id{
+    private fun createCircle(axisPlacement: Id, radius: Double) : Id{
         return addNamedObject("CIRCLE", axisPlacement, radius)
     }
 
-    private fun line(point: Id, direction: Id) : Id{
+    private fun createLine(point: Id, direction: Id) : Id{
         return addNamedObject("LINE", point, direction)
     }
 
-    private fun edgeCurve(start: Id, end: Id, curve: Id, sense : Boolean) : Id{
+    private fun createEdgeCurve(start: Id, end: Id, curve: Id, sense : Boolean) : Id{
         return addNamedObject("EDGE_CURVE", start, end, curve, sense)
     }
 
-    private fun edgeCurve(edge: Edge) : Id{
+    private fun createEdgeCurve(edge: Edge) : Id{
         return edges.computeIfAbsent(edge){
             val bound = edge.bound
 
-            val start = bound?.start?.let { vertexPoint(it) }
-            val end = bound?.end?.let { vertexPoint(it) }
+            val start = bound?.start?.let { createVertexPoint(it) }
+            val end = bound?.end?.let { createVertexPoint(it) }
 
-            val curve = buildCurve(edge.curve)
+            val curve = createCurve(edge.curve)
             val sense = (bound?.sense ?: Sense.CCW) != Sense.CW
-            edgeCurve(start!!, end!!, curve, sense)
+            createEdgeCurve(start!!, end!!, curve, sense)
         }
     }
 
-    private fun vertexPoint(vertex: Vertex) : Id{
+    private fun createVertexPoint(vertex: Vertex) : Id{
         return vertices.computeIfAbsent(vertex){
-            addNamedObject("VERTEX_POINT", cartesianPoint(vertex.point.eval()))
+            addNamedObject("VERTEX_POINT", createCartesianPoint(vertex.point.eval()))
         }
     }
 
-    private fun edgeLoop(orientedEdges: List<Id>) : Id{
+    private fun createEdgeLoop(orientedEdges: List<Id>) : Id{
         return addNamedObject("EDGE_LOOP", tuple(orientedEdges))
     }
 
-    private fun faceBound(edgeLoop: Id, sense: Boolean) : Id{
+    private fun createFaceBound(edgeLoop: Id, sense: Boolean) : Id{
         return addNamedObject("FACE_BOUND", edgeLoop, sense)
     }
 
-    private fun advancedFace(faceBound: List<Id>, surface: Id, sense: Boolean) : Id{
+    private fun createAdvancedFace(faceBound: List<Id>, surface: Id, sense: Boolean) : Id{
         return addNamedObject("ADVANCED_FACE", tuple(faceBound), surface, sense)
     }
 
-    private fun cylindricalSurface(axisPlacement: Id, radius: Double) : Id{
+    private fun createCylindricalSurface(axisPlacement: Id, radius: Double) : Id{
         return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius)
     }
 
-    private fun plane(axisPlacement: Id) : Id{
+    private fun createPlane(axisPlacement: Id) : Id{
         return addNamedObject("PLANE", axisPlacement)
     }
 
-    private fun axisPlacement(point: Id, normal: Id, x : Id) : Id{
+    private fun createAxisPlacement(point: Id, normal: Id, x : Id) : Id{
         return addNamedObject("AXIS2_PLACEMENT_3D", point, normal, x)
     }
 
@@ -203,23 +203,23 @@ class StepExport : ModelExport{
         return addNamedObject("CLOSED_SHELL", tuple(advancedFaces))
     }
 
-    private fun openShell(advancedFaces: List<Id>) : Id{
+    private fun createOpenShell(advancedFaces: List<Id>) : Id{
         return addNamedObject("OPEN_SHELL", tuple(advancedFaces))
     }
 
-    private fun shellSurface(shell: Id) : Id{
+    private fun createShellSurface(shell: Id) : Id{
         return addNamedObject("SHELL_BASED_SURFACE_MODEL", tuple(shell), name= "Surface 1")
     }
 
-    private fun solidBrep(shell: Id) : Id{
+    private fun createSolidBrep(shell: Id) : Id{
         return addNamedObject("MANIFOLD_SOLID_BREP", shell, name= "Part 1")
     }
 
-    private fun geometricPresentationRepresentation(styledItems: List<Id>, context: Id) : Id{
+    private fun createGeometricPresentationRepresentation(styledItems: List<Id>, context: Id) : Id{
         return addNamedObject("MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION", tuple(styledItems), context)
     }
 
-    private fun presentationStyleAssignment() : Id{
+    private fun createPresentationStyleAssignment() : Id{
         val color = addNamedObject("COLOUR_RGB", 0.615686274509804, 0.811764705882353, 0.929411764705882)
         val fillAreaStyleColor = addNamedObject("FILL_AREA_STYLE_COLOUR", color)
         val fillAreaStyle = addNamedObject("FILL_AREA_STYLE", tuple(fillAreaStyleColor))
@@ -229,11 +229,11 @@ class StepExport : ModelExport{
         return addObject("PRESENTATION_STYLE_ASSIGNMENT", tuple(surfaceStyleUsage))
     }
 
-    private fun styledItem(solidBrep: Id, presentationStyleAssignment: Id) : Id{
+    private fun createStyledItem(solidBrep: Id, presentationStyleAssignment: Id) : Id{
         return addNamedObject("STYLED_ITEM", tuple(presentationStyleAssignment), solidBrep)
     }
 
-    private fun applicationContext() : Id{
+    private fun createApplicationContext() : Id{
         val applicationContext = addNamedObject("APPLICATION_CONTEXT", name="managed model based 3d engineering")
         val applicationProtocolDefinition = addNamedObject("APPLICATION_PROTOCOL_DEFINITION",
             "'ap242_managed_model_based_3d_engineering'",
@@ -244,7 +244,7 @@ class StepExport : ModelExport{
         return applicationContext
     }
 
-    private fun representationContext() : Id{
+    private fun createRepresentationContext() : Id{
         val solidAngleUnit = addSpecialObject(
             createObject("NAMED_UNIT", "*"),
             createObject("SI_UNIT", "$", ".STERADIAN."),
@@ -280,7 +280,7 @@ class StepExport : ModelExport{
         return representationContext
     }
 
-    private fun shapeRepresentation(applicationContext: Id, representationContext: Id) : Id{
+    private fun createShapeRepresentation(applicationContext: Id, representationContext: Id) : Id{
         val productContext = addNamedObject("PRODUCT_CONTEXT", applicationContext, "'mechanical'")
         val productCategory = addNamedObject("PRODUCT_CATEGORY", "''")
         val product = addNamedObject("PRODUCT", "'Part 1'", "'Part 1'", tuple(productContext), name="Part 1")
@@ -292,40 +292,40 @@ class StepExport : ModelExport{
         val productDefinition = addNamedObject("PRODUCT_DEFINITION", "''", productDefFormWithSpecSource, productDefinitionContext)
         val productDefinitionShape = addNamedObject("PRODUCT_DEFINITION_SHAPE", "''", productDefinition)
 
-        val normal = direction(Vec3(0.0, 0.0, 1.0))
-        val xAxis = direction(Vec3(1.0, 0.0, 0.0))
-        val point = cartesianPoint(Vec3.ZERO)
-        val axisPlacement = axisPlacement(point, normal, xAxis)
+        val normal = createDirection(Vec3(0.0, 0.0, 1.0))
+        val xAxis = createDirection(Vec3(1.0, 0.0, 0.0))
+        val point = createCartesianPoint(Vec3.ZERO)
+        val axisPlacement = createAxisPlacement(point, normal, xAxis)
 
         val shapeRepresentation = addNamedObject("SHAPE_REPRESENTATION", tuple(axisPlacement), representationContext, name = "Part 1")
         val shapeDefinitionRepresentation = addObject("SHAPE_DEFINITION_REPRESENTATION", productDefinitionShape, shapeRepresentation)
         return shapeRepresentation
     }
 
-    private fun buildAxisPlacement(workplane: Workplane) : Id{
-        return axisPlacement(cartesianPoint(workplane.origin), direction(workplane.normal), direction(workplane.axisX))
+    private fun createAxisPlacement(workplane: Workplane) : Id{
+        return createAxisPlacement(createCartesianPoint(workplane.origin), createDirection(workplane.normal), createDirection(workplane.axisX))
     }
 
-    private fun buildSurface(surface: Surface) : Id{
-        val axisPlacement = buildAxisPlacement(surface.workplane.eval())
+    private fun createSurface(surface: Surface) : Id{
+        val axisPlacement = createAxisPlacement(surface.workplane.eval())
         return when(surface){
             is CylindricalSurface ->
-                cylindricalSurface(axisPlacement, surface.radius.evalDouble() )
-            is PlaneSurface -> plane(axisPlacement)
+                createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
+            is PlaneSurface -> createPlane(axisPlacement)
             else -> throw RuntimeException("Unknown surface")
         }
     }
 
-    private fun buildCurve(curve: Curve) : Id{
+    private fun createCurve(curve: Curve) : Id{
         return when(curve){
-            is Circle -> circle(buildAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
-            is Line -> line(cartesianPoint(curve.point.eval()), vector(curve.direction.eval()))
+            is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
+            is Line -> createLine(createCartesianPoint(curve.point.eval()), createVector(curve.direction.eval()))
             else -> throw RuntimeException("Unknown surface")
         }
     }
 
-    private fun buildAdvancedFace(face : Face) : Id{
-        val surface = buildSurface(face.surface)
+    private fun createAdvancedFace(face : Face) : Id{
+        val surface = createSurface(face.surface)
 
         val stepBounds = arrayListOf<Id>()
         for(faceBound in face.bounds){
@@ -334,86 +334,73 @@ class StepExport : ModelExport{
                 val orientedEdge = edgeLoop.edge
                 val edge = orientedEdge.edge
 
-                val stepEdgeCurve = edgeCurve(edge)
+                val stepEdgeCurve = createEdgeCurve(edge)
 
                 val stepOrientedEdge =
-                    orientedEdge(stepEdgeCurve,
+                    createOrientedEdge(stepEdgeCurve,
                     orientedEdge.orientation == EdgeOrientation.Forward)
 
                 stepOrientedEdges.add(stepOrientedEdge)
             }
 
             val stepSense = faceBound.sense == FaceBoundSense.Inside
-            val stepEdgeLoop = edgeLoop(stepOrientedEdges)
-            val stepFaceBound = faceBound(stepEdgeLoop, stepSense)
+            val stepEdgeLoop = createEdgeLoop(stepOrientedEdges)
+            val stepFaceBound = createFaceBound(stepEdgeLoop, stepSense)
             stepBounds.add(stepFaceBound)
         }
 
-        return advancedFace(stepBounds, surface, true)
+        return createAdvancedFace(stepBounds, surface, true)
     }
 
-    private fun buildShell(shell: Shell) : Id{
+    private fun createShell(shell: Shell) : Id{
         val stepAdvancedFaces = arrayListOf<Id>()
         for(face in shell.faces){
-            val advancedFace = buildAdvancedFace(face)
+            val advancedFace = createAdvancedFace(face)
             stepAdvancedFaces.add(advancedFace)
         }
 
         return closedShell(stepAdvancedFaces)
     }
 
-    private fun buildVolume(volume: Volume) : Id{
-        val shell = buildShell(volume.shells.first())
-        return solidBrep(shell)
+    private fun createVolume(volume: Volume) : Id{
+        val shell = createShell(volume.shells.first())
+        return createSolidBrep(shell)
     }
 
-    private fun buildFace(face: Face) : Id{
-        val openShell = openShell(listOf(buildAdvancedFace(face)))
-        val surfaceModel = shellSurface(openShell)
+    private fun createFace(face: Face) : Id{
+        val openShell = createOpenShell(listOf(createAdvancedFace(face)))
+        val surfaceModel = createShellSurface(openShell)
         return surfaceModel
+    }
+
+    private fun createShapeRepresentationRelationship(shapeRepresentation: Id, shapeRep: Id){
+        addNamedObject("SHAPE_REPRESENTATION_RELATIONSHIP", "''", shapeRepresentation, shapeRep)
     }
 
     override fun export(context: Context): ByteArray{
         data.append(Header)
-        val models = arrayListOf<Id>()
-        val breps = arrayListOf<Id>()
-        val surfaceModels = arrayListOf<Id>()
+
+        val style = createPresentationStyleAssignment()
+        val applicationContext = createApplicationContext()
+        val representationContext = createRepresentationContext()
+        val shapeRepresentation = createShapeRepresentation(applicationContext, representationContext)
+
+        val styledItems = arrayListOf<Id>()
         for( face in context.faces ){
-            val face = buildFace(face)
-            models.add(face)
-            surfaceModels.add(face)
+            val item = createFace(face)
+            styledItems.add(createStyledItem(item, style))
+            val shapeRep = addNamedObject("MANIFOLD_SURFACE_SHAPE_REPRESENTATION", tuple(item), representationContext)
+            createShapeRepresentationRelationship(shapeRepresentation, shapeRep)
         }
 
         for( volume in context.volumes ){
-            val brep = buildVolume(volume)
-            models.add(brep)
-            breps.add(brep)
+            val item = createVolume(volume)
+            styledItems.add(createStyledItem(item, style))
+            val shapeRep = addNamedObject("ADVANCED_BREP_SHAPE_REPRESENTATION", tuple(item), representationContext)
+            createShapeRepresentationRelationship(shapeRepresentation, shapeRep)
         }
 
-        val styledItems = arrayListOf<Id>()
-        val style = presentationStyleAssignment()
-        val applicationContext = applicationContext()
-        val representationContext = representationContext()
-        val shapeRepresentation = shapeRepresentation(applicationContext, representationContext)
-
-        for(model in models){
-            styledItems.add(styledItem(model, style))
-        }
-
-        val shapeReps = arrayListOf<Id>()
-        for(brep in breps){
-            shapeReps.add(addNamedObject("ADVANCED_BREP_SHAPE_REPRESENTATION", tuple(brep), representationContext))
-        }
-
-        for(surface in surfaceModels){
-            shapeReps.add(addNamedObject("MANIFOLD_SURFACE_SHAPE_REPRESENTATION", tuple(surface), representationContext))
-        }
-
-        shapeReps.forEach {
-            addNamedObject("SHAPE_REPRESENTATION_RELATIONSHIP", "''", shapeRepresentation, it)
-        }
-
-        geometricPresentationRepresentation(styledItems, representationContext)
+        createGeometricPresentationRepresentation(styledItems, representationContext)
         data.append(Footer)
         return data.toString().toByteArray(StandardCharsets.UTF_8)
     }
