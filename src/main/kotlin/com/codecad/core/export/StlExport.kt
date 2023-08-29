@@ -1,11 +1,19 @@
 package com.codecad.core.export
 
 import com.codecad.core.mesh.Mesh
+import com.codecad.core.mesh.MeshGenerator
+import com.codecad.core.part.Context
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class StlExport : ModelExport{
-    override fun export(mesh: Mesh): ByteArray{
+    override fun export(context: Context): ByteArray{
+        val meshGenerator = MeshGenerator()
+        for( volume in context.volumes ){
+            meshGenerator.generate(volume)
+        }
+        val mesh = meshGenerator.build()
+
         val indices = mesh.indices
         val vertices = mesh.vertices
 

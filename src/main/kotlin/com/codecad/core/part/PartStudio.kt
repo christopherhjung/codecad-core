@@ -4,14 +4,21 @@ import com.codecad.core.*
 import com.codecad.core.brep.Face
 import com.codecad.core.volume.Volume
 
-class Context{
-    val volumes = arrayListOf<Volume>()
+class Context(val faces : MutableList<Face> = arrayListOf(), val volumes : MutableList<Volume> = arrayListOf()){
+    companion object{
+        fun of(volume: Volume) : Context{
+            return Context(mutableListOf(), mutableListOf(volume))
+        }
+
+        fun of(face: Face) : Context{
+            return Context(mutableListOf(face), mutableListOf())
+        }
+    }
 }
 
 class PartStudio(val world : World = World()){
     val sketches: MutableList<Sketch> = mutableListOf()
-    val faces = arrayListOf<Face>()
-    val volumes = arrayListOf<Volume>()
+    val context = Context()
 
     fun addFace(face: Face){
         //faces.add(face)
@@ -22,7 +29,7 @@ class PartStudio(val world : World = World()){
     }
 
     fun addVolume(volume: Volume){
-        volumes.add(volume)
+        context.volumes.add(volume)
     }
 
 /*

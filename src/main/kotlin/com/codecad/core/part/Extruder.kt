@@ -11,12 +11,6 @@ import com.codecad.core.volume.Volume
 
 
 class Extruder(){
-    val map = hashMapOf<Pair<Vertex, Vec3Expr>, Vertex>()
-
-    fun remap(vertex: Vertex, offset: Vec3Expr) : Vertex {
-        val pair = Pair(vertex, offset)
-        return map.computeIfAbsent(pair){ Vertex(vertex.point + offset) }
-    }
 
     fun extrude(face: Face, normal: Vec3Expr, height: Expr) : Volume {
         val faceSurface = face.surface
@@ -26,12 +20,12 @@ class Extruder(){
         val offset = normal * height
         val world = normal.world
 
-        val topFace = offsetFace(face, world.ZeroVec3)
-        val bottomFace = offsetFace(face, offset)
+        val bottomFace = offsetFace(face, world.ZeroVec3)
+        val topFace = offsetFace(face, offset)
 
         val faces = arrayListOf<Face>()
-        faces.add(topFace)
         faces.add(bottomFace)
+        faces.add(topFace)
 
         val map = hashMapOf<Vertex, Edge>()
         fun extrusionLine(start: Vertex, end: Vertex) : Edge {
@@ -84,11 +78,16 @@ class Extruder(){
         }
 
         val volume = Volume(listOf(Shell(faces)))
-        println(volume)
+        //println(volume)
         return volume
     }
 
     fun offsetFace(face : Face, offset : Vec3Expr) : Face {
+        val map = hashMapOf<Vertex, Vertex>()
+        fun remap(vertex: Vertex) : Vertex {
+            return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
+        }
+
         val faceBounds = arrayListOf<FaceBound>()
         for( faceBound in face.bounds ) {
 
@@ -101,8 +100,8 @@ class Extruder(){
 
                 val newBound = bound?.let {
                     EdgeBound(
-                        remap(bound.start, offset),
-                        remap(bound.end, offset),
+                        remap(bound.start),
+                        remap(bound.end),
                         bound.sense
                     )
                 }

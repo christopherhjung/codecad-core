@@ -94,7 +94,7 @@ class SketchTest {
 
         println(sketch)
 
-        val face = partStudio.faces.first()
+        val face = partStudio.context.faces.first()
         ExportHelper.saveStl(face)
     }
 }

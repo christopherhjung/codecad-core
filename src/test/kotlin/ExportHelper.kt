@@ -1,33 +1,31 @@
 import com.codecad.core.brep.Face
+import com.codecad.core.export.ModelExport
+import com.codecad.core.export.StepExport
 import com.codecad.core.export.StlExport
 import com.codecad.core.mesh.MeshGenerator
+import com.codecad.core.part.Context
 import com.codecad.core.volume.Volume
 import java.io.FileOutputStream
 
 object ExportHelper {
 
+    fun createExporter() : ModelExport{
+        return StepExport()
+    }
+
     fun saveStl(volume: Volume){
-        val meshGenerator = MeshGenerator()
-        meshGenerator.generate(volume)
-        val mesh = meshGenerator.build()
 
-        val stlExport = StlExport()
-        val byteArray = stlExport.export(mesh)
+        val byteArray = createExporter().export(Context.of(volume))
 
-        val outStream = FileOutputStream("test.stl")
+        val outStream = FileOutputStream("test.step")
         outStream.write(byteArray)
         outStream.close()
     }
 
     fun saveStl(face: Face){
-        val meshGenerator = MeshGenerator()
-        meshGenerator.generate(face)
-        val mesh = meshGenerator.build()
+        val byteArray = createExporter().export(Context.of(face))
 
-        val stlExport = StlExport()
-        val byteArray = stlExport.export(mesh)
-
-        val outStream = FileOutputStream("test.stl")
+        val outStream = FileOutputStream("test.step")
         outStream.write(byteArray)
         outStream.close()
     }

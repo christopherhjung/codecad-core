@@ -87,7 +87,7 @@ object VolumeSuite {
     }
 
 
-    fun createPlane(workplane: WorkplaneExpr, size: Double) : Volume {
+    fun createPlane(workplane: WorkplaneExpr, size: Double) : Face {
         val origin = workplane.origin
         val world = origin.world
         val size = world.literal(size)
@@ -106,9 +106,7 @@ object VolumeSuite {
 
         val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
-        val shell = Shell(listOf(face))
-        val volume = Volume(listOf(shell))
-        return volume
+        return face
     }
 
     fun roundedPlane(workplane: WorkplaneExpr, size: Double, radius: Double) : Face {

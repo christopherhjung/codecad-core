@@ -10,11 +10,11 @@ fun mapModel(partStudio: PartStudio) : Model{
    val model = Model()
 
     val meshGenerator = MeshGenerator()
-    for( face in partStudio.faces ){
+    for( face in partStudio.context.faces ){
         meshGenerator.generate(face)
     }
 
-    for( volume in partStudio.volumes ){
+    for( volume in partStudio.context.volumes ){
         meshGenerator.generate(volume)
     }
     val mesh = meshGenerator.build()

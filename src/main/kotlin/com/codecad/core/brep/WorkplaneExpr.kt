@@ -38,21 +38,21 @@ class WorkplaneExpr(val origin : Vec3Expr, val xAxis: Vec3Expr, val yAxis : Vec3
     }
 }
 
-class Workplane(val origin : Vec3, val axisA: Vec3, val axisB : Vec3){
-    val axisUp get() = axisA.cross(axisB)
+class Workplane(val origin : Vec3, val axisX: Vec3, val axisY : Vec3){
+    val normal get() = axisX.cross(axisY)
 
     fun unproject(point: Vec2) : Vec3 {
         return unproject(point.x, point.y)
     }
 
     fun unproject(x: Double, y: Double) : Vec3 {
-        return axisA * x + axisB * y + origin
+        return axisX * x + axisY * y + origin
     }
 
     fun project(point: Vec3) : Vec2 {
         val fromOrigin = point - origin
-        val x = axisA.dot(fromOrigin) / axisA.squaredLength()
-        val y = axisB.dot(fromOrigin) / axisB.squaredLength()
+        val x = axisX.dot(fromOrigin) / axisX.squaredLength()
+        val y = axisY.dot(fromOrigin) / axisY.squaredLength()
         return Vec2(x,y)
     }
 }

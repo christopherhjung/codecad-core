@@ -22,14 +22,13 @@ class Debugger{
         }
     }
 
-    fun addFace(face: Face){
+    fun addFace(face: Face) : Debugger{
         for(faceBound in face.bounds){
             faceBuilder.append("Face(")
             var sep = ""
             for(edgeLoop in faceBound.edgeLoop){
                 val orientedEdge = edgeLoop.edge
-                val edge = orientedEdge.edge
-                val bound = edge.bound
+                val bound = orientedEdge.bound
                 if(bound != null){
                     faceBuilder.append(sep).append(getVertexIndex(bound.start))
                     sep = ", "
@@ -37,6 +36,8 @@ class Debugger{
             }
             faceBuilder.append(")\n")
         }
+
+        return this
     }
 
     fun build() : String{

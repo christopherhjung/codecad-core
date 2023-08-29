@@ -25,7 +25,7 @@ class CylinderProjector(val workplane: Workplane, val radius: Expr) : Projector{
         val theta = atan2(diff.y, diff.x)
 
         val test = point - workplane.origin
-        val axisUp = workplane.axisUp
+        val axisUp = workplane.normal
 
         val axisOffset = test.dot(axisUp) // vector projection optimized
         return Vec2(theta, axisOffset)

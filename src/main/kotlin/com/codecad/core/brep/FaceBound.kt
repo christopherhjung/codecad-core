@@ -18,6 +18,13 @@ enum class EdgeOrientation{
     }
 }
 class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrientation.Forward){
+    val start get() = if(orientation == EdgeOrientation.Forward) edge.bound?.start else edge.bound?.end
+    val end get() = if(orientation == EdgeOrientation.Forward) edge.bound?.end else edge.bound?.start
+    val bound get() = if(orientation == EdgeOrientation.Forward) edge.bound else edge.bound?.let {
+            EdgeBound(it.end, it.start, it.sense)
+        }
+
+
     override fun equals(other: Any?): Boolean {
         return this === other ||
                 other is OrientedEdge &&
