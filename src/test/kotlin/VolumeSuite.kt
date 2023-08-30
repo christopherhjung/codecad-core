@@ -10,8 +10,12 @@ object VolumeSuite {
         val outerRadius = world.literal(outerRadius)
         val height = world.literal(height)
 
-        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.normal * height, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
-        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
+        val topWorkplane = WorkplaneExpr(
+            bottomWorkplane.origin + bottomWorkplane.normal * height,
+            bottomWorkplane.normal,
+            bottomWorkplane.normal
+        )
+        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.normal, bottomWorkplane.normal)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -44,8 +48,8 @@ object VolumeSuite {
         val innerRadius = world.literal(innerRadius)
         val height = world.literal(height)
 
-        val topWorkplane = WorkplaneExpr(bottomWorkplane.origin + bottomWorkplane.normal * height, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
-        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.xAxis, bottomWorkplane.yAxis )
+        val topWorkplane = bottomWorkplane.move(bottomWorkplane.normal * height)
+        val zeroXYWorkplane = bottomWorkplane.withOrigin(world.ZeroVec3)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -112,8 +116,8 @@ object VolumeSuite {
         val size = world.literal(size)
         val halfSize = size / 2.0
 
-        val axisA = workplane.xAxis
-        val axisB = workplane.yAxis
+        val axisA = workplane.normal
+        val axisB = workplane.xAxis
 
         val a = Vertex(origin - axisA * halfSize - axisB * halfSize)
         val b = Vertex(origin + axisA * halfSize - axisB * halfSize)

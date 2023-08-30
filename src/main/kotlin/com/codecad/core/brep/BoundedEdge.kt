@@ -7,7 +7,7 @@ import com.codecad.core.brep.curve.Line
 enum class Sense{
     None, CW, CCW;
 
-    fun inverse() : Sense{
+    fun invert() : Sense{
         return when(this){
             None -> None
             CW -> CCW

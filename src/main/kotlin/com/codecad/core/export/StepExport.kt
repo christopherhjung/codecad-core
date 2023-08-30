@@ -161,7 +161,7 @@ class StepExport : ModelExport{
             if(bound != null){
                 val start = createVertexPoint(bound.start)
                 val end = createVertexPoint(bound.end)
-                val sense = bound.sense != Sense.CW
+                val sense = bound.sense != Sense.CCW
                 createEdgeCurve(start, end, curve, sense)
             }else if(edgeCurve is Circle){
                 val vertex = circleSeam.computeIfAbsent(edge){

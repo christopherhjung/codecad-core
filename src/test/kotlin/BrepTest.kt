@@ -8,7 +8,7 @@ class BrepTest {
     @Test
     fun cylinderTest(){
         val world = World()
-        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val volume = VolumeSuite.createCylinder(bottomWorkplane, 50.0, 200.0)
         ExportHelper.saveStl(volume)
     }
@@ -16,7 +16,7 @@ class BrepTest {
     @Test
     fun pipeTest(){
         val world = World()
-        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
         ExportHelper.saveStl(volume)
     }
@@ -24,8 +24,8 @@ class BrepTest {
     @Test
     fun pipeTiltTest(){
         val world = World()
-        val xzWorkplane = (world.DirectionX + world.DirectionZ).normalized()
-        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, xzWorkplane, world.DirectionY )
+        val xzWorkplane = (world.DirectionX + world.DirectionY).normalized()
+        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, xzWorkplane, world.DirectionY)
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
         ExportHelper.saveStl(volume)
     }
@@ -33,7 +33,7 @@ class BrepTest {
     @Test
     fun pipeTiltExtrudeTest(){
         val world = World()
-        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0, 200.0)
 
         val volume = Extruder()
@@ -44,7 +44,7 @@ class BrepTest {
     @Test
     fun planetest(){
         val world = World()
-        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.createPlane(workplane, 50.0)
 
         val volume = Extruder()
@@ -55,7 +55,7 @@ class BrepTest {
     @Test
     fun roundplanetest(){
         val world = World()
-        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         ExportHelper.saveStl(face)
     }
@@ -63,7 +63,7 @@ class BrepTest {
     @Test
     fun roundplaneextrudetest(){
         val world = World()
-        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionX, world.DirectionY )
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         val volume = Extruder()
             .extrude(face, world.DirectionZ, world.literal(10.0))

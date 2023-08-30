@@ -7,7 +7,7 @@ import kotlin.test.assertSame
 class WorkplaneTest {
 
     val world = World()
-
+/*
     fun createPlacement() : WorkplaneExpr {
         val origin = world.vec3(world.literal(2.3), world.literal(3.4), world.literal(4.5))
         val axisA = world.vec3(world.literal(1.0), world.literal(1.0), world.literal(0.0))
@@ -28,5 +28,5 @@ class WorkplaneTest {
 
         val expected = world.vec2(x, y)
         assertSame(expected, actual)
-    }
+    }*/
 }

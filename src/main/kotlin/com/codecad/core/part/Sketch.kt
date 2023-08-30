@@ -187,7 +187,7 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
                 }
                 is SketchCircle -> {
                     val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.xAxis, workplane.yAxis )
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.normal, workplane.xAxis)
 
                     val circle = Edge(
                         Circle(centerWorkplane, figure.radius)
@@ -195,7 +195,7 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
                 }
                 is SketchArc -> {
                     val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.xAxis, workplane.yAxis )
+                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.normal, workplane.xAxis)
                     val arc = Edge(
                         Circle(centerWorkplane, figure.radius),
                         EdgeBound(

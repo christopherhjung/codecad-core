@@ -7,15 +7,15 @@ import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.scope.Scope
 
-class WorkplaneExpr(val origin : Vec3Expr, val xAxis: Vec3Expr, val yAxis : Vec3Expr) : Expr(origin.world){
-    val normal get() = xAxis.cross(yAxis)
+class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val xAxis: Vec3Expr) : Expr(origin.world){
+    val yAxis get() = normal.cross(xAxis)
 
     override fun eval(scope: Scope): Workplane {
-        return Workplane(origin.eval(), xAxis.eval(), yAxis.eval())
+        return Workplane(origin.eval(), normal.eval(), xAxis.eval())
     }
 
     fun withOrigin(origin: Vec3Expr) : WorkplaneExpr {
-        return WorkplaneExpr(origin, xAxis, yAxis)
+        return WorkplaneExpr(origin, normal, xAxis)
     }
 
     fun unproject(point: Vec2Expr) : Vec3Expr {
@@ -34,16 +34,16 @@ class WorkplaneExpr(val origin : Vec3Expr, val xAxis: Vec3Expr, val yAxis : Vec3
     }
 
     fun move(offset: Vec3Expr) : WorkplaneExpr{
-        return WorkplaneExpr(origin + offset, xAxis, yAxis)
+        return WorkplaneExpr(origin + offset, normal, xAxis)
     }
 
     fun invert() : WorkplaneExpr{
-        return WorkplaneExpr(origin, xAxis, yAxis.negate())
+        return WorkplaneExpr(origin, normal.negate(), xAxis)
     }
 }
 
-class Workplane(val origin : Vec3, val axisX: Vec3, val axisY : Vec3){
-    val normal get() = axisX.cross(axisY)
+class Workplane(val origin: Vec3, val normal: Vec3, val axisX: Vec3){
+    val axisY get() = normal.cross(axisX)
 
     fun unproject(point: Vec2) : Vec3 {
         return unproject(point.x, point.y)

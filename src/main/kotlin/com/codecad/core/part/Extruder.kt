@@ -58,8 +58,8 @@ class Extruder(){
 
                     val surface =  when(curve) {
                         is Line -> {
-                            val up = curve.direction.cross(normal).cross(curve.direction).normalized()
-                            val workplane = WorkplaneExpr(bottomEdgeBound.start.point, curve.direction, up)
+                            val newNormal = curve.direction.cross(normal).normalized()
+                            val workplane = WorkplaneExpr(bottomEdgeBound.start.point, newNormal, curve.direction)
                             PlaneSurface(workplane)
                         }
                         is Circle -> CylindricalSurface(faceSurface.workplane, curve.radius)

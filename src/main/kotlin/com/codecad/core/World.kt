@@ -31,9 +31,9 @@ class World {
     val PlaneYZ = Plane(DirectionX, Zero)
     val PlaneZX = Plane(DirectionY, Zero)
 
-    val WorkplaneXY = WorkplaneExpr(ZeroVec3, DirectionX, DirectionY)
-    val WorkplaneYZ = WorkplaneExpr(ZeroVec3, DirectionY, DirectionZ)
-    val WorkplaneZX = WorkplaneExpr(ZeroVec3, DirectionX, DirectionZ)
+    val WorkplaneXY = WorkplaneExpr(ZeroVec3, DirectionZ, DirectionX)
+    val WorkplaneYZ = WorkplaneExpr(ZeroVec3, DirectionX, DirectionY)
+    val WorkplaneZX = WorkplaneExpr(ZeroVec3, DirectionY, DirectionX)
 
     private inline fun <reified T : Expr> unify(expr: T) : T {
         return sea.putIfAbsent(expr, expr) as? T ?: expr
