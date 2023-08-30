@@ -117,7 +117,7 @@ object VolumeSuite {
         val halfSize = size / 2.0
 
         val axisA = workplane.normal
-        val axisB = workplane.xAxis
+        val axisB = workplane.x
 
         val a = Vertex(origin - axisA * halfSize - axisB * halfSize)
         val b = Vertex(origin + axisA * halfSize - axisB * halfSize)

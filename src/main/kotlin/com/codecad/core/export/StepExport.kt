@@ -314,7 +314,7 @@ class StepExport : ModelExport{
     }
 
     private fun createAxisPlacement(workplane: Workplane) : Id{
-        return createAxisPlacement(createCartesianPoint(workplane.origin), createDirection(workplane.normal), createDirection(workplane.axisX))
+        return createAxisPlacement(createCartesianPoint(workplane.origin), createDirection(workplane.normal), createDirection(workplane.x))
     }
 
     private fun createSurface(surface: Surface) : Id{
