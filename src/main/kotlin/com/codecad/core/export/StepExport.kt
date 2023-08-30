@@ -83,19 +83,14 @@ class StepExport : ModelExport{
     }
 
     private fun addObject(struct: String, vararg args: Any) : Id{
-        val currentIdx = index++
-
-        data
-            .append("#")
-            .append(currentIdx)
-            .append("=")
-
-        buildObject(data, struct,"", ",", "", args.asIterable())
-        data.append(";\n")
-        return Id(currentIdx)
+        return addObject(struct,"", ",", "", args.asIterable())
     }
 
-    private fun addSpecialObject(vararg args: Any) : Id{
+    private fun addCombinedObject(vararg args: Any) : Id{
+        return addObject("", "\n", "\n", "\n", args.asIterable())
+    }
+
+    private fun addObject(struct: String, prefix: String, delimiter: String, postfix: String, args: Iterable<Any>) : Id{
         val currentIdx = index++
 
         data
@@ -103,7 +98,7 @@ class StepExport : ModelExport{
             .append(currentIdx)
             .append("=")
 
-        buildObject(data, "", "\n", "\n", "\n", args.asIterable())
+        buildObject(data, struct, prefix, delimiter, postfix, args.asIterable())
         data.append(";\n")
         return Id(currentIdx)
     }
@@ -257,19 +252,19 @@ class StepExport : ModelExport{
     }
 
     private fun createRepresentationContext() : Id{
-        val solidAngleUnit = addSpecialObject(
+        val solidAngleUnit = addCombinedObject(
             createObject("NAMED_UNIT", "*"),
             createObject("SI_UNIT", "$", ".STERADIAN."),
             createObject("SOLID_ANGLE_UNIT"),
         )
 
-        val radianUnit = addSpecialObject(
+        val radianUnit = addCombinedObject(
             createObject("NAMED_UNIT", "*"),
             createObject("PLANE_ANGLE_UNIT"),
             createObject("SI_UNIT", "$", ".RADIAN.")
         )
 
-        val mmUnit = addSpecialObject(
+        val mmUnit = addCombinedObject(
             createObject("LENGTH_UNIT"),
             createObject("NAMED_UNIT", "*"),
             createObject("SI_UNIT", ".MILLI.", ".METRE.")
@@ -282,7 +277,7 @@ class StepExport : ModelExport{
             "'Maximum Tolerance applied to model'"
         )
 
-        val representationContext = addSpecialObject(
+        val representationContext = addCombinedObject(
             createObject("GEOMETRIC_REPRESENTATION_CONTEXT", 3),
             createObject("GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT", tuple(uncertaintyMeasureWithUnit)),
             createObject("GLOBAL_UNIT_ASSIGNED_CONTEXT", tuple(solidAngleUnit, radianUnit, mmUnit)),

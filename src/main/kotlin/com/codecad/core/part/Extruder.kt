@@ -105,7 +105,6 @@ class Extruder(){
             for (currentEdgeLoop in faceBound.edgeLoop) {
                 val orientedEdge = currentEdgeLoop.edge
                 val edge = orientedEdge.edge
-
                 val bound = edge.bound
 
                 val newBound = bound?.let {
