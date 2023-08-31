@@ -24,7 +24,6 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
             EdgeBound(it.end, it.start, it.sense.invert())
         }
 
-
     override fun equals(other: Any?): Boolean {
         return this === other ||
                 other is OrientedEdge &&
@@ -42,7 +41,6 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
 class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
     lateinit var prev : EdgeLoop
     lateinit var next : EdgeLoop
-    var orientation : Boolean = false
 
     override fun iterator(): Iterator<EdgeLoop> {
         return EdgeLoopIterator(this)
