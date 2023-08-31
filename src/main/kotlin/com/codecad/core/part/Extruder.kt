@@ -62,7 +62,7 @@ class Extruder(){
                             val workplane = WorkplaneExpr(bottomEdgeBound.start.point, newNormal, curve.direction)
                             PlaneSurface(workplane)
                         }
-                        is Circle -> CylindricalSurface(faceSurface.workplane, curve.radius)
+                        is Circle -> CylindricalSurface(curve.workplane, curve.radius)
                         else -> throw RuntimeException()
                     }
 
@@ -88,7 +88,6 @@ class Extruder(){
         }
 
         val volume = Volume(listOf(Shell(faces)))
-        //println(volume)
         return volume
     }
 
@@ -100,7 +99,6 @@ class Extruder(){
 
         val faceBounds = arrayListOf<FaceBound>()
         for( faceBound in face.bounds ) {
-
             val edges = arrayListOf<OrientedEdge>()
             for (currentEdgeLoop in faceBound.edgeLoop) {
                 val orientedEdge = currentEdgeLoop.edge
@@ -115,8 +113,7 @@ class Extruder(){
                     )
                 }
 
-                var curve = edge.curve.move(offset)
-                if(invert) curve = curve.invert()
+                val curve = edge.curve.move(offset)
                 edges.add(OrientedEdge(Edge(curve, newBound), orientedEdge.orientation))
             }
 

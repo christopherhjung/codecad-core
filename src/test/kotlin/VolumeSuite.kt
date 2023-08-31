@@ -162,10 +162,10 @@ object VolumeSuite {
         val cEdge = Edge.line(c1, c2)
         val dEdge = Edge.line(d1, d2)
 
-        val abArc = Edge.arc(workplane.withOrigin(lrCircle), a2, b1, Sense.CCW)
-        val bcArc = Edge.arc(workplane.withOrigin(urCircle), b2, c1, Sense.CCW)
-        val cdArc = Edge.arc(workplane.withOrigin(ulCircle), c2, d1, Sense.CCW)
-        val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.CCW)
+        val abArc = Edge.arc(workplane.withOrigin(lrCircle), a2, b1, Sense.CW)
+        val bcArc = Edge.arc(workplane.withOrigin(urCircle), b2, c1, Sense.CW)
+        val cdArc = Edge.arc(workplane.withOrigin(ulCircle), c2, d1, Sense.CW)
+        val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.CW)
 
         val surface = PlaneSurface(workplane)
         val edgeLoop = EdgeLoop.forward(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)

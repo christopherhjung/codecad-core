@@ -30,7 +30,11 @@ class Debugger{
                 val orientedEdge = edgeLoop.edge
                 val bound = orientedEdge.bound
                 if(bound != null){
-                    faceBuilder.append(sep).append(getVertexIndex(bound.start))
+                    faceBuilder.append(sep)
+                        .append(getVertexIndex(bound.start))
+                        .append("(")
+                        .append(bound.sense)
+                        .append(")")
                     sep = ", "
                 }
             }

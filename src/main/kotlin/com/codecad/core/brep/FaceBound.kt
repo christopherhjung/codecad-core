@@ -21,7 +21,7 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
     val start get() = if(orientation == EdgeOrientation.Forward) edge.bound?.start else edge.bound?.end
     val end get() = if(orientation == EdgeOrientation.Forward) edge.bound?.end else edge.bound?.start
     val bound get() = if(orientation == EdgeOrientation.Forward) edge.bound else edge.bound?.let {
-            EdgeBound(it.end, it.start, it.sense)
+            EdgeBound(it.end, it.start, it.sense.invert())
         }
 
 
@@ -40,11 +40,9 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
 }
 
 class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
-    var orientation : Boolean = false
-    lateinit var twin : EdgeLoop
-
-    lateinit var next : EdgeLoop
     lateinit var prev : EdgeLoop
+    lateinit var next : EdgeLoop
+    var orientation : Boolean = false
 
     override fun iterator(): Iterator<EdgeLoop> {
         return EdgeLoopIterator(this)

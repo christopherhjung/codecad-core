@@ -13,19 +13,19 @@ object ExportHelper {
         return StepExport()
     }
 
-    fun saveStl(volume: Volume){
+    fun saveStl(volume: Volume, name : String = "test.step"){
 
         val byteArray = createExporter().export(Context.of(volume))
 
-        val outStream = FileOutputStream("test.step")
+        val outStream = FileOutputStream(name)
         outStream.write(byteArray)
         outStream.close()
     }
 
-    fun saveStl(face: Face){
+    fun saveStl(face: Face, name : String = "test.step"){
         val byteArray = createExporter().export(Context.of(face))
 
-        val outStream = FileOutputStream("test.step")
+        val outStream = FileOutputStream(name)
         outStream.write(byteArray)
         outStream.close()
     }

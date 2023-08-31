@@ -23,9 +23,9 @@ class PartStudio(val world : World = World()){
     fun addFace(face: Face){
         //faces.add(face)
 
-        val volume = Extruder()
-            .extrude(face, world.DirectionZ, world.literal(4.0))
-        addVolume(volume)
+        //val volume = Extruder()
+            //.extrude(face, world.DirectionZ, world.literal(4.0))
+        //addVolume(volume)
     }
 
     fun addVolume(volume: Volume){
