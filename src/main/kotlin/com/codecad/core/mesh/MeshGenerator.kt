@@ -11,7 +11,6 @@ import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.rollover
-import com.codecad.core.volume.Debugger
 import com.codecad.core.volume.Volume
 import org.poly2tri.Poly2Tri
 import org.poly2tri.geometry.polygon.PolygonPoint
@@ -59,7 +58,7 @@ class MeshGenerator {
             val holes = arrayListOf<List<Vec3>>()
             for(bound in face.bounds){
                val edgeLoop = bound.edgeLoop
-               if(bound.sense == FaceBoundSense.Inside){
+               if(bound.sense == FaceBoundKind.OuterBound){
                    outline = sweepVertices(edgeLoop)
                }else{
                    holes.add(sweepVertices(edgeLoop))

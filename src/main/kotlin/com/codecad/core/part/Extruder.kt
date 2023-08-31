@@ -55,7 +55,7 @@ class Extruder(){
                             OrientedEdge(topEdge, bottomOrientedEdge.orientation.invert()),
                             OrientedEdge(startEdge, bottomOrientedEdge.orientation.invert())
                         ),
-                        FaceBoundSense.Inside
+                        FaceBoundKind.OuterBound
                     )
 
                     val surface =  when(curve) {
@@ -74,7 +74,7 @@ class Extruder(){
                                 bottomControls.zip(topControls).map {
                                     arrayOf(it.first, it.second)
                                 }.toTypedArray()
-                            
+
                             BSplineSurface(curve.degree, 2, resultControls)
                         }
                         else -> throw RuntimeException()
@@ -87,11 +87,11 @@ class Extruder(){
 
                     val bottomBound = FaceBound(
                         EdgeLoop.of(bottomOrientedEdge),
-                        FaceBoundSense.Outside
+                        FaceBoundKind.InnerBound
                     )
                     val topBound = FaceBound(
                         EdgeLoop.of(topOrientedEdge),
-                        FaceBoundSense.Outside
+                        FaceBoundKind.InnerBound
                     )
 
                     faces.add(Face(surface, listOf(bottomBound, topBound)))

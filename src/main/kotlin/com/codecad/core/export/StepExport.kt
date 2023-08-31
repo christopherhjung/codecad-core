@@ -6,12 +6,8 @@ import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
-import com.codecad.core.brep.surface.BSplineSurface
-import com.codecad.core.brep.surface.CylindricalSurface
-import com.codecad.core.brep.surface.PlaneSurface
-import com.codecad.core.brep.surface.Surface
+import com.codecad.core.brep.surface.*
 import com.codecad.core.part.Context
-import com.codecad.core.step
 import com.codecad.core.volume.Volume
 import java.nio.charset.StandardCharsets
 
@@ -168,9 +164,7 @@ class StepExport : ModelExport{
                 createEdgeCurve(start, end, curve, sense)
             }else if(edgeCurve is Circle){
                 val vertex = circleSeam.computeIfAbsent(edge){
-                    val workplane = edgeCurve.workplane
-                    val somePoint = workplane.unproject(edgeCurve.radius, workplane.world.Zero)
-                    Vertex(somePoint)
+                    Vertex(edgeCurve.rightmostPoint())
                 }
 
                 val startEnd = createVertexPoint(vertex)
@@ -189,6 +183,10 @@ class StepExport : ModelExport{
         return addNamedObject("EDGE_LOOP", tuple(orientedEdges))
     }
 
+    private fun createVertexLoop(vertex: Id) : Id{
+        return addNamedObject("VERTEX_LOOP", vertex)
+    }
+
     private fun createFaceBound(edgeLoop: Id, sense: Boolean) : Id{
         return addNamedObject("FACE_BOUND", edgeLoop, sense)
     }
@@ -199,6 +197,10 @@ class StepExport : ModelExport{
 
     private fun createCylindricalSurface(axisPlacement: Id, radius: Double) : Id{
         return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius)
+    }
+
+    private fun createToroidalSurface(axisPlacement: Id, major: Double, minor: Double) : Id{
+        return addNamedObject("TOROIDAL_SURFACE", axisPlacement, major, minor)
     }
 
     private fun createPlane(axisPlacement: Id) : Id{
@@ -330,6 +332,10 @@ class StepExport : ModelExport{
                 val axisPlacement = createAxisPlacement(surface.workplane.eval())
                 createPlane(axisPlacement)
             }
+            is ToroidalSurface -> {
+                val axisPlacement = createAxisPlacement(surface.workplane.eval())
+                createToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble())
+            }
             is BSplineSurface -> {
                 val stepControlPoints = tuple(
                     surface.controlPoints.map { row ->
@@ -374,7 +380,7 @@ class StepExport : ModelExport{
     private fun createCurve(curve: Curve) : Id{
         return when(curve){
             is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
-            is Line -> createLine(createCartesianPoint(curve.point.eval()), createVector(curve.direction.eval()))
+            is Line -> createLine(createCartesianPoint(curve.origin.eval()), createVector(curve.direction.eval()))
             is BSpline -> {
                 val size = curve.points.size
                 val stepPoints = tuple(curve.points.map {
@@ -415,7 +421,7 @@ class StepExport : ModelExport{
                 stepOrientedEdges.add(stepOrientedEdge)
             }
 
-            val stepSense = faceBound.sense == FaceBoundSense.Inside
+            val stepSense = faceBound.sense == FaceBoundKind.OuterBound
             val stepEdgeLoop = createEdgeLoop(stepOrientedEdges)
             val stepFaceBound = createFaceBound(stepEdgeLoop, stepSense)
             stepBounds.add(stepFaceBound)

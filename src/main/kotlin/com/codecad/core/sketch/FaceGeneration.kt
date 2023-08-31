@@ -174,12 +174,12 @@ fun SketchEdgeLoop.toFace(workplane: WorkplaneExpr) : Face{
     val world = workplane.origin.world
     val workplane = workplane.eval()
     val projPoints = points.map { workplane.unproject(it).toExpr(world) }.toList().toTypedArray()
-    val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundSense.Inside)
+    val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.OuterBound)
     faceBounds.add(bound)
 
     for( hole in children ){
         val projPoints = hole.points.map { workplane.unproject(it).toExpr(world) }.toList().toTypedArray()
-        val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundSense.Outside)
+        val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.InnerBound)
         faceBounds.add(bound)
     }
     return result

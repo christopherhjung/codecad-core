@@ -2,6 +2,7 @@ package com.codecad.core.ast.vec
 
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.brep.curve.Line
 import com.codecad.core.scope.Scope
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -180,6 +181,13 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     companion object{
+        fun projectToLine(line: Line, point: Vec3Expr) : Vec3Expr{
+            return projectTo(line.origin, line.direction, point)
+        }
+        fun projectTo(origin : Vec3Expr, direction: Vec3Expr, point: Vec3Expr) : Vec3Expr{
+            return origin + direction * ( point.dot(direction) / direction.squaredLength() )
+        }
+
         operator fun Double.times(point: Vec3Expr): Vec3Expr {
             val world = point.world
             return world.vec3(point.x * this, point.y * this, point.z * this)

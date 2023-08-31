@@ -2,11 +2,11 @@ package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.rollover
-enum class FaceBoundSense{
-    Inside, Outside
+enum class FaceBoundKind{
+    OuterBound, InnerBound
 }
 
-class FaceBound(var edgeLoop : EdgeLoop, var sense: FaceBoundSense)
+class FaceBound(var edgeLoop : EdgeLoop, var sense: FaceBoundKind)
 enum class EdgeOrientation{
     Forward, Backward;
 
@@ -41,6 +41,10 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
 class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
     lateinit var prev : EdgeLoop
     lateinit var next : EdgeLoop
+
+    fun isClosed() : Boolean{
+        return prev === next
+    }
 
     override fun iterator(): Iterator<EdgeLoop> {
         return EdgeLoopIterator(this)

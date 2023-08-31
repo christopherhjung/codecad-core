@@ -12,4 +12,8 @@ open class Circle(workplane: WorkplaneExpr, val radius: Expr) : Conic(workplane)
     override fun invert(): Curve {
         return Circle(workplane.invert(), radius)
     }
+
+    fun rightmostPoint() : Vec3Expr{
+        return workplane.unproject(radius, workplane.world.Zero)
+    }
 }
