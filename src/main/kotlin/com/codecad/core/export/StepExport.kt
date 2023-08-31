@@ -378,11 +378,14 @@ class StepExport : ModelExport{
             is BSpline -> {
                 val size = curve.points.size
                 val stepPoints = curve.points.map { createCartesianPoint(it.point.eval()) }
-                addNamedObject("B_SPLINE_CURVE_WITH_KNOTS", size - 1, tuple(stepPoints), ".UNSPECIFIED.",
+                addNamedObject("B_SPLINE_CURVE_WITH_KNOTS",
+                    size - 1,
+                    tuple(stepPoints),
+                    ".UNSPECIFIED.",
                     false,
                     false,
                     tuple(size, size),
-                    tuple(0.0, 1.0),
+                    createRange(2),
                     ".PIECEWISE_BEZIER_KNOTS."
                 )
             }
