@@ -70,4 +70,12 @@ class BrepTest {
         println(volume.toString())
         ExportHelper.saveStl(volume)
     }
+
+    @Test
+    fun splineFaceTest(){
+        val world = World()
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
+        val face = VolumeSuite.splineCircle(workplane, 50.0)
+        ExportHelper.saveStl(face)
+    }
 }

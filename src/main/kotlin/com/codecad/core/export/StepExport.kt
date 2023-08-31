@@ -2,13 +2,16 @@ package com.codecad.core.export
 
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
+import com.codecad.core.brep.surface.BSplineSurface
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.brep.surface.Surface
 import com.codecad.core.part.Context
+import com.codecad.core.step
 import com.codecad.core.volume.Volume
 import java.nio.charset.StandardCharsets
 
@@ -323,14 +326,66 @@ class StepExport : ModelExport{
             is CylindricalSurface ->
                 createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
             is PlaneSurface -> createPlane(axisPlacement)
+            is BSplineSurface -> {
+
+                val uDegrees = surface.controlPoints.size
+                val vDegrees = surface.controlPoints[0].size
+
+                val stepControlPoints = tuple(
+                    surface.controlPoints.map {
+                        tuple(it.map {
+                            createCartesianPoint(it.point.eval())
+                        })
+                    }
+                )
+
+                addNamedObject("B_SPLINE_SURFACE_WITH_KNOTS",
+                    uDegrees,
+                    vDegrees,
+                    stepControlPoints,
+                    ".SURF_OF_LINEAR_EXTRUSION.",
+                    false,
+                    false,
+                    false,
+                    "(4,1,1,1,1,1,1,1,4)",
+                    "(2,2)",
+                    createRange(uDegrees),
+                    createRange(vDegrees),
+                    ".UNSPECIFIED."
+                )
+            }
             else -> throw RuntimeException("Unknown surface")
         }
+    }
+
+    private fun createRange(segments : Int) : String{
+        val sb = StringBuilder()
+        val width = 1.0 / (segments - 1)
+
+        sb.append(0.0)
+        for( i in 1 until segments - 1 ){
+            sb.append(i * width)
+        }
+        sb.append(1.0)
+
+        return sb.toString()
     }
 
     private fun createCurve(curve: Curve) : Id{
         return when(curve){
             is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
             is Line -> createLine(createCartesianPoint(curve.point.eval()), createVector(curve.direction.eval()))
+            is BSpline -> {
+                val size = curve.points.size
+                val stepPoints = curve.points.map { createCartesianPoint(it.point.eval()) }
+                addNamedObject("B_SPLINE_CURVE_WITH_KNOTS", size - 1, tuple(stepPoints), ".UNSPECIFIED.",
+                    false,
+                    false,
+                    tuple(size, size),
+                    tuple(0.0, 1.0),
+                    ".PIECEWISE_BEZIER_KNOTS."
+                )
+            }
             else -> throw RuntimeException("Unknown surface")
         }
     }

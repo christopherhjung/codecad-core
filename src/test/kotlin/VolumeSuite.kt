@@ -1,4 +1,6 @@
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.BSpline
+import com.codecad.core.brep.curve.BSplineControlPoint
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
@@ -169,6 +171,35 @@ object VolumeSuite {
 
         val surface = PlaneSurface(workplane)
         val edgeLoop = EdgeLoop.forward(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
+        val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
+
+        return face
+    }
+
+
+
+
+
+    fun splineCircle(workplane: WorkplaneExpr, radius: Double) : Face {
+        val origin = workplane.origin
+        val world = origin.world
+        val radius = world.literal(radius)
+
+        val aPoint = BSplineControlPoint(workplane.unproject(-radius, -radius), world.One)
+        val bPoint = BSplineControlPoint(workplane.unproject(radius, -radius), world.One)
+        val cPoint = BSplineControlPoint(workplane.unproject(radius, radius), world.One)
+        val dPoint = BSplineControlPoint(workplane.unproject(-radius, radius), world.One)
+
+        val spline = BSpline(listOf(aPoint, bPoint, cPoint, dPoint, aPoint))
+
+        val aVertex = Vertex(aPoint.point)
+        //val bVertex = Vertex(bPoint.point)
+        //val cVertex = Vertex(cPoint.point)
+        //val dVertex = Vertex(dPoint.point)
+
+        val aEdge = Edge(spline, EdgeBound(aVertex, aVertex, Sense.None))
+        val surface = PlaneSurface(workplane)
+        val edgeLoop = EdgeLoop.of(aEdge)
         val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundSense.Inside)))
 
         return face

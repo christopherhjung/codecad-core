@@ -1,5 +1,6 @@
 package com.codecad.core.brep
 
+import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
