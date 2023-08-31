@@ -47,7 +47,7 @@ class Revolver(){
                             if(abs(curve.direction.dot(axis.direction).evalDouble()) < 1e-8){
                                 //plane
                                 PlaneSurface(workplane)
-                            }else if(abs(curve.direction.cross(axis.direction).z.evalDouble()) < 1e-8){
+                            }else if(abs(curve.direction.cross(axis.direction).length().evalDouble()) < 1e-8){
                                 //cylinder
                                 CylindricalSurface(workplane, radius)
                             }else{
@@ -59,6 +59,12 @@ class Revolver(){
                         }
 
                         is Circle -> {
+                            val point = curve.workplane.origin
+                            val center = axis.project(point)
+                            val radial = point - center
+                            val radius = radial.length()
+                            val workplane = WorkplaneExpr(center, axis.direction, radial.normalized())
+
                             val radiusValue = radius.evalDouble()
                             if(radiusValue < 1e-8){
                                 SphericalSurface(workplane, curve.radius)
@@ -70,7 +76,7 @@ class Revolver(){
                     }
 
                     val revolveCurve = Circle(workplane, radius)
-                    val revolveEdge = OrientedEdge(Edge(revolveCurve), orientedEdge.orientation)
+                    val revolveEdge = OrientedEdge(Edge(revolveCurve), EdgeOrientation.Forward)
                     faceBounds.add(FaceBound(EdgeLoop.of(revolveEdge), FaceBoundKind.OuterBound))
                     surfaces.add(revolveSurface)
                 }
