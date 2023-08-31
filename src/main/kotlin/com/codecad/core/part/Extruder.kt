@@ -3,8 +3,10 @@ package com.codecad.core.part
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
+import com.codecad.core.brep.surface.BSplineSurface
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
@@ -63,6 +65,18 @@ class Extruder(){
                             PlaneSurface(workplane)
                         }
                         is Circle -> CylindricalSurface(curve.workplane, curve.radius)
+                        is BSpline -> {
+                            val bottomControls = curve.points
+                            val topSpline = topEdge.curve as BSpline
+                            val topControls = topSpline.points
+
+                            val resultControls =
+                                bottomControls.zip(topControls).map {
+                                    arrayOf(it.first, it.second)
+                                }.toTypedArray()
+                            
+                            BSplineSurface(curve.degree, 2, resultControls)
+                        }
                         else -> throw RuntimeException()
                     }
 
@@ -120,7 +134,8 @@ class Extruder(){
             faceBounds.add(FaceBound(EdgeLoop.of(edges), faceBound.sense))
         }
 
-        val newWorkplane = face.surface.workplane.move(offset)
+        val surface = face.surface as PlaneSurface
+        val newWorkplane = surface.workplane.move(offset)
         return Face(PlaneSurface(newWorkplane), faceBounds)
     }
 }

@@ -321,36 +321,36 @@ class StepExport : ModelExport{
     }
 
     private fun createSurface(surface: Surface) : Id{
-        val axisPlacement = createAxisPlacement(surface.workplane.eval())
         return when(surface){
-            is CylindricalSurface ->
+            is CylindricalSurface -> {
+                val axisPlacement = createAxisPlacement(surface.workplane.eval())
                 createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
-            is PlaneSurface -> createPlane(axisPlacement)
+            }
+            is PlaneSurface -> {
+                val axisPlacement = createAxisPlacement(surface.workplane.eval())
+                createPlane(axisPlacement)
+            }
             is BSplineSurface -> {
-
-                val uDegrees = surface.controlPoints.size
-                val vDegrees = surface.controlPoints[0].size
-
                 val stepControlPoints = tuple(
-                    surface.controlPoints.map {
-                        tuple(it.map {
-                            createCartesianPoint(it.point.eval())
+                    surface.controlPoints.map { row ->
+                        tuple(row.map { pt ->
+                            createCartesianPoint(pt.point.eval())
                         })
                     }
                 )
 
                 addNamedObject("B_SPLINE_SURFACE_WITH_KNOTS",
-                    uDegrees,
-                    vDegrees,
+                    surface.uDegree - 1,
+                    surface.vDegree - 1,
                     stepControlPoints,
-                    ".SURF_OF_LINEAR_EXTRUSION.",
+                    ".UNSPECIFIED.",
                     false,
                     false,
                     false,
-                    "(4,1,1,1,1,1,1,1,4)",
-                    "(2,2)",
-                    createRange(uDegrees),
-                    createRange(vDegrees),
+                    tuple(surface.uDegree, surface.uDegree),
+                    tuple(surface.vDegree, surface.vDegree),
+                    createRange(2),
+                    createRange(2),
                     ".UNSPECIFIED."
                 )
             }
@@ -360,14 +360,14 @@ class StepExport : ModelExport{
 
     private fun createRange(segments : Int) : String{
         val sb = StringBuilder()
+        sb.append("(0.0")
         val width = 1.0 / (segments - 1)
 
-        sb.append(0.0)
         for( i in 1 until segments - 1 ){
+            sb.append(",")
             sb.append(i * width)
         }
-        sb.append(1.0)
-
+        sb.append(",1.0)")
         return sb.toString()
     }
 
@@ -377,10 +377,13 @@ class StepExport : ModelExport{
             is Line -> createLine(createCartesianPoint(curve.point.eval()), createVector(curve.direction.eval()))
             is BSpline -> {
                 val size = curve.points.size
-                val stepPoints = curve.points.map { createCartesianPoint(it.point.eval()) }
+                val stepPoints = tuple(curve.points.map {
+                    createCartesianPoint(it.point.eval())
+                })
+
                 addNamedObject("B_SPLINE_CURVE_WITH_KNOTS",
                     size - 1,
-                    tuple(stepPoints),
+                    stepPoints,
                     ".UNSPECIFIED.",
                     false,
                     false,

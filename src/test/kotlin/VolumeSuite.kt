@@ -176,10 +176,6 @@ object VolumeSuite {
         return face
     }
 
-
-
-
-
     fun splineCircle(workplane: WorkplaneExpr, radius: Double) : Face {
         val origin = workplane.origin
         val world = origin.world
@@ -190,7 +186,7 @@ object VolumeSuite {
         val cPoint = BSplineControlPoint(workplane.unproject(radius, radius), world.One)
         val dPoint = BSplineControlPoint(workplane.unproject(-radius, radius), world.One)
 
-        val spline = BSpline(listOf(aPoint, bPoint, cPoint, dPoint, aPoint))
+        val spline = BSpline(arrayOf(aPoint, bPoint, cPoint, dPoint, aPoint))
 
         val aVertex = Vertex(aPoint.point)
         //val bVertex = Vertex(bPoint.point)

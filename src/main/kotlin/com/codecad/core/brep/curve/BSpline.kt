@@ -5,8 +5,12 @@ import com.codecad.core.ast.vec.Vec3Expr
 
 class BSplineControlPoint(val point : Vec3Expr, val weight: Expr)
 
-class BSpline(var points : List<BSplineControlPoint>) : Curve(){
-    override fun move(offset: Vec3Expr): Curve {
-        return BSpline(points.map { BSplineControlPoint(it.point + offset, it.weight) })
+class BSpline(var points : Array<BSplineControlPoint>) : Curve(){
+    val degree : Int = points.size
+
+    override fun move(offset: Vec3Expr): BSpline {
+        return BSpline(points.map {
+            BSplineControlPoint(it.point + offset, it.weight)
+        }.toTypedArray())
     }
 }
