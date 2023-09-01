@@ -118,7 +118,7 @@ class BrepTest {
     @Test
     fun roundPlaneRevolveTest(){
         val workplane = WorkplaneExpr(vec3(100.0, 0.0, 0.0), world.DirectionY, world.DirectionX)
-        val face = VolumeSuite.roundedPlane(workplane, 10.0, 2.0)
+        val face = VolumeSuite.roundedPlane(workplane, 10.0, 5.0)
         val volume = Revolver()
             .revolve(face, Line(world.ZeroVec3, world.DirectionZ), literal(1.0))
         println(volume.toString())
@@ -131,7 +131,7 @@ class BrepTest {
         val workplane = WorkplaneExpr(vec3(50.0,0.0,0.0), world.DirectionY, world.DirectionX)
         val face = VolumeSuite.createCircle(workplane, 10.0)
         val volume = Revolver()
-            .revolve(face, Line(world.ZeroVec3, world.DirectionZ), literal(1.0))
+            .revolve(face, Line(world.ZeroVec3, world.DirectionZ), literal(5.0))
         println(volume.toString())
         ExportHelper.saveStep(volume, "revolve")
     }

@@ -36,6 +36,7 @@ class Revolver(){
 
                 val faceBounds = arrayListOf<FaceBound>()
 
+                val faces = arrayListOf<Face>()
                 if(true){ // try revolve endstops
                     val newCenter = quat.rotate(surfaceWorkplane.origin, center)
                     val radial = (newCenter - surfaceWorkplane.origin).normalized()
@@ -56,12 +57,14 @@ class Revolver(){
 
                     faceBounds.add(newFaceBound)
                     faceBounds.add(invertedFaceBound)
-                    shells.add(Shell(listOf(rotated, otherFace)))
+                    faces.add(rotated)
+                    faces.add(otherFace)
                 }
 
 
                 val revolveFace = Face(ravolveSurface, faceBounds)
-                shells.add(Shell(listOf(revolveFace)))
+                faces.add(revolveFace)
+                shells.add(Shell(faces))
             }else{
                 val faceBounds = arrayListOf<FaceBound>()
                 val surfaces = arrayListOf<Surface>()
