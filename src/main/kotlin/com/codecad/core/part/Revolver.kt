@@ -1,6 +1,7 @@
 package com.codecad.core.part
 
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.QuaternionExpr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
@@ -13,6 +14,7 @@ import kotlin.math.abs
 class Revolver(){
 
     fun revolve(face: Face, axis: Line, theta: Expr) : Volume {
+        val quat = QuaternionExpr.fromAxis(axis.direction, theta)
 
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
@@ -21,28 +23,52 @@ class Revolver(){
             val curve = edgeLoop.edge.edge.curve
 
             if(closed && curve is Circle){
-                val point = curve.workplane.origin
-                val center = axis.projectPoint(point)
-                val workplane = WorkplaneExpr(center, axis.direction, curve.workplane.x)
+                val center = curve.workplane.origin
+                val surfaceWorkplane = axis.alignWorkplane(center)
+                val radius = surfaceWorkplane.distanceTo(center)
 
-                val radius = (point - center).length()
-                val surface = if(abs(radius.evalDouble()) < 1e-8){
-                    SphericalSurface(workplane, curve.radius)
+                val ravolveSurface = if(abs(radius.evalDouble()) < 1e-8){
+                    SphericalSurface(surfaceWorkplane, curve.radius)
                 }else{
-                    ToroidalSurface(workplane, radius, curve.radius)
+                    ToroidalSurface(surfaceWorkplane, radius, curve.radius)
                 }
 
-                val face = Face(surface, listOf())
-                shells.add(Shell(listOf(face)))
+
+                val faceBounds = arrayListOf<FaceBound>()
+
+                if(true){ // try revolve endstops
+                    val newCenter = quat.rotate(surfaceWorkplane.origin, center)
+                    val radial = (newCenter - surfaceWorkplane.origin).normalized()
+                    val rotatedWorkplane = WorkplaneExpr(newCenter, axis.direction.cross(radial), radial)
+                    val rotatedCircle = Circle(rotatedWorkplane, curve.radius)
+                    val plane = PlaneSurface(rotatedWorkplane)
+
+                    val newFaceBound = FaceBound(EdgeLoop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
+
+
+                    val test = face.surface as ElementarySurface
+                    val invertedWorkplane = test.workplane.invert()
+                    val firstPlane = PlaneSurface(invertedWorkplane)
+                    val invertedFaceBound = FaceBound(EdgeLoop.of(Edge(Circle(invertedWorkplane, curve.radius))),FaceBoundKind.OuterBound)
+                    val rotated = Face(firstPlane, listOf(invertedFaceBound))
+
+                    val otherFace = Face(plane, listOf(newFaceBound))
+
+                    faceBounds.add(newFaceBound)
+                    faceBounds.add(invertedFaceBound)
+                    shells.add(Shell(listOf(rotated, otherFace)))
+                }
+
+
+                val revolveFace = Face(ravolveSurface, faceBounds)
+                shells.add(Shell(listOf(revolveFace)))
             }else{
                 val faceBounds = arrayListOf<FaceBound>()
                 val surfaces = arrayListOf<Surface>()
                 for (currentEdgeLoop in edgeLoop) {
                     val orientedEdge = currentEdgeLoop.edge
-                    val edge = orientedEdge.edge
-                    val curve = edge.curve
+                    val curve = orientedEdge.edge.curve
                     val start = orientedEdge.start!!
-
 
                     val workplane = axis.alignWorkplane(start.point)
                     val radius = workplane.distanceTo(start.point)
