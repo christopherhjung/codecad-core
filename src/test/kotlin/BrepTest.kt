@@ -125,4 +125,14 @@ class BrepTest {
         ExportHelper.saveStep(volume, "revolve")
         ExportHelper.saveStep(face, "face")
     }
+
+    @Test
+    fun sphereTest(){
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionY, world.DirectionX)
+        val face = VolumeSuite.createCircle(workplane, 10.0)
+        val volume = Revolver()
+            .revolve(face, Line(world.ZeroVec3, world.DirectionZ), literal(2.0))
+        println(volume.toString())
+        ExportHelper.saveStep(volume, "revolve")
+    }
 }

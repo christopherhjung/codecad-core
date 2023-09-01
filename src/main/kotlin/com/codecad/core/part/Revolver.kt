@@ -21,11 +21,17 @@ class Revolver(){
             val curve = edgeLoop.edge.edge.curve
 
             if(closed && curve is Circle){
-                val point = curve.rightmostPoint()
-                val center = axis.project(point)
-                val radial = point - center
-                val workplane = WorkplaneExpr(center, axis.direction, radial.normalized())
-                val surface = ToroidalSurface(workplane, radial.length(), curve.radius)
+                val point = curve.workplane.origin
+                val center = axis.projectPoint(point)
+                val workplane = WorkplaneExpr(center, axis.direction, curve.workplane.x)
+
+                val radius = (point - center).length()
+                val surface = if(abs(radius.evalDouble()) < 1e-8){
+                    SphericalSurface(workplane, curve.radius)
+                }else{
+                    ToroidalSurface(workplane, radius, curve.radius)
+                }
+
                 val face = Face(surface, listOf())
                 shells.add(Shell(listOf(face)))
             }else{
@@ -37,10 +43,9 @@ class Revolver(){
                     val curve = edge.curve
                     val start = orientedEdge.start!!
 
-                    val center = axis.project(start.point)
-                    val radial = start.point - center
-                    val radius = radial.length()
-                    val workplane = WorkplaneExpr(center, axis.direction, radial.normalized())
+
+                    val workplane = axis.alignWorkplane(start.point)
+                    val radius = workplane.distanceTo(start.point)
 
                     val revolveSurface = when(curve){
                         is Line -> {
@@ -59,14 +64,9 @@ class Revolver(){
                         }
 
                         is Circle -> {
-                            val point = curve.workplane.origin
-                            val center = axis.project(point)
-                            val radial = point - center
-                            val radius = radial.length()
-                            val workplane = WorkplaneExpr(center, axis.direction, radial.normalized())
-
-                            val radiusValue = radius.evalDouble()
-                            if(radiusValue < 1e-8){
+                            val workplane = axis.alignWorkplane(curve.workplane.origin)
+                            val radius = workplane.distanceTo(curve.workplane.origin)
+                            if(radius.evalDouble() < 1e-8){
                                 SphericalSurface(workplane, curve.radius)
                             }else{
                                 ToroidalSurface(workplane, radius, curve.radius)

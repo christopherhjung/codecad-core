@@ -203,6 +203,10 @@ class StepExport : ModelExport{
         return addNamedObject("TOROIDAL_SURFACE", axisPlacement, major, minor)
     }
 
+    private fun createSphericalSurface(axisPlacement: Id, radius: Double) : Id{
+        return addNamedObject("SPHERICAL_SURFACE", axisPlacement, radius)
+    }
+
     private fun createPlane(axisPlacement: Id) : Id{
         return addNamedObject("PLANE", axisPlacement)
     }
@@ -324,18 +328,17 @@ class StepExport : ModelExport{
 
     private fun createSurface(surface: Surface) : Id{
         return when(surface){
-            is CylindricalSurface -> {
+            is ElementarySurface -> {
                 val axisPlacement = createAxisPlacement(surface.workplane.eval())
-                createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
+                when(surface){
+                    is CylindricalSurface -> createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
+                    is PlaneSurface -> createPlane(axisPlacement)
+                    is ToroidalSurface -> createToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble())
+                    is SphericalSurface -> createSphericalSurface(axisPlacement, surface.radius.evalDouble())
+                    else -> throw RuntimeException("Unknown surface")
+                }
             }
-            is PlaneSurface -> {
-                val axisPlacement = createAxisPlacement(surface.workplane.eval())
-                createPlane(axisPlacement)
-            }
-            is ToroidalSurface -> {
-                val axisPlacement = createAxisPlacement(surface.workplane.eval())
-                createToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble())
-            }
+
             is BSplineSurface -> {
                 val stepControlPoints = tuple(
                     surface.controlPoints.map { row ->

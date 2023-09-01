@@ -33,6 +33,10 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
         return origin.world.vec2(x,y)
     }
 
+    fun distanceTo(point: Vec3Expr) : Expr{
+        return origin.distanceTo(point)
+    }
+
     fun move(offset: Vec3Expr) : WorkplaneExpr{
         return WorkplaneExpr(origin + offset, normal, x)
     }
