@@ -141,6 +141,24 @@ object VolumeSuite {
         return face
     }
 
+    fun createTriangle(workplane: WorkplaneExpr, size: Double) : Face {
+        val origin = workplane.origin
+        val world = origin.world
+        val size = world.literal(size)
+        val halfSize = size / 2.0
+
+        val a = Vertex(workplane.unproject(-halfSize, -halfSize))
+        val b = Vertex(workplane.unproject(-halfSize, halfSize))
+        val c = Vertex(workplane.unproject(halfSize, world.Zero))
+
+        val surface = PlaneSurface(workplane)
+        val edgeLoop = EdgeLoop.polygon(a,b,c)
+
+        val face = Face(surface, listOf(FaceBound(edgeLoop, FaceBoundKind.OuterBound)))
+
+        return face
+    }
+
     fun roundedPlane(workplane: WorkplaneExpr, size: Double, radius: Double) : Face {
         val origin = workplane.origin
         val world = origin.world

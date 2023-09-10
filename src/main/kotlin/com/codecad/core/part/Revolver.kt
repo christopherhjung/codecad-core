@@ -2,6 +2,7 @@ package com.codecad.core.part
 
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.QuaternionExpr
+import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
@@ -19,20 +20,18 @@ class Revolver(){
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
             val edgeLoop = faceBound.edgeLoop
-            val closed = edgeLoop.isClosed()
             val curve = edgeLoop.edge.edge.curve
 
-            if(closed && curve is Circle){
+            if(curve is Circle && edgeLoop.isClosed()){
                 val center = curve.workplane.origin
                 val surfaceWorkplane = axis.alignWorkplane(center)
                 val radius = surfaceWorkplane.distanceTo(center)
 
-                val ravolveSurface = if(abs(radius.evalDouble()) < 1e-8){
+                val revolveSurface = if(abs(radius.evalDouble()) < 1e-8){
                     SphericalSurface(surfaceWorkplane, curve.radius)
                 }else{
                     ToroidalSurface(surfaceWorkplane, radius, curve.radius)
                 }
-
 
                 val faceBounds = arrayListOf<FaceBound>()
 
@@ -46,11 +45,13 @@ class Revolver(){
 
                     val newFaceBound = FaceBound(EdgeLoop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
 
-
                     val test = face.surface as ElementarySurface
                     val invertedWorkplane = test.workplane.invert()
                     val firstPlane = PlaneSurface(invertedWorkplane)
-                    val invertedFaceBound = FaceBound(EdgeLoop.of(Edge(Circle(invertedWorkplane, curve.radius))),FaceBoundKind.OuterBound)
+                    val invertedFaceBound = FaceBound(
+                        EdgeLoop.of(Edge(Circle(invertedWorkplane, curve.radius))),
+                        FaceBoundKind.OuterBound
+                    )
                     val rotated = Face(firstPlane, listOf(invertedFaceBound))
 
                     val otherFace = Face(plane, listOf(newFaceBound))
@@ -61,8 +62,7 @@ class Revolver(){
                     faces.add(otherFace)
                 }
 
-
-                val revolveFace = Face(ravolveSurface, faceBounds)
+                val revolveFace = Face(revolveSurface, faceBounds)
                 faces.add(revolveFace)
                 shells.add(Shell(faces))
             }else{
@@ -86,9 +86,8 @@ class Revolver(){
                                 CylindricalSurface(workplane, radius)
                             }else{
                                 //cone
-                                throw RuntimeException("Not yet implemented")
-                                //val workplane = WorkplaneExpr(axis.origin,axis.direction, )
-                                //ConicalSurface(workplane, radial.length(), axis.angle)
+                                val angle = Vec3Expr.angle(axis.direction, curve.direction)
+                                ConicalSurface(workplane, radius, angle)
                             }
                         }
 

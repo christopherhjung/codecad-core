@@ -8,7 +8,7 @@ import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.scope.Scope
 
 class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr) : Expr(origin.world){
-    val yAxis get() = normal.cross(x)
+    val y get() = normal.cross(x)
 
     override fun eval(scope: Scope): Workplane {
         return Workplane(origin.eval(), normal.eval(), x.eval())
@@ -23,13 +23,13 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
     }
 
     fun unproject(x: Expr, y: Expr) : Vec3Expr {
-        return this.x * x + yAxis * y + origin
+        return this.x * x + this.y * y + origin
     }
 
     fun project(point: Vec3Expr) : Vec2Expr {
         val fromOrigin = point - origin
         val x = x.dot(fromOrigin) / x.squaredLength()
-        val y = yAxis.dot(fromOrigin) / yAxis.squaredLength()
+        val y = y.dot(fromOrigin) / y.squaredLength()
         return origin.world.vec2(x,y)
     }
 
@@ -47,20 +47,20 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
 }
 
 class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
-    val axisY get() = normal.cross(x)
+    val y get() = normal.cross(x)
 
     fun unproject(point: Vec2) : Vec3 {
         return unproject(point.x, point.y)
     }
 
     fun unproject(x: Double, y: Double) : Vec3 {
-        return this.x * x + axisY * y + origin
+        return this.x * x + this.y * y + origin
     }
 
     fun project(point: Vec3) : Vec2 {
         val fromOrigin = point - origin
         val x = x.dot(fromOrigin) / x.squaredLength()
-        val y = axisY.dot(fromOrigin) / axisY.squaredLength()
+        val y = y.dot(fromOrigin) / y.squaredLength()
         return Vec2(x,y)
     }
 }

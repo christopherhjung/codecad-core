@@ -181,18 +181,29 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     companion object{
+
+        fun angleWithDot(lhs: Vec3Expr, rhs: Vec3Expr) : Expr{
+            return acos(lhs.normalized().dot(rhs.normalized()))
+        }
+
+        fun angle(lhs: Vec3Expr, rhs: Vec3Expr) : Expr{
+            return asin(lhs.normalized().cross(rhs.normalized()).length())
+        }
+
+        fun midpoint(lhs: Vec3Expr, rhs: Vec3Expr) : Vec3Expr{
+            return (lhs + rhs) / 2.0
+        }
+
         fun projectToLine(line: Line, point: Vec3Expr) : Vec3Expr{
             return projectTo(line.origin, line.direction, point)
         }
+
         fun projectTo(origin : Vec3Expr, direction: Vec3Expr, point: Vec3Expr) : Vec3Expr{
             return origin + direction * ( point.dot(direction) / direction.squaredLength() )
         }
 
         operator fun Double.times(point: Vec3Expr): Vec3Expr {
             val world = point.world
-            return world.vec3(point.x * this, point.y * this, point.z * this)
-        }
-        operator fun Expr.times(point: Vec3Expr): Vec3Expr {
             return world.vec3(point.x * this, point.y * this, point.z * this)
         }
     }
