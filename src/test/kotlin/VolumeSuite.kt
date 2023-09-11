@@ -93,11 +93,10 @@ object VolumeSuite {
     }
 
 
-    fun createCircleWithHole(bottomWorkplane: WorkplaneExpr, outerRadius: Double, innerRadius: Double, height: Double) : Face {
+    fun createCircleWithHole(bottomWorkplane: WorkplaneExpr, outerRadius: Double, innerRadius: Double) : Face {
         val world = bottomWorkplane.origin.world
         val outerRadius = world.literal(outerRadius)
         val innerRadius = world.literal(innerRadius)
-        val height = world.literal(height)
 
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
         val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))

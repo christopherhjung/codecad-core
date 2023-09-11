@@ -10,11 +10,24 @@ import com.codecad.core.scope.Scope
 class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr) : Expr(origin.world){
     val y get() = normal.cross(x)
 
+    init {
+        if(kotlin.math.abs(normal.length().evalDouble() - 1.0) > 1e-5){
+            throw RuntimeException("Check")
+        }
+        if(kotlin.math.abs(x.length().evalDouble() - 1.0) > 1e-5){
+            throw RuntimeException("Check")
+        }
+    }
+
     override fun eval(scope: Scope): Workplane {
         return Workplane(origin.eval(), normal.eval(), x.eval())
     }
 
     fun withOrigin(origin: Vec3Expr) : WorkplaneExpr {
+        return WorkplaneExpr(origin, normal, x)
+    }
+
+    fun withNormal(normal: Vec3Expr) : WorkplaneExpr {
         return WorkplaneExpr(origin, normal, x)
     }
 

@@ -17,43 +17,42 @@ class Extruder(){
     fun extrude(face: Face, normal: Vec3Expr, height: Expr) : Volume {
         val faceSurface = face.surface
         if(faceSurface !is PlaneSurface) throw RuntimeException()
-
+        val world = normal.world
         val normal = normal.normalized()
         val offset = normal * height
-        val world = normal.world
+        val extrudeFaceNormal = offset.normalized()
 
-        val bottomFace = offsetFace(face, world.ZeroVec3, true)
-        val topFace = offsetFace(face, offset, false)
+        val baseFace = offsetFace(face, world.ZeroVec3, extrudeFaceNormal.negate())
+        val extrudeFace = offsetFace(face, offset, extrudeFaceNormal)
 
         val faces = arrayListOf<Face>()
-        faces.add(bottomFace)
-        faces.add(topFace)
+        faces.add(baseFace)
+        faces.add(extrudeFace)
 
         val map = hashMapOf<Vertex, Edge>()
         fun extrusionLine(start: Vertex, end: Vertex) : Edge {
             return map.computeIfAbsent(start){ Edge.line(start, end) }
         }
 
-        for( (bottomBound, topBound) in bottomFace.bounds.zip(topFace.bounds) ){
-            for((bottomEdgeLoop, topEdgeLoop) in bottomBound.edgeLoop.zip(topBound.edgeLoop)){
-                val bottomOrientedEdge = bottomEdgeLoop.edge
-                val topOrientedEdge = topEdgeLoop.edge
-                val bottomEdge = bottomOrientedEdge.edge
-                val topEdge = topOrientedEdge.edge
-                val bottomEdgeBound = bottomEdge.bound
-                val topEdgeBound = topEdge.bound
-                val curve = bottomEdge.curve
-
-                if(bottomEdgeBound != null && topEdgeBound != null){
-                    val startEdge = extrusionLine(bottomEdgeBound.start, topEdgeBound.start)
-                    val endEdge = extrusionLine(bottomEdgeBound.end, topEdgeBound.end)
+        for( (baseBound, extrudeBound) in baseFace.bounds.zip(extrudeFace.bounds) ){
+            for((baseEdgeLoop, extrudeEdgeLoop) in baseBound.edgeLoop.zip(extrudeBound.edgeLoop)){
+                val baseOrientedEdge = baseEdgeLoop.edge
+                val extrudeOrientedEdge = extrudeEdgeLoop.edge
+                val baseEdge = baseOrientedEdge.edge
+                val extrudeEdge = extrudeOrientedEdge.edge
+                val baseEdgeBound = baseEdge.bound
+                val extrudeEdgeBound = extrudeEdge.bound
+                val curve = baseEdge.curve
+                val sideFace = if(baseEdgeBound != null && extrudeEdgeBound != null){
+                    val startEdge = extrusionLine(baseEdgeBound.start, extrudeEdgeBound.start)
+                    val endEdge = extrusionLine(baseEdgeBound.end, extrudeEdgeBound.end)
 
                     val bound = FaceBound(
                         EdgeLoop.of(
-                            bottomOrientedEdge,
-                            OrientedEdge(endEdge, bottomOrientedEdge.orientation),
-                            OrientedEdge(topEdge, bottomOrientedEdge.orientation.invert()),
-                            OrientedEdge(startEdge, bottomOrientedEdge.orientation.invert())
+                            baseOrientedEdge,
+                            OrientedEdge(endEdge, baseOrientedEdge.orientation),
+                            OrientedEdge(extrudeEdge, baseOrientedEdge.orientation.invert()),
+                            OrientedEdge(startEdge, baseOrientedEdge.orientation.invert())
                         ),
                         FaceBoundKind.OuterBound
                     )
@@ -61,13 +60,13 @@ class Extruder(){
                     val surface =  when(curve) {
                         is Line -> {
                             val newNormal = curve.direction.cross(normal).normalized()
-                            val workplane = WorkplaneExpr(bottomEdgeBound.start.point, newNormal, curve.direction)
+                            val workplane = WorkplaneExpr(baseEdgeBound.start.point, newNormal, curve.direction)
                             PlaneSurface(workplane)
                         }
                         is Circle -> CylindricalSurface(curve.workplane, curve.radius)
                         is BSpline -> {
                             val bottomControls = curve.points
-                            val topSpline = topEdge.curve as BSpline
+                            val topSpline = extrudeEdge.curve as BSpline
                             val topControls = topSpline.points
 
                             val resultControls =
@@ -80,24 +79,15 @@ class Extruder(){
                         else -> throw RuntimeException()
                     }
 
-                    val extrusionFace = Face(surface, listOf(bound))
-                    faces.add(extrusionFace)
+                    Face(surface, listOf(bound))
                 }else if(curve is Circle){
                     val surface = CylindricalSurface(faceSurface.workplane, curve.radius)
-
-                    val bottomBound = FaceBound(
-                        EdgeLoop.of(bottomOrientedEdge),
-                        FaceBoundKind.InnerBound
-                    )
-                    val topBound = FaceBound(
-                        EdgeLoop.of(topOrientedEdge),
-                        FaceBoundKind.InnerBound
-                    )
-
-                    faces.add(Face(surface, listOf(bottomBound, topBound)))
+                    Face(surface, listOf(baseBound, extrudeBound))
                 }else{
                     throw RuntimeException("Missing bounds!!")
                 }
+
+                faces.add(sideFace)
             }
         }
 
@@ -105,7 +95,7 @@ class Extruder(){
         return volume
     }
 
-    fun offsetFace(face : Face, offset : Vec3Expr, invert: Boolean) : Face {
+    private fun offsetFace(face : Face, offset : Vec3Expr, normal: Vec3Expr) : Face {
         val map = hashMapOf<Vertex, Vertex>()
         fun remap(vertex: Vertex) : Vertex {
             return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
@@ -117,26 +107,29 @@ class Extruder(){
             for (currentEdgeLoop in faceBound.edgeLoop) {
                 val orientedEdge = currentEdgeLoop.edge
                 val edge = orientedEdge.edge
-                val bound = edge.bound
 
-                val newBound = bound?.let {
+                val offsetBound = edge.bound?.let {
                     EdgeBound(
-                        remap(bound.start),
-                        remap(bound.end),
-                        bound.sense
+                        remap(it.start),
+                        remap(it.end),
+                        it.sense
                     )
                 }
 
-                val curve = edge.curve.move(offset)
-                edges.add(OrientedEdge(Edge(curve, newBound), orientedEdge.orientation))
+                val offsetCurve = when(val curve = edge.curve){
+                    is Circle -> Circle(curve.workplane.move(offset).withNormal(normal), curve.radius)
+                    else -> curve.move(offset)
+                }
+
+                edges.add(OrientedEdge(Edge(offsetCurve, offsetBound), orientedEdge.orientation))
             }
 
             faceBounds.add(FaceBound(EdgeLoop.of(edges), faceBound.sense))
         }
 
         val surface = face.surface as PlaneSurface
-        val newWorkplane = surface.workplane.move(offset)
-        return Face(PlaneSurface(newWorkplane), faceBounds)
+        val offsetWorkplane = surface.workplane.move(offset).withNormal(normal)
+        return Face(PlaneSurface(offsetWorkplane), faceBounds)
     }
 }
 

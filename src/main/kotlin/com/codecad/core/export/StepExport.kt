@@ -203,7 +203,7 @@ class StepExport : ModelExport{
         return addNamedObject("PLANE", axisPlacement)
     }
 
-    private fun createConical(axisPlacement: Id, radius: Double, angle: Double) : Id{
+    private fun createConicalSurface(axisPlacement: Id, radius: Double, angle: Double) : Id{
         return addNamedObject("CONICAL_SURFACE", axisPlacement, radius, angle)
     }
 
@@ -340,8 +340,8 @@ class StepExport : ModelExport{
                 val axisPlacement = createAxisPlacement(surface.workplane.eval())
                 when(surface){
                     is PlaneSurface -> createPlane(axisPlacement)
-                    is ConicalSurface -> createConical(axisPlacement, surface.radius.evalDouble(), surface.angle.evalDouble())
                     is CylindricalSurface -> createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
+                    is ConicalSurface -> createConicalSurface(axisPlacement, surface.radius.evalDouble(), surface.angle.evalDouble())
                     is ToroidalSurface -> createToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble())
                     is SphericalSurface -> createSphericalSurface(axisPlacement, surface.radius.evalDouble())
                     else -> throw RuntimeException("Unknown surface")
@@ -391,8 +391,8 @@ class StepExport : ModelExport{
 
     private fun createCurve(curve: Curve) : Id{
         return when(curve){
-            is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
             is Line -> createLine(createCartesianPoint(curve.origin.eval()), createVector(curve.direction.eval()))
+            is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
             is BSpline -> {
                 val size = curve.points.size
                 val stepPoints = tuple(curve.points.map {
@@ -410,7 +410,7 @@ class StepExport : ModelExport{
                     ".PIECEWISE_BEZIER_KNOTS."
                 )
             }
-            else -> throw RuntimeException("Unknown surface")
+            else -> throw RuntimeException("Unknown curve")
         }
     }
 

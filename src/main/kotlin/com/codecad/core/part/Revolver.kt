@@ -20,27 +20,26 @@ class Revolver(){
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
             val edgeLoop = faceBound.edgeLoop
-            val curve = edgeLoop.edge.edge.curve
+            val circleCurve = edgeLoop.edge.edge.curve
 
-            if(curve is Circle && edgeLoop.isClosed()){
-                val center = curve.workplane.origin
+            if(circleCurve is Circle && edgeLoop.isClosed()){
+                val center = circleCurve.workplane.origin
                 val surfaceWorkplane = axis.alignWorkplane(center)
                 val radius = surfaceWorkplane.distanceTo(center)
 
                 val revolveSurface = if(abs(radius.evalDouble()) < 1e-8){
-                    SphericalSurface(surfaceWorkplane, curve.radius)
+                    SphericalSurface(surfaceWorkplane, circleCurve.radius)
                 }else{
-                    ToroidalSurface(surfaceWorkplane, radius, curve.radius)
+                    ToroidalSurface(surfaceWorkplane, radius, circleCurve.radius)
                 }
 
                 val faceBounds = arrayListOf<FaceBound>()
-
                 val faces = arrayListOf<Face>()
                 if(true){ // try revolve endstops
                     val newCenter = quat.rotate(surfaceWorkplane.origin, center)
                     val radial = (newCenter - surfaceWorkplane.origin).normalized()
                     val rotatedWorkplane = WorkplaneExpr(newCenter, axis.direction.cross(radial), radial)
-                    val rotatedCircle = Circle(rotatedWorkplane, curve.radius)
+                    val rotatedCircle = Circle(rotatedWorkplane, circleCurve.radius)
                     val plane = PlaneSurface(rotatedWorkplane)
 
                     val newFaceBound = FaceBound(EdgeLoop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
@@ -49,7 +48,7 @@ class Revolver(){
                     val invertedWorkplane = test.workplane.invert()
                     val firstPlane = PlaneSurface(invertedWorkplane)
                     val invertedFaceBound = FaceBound(
-                        EdgeLoop.of(Edge(Circle(invertedWorkplane, curve.radius))),
+                        EdgeLoop.of(Edge(Circle(invertedWorkplane, circleCurve.radius))),
                         FaceBoundKind.OuterBound
                     )
                     val rotated = Face(firstPlane, listOf(invertedFaceBound))

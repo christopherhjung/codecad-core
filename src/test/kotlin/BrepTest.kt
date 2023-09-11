@@ -8,9 +8,15 @@ import com.codecad.core.part.Revolver
 import org.junit.jupiter.api.Test
 
 class BrepTest {
+    private val world = World()
 
+    fun vec3(x: Double, y: Double, z:Double) : Vec3Expr{
+        return world.vec3(literal(x), literal(y), literal(z))
+    }
 
-    val world = World()
+    fun literal(value: Double) : Expr {
+        return world.literal(value)
+    }
 
     @Test
     fun cylinderTest(){
@@ -37,7 +43,7 @@ class BrepTest {
     @Test
     fun pipeTiltExtrudeTest(){
         val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
-        val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0, 200.0)
+        val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0)
 
         val volume = Extruder()
             .extrude(face, world.DirectionZ, world.literal(10.0))
@@ -67,8 +73,16 @@ class BrepTest {
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         val volume = Extruder()
             .extrude(face, world.DirectionZ, world.literal(10.0))
-        println(volume.toString())
-        ExportHelper.saveStep(volume)
+        ExportHelper.saveStep(volume, "extrude")
+    }
+
+    @Test
+    fun circleExtrudeTest(){
+        val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
+        val face = VolumeSuite.createCircleWithHole(workplane, 50.0, 5.0)
+        val volume = Extruder()
+            .extrude(face, world.DirectionZ, world.literal(10.0))
+        ExportHelper.saveStep(volume, "extrude")
     }
 
     @Test
@@ -85,14 +99,6 @@ class BrepTest {
         val volume = Extruder()
             .extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume)
-    }
-
-    fun vec3(x: Double, y: Double, z:Double) : Vec3Expr{
-        return world.vec3(literal(x), literal(y), literal(z))
-    }
-
-    fun literal(value: Double) : Expr {
-        return world.literal(value)
     }
 
     @Test
@@ -143,6 +149,7 @@ class BrepTest {
         val volume = Revolver()
             .revolve(face, Line(world.ZeroVec3, world.DirectionZ), literal(5.0))
         println(volume.toString())
+        //ExportHelper.saveStep(volume.shells.first().faces[2], "revolve")
         ExportHelper.saveStep(volume, "revolve")
     }
 }
