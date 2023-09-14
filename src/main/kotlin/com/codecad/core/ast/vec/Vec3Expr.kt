@@ -3,6 +3,8 @@ package com.codecad.core.ast.vec
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
+import kotlin.math.acos
+import kotlin.math.asin
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -51,7 +53,7 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
         return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
     }
 
-    fun distance(other: Vec3): Double {
+    fun distanceTo(other: Vec3): Double {
         return sqrt(squaredDistance(other))
     }
 
@@ -59,8 +61,44 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
         return world.vec3(world.literal(x), world.literal(y), world.literal(z))
     }
 
+    fun negate() : Vec3{
+        return Vec3(-x,-y,-z)
+    }
+
+    fun scaleTo(expr : Double) : Vec3{
+        return normalized() * expr
+    }
+
+    fun normalized() : Vec3 {
+        return this / length()
+    }
+
     companion object{
         val ZERO = Vec3(0.0,0.0,0.0)
+        val DirectionX = Vec3(1.0, 0.0, 0.0)
+        val DirectionY = Vec3(0.0, 1.0, 0.0)
+        val DirectionZ = Vec3(0.0, 0.0, 1.0)
+
+        fun angleWithDot(lhs: Vec3, rhs: Vec3) : Double{
+            return acos(lhs.normalized().dot(rhs.normalized()))
+        }
+
+        fun angle(lhs: Vec3, rhs: Vec3) : Double{
+            return asin(lhs.normalized().cross(rhs.normalized()).length())
+        }
+
+        fun midpoint(lhs: Vec3, rhs: Vec3) : Vec3{
+            return (lhs + rhs) / 2.0
+        }
+
+        //projects lhs onto rhs
+        fun project(lhs: Vec3, rhs: Vec3) : Vec3{
+            return rhs * ( lhs.dot(rhs) / rhs.squaredLength() )
+        }
+
+        operator fun Double.times(point: Vec3): Vec3 {
+            return Vec3(point.x * this, point.y * this, point.z * this)
+        }
     }
 }
 

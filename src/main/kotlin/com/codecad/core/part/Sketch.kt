@@ -4,10 +4,7 @@ import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.vec.Vec2Expr
-import com.codecad.core.brep.Edge
-import com.codecad.core.brep.EdgeBound
-import com.codecad.core.brep.Vertex
-import com.codecad.core.brep.WorkplaneExpr
+import com.codecad.core.brep.*
 import com.codecad.core.constraint.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.optimizer.Solver
@@ -18,7 +15,7 @@ import com.codecad.core.sketch.toFace
 import java.util.*
 
 
-class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name: String) {
+class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val world = partStudio.world
@@ -136,7 +133,7 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         addConstraint(Equals(value1, value2))
     }
 
-    fun radius(circle: Circle, value: Expr) {
+    fun radius(circle: SketchCircle, value: Expr) {
         addConstraint(Equals(circle.radius, value))
     }
 
@@ -180,27 +177,27 @@ class Sketch(val partStudio: PartStudio, val workplane : WorkplaneExpr, val name
         for( figure in entities ){
             when(figure){
                 is LineSegmentExpr -> {
-                    val projA = workplane.unproject(figure.p0)
-                    val projB = workplane.unproject(figure.p1)
+                    val projA = workplane.unproject(figure.p0.eval())
+                    val projB = workplane.unproject(figure.p1.eval())
 
                     val lineNew = Edge.line(Vertex(projA), Vertex(projB))
                 }
                 is SketchCircle -> {
-                    val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.normal, workplane.x)
+                    val projCenter = workplane.unproject(figure.center.eval())
+                    val centerWorkplane = Workplane(projCenter, workplane.normal, workplane.x)
 
                     val circle = Edge(
-                        Circle(centerWorkplane, figure.radius)
+                        Circle(centerWorkplane, figure.radius.evalDouble())
                     )
                 }
                 is SketchArc -> {
-                    val projCenter = workplane.unproject(figure.center)
-                    val centerWorkplane = WorkplaneExpr(projCenter, workplane.normal, workplane.x)
+                    val projCenter = workplane.unproject(figure.center.eval())
+                    val centerWorkplane = Workplane(projCenter, workplane.normal, workplane.x)
                     val arc = Edge(
-                        Circle(centerWorkplane, figure.radius),
+                        Circle(centerWorkplane, figure.radius.evalDouble()),
                         EdgeBound(
-                            Vertex(workplane.unproject(figure.p0)),
-                            Vertex(workplane.unproject(figure.p1))
+                            Vertex(workplane.unproject(figure.p0.eval())),
+                            Vertex(workplane.unproject(figure.p1.eval()))
                         )
                     )
                 }

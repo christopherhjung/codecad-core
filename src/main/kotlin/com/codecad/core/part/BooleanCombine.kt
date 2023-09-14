@@ -1,5 +1,6 @@
 package com.codecad.core.part
 
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Curve
@@ -54,20 +55,18 @@ object BooleanCombine{
 
     var count = 0
     var test = 0
-    fun cutEdge(lhsEdge: Edge, rhsFace: Face, rhsPlane : PlaneExpr){
+    fun cutEdge(lhsEdge: Edge, rhsFace: Face, rhsPlane : Plane){
         when(val curve = lhsEdge.curve){
             is Line -> {
                 val intersection = rhsPlane.intersect(curve)
-                if(isInside(intersection, rhsFace)){
+                if(intersection != null && isInside(intersection, rhsFace)){
                     println(intersection)
                 }
             }
         }
     }
 
-    fun isInside(point: Vec3Expr, rhsFace: Face) : Boolean{
-        if(point.nan()) return false
-
+    fun isInside(point: Vec3, rhsFace: Face) : Boolean{
         val planeSurface = rhsFace.surface as PlaneSurface
 
         for(bound in rhsFace.bounds){
@@ -79,9 +78,9 @@ object BooleanCombine{
         return true
     }
 
-    fun isInside(point: Vec3Expr, bound: FaceBound, workplane : WorkplaneExpr) : Boolean{
-        val projPoint = workplane.project2d(point).eval()
-        val points = bound.edgeLoop.map { workplane.project2d(it.edge.start!!.point).eval() }
+    fun isInside(point: Vec3, bound: FaceBound, workplane : Workplane) : Boolean{
+        val projPoint = workplane.project2d(point)
+        val points = bound.edgeLoop.map { workplane.project2d(it.edge.start!!.point) }
         return isPointInPolygon(projPoint, points)
     }
 
@@ -107,7 +106,7 @@ object BooleanCombine{
     }
 
     fun combine(lhsSurface: PlaneSurface, rhsSurface: PlaneSurface) : Line{
-        return WorkplaneExpr.intersect(lhsSurface.workplane, rhsSurface.workplane)
+        return Workplane.intersect(lhsSurface.workplane, rhsSurface.workplane)
     }
 }
 

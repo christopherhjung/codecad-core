@@ -12,14 +12,14 @@ interface Projector {
 
 class PlaneProjector(val workplane: Workplane) : Projector{
     override fun project(point : Vec3) : Vec2{
-        return workplane.project(point)
+        return workplane.project2d(point)
     }
 }
 
-class CylinderProjector(val workplane: Workplane, val radius: Expr) : Projector{
+class CylinderProjector(val workplane: Workplane, val radius: Double) : Projector{
     override fun project(point : Vec3) : Vec2 {
-        val offset = workplane.project(point)
-        val origin = workplane.project(workplane.origin)
+        val offset = workplane.project2d(point)
+        val origin = workplane.project2d(workplane.origin)
         val diff = offset - origin
 
         val theta = atan2(diff.y, diff.x)

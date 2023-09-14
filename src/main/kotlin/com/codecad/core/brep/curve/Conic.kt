@@ -1,7 +1,7 @@
 package com.codecad.core.brep.curve
 
-import com.codecad.core.brep.WorkplaneExpr
+import com.codecad.core.brep.Workplane
 
-abstract class Conic(val workplane: WorkplaneExpr) : Curve() {
+abstract class Conic(val workplane: Workplane) : Curve() {
 
 }

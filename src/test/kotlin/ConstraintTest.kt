@@ -1,4 +1,5 @@
 import com.codecad.core.ast.vec.Vec2Expr
+import com.codecad.core.brep.Workplane
 import com.codecad.core.part.PartStudio
 import com.codecad.core.part.Sketch
 import com.codecad.core.constraint.*
@@ -14,7 +15,7 @@ class ConstraintTest {
     fun tangentSolveFromAbove(){
         val partStudio = PartStudio()
         val world = partStudio.world
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
         val center = world.vec2(x, y)
@@ -34,7 +35,7 @@ class ConstraintTest {
     fun tangentSolveFromAboveLarge(){
         val partStudio = PartStudio()
         val world = partStudio.world
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
         val center = Vec2Expr(world, x, y)
@@ -50,7 +51,7 @@ class ConstraintTest {
     fun tangentSolveFromBelow(){
         val partStudio = PartStudio()
         val world = partStudio.world
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(-1.0)
         val center = Vec2Expr(world, x, y)
@@ -66,7 +67,7 @@ class ConstraintTest {
     fun tangentSolveDiagonal(){
         val partStudio = PartStudio()
         val world = partStudio.world
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         val x = sketch.param(0.0)
         val y = sketch.param(1.0)
         val center = world.vec2(x, y)
@@ -85,7 +86,7 @@ class ConstraintTest {
     fun pointOnPointSimple(){
         val partStudio = PartStudio()
         val world = partStudio.world
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         val x = sketch.param(10.0)
         val y = sketch.param(100.0)
         val current = sketch.point(x,y)

@@ -25,7 +25,7 @@ class Edge(var curve: Curve, val bound : EdgeBound? = null){
             return Edge(Line.fromTo(start.point, end.point), EdgeBound(start, end))
         }
 
-        fun arc(workplane: WorkplaneExpr, start: Vertex, end: Vertex, sense: Sense) : Edge {
+        fun arc(workplane: Workplane, start: Vertex, end: Vertex, sense: Sense) : Edge {
             return Edge(Circle(workplane, workplane.origin.distanceTo(start.point)), EdgeBound(start, end, sense))
         }
     }

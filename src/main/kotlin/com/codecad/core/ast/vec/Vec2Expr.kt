@@ -3,12 +3,29 @@ package com.codecad.core.ast.vec
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 data class Vec2(val x: Double, val y: Double){
     companion object{
         val ZERO = Vec2(0.0, 0.0)
+    }
+
+    fun absoluteAngle() : Double{
+        return atan2(y, x)
+    }
+
+    fun rotate(center: Vec2, angle: Double) : Vec2 {
+        return rotate(this - center, angle) + center
+    }
+
+    fun rotate(angle: Double) : Vec2 {
+        val s = sin(angle)
+        val c = cos(angle)
+
+        return Vec2(
+            c * x - s * y,
+            s * x + c * y
+        )
     }
 
     fun dot(right: Vec2) : Double {

@@ -1,3 +1,4 @@
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.BSplineControlPoint
@@ -7,17 +8,14 @@ import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
 
 object VolumeSuite {
-    fun createCylinder(bottomWorkplane: WorkplaneExpr, outerRadius: Double, height: Double) : Volume {
-        val world = bottomWorkplane.origin.world
-        val outerRadius = world.literal(outerRadius)
-        val height = world.literal(height)
+    fun createCylinder(bottomWorkplane: Workplane, outerRadius: Double, height: Double) : Volume {
 
-        val topWorkplane = WorkplaneExpr(
+        val topWorkplane = Workplane(
             bottomWorkplane.origin + bottomWorkplane.normal * height,
             bottomWorkplane.normal,
             bottomWorkplane.normal
         )
-        val zeroXYWorkplane = WorkplaneExpr(world.ZeroVec3, bottomWorkplane.normal, bottomWorkplane.normal)
+        val zeroXYWorkplane = Workplane(Vec3.ZERO, bottomWorkplane.normal, bottomWorkplane.normal)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -44,14 +42,10 @@ object VolumeSuite {
         return volume
     }
 
-    fun createPipe(bottomWorkplane: WorkplaneExpr, outerRadius: Double, innerRadius: Double, height: Double) : Volume {
-        val world = bottomWorkplane.origin.world
-        val outerRadius = world.literal(outerRadius)
-        val innerRadius = world.literal(innerRadius)
-        val height = world.literal(height)
+    fun createPipe(bottomWorkplane: Workplane, outerRadius: Double, innerRadius: Double, height: Double) : Volume {
 
         val topWorkplane = bottomWorkplane.move(bottomWorkplane.normal * height)
-        val zeroXYWorkplane = bottomWorkplane.withOrigin(world.ZeroVec3)
+        val zeroXYWorkplane = bottomWorkplane.withOrigin(Vec3.ZERO)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -93,11 +87,7 @@ object VolumeSuite {
     }
 
 
-    fun createCircleWithHole(bottomWorkplane: WorkplaneExpr, outerRadius: Double, innerRadius: Double) : Face {
-        val world = bottomWorkplane.origin.world
-        val outerRadius = world.literal(outerRadius)
-        val innerRadius = world.literal(innerRadius)
-
+    fun createCircleWithHole(bottomWorkplane: Workplane, outerRadius: Double, innerRadius: Double) : Face {
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
         val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))
 
@@ -111,9 +101,7 @@ object VolumeSuite {
         return face
     }
 
-    fun createCircle(bottomWorkplane: WorkplaneExpr, radius: Double) : Face {
-        val world = bottomWorkplane.origin.world
-        val radius = world.literal(radius)
+    fun createCircle(bottomWorkplane: Workplane, radius: Double) : Face {
         val bottomEdge = Edge(Circle(bottomWorkplane, radius))
         val bottomSurface = PlaneSurface(bottomWorkplane)
         val bottomEdgeLoop = EdgeLoop.of(bottomEdge)
@@ -121,10 +109,7 @@ object VolumeSuite {
         return face
     }
 
-    fun createPlane(workplane: WorkplaneExpr, size: Double) : Face {
-        val origin = workplane.origin
-        val world = origin.world
-        val size = world.literal(size)
+    fun createPlane(workplane: Workplane, size: Double) : Face {
         val halfSize = size / 2.0
 
         val a = Vertex(workplane.unproject(-halfSize, -halfSize))
@@ -140,15 +125,12 @@ object VolumeSuite {
         return face
     }
 
-    fun createTriangle(workplane: WorkplaneExpr, size: Double) : Face {
-        val origin = workplane.origin
-        val world = origin.world
-        val size = world.literal(size)
+    fun createTriangle(workplane: Workplane, size: Double) : Face {
         val halfSize = size / 2.0
 
         val a = Vertex(workplane.unproject(-halfSize, -halfSize))
         val b = Vertex(workplane.unproject(-halfSize, halfSize))
-        val c = Vertex(workplane.unproject(halfSize, world.Zero))
+        val c = Vertex(workplane.unproject(halfSize, 0.0))
 
         val surface = PlaneSurface(workplane)
         val edgeLoop = EdgeLoop.polygon(a,b,c)
@@ -158,11 +140,8 @@ object VolumeSuite {
         return face
     }
 
-    fun roundedPlane(workplane: WorkplaneExpr, size: Double, radius: Double) : Face {
+    fun roundedPlane(workplane: Workplane, size: Double, radius: Double) : Face {
         val origin = workplane.origin
-        val world = origin.world
-        val size = world.literal(size)
-        val radius = world.literal(radius)
         val halfSize = size / 2.0
         val halfLength = halfSize - radius
 
@@ -200,15 +179,13 @@ object VolumeSuite {
         return face
     }
 
-    fun splineCircle(workplane: WorkplaneExpr, radius: Double) : Face {
+    fun splineCircle(workplane: Workplane, radius: Double) : Face {
         val origin = workplane.origin
-        val world = origin.world
-        val radius = world.literal(radius)
 
-        val aPoint = BSplineControlPoint(workplane.unproject(-radius, -radius), world.One)
-        val bPoint = BSplineControlPoint(workplane.unproject(radius, -radius), world.One)
-        val cPoint = BSplineControlPoint(workplane.unproject(radius, radius), world.One)
-        val dPoint = BSplineControlPoint(workplane.unproject(-radius, radius), world.One)
+        val aPoint = BSplineControlPoint(workplane.unproject(-radius, -radius), 1.0)
+        val bPoint = BSplineControlPoint(workplane.unproject(radius, -radius), 1.0)
+        val cPoint = BSplineControlPoint(workplane.unproject(radius, radius), 1.0)
+        val dPoint = BSplineControlPoint(workplane.unproject(-radius, radius), 1.0)
 
         val spline = BSpline(arrayOf(aPoint, bPoint, cPoint, dPoint, aPoint))
 

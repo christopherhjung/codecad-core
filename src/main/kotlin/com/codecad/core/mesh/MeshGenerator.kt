@@ -2,6 +2,7 @@ package com.codecad.core.mesh
 
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.primitive.times
+import com.codecad.core.ast.vec.Quaternion
 import com.codecad.core.ast.vec.QuaternionExpr
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
@@ -52,7 +53,7 @@ class MeshGenerator {
         val surface = face.surface
 
         if(surface is PlaneSurface){
-            val projector = PlaneProjector(surface.workplane.eval())
+            val projector = PlaneProjector(surface.workplane)
 
             var outline : List<Vec3>? = null
             val holes = arrayListOf<List<Vec3>>()
@@ -67,8 +68,7 @@ class MeshGenerator {
 
             addTriangles(generateTriangles(projector, outline!!, holes))
         }else if(surface is CylindricalSurface){
-
-            val projector = CylinderProjector(surface.workplane.eval(), surface.radius)
+            val projector = CylinderProjector(surface.workplane, surface.radius)
 
             class CylindricalVertex(val edge: OrientedEdge, val vertexPoint : Vec3, val projPoint: Vec2) : Comparable<CylindricalVertex>{
                 lateinit var prev : CylindricalVertex
@@ -211,52 +211,49 @@ class MeshGenerator {
         when(curve){
             is Line -> {
                 if(bound != null){
-                    addPoint(bound.start.point.eval())
+                    addPoint(bound.start.point)
                 }
             }
             is Circle -> {
                 val workplane = curve.workplane
                 val axisUp = workplane.normal
 
-                val paramExpr = ParamExpr(axisUp.world, 0.0)
-                val world = workplane.world
-                val startIdx : Int
-                val rotatedPoint = if(bound != null){
-                    val startPoint = bound.start.point.copy()
-                    val endPoint = bound.end.point.copy()
+                val startIdx = if(bound != null) 1 else 0
 
-                    addPoint(startPoint.eval())
-
-                    val projStartPoint = workplane.project2d(startPoint)
-                    val projEndPoint = workplane.project2d(endPoint)
-
-                    val startTheta = projStartPoint.absoluteAngle()
-                    val offsetPoint = projEndPoint.rotate(-startTheta)
-                    val offsetTheta = offsetPoint.absoluteAngle()
-                    val theta = startTheta + paramExpr * when(bound.sense){
-                        Sense.CCW -> offsetTheta
-                        Sense.CW  -> (offsetTheta - 2.0 * Math.PI)
-                        else -> throw RuntimeException("Missing Sense")
-                    }
-
-                    val rotatedPoint2D = world.vec2(curve.radius, world.Zero)
-                    val rotatedPoint = rotatedPoint2D.rotate(theta)
-                    startIdx = 1
-                    workplane.unproject(rotatedPoint)
-                }else{
-                    val quaternion = QuaternionExpr.fromAxis(axisUp, (2.0 * Math.PI) * paramExpr )
-                    val somePoint = workplane.unproject(curve.radius, workplane.world.Zero)
-
-                    startIdx = 0
-                    quaternion.rotate(workplane.origin, somePoint)
-                }
 
                 val count = 10
                 for( angle in startIdx until count ){
                     val theta = angle / count.toDouble()
-                    paramExpr.value = theta
-                    val point = rotatedPoint.eval()
-                    addPoint(point)
+
+                    val rotatedPoint = if(bound != null){
+                        val startPoint = bound.start.point.copy()
+                        val endPoint = bound.end.point.copy()
+
+                        addPoint(startPoint)
+
+                        val projStartPoint = workplane.project2d(startPoint)
+                        val projEndPoint = workplane.project2d(endPoint)
+
+                        val startTheta = projStartPoint.absoluteAngle()
+                        val offsetPoint = projEndPoint.rotate(-startTheta)
+                        val offsetTheta = offsetPoint.absoluteAngle()
+                        val theta = startTheta + theta * when(bound.sense){
+                            Sense.CCW -> offsetTheta
+                            Sense.CW  -> (offsetTheta - 2.0 * Math.PI)
+                            else -> throw RuntimeException("Missing Sense")
+                        }
+
+                        val rotatedPoint2D = Vec2(curve.radius, 0.0)
+                        val rotatedPoint = rotatedPoint2D.rotate(theta)
+                        workplane.unproject(rotatedPoint)
+                    }else{
+                        val quaternion = Quaternion.fromAxis(axisUp, (2.0 * Math.PI) * theta )
+                        val somePoint = workplane.unproject(curve.radius, 0.0)
+
+                        quaternion.rotate(workplane.origin, somePoint)
+                    }
+
+                    addPoint(rotatedPoint)
                 }
             }
             else -> throw RuntimeException("not implemented")

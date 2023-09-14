@@ -1,7 +1,9 @@
 package com.codecad.core.part
 
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Quaternion
 import com.codecad.core.ast.vec.QuaternionExpr
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
@@ -14,8 +16,8 @@ import kotlin.math.abs
 
 class Revolver(){
 
-    fun revolve(face: Face, axis: Line, theta: Expr) : Volume {
-        val quat = QuaternionExpr.fromAxis(axis.direction, theta)
+    fun revolve(face: Face, axis: Line, theta: Double) : Volume {
+        val quat = Quaternion.fromAxis(axis.direction, theta)
 
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
@@ -27,7 +29,7 @@ class Revolver(){
                 val surfaceWorkplane = axis.alignWorkplane(center)
                 val radius = surfaceWorkplane.origin.distanceTo(center)
 
-                val revolveSurface = if(abs(radius.evalDouble()) < 1e-8){
+                val revolveSurface = if(abs(radius) < 1e-8){
                     SphericalSurface(surfaceWorkplane, circleCurve.radius)
                 }else{
                     ToroidalSurface(surfaceWorkplane, radius, circleCurve.radius)
@@ -38,7 +40,7 @@ class Revolver(){
                 if(true){ // try revolve endstops
                     val newCenter = quat.rotate(surfaceWorkplane.origin, center)
                     val radial = (newCenter - surfaceWorkplane.origin).normalized()
-                    val rotatedWorkplane = WorkplaneExpr(newCenter, axis.direction.cross(radial), radial)
+                    val rotatedWorkplane = Workplane(newCenter, axis.direction.cross(radial), radial)
                     val rotatedCircle = Circle(rotatedWorkplane, circleCurve.radius)
                     val plane = PlaneSurface(rotatedWorkplane)
 
@@ -77,15 +79,15 @@ class Revolver(){
 
                     val revolveSurface = when(curve){
                         is Line -> {
-                            if(abs(curve.direction.dot(axis.direction).evalDouble()) < 1e-8){
+                            if(abs(curve.direction.dot(axis.direction)) < 1e-8){
                                 //plane
                                 PlaneSurface(workplane)
-                            }else if(abs(curve.direction.cross(axis.direction).length().evalDouble()) < 1e-8){
+                            }else if(abs(curve.direction.cross(axis.direction).length()) < 1e-8){
                                 //cylinder
                                 CylindricalSurface(workplane, radius)
                             }else{
                                 //cone
-                                val angle = Vec3Expr.angle(axis.direction, curve.direction)
+                                val angle = Vec3.angle(axis.direction, curve.direction)
                                 ConicalSurface(workplane, radius, angle)
                             }
                         }
@@ -93,7 +95,7 @@ class Revolver(){
                         is Circle -> {
                             val workplane = axis.alignWorkplane(curve.workplane.origin)
                             val radius = workplane.origin.distanceTo(curve.workplane.origin)
-                            if(radius.evalDouble() < 1e-8){
+                            if(radius < 1e-8){
                                 SphericalSurface(workplane, curve.radius)
                             }else{
                                 ToroidalSurface(workplane, radius, curve.radius)

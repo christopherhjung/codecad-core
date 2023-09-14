@@ -2,6 +2,7 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.LiteralExpr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.World
+import com.codecad.core.brep.Workplane
 import com.codecad.core.part.PartStudio
 import com.codecad.core.part.Sketch
 import org.junit.jupiter.api.Test
@@ -54,7 +55,7 @@ class SketchTest {
     fun sketchTest() {
         val world = World()
         val partStudio = PartStudio(world)
-        val sketch = Sketch(partStudio, world.WorkplaneXY, "")
+        val sketch = Sketch(partStudio, Workplane.XY, "")
         //var arc = sketch.arc(world.vec2(world.Zero, world.Zero), world.vec2(world.One, world.One))
 
         with(sketch){

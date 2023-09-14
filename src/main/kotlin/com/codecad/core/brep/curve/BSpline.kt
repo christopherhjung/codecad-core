@@ -1,14 +1,13 @@
 package com.codecad.core.brep.curve
 
-import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.ast.vec.Vec3Expr
+import com.codecad.core.ast.vec.Vec3
 
-class BSplineControlPoint(val point : Vec3Expr, val weight: Expr)
+class BSplineControlPoint(val point : Vec3, val weight: Double)
 
 class BSpline(var points : Array<BSplineControlPoint>) : Curve(){
     val degree : Int = points.size
 
-    override fun move(offset: Vec3Expr): BSpline {
+    override fun move(offset: Vec3): BSpline {
         return BSpline(points.map {
             BSplineControlPoint(it.point + offset, it.weight)
         }.toTypedArray())

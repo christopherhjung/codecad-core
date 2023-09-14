@@ -2,6 +2,7 @@ package com.codecad.core.ast.complex
 
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.brep.Workplane
 import com.codecad.core.part.Sketch
 import com.codecad.core.scope.NestedScope
 import com.codecad.core.scope.Scope
@@ -15,7 +16,7 @@ class SketchExpr(
 
     override fun eval(scope: Scope): Any? {
         val project = scope.partStudio
-        val sketch = Sketch(project, world.WorkplaneXY, name)
+        val sketch = Sketch(project, Workplane.XY, name)
         project.sketches.add(sketch)
         val nestedScope = NestedScope.mutual(scope)
         nestedScope.sketch = sketch

@@ -1,5 +1,6 @@
 package com.codecad.core.brep
 
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.rollover
 enum class FaceBoundKind{
@@ -89,7 +90,7 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
             return firstLoop
         }
 
-        fun polygon(vararg vertices: Vec3Expr) : EdgeLoop{
+        fun polygon(vararg vertices: Vec3) : EdgeLoop{
             return polygon(vertices.map { Vertex(it) })
         }
 

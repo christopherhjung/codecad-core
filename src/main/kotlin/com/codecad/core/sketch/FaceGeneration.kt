@@ -161,7 +161,7 @@ fun collectSurfaces(parentSurface : SketchEdgeLoop, surfaces : MutableList<Sketc
     }
 }
 
-fun SketchEdgeLoop.toFace(workplane: WorkplaneExpr) : Face{
+fun SketchEdgeLoop.toFace(workplane: Workplane) : Face{
     val points = when (type) {
         FaceType.Root -> emptyList()
         else -> points.toList()
@@ -171,14 +171,12 @@ fun SketchEdgeLoop.toFace(workplane: WorkplaneExpr) : Face{
     val faceBounds = arrayListOf<FaceBound>()
     val result = Face(surface, faceBounds)
 
-    val world = workplane.origin.world
-    val workplane = workplane.eval()
-    val projPoints = points.map { workplane.unproject(it).toExpr(world) }.toList().toTypedArray()
+    val projPoints = points.map { workplane.unproject(it) }.toList().toTypedArray()
     val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.OuterBound)
     faceBounds.add(bound)
 
     for( hole in children ){
-        val projPoints = hole.points.map { workplane.unproject(it).toExpr(world) }.toList().toTypedArray()
+        val projPoints = hole.points.map { workplane.unproject(it) }.toList().toTypedArray()
         val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.InnerBound)
         faceBounds.add(bound)
     }

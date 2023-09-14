@@ -1,6 +1,7 @@
 package com.codecad.core.part
 
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.BSpline
@@ -14,15 +15,14 @@ import com.codecad.core.volume.Volume
 
 object Extruder{
 
-    fun extrude(face: Face, normal: Vec3Expr, height: Expr) : Volume {
+    fun extrude(face: Face, normal: Vec3, height: Double) : Volume {
         val faceSurface = face.surface
         if(faceSurface !is PlaneSurface) throw RuntimeException()
-        val world = normal.world
         val normal = normal.normalized()
         val offset = normal * height
         val extrudeFaceNormal = offset.normalized()
 
-        val baseFace = offsetFace(face, world.ZeroVec3, extrudeFaceNormal.negate())
+        val baseFace = offsetFace(face, Vec3.ZERO, extrudeFaceNormal.negate())
         val extrudeFace = offsetFace(face, offset, extrudeFaceNormal)
 
         val faces = arrayListOf<Face>()
@@ -59,7 +59,7 @@ object Extruder{
                     val surface =  when(curve) {
                         is Line -> {
                             val newNormal = curve.direction.cross(normal).normalized()
-                            val workplane = WorkplaneExpr(baseEdgeBound.start.point, newNormal, curve.direction)
+                            val workplane = Workplane(baseEdgeBound.start.point, newNormal, curve.direction)
                             PlaneSurface(workplane)
                         }
                         is Circle -> CylindricalSurface(curve.workplane, curve.radius)
@@ -95,7 +95,7 @@ object Extruder{
         return volume
     }
 
-    private fun offsetFace(face : Face, offset : Vec3Expr, normal: Vec3Expr) : Face {
+    private fun offsetFace(face : Face, offset : Vec3, normal: Vec3) : Face {
         val map = hashMapOf<Vertex, Vertex>()
         fun remap(vertex: Vertex) : Vertex {
             return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
