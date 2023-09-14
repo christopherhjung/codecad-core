@@ -9,10 +9,10 @@ import com.codecad.core.visitor.Printer
 import java.util.function.Consumer
 
 abstract class Expr(val world: World) {
-    protected var type : Int = 0
+    protected var opt : Int = 0
 
     fun isType(type : Int) : Boolean{
-        return type == this.type
+        return type == this.opt
     }
 
     abstract fun eval(scope: Scope = EmptyScope): Any?

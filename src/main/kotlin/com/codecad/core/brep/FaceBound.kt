@@ -17,6 +17,7 @@ enum class EdgeOrientation{
         }
     }
 }
+
 class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrientation.Forward){
     val start get() = if(orientation == EdgeOrientation.Forward) edge.bound?.start else edge.bound?.end
     val end get() = if(orientation == EdgeOrientation.Forward) edge.bound?.end else edge.bound?.start

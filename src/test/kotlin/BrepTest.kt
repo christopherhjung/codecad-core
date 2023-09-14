@@ -3,8 +3,11 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.WorkplaneExpr
 import com.codecad.core.brep.curve.Line
+import com.codecad.core.part.BooleanCombine
+import com.codecad.core.part.CombineKind
 import com.codecad.core.part.Extruder
 import com.codecad.core.part.Revolver
+import com.codecad.core.volume.Volume
 import org.junit.jupiter.api.Test
 
 class BrepTest {
@@ -45,8 +48,7 @@ class BrepTest {
         val bottomWorkplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0)
 
-        val volume = Extruder()
-            .extrude(face, world.DirectionZ, world.literal(10.0))
+        val volume = Extruder.extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume)
     }
 
@@ -55,7 +57,7 @@ class BrepTest {
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.createPlane(workplane, 50.0)
 
-        val volume = Extruder()
+        val volume = Extruder
             .extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume)
     }
@@ -71,7 +73,7 @@ class BrepTest {
     fun roundPlaneExtrudeTest(){
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
-        val volume = Extruder()
+        val volume = Extruder
             .extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume, "extrude")
     }
@@ -80,7 +82,7 @@ class BrepTest {
     fun circleExtrudeTest(){
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.createCircleWithHole(workplane, 50.0, 5.0)
-        val volume = Extruder()
+        val volume = Extruder
             .extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume, "extrude")
     }
@@ -96,7 +98,7 @@ class BrepTest {
     fun splineVolumeTest(){
         val workplane = WorkplaneExpr(world.ZeroVec3, world.DirectionZ, world.DirectionX)
         val face = VolumeSuite.splineCircle(workplane, 50.0)
-        val volume = Extruder()
+        val volume = Extruder
             .extrude(face, world.DirectionZ, world.literal(10.0))
         ExportHelper.saveStep(volume)
     }
@@ -151,5 +153,23 @@ class BrepTest {
         println(volume.toString())
         //ExportHelper.saveStep(volume.shells.first().faces[2], "revolve")
         ExportHelper.saveStep(volume, "revolve")
+    }
+
+    fun box(position : Vec3Expr, size: Double) : Volume{
+        val sizeExpr = world.literal(size)
+        val halfSizeExpr = size / 2.0
+        val workplane = WorkplaneExpr(position - world.DirectionZ * halfSizeExpr, world.DirectionZ, world.DirectionX)
+        val face = VolumeSuite.createPlane(workplane, size)
+        val volume = Extruder.extrude(face, world.DirectionZ, sizeExpr)
+        return volume
+    }
+
+    @Test
+    fun unionTest(){
+        val box1 = box(vec3(5.0, 5.0, 5.0), 10.0)
+        val box2 = box(vec3(10.0, 10.0, 10.0), 10.0)
+        //ExportHelper.saveStep(volume.shells.first().faces[2], "revolve")
+        val result = BooleanCombine.combine(CombineKind.Add, box1, box2)
+        ExportHelper.saveStep(result, "extrude")
     }
 }

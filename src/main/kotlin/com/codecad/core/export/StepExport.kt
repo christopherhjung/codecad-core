@@ -2,10 +2,7 @@ package com.codecad.core.export
 
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
-import com.codecad.core.brep.curve.BSpline
-import com.codecad.core.brep.curve.Circle
-import com.codecad.core.brep.curve.Curve
-import com.codecad.core.brep.curve.Line
+import com.codecad.core.brep.curve.*
 import com.codecad.core.brep.surface.*
 import com.codecad.core.part.Context
 import com.codecad.core.volume.Volume
@@ -45,7 +42,7 @@ class StepExport : ModelExport{
 
     private val Footer = "ENDSEC;\nEND-${ISO};"
 
-    private val Color = Color(157, 207, 237);
+    private val DefaultColor = Color(157, 207, 237);
 
     private val data = StringBuilder()
     private val vertices = hashMapOf<Vertex, Id>()
@@ -147,6 +144,10 @@ class StepExport : ModelExport{
         return addNamedObject("CIRCLE", axisPlacement, radius)
     }
 
+    private fun createEllipse(axisPlacement: Id, major: Double, minor: Double) : Id{
+        return addNamedObject("ELLIPSE", axisPlacement, major, minor)
+    }
+
     private fun createLine(point: Id, direction: Id) : Id{
         return addNamedObject("LINE", point, direction)
     }
@@ -211,6 +212,10 @@ class StepExport : ModelExport{
         return addNamedObject("CYLINDRICAL_SURFACE", axisPlacement, radius)
     }
 
+    private fun createDegenerateToroidalSurface(axisPlacement: Id, major: Double, minor: Double, outer: Boolean) : Id{
+        return addNamedObject("DEGENERATE_TOROIDAL_SURFACE", axisPlacement, major, minor, outer)
+    }
+
     private fun createToroidalSurface(axisPlacement: Id, major: Double, minor: Double) : Id{
         return addNamedObject("TOROIDAL_SURFACE", axisPlacement, major, minor)
     }
@@ -243,8 +248,8 @@ class StepExport : ModelExport{
         return addNamedObject("MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION", tuple(styledItems), context)
     }
 
-    private fun createPresentationStyleAssignment() : Id{
-        val color = addNamedObject("COLOUR_RGB", Color.r / 255.0, Color.g / 255.0, Color.b / 255.0 )
+    private fun createPresentationStyleAssignment(color: Color) : Id{
+        val color = addNamedObject("COLOUR_RGB", color.r / 255.0, color.g / 255.0, color.b / 255.0 )
         val fillAreaStyleColor = addNamedObject("FILL_AREA_STYLE_COLOUR", color)
         val fillAreaStyle = addNamedObject("FILL_AREA_STYLE", tuple(fillAreaStyleColor))
         val surfaceStyleFillArea = addObject("SURFACE_STYLE_FILL_AREA", fillAreaStyle)
@@ -342,6 +347,7 @@ class StepExport : ModelExport{
                     is PlaneSurface -> createPlane(axisPlacement)
                     is CylindricalSurface -> createCylindricalSurface(axisPlacement, surface.radius.evalDouble() )
                     is ConicalSurface -> createConicalSurface(axisPlacement, surface.radius.evalDouble(), surface.angle.evalDouble())
+                    is DegenerateToroidalSurface -> createDegenerateToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble(), surface.outer)
                     is ToroidalSurface -> createToroidalSurface(axisPlacement, surface.major.evalDouble(), surface.minor.evalDouble())
                     is SphericalSurface -> createSphericalSurface(axisPlacement, surface.radius.evalDouble())
                     else -> throw RuntimeException("Unknown surface")
@@ -393,6 +399,7 @@ class StepExport : ModelExport{
         return when(curve){
             is Line -> createLine(createCartesianPoint(curve.origin.eval()), createVector(curve.direction.eval()))
             is Circle -> createCircle(createAxisPlacement(curve.workplane.eval()), curve.radius.evalDouble())
+            is Ellipse -> createEllipse(createAxisPlacement(curve.workplane.eval()), curve.minor.evalDouble(), curve.major.evalDouble())
             is BSpline -> {
                 val size = curve.points.size
                 val stepPoints = tuple(curve.points.map {
@@ -427,8 +434,10 @@ class StepExport : ModelExport{
                 val stepEdgeCurve = createEdgeCurve(edge)
 
                 val stepOrientedEdge =
-                    createOrientedEdge(stepEdgeCurve,
-                    orientedEdge.orientation == EdgeOrientation.Forward)
+                    createOrientedEdge(
+                        stepEdgeCurve,
+                        orientedEdge.orientation == EdgeOrientation.Forward
+                    )
 
                 stepOrientedEdges.add(stepOrientedEdge)
             }
@@ -466,7 +475,7 @@ class StepExport : ModelExport{
     override fun export(context: Context): ByteArray{
         data.append(Header)
 
-        val style = createPresentationStyleAssignment()
+        val style = createPresentationStyleAssignment(DefaultColor)
         val applicationContext = createApplicationContext()
         val representationContext = createRepresentationContext()
         val shapeRepresentation = createShapeRepresentation(applicationContext, representationContext)

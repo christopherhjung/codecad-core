@@ -2,7 +2,6 @@ package com.codecad.core.ast.vec
 
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.brep.curve.Line
 import com.codecad.core.scope.Scope
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -75,12 +74,16 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
         return Vec3(x.evalDouble(scope), y.evalDouble(scope), z.evalDouble(scope))
     }
 
+    fun nan() : Boolean{
+        return x == world.NaN || y == world.NaN || z == world.NaN
+    }
+
     fun scaleTo(expr : Expr) : Vec3Expr{
         return this.normalized() * expr
     }
 
     fun normalized() : Vec3Expr {
-        return when (this.type) {
+        return when (this.opt) {
             NormalizedVec -> this
             else -> this / length()
         }
@@ -140,14 +143,14 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
     }
 
     fun squaredLength(): Expr {
-        return when (type) {
+        return when (opt) {
             NormalizedVec -> world.One
             else -> x.pow(2) + y.pow(2) + z.pow(2)
         }
     }
 
     fun length(): Expr {
-        return when (type) {
+        return when (opt) {
             NormalizedVec -> world.One
             else -> squaredLength().sqrt()
         }
@@ -194,12 +197,9 @@ class Vec3Expr(world: World, val x: Expr, val y: Expr, val z: Expr) : Expr(world
             return (lhs + rhs) / 2.0
         }
 
-        fun projectToLine(line: Line, point: Vec3Expr) : Vec3Expr{
-            return projectTo(line.origin, line.direction, point)
-        }
-
-        fun projectTo(origin : Vec3Expr, direction: Vec3Expr, point: Vec3Expr) : Vec3Expr{
-            return origin + direction * ( point.dot(direction) / direction.squaredLength() )
+        //projects lhs onto rhs
+        fun project(lhs: Vec3Expr, rhs: Vec3Expr) : Vec3Expr{
+            return rhs * ( lhs.dot(rhs) / rhs.squaredLength() )
         }
 
         operator fun Double.times(point: Vec3Expr): Vec3Expr {

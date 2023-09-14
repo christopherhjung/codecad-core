@@ -227,8 +227,8 @@ class MeshGenerator {
 
                     addPoint(startPoint.eval())
 
-                    val projStartPoint = workplane.project(startPoint)
-                    val projEndPoint = workplane.project(endPoint)
+                    val projStartPoint = workplane.project2d(startPoint)
+                    val projEndPoint = workplane.project2d(endPoint)
 
                     val startTheta = projStartPoint.absoluteAngle()
                     val offsetPoint = projEndPoint.rotate(-startTheta)

@@ -2,8 +2,6 @@ package com.codecad.core.brep.curve
 
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec3Expr
-import com.codecad.core.brep.Edge
-import com.codecad.core.brep.Workplane
 import com.codecad.core.brep.WorkplaneExpr
 
 class Line(var origin : Vec3Expr, var direction : Vec3Expr) : Curve(){
@@ -19,7 +17,7 @@ class Line(var origin : Vec3Expr, var direction : Vec3Expr) : Curve(){
 
     fun projectPoint(point: Vec3Expr) : Vec3Expr{
         val offset = point - origin
-        return origin + direction * ( offset.dot(direction) / direction.squaredLength() )
+        return origin + Vec3Expr.project(offset, direction)
     }
 
     fun alignWorkplane(point: Vec3Expr) : WorkplaneExpr{

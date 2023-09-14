@@ -204,7 +204,27 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
 private fun isLeft(p0: Vec2, p1: Vec2, p2: Vec2): Double {
     return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
+/*
+fun isPointInPolygon3d(point: Vec2, polygon: Iterable<Vec3>): Boolean {
+    var windingNumber = 0
 
+    for ((p1, p2) in polygon.rollover()) {
+        if (p1.y <= point.y) {
+            if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
+                windingNumber++
+            }
+        } else if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
+            windingNumber--
+        }
+    }
+
+    return windingNumber != 0
+}
+
+private fun isLeft3d(p0: Vec3, p1: Vec3, p2: Vec3, normal : Vec3): Double {
+    return (p1 - p0).cross(p2 - p1).dot(normal)
+}
+*/
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineSegment>{
     val unifier = Unifier<Vec2>{ lhs,rhs ->
         lhs.distance(rhs) < 0.001

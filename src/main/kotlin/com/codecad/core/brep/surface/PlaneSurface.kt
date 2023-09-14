@@ -9,6 +9,7 @@ class PlaneSurface(workplane: WorkplaneExpr) : ElementarySurface(workplane)
 class CylindricalSurface(workplane: WorkplaneExpr, val radius: Expr) : ElementarySurface(workplane)
 class ConicalSurface(workplane: WorkplaneExpr, val radius: Expr, val angle: Expr) : ElementarySurface(workplane)
 class ToroidalSurface(workplane: WorkplaneExpr, val major: Expr, val minor: Expr) : ElementarySurface(workplane)
+class DegenerateToroidalSurface(workplane: WorkplaneExpr, val major: Expr, val minor: Expr, val outer: Boolean) : ElementarySurface(workplane)
 class SphericalSurface(workplane: WorkplaneExpr, val radius: Expr) : ElementarySurface(workplane)
 
 

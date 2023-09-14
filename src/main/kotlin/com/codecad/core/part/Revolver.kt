@@ -25,7 +25,7 @@ class Revolver(){
             if(circleCurve is Circle && edgeLoop.isClosed()){
                 val center = circleCurve.workplane.origin
                 val surfaceWorkplane = axis.alignWorkplane(center)
-                val radius = surfaceWorkplane.distanceTo(center)
+                val radius = surfaceWorkplane.origin.distanceTo(center)
 
                 val revolveSurface = if(abs(radius.evalDouble()) < 1e-8){
                     SphericalSurface(surfaceWorkplane, circleCurve.radius)
@@ -73,7 +73,7 @@ class Revolver(){
                     val start = orientedEdge.start!!
 
                     val workplane = axis.alignWorkplane(start.point)
-                    val radius = workplane.distanceTo(start.point)
+                    val radius = workplane.origin.distanceTo(start.point)
 
                     val revolveSurface = when(curve){
                         is Line -> {
@@ -92,7 +92,7 @@ class Revolver(){
 
                         is Circle -> {
                             val workplane = axis.alignWorkplane(curve.workplane.origin)
-                            val radius = workplane.distanceTo(curve.workplane.origin)
+                            val radius = workplane.origin.distanceTo(curve.workplane.origin)
                             if(radius.evalDouble() < 1e-8){
                                 SphericalSurface(workplane, curve.radius)
                             }else{

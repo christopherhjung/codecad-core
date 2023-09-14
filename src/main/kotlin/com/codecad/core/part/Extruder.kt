@@ -12,7 +12,7 @@ import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
 
 
-class Extruder(){
+object Extruder{
 
     fun extrude(face: Face, normal: Vec3Expr, height: Expr) : Volume {
         val faceSurface = face.surface
@@ -27,7 +27,6 @@ class Extruder(){
 
         val faces = arrayListOf<Face>()
         faces.add(baseFace)
-        faces.add(extrudeFace)
 
         val map = hashMapOf<Vertex, Edge>()
         fun extrusionLine(start: Vertex, end: Vertex) : Edge {
@@ -91,6 +90,7 @@ class Extruder(){
             }
         }
 
+        faces.add(extrudeFace)
         val volume = Volume(listOf(Shell(faces)))
         return volume
     }

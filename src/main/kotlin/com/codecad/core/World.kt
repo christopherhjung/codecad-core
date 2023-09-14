@@ -16,6 +16,7 @@ class World {
     val Zero = LiteralExpr(this, 0.0)
     val One = LiteralExpr(this, 1.0)
     val Two = LiteralExpr(this, 2.0)
+    val NaN = LiteralExpr(this, Double.NaN)
 
     val ZeroVec2 = vec2(Zero, Zero)
     val ZeroVec3 = vec3(Zero, Zero, Zero)
@@ -190,7 +191,9 @@ class World {
     }
 
     fun div(lhs : Expr, rhs: Expr) : Expr {
-        return if (lhs === Zero) {
+        return if (rhs === Zero){
+            NaN
+        }else if (lhs === Zero) {
             Zero
         }else if (rhs === One){
             lhs

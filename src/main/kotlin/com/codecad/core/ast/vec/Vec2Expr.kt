@@ -91,11 +91,11 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
     }
 
     fun normalized() : Vec2Expr {
-        return when (this.type) {
+        return when (this.opt) {
             NormalizedVec -> this
             else -> {
                 val result = this / length()
-                result.type = NormalizedVec
+                result.opt = NormalizedVec
                 result
             }
         }
@@ -162,14 +162,14 @@ class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
     }
 
     fun squaredLength(): Expr {
-        return when (type) {
+        return when (opt) {
             NormalizedVec -> world.One
             else -> x.pow(2) + y.pow(2)
         }
     }
 
     fun length(): Expr {
-        return when (type) {
+        return when (opt) {
             NormalizedVec -> world.One
             else -> squaredLength().sqrt()
         }
