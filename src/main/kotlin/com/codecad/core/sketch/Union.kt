@@ -10,37 +10,41 @@ class Key(val obj : Any){
     }
 }
 
-class Unifier<T : Any>(val condition : (T, T) -> Boolean){
+class Unifier<T : Any>(){
     val nodes = hashMapOf<Key, UnionNode<T>>()
 
-    fun add(value : T ){
-        val key = Key(value)
-
-        if(!nodes.contains(key)){
-            var uniqueNode = UnionNode(value)
-            for(presentNode in nodes.values){
-                if( condition(presentNode.value, value) ){
-                    uniqueNode = unify(presentNode, uniqueNode)
-                }
-            }
-
-            nodes[key] = uniqueNode
+    fun find(x : UnionNode<T>) : UnionNode<T>{
+        return if(x.parent !== x){
+            x.parent = find(x.parent)
+            x.parent
+        }else{
+            x
         }
     }
 
-    fun get( value : T ) : T{
-        val node = nodes[Key(value)]
-        return node?.value ?: value
+    fun get( value : T ) : UnionNode<T>{
+        return nodes.computeIfAbsent(Key(value)){UnionNode(value)}
     }
 
-    fun unify(x: UnionNode<T>, y: UnionNode<T>) : UnionNode<T> {
-        if (x != y) y.parent = x
-        return x
+    fun unify(x: UnionNode<T>, y: UnionNode<T>) {
+        val x = find(x)
+        val y = find(y)
+
+        if (x == y) return
+
+        if(x.size < y.size){
+            y.parent = x
+            x.size += y.size
+        }else{
+            x.parent = y
+            y.size += x.size
+        }
     }
 }
 
 class UnionNode<T>(val value: T){
     var parent : UnionNode<T> = this
+    var size = 1
 
     fun find() : UnionNode<T>{
         if (parent != this) {

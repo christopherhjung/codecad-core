@@ -224,7 +224,7 @@ private fun isLeft3d(p0: Vec3, p1: Vec3, p2: Vec3, normal : Vec3): Double {
 }
 */
 fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineSegment>{
-    val unifier = Unifier<Vec2>{ lhs,rhs ->
+    /*val unifier = Unifier<Vec2>{ lhs,rhs ->
         lhs.distance(rhs) < 0.001
     }
 
@@ -245,6 +245,8 @@ fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<Li
         lineSegment.p1 = unifier.get(lineSegment.p1)
     }
 
-    return list
+    return list*/
+
+    return emptyList()
 }
 

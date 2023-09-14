@@ -43,6 +43,8 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
 class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
     lateinit var prev : EdgeLoop
     lateinit var next : EdgeLoop
+    lateinit var face : Face
+    var twin : EdgeLoop? = null
 
     fun isClosed() : Boolean{
         return prev === next
@@ -68,6 +70,10 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
             return of(edges.toList())
         }
 
+        fun combine(vararg edgeLoops: EdgeLoop) : EdgeLoop {
+            return ofLoops(edgeLoops.toList())
+        }
+
         fun of(edges: Iterable<OrientedEdge>) : EdgeLoop {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
@@ -80,6 +86,26 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
             while(iterator.hasNext()){
                 val currentEdge = iterator.next()
                 currentEdgeLoop = EdgeLoop(currentEdge)
+                currentEdgeLoop.prev = prevEdgeLoop
+                prevEdgeLoop.next = currentEdgeLoop
+                prevEdgeLoop = currentEdgeLoop
+            }
+
+            firstLoop.prev = currentEdgeLoop
+            currentEdgeLoop.next = firstLoop
+            return firstLoop
+        }
+
+        fun ofLoops(edgeLoops: Iterable<EdgeLoop>) : EdgeLoop {
+            val iterator = edgeLoops.iterator()
+            if(!iterator.hasNext()) throw RuntimeException("One is required")
+
+            val firstLoop = iterator.next()
+            var prevEdgeLoop = firstLoop
+            var currentEdgeLoop = firstLoop
+
+            while(iterator.hasNext()){
+                currentEdgeLoop = iterator.next()
                 currentEdgeLoop.prev = prevEdgeLoop
                 prevEdgeLoop.next = currentEdgeLoop
                 prevEdgeLoop = currentEdgeLoop

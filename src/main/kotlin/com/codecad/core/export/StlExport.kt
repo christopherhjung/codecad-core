@@ -1,6 +1,5 @@
 package com.codecad.core.export
 
-import com.codecad.core.mesh.Mesh
 import com.codecad.core.mesh.MeshGenerator
 import com.codecad.core.part.Context
 import java.nio.ByteBuffer
