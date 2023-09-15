@@ -1,8 +1,6 @@
 package com.codecad.core.part
 
-import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
@@ -34,7 +32,7 @@ object Extruder{
         }
 
         for( (baseBound, extrudeBound) in baseFace.bounds.zip(extrudeFace.bounds) ){
-            for((baseEdgeLoop, extrudeEdgeLoop) in baseBound.edgeLoop.zip(extrudeBound.edgeLoop)){
+            for((baseEdgeLoop, extrudeEdgeLoop) in baseBound.loop.zip(extrudeBound.loop)){
                 val baseOrientedEdge = baseEdgeLoop.edge
                 val extrudeOrientedEdge = extrudeEdgeLoop.edge
                 val baseEdge = baseOrientedEdge.edge
@@ -47,7 +45,7 @@ object Extruder{
                     val endEdge = extrusionLine(baseEdgeBound.end, extrudeEdgeBound.end)
 
                     val bound = FaceBound(
-                        EdgeLoop.of(
+                        Loop.of(
                             baseOrientedEdge,
                             OrientedEdge(endEdge, baseOrientedEdge.orientation),
                             OrientedEdge(extrudeEdge, baseOrientedEdge.orientation.invert()),
@@ -104,7 +102,7 @@ object Extruder{
         val faceBounds = arrayListOf<FaceBound>()
         for( faceBound in face.bounds ) {
             val edges = arrayListOf<OrientedEdge>()
-            for (currentEdgeLoop in faceBound.edgeLoop) {
+            for (currentEdgeLoop in faceBound.loop) {
                 val orientedEdge = currentEdgeLoop.edge
                 val edge = orientedEdge.edge
 
@@ -124,7 +122,7 @@ object Extruder{
                 edges.add(OrientedEdge(Edge(offsetCurve, offsetBound), orientedEdge.orientation))
             }
 
-            faceBounds.add(FaceBound(EdgeLoop.of(edges), faceBound.sense))
+            faceBounds.add(FaceBound(Loop.of(edges), faceBound.sense))
         }
 
         val surface = face.surface as PlaneSurface

@@ -35,7 +35,7 @@ class StlImporter : Importer {
 
         val vertices = HashMap<Vec3, StlVertex>()
         val edges = HashMap<Pair<StlVertex, StlVertex>, Edge>()
-        val edgeLoops = HashMap<Pair<StlVertex, StlVertex>, EdgeLoop>()
+        val loops = HashMap<Pair<StlVertex, StlVertex>, Loop>()
         var idx = 0
         fun nextVec3() : Vec3{
             val x = buffer.getFloat()
@@ -50,7 +50,7 @@ class StlImporter : Importer {
             return vertices.computeIfAbsent(point){StlVertex(Vertex(point), idx++)}
         }
 
-        fun createEdge(lhs: StlVertex, rhs: StlVertex) : EdgeLoop{
+        fun createEdge(lhs: StlVertex, rhs: StlVertex) : Loop{
             val pair = if(lhs.idx < rhs.idx){
                 Pair(lhs, rhs)
             }else{
@@ -67,14 +67,14 @@ class StlImporter : Importer {
                 OrientedEdge(edge, EdgeOrientation.Backward)
             }
 
-            val loop = EdgeLoop(orientedEdge)
+            val loop = Loop(orientedEdge)
 
-            val previous = edgeLoops[pair]
+            val previous = loops[pair]
             if(previous != null){
                 loop.twin = previous
                 previous.twin = loop
             }else{
-                edgeLoops[pair] = loop
+                loops[pair] = loop
             }
 
             return loop
@@ -82,7 +82,7 @@ class StlImporter : Importer {
 
         val faces = arrayListOf<Face>()
         for (i in 0 until count) {
-            nextVec3()
+            val normal = nextVec3()
             val a = nextVertex()
             val b = nextVertex()
             val c = nextVertex()
@@ -91,16 +91,13 @@ class StlImporter : Importer {
             val bcEdge = createEdge(b, c)
             val caEdge = createEdge(c, a)
 
-            val edgeLoop = EdgeLoop.combine(abEdge, bcEdge, caEdge)
+            val loop = Loop.combine(abEdge, bcEdge, caEdge)
             val center = (a.point + b.point + c.point) / 3.0
-            val direction = a.point - center
-
-            val otherDirection = b.point - center
-            val normal = direction.cross(otherDirection)
+            val direction = (a.point - center).normalized()
 
             val workplane = Workplane(center, normal, direction)
 
-            val face = Face(PlaneSurface(workplane), listOf(FaceBound(edgeLoop, FaceBoundKind.OuterBound)))
+            val face = Face(PlaneSurface(workplane), listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
             faces.add(face)
             buffer.getShort()
@@ -111,7 +108,7 @@ class StlImporter : Importer {
         faces.forEach{ lhsFace ->
             val lhsNode = unifier.get(lhsFace)
             val bound = lhsFace.bounds.first()
-            bound.edgeLoop.forEach {
+            bound.loop.forEach {
                 val twin = it.twin ?: throw RuntimeException()
 
                 val oppositeFace = twin.face

@@ -1,9 +1,6 @@
 package com.codecad.core.mesh
 
-import com.codecad.core.ast.primitive.ParamExpr
-import com.codecad.core.ast.primitive.times
 import com.codecad.core.ast.vec.Quaternion
-import com.codecad.core.ast.vec.QuaternionExpr
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
@@ -58,7 +55,7 @@ class MeshGenerator {
             var outline : List<Vec3>? = null
             val holes = arrayListOf<List<Vec3>>()
             for(bound in face.bounds){
-               val edgeLoop = bound.edgeLoop
+               val edgeLoop = bound.loop
                if(bound.sense == FaceBoundKind.OuterBound){
                    outline = sweepVertices(edgeLoop)
                }else{
@@ -88,7 +85,7 @@ class MeshGenerator {
             val helper = arrayListOf<CylindricalVertex>()
 
             for(bound in face.bounds){
-                val edgeLoop = bound.edgeLoop
+                val edgeLoop = bound.loop
 
                 val loopVertices = arrayListOf<CylindricalVertex>()
                 for(current in edgeLoop){
@@ -182,9 +179,9 @@ class MeshGenerator {
         }
     }
 
-    fun sweepVertices(edgeLoop: EdgeLoop) : List<Vec3>{
+    fun sweepVertices(loop: Loop) : List<Vec3>{
         val vertices = arrayListOf<Vec3>()
-        for(current in edgeLoop){
+        for(current in loop){
             vertices.addAll(sweepOrientedEdge(current.edge))
         }
 

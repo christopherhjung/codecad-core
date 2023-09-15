@@ -1,13 +1,16 @@
 package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.rollover
+import com.codecad.core.sketch.SketchEdge
+
 enum class FaceBoundKind{
     OuterBound, InnerBound
 }
 
-class FaceBound(var edgeLoop : EdgeLoop, var sense: FaceBoundKind)
+class FaceBound(var loop : Loop, var sense: FaceBoundKind){
+
+}
 enum class EdgeOrientation{
     Forward, Backward;
 
@@ -40,52 +43,88 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
     }
 }
 
-class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
-    lateinit var prev : EdgeLoop
-    lateinit var next : EdgeLoop
+class Loop(var edge : OrientedEdge) : Iterable<Loop>{
+    lateinit var prev : Loop
+    lateinit var next : Loop
     lateinit var face : Face
-    var twin : EdgeLoop? = null
+    var twin : Loop? = null
 
     fun isClosed() : Boolean{
         return prev === next
     }
 
-    override fun iterator(): Iterator<EdgeLoop> {
+    override fun iterator(): Iterator<Loop> {
         return EdgeLoopIterator(this)
     }
 
+    fun computeArea() : Double{
+        var area = Vec3.ZERO
+        for( loop in this ){
+            val edge = loop.edge
+            area += edge.start!!.point.cross(edge.end!!.point)
+        }
+
+        return area.length() / 2
+    }
+
+    fun toString(sb: StringBuilder){
+        var sep = ""
+        for(edgeLoop in this){
+            val orientedEdge = edgeLoop.edge
+            val bound = orientedEdge.bound
+            if(bound != null){
+                sb.append(sep)
+                    .append(bound.start)
+
+                if(bound.sense != Sense.None){
+                    sb.append("(")
+                        .append(bound.sense)
+                        .append(")")
+                }
+
+                sep = "\n"
+            }
+        }
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        toString(sb)
+        return sb.toString()
+    }
+
     companion object{
-        fun of(edge: Edge) : EdgeLoop {
-            val loop = EdgeLoop(OrientedEdge(edge))
+        fun of(edge: Edge) : Loop {
+            val loop = Loop(OrientedEdge(edge))
             loop.next = loop
             loop.prev = loop
             return loop
         }
 
-        fun forward(vararg edges: Edge) : EdgeLoop {
+        fun forward(vararg edges: Edge) : Loop {
             return of(edges.map { OrientedEdge(it, EdgeOrientation.Forward) })
         }
 
-        fun of(vararg edges: OrientedEdge) : EdgeLoop {
+        fun of(vararg edges: OrientedEdge) : Loop {
             return of(edges.toList())
         }
 
-        fun combine(vararg edgeLoops: EdgeLoop) : EdgeLoop {
-            return ofLoops(edgeLoops.toList())
+        fun combine(vararg loops: Loop) : Loop {
+            return ofLoops(loops.toList())
         }
 
-        fun of(edges: Iterable<OrientedEdge>) : EdgeLoop {
+        fun of(edges: Iterable<OrientedEdge>) : Loop {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
             val firstEdge = iterator.next()
-            val firstLoop = EdgeLoop(firstEdge)
+            val firstLoop = Loop(firstEdge)
             var prevEdgeLoop = firstLoop
             var currentEdgeLoop = firstLoop
 
             while(iterator.hasNext()){
                 val currentEdge = iterator.next()
-                currentEdgeLoop = EdgeLoop(currentEdge)
+                currentEdgeLoop = Loop(currentEdge)
                 currentEdgeLoop.prev = prevEdgeLoop
                 prevEdgeLoop.next = currentEdgeLoop
                 prevEdgeLoop = currentEdgeLoop
@@ -96,8 +135,8 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
             return firstLoop
         }
 
-        fun ofLoops(edgeLoops: Iterable<EdgeLoop>) : EdgeLoop {
-            val iterator = edgeLoops.iterator()
+        fun ofLoops(loops: Iterable<Loop>) : Loop {
+            val iterator = loops.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
             val firstLoop = iterator.next()
@@ -116,15 +155,15 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
             return firstLoop
         }
 
-        fun polygon(vararg vertices: Vec3) : EdgeLoop{
+        fun polygon(vararg vertices: Vec3) : Loop{
             return polygon(vertices.map { Vertex(it) })
         }
 
-        fun polygon(vararg vertices: Vertex) : EdgeLoop{
+        fun polygon(vararg vertices: Vertex) : Loop{
             return polygon(vertices.asIterable())
         }
 
-        fun polygon(vertices: Iterable<Vertex>) : EdgeLoop{
+        fun polygon(vertices: Iterable<Vertex>) : Loop{
             val edges = arrayListOf<OrientedEdge>()
 
             for((lhs, rhs) in vertices.asIterable().rollover() ){
@@ -136,14 +175,14 @@ class EdgeLoop(var edge : OrientedEdge) : Iterable<EdgeLoop>{
     }
 }
 
-class EdgeLoopIterator(val init : EdgeLoop) : Iterator<EdgeLoop>{
+class EdgeLoopIterator(val init : Loop) : Iterator<Loop>{
     var first = true
     var current = init
     override fun hasNext(): Boolean {
         return first || init !== current
     }
 
-    override fun next(): EdgeLoop {
+    override fun next(): Loop {
         val result = current
         current = current.next
         first = false

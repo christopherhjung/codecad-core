@@ -1,10 +1,7 @@
 package com.codecad.core.part
 
-import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Quaternion
-import com.codecad.core.ast.vec.QuaternionExpr
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
@@ -21,7 +18,7 @@ class Revolver(){
 
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
-            val edgeLoop = faceBound.edgeLoop
+            val edgeLoop = faceBound.loop
             val circleCurve = edgeLoop.edge.edge.curve
 
             if(circleCurve is Circle && edgeLoop.isClosed()){
@@ -44,13 +41,13 @@ class Revolver(){
                     val rotatedCircle = Circle(rotatedWorkplane, circleCurve.radius)
                     val plane = PlaneSurface(rotatedWorkplane)
 
-                    val newFaceBound = FaceBound(EdgeLoop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
+                    val newFaceBound = FaceBound(Loop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
 
                     val test = face.surface as ElementarySurface
                     val invertedWorkplane = test.workplane.invert()
                     val firstPlane = PlaneSurface(invertedWorkplane)
                     val invertedFaceBound = FaceBound(
-                        EdgeLoop.of(Edge(Circle(invertedWorkplane, circleCurve.radius))),
+                        Loop.of(Edge(Circle(invertedWorkplane, circleCurve.radius))),
                         FaceBoundKind.OuterBound
                     )
                     val rotated = Face(firstPlane, listOf(invertedFaceBound))
@@ -106,7 +103,7 @@ class Revolver(){
 
                     val revolveCurve = Circle(workplane, radius)
                     val revolveEdge = OrientedEdge(Edge(revolveCurve), EdgeOrientation.Forward)
-                    faceBounds.add(FaceBound(EdgeLoop.of(revolveEdge), FaceBoundKind.OuterBound))
+                    faceBounds.add(FaceBound(Loop.of(revolveEdge), FaceBoundKind.OuterBound))
                     surfaces.add(revolveSurface)
                 }
 

@@ -7,6 +7,7 @@ import com.codecad.core.brep.surface.*
 import com.codecad.core.part.Context
 import com.codecad.core.volume.Volume
 import java.nio.charset.StandardCharsets
+import kotlin.math.abs
 
 class StepExport : ModelExport{
     private val ISO = "ISO-10303-21"
@@ -129,6 +130,7 @@ class StepExport : ModelExport{
     }
 
     private fun createDirection(point : Vec3) : Id{
+        assert(abs(point.length() - 1.0) < 1e-5)
         return addNamedObject("DIRECTION", serialize(point))
     }
 
@@ -427,7 +429,7 @@ class StepExport : ModelExport{
         val stepBounds = arrayListOf<Id>()
         for(faceBound in face.bounds){
             val stepOrientedEdges = arrayListOf<Id>()
-            for(edgeLoop in faceBound.edgeLoop){
+            for(edgeLoop in faceBound.loop){
                 val orientedEdge = edgeLoop.edge
                 val edge = orientedEdge.edge
 

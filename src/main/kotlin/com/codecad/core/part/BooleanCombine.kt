@@ -1,7 +1,6 @@
 package com.codecad.core.part
 
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
@@ -44,7 +43,7 @@ object BooleanCombine{
         val plane = planeSurface.workplane.toPlane()
 
         for( lhsBound in lhsFace.bounds ) {
-            for (lhsEdgeLoop in lhsBound.edgeLoop) {
+            for (lhsEdgeLoop in lhsBound.loop) {
                 val lhsOrientedEdge = lhsEdgeLoop.edge
                 val lhsEdge = lhsOrientedEdge.edge
 
@@ -80,7 +79,7 @@ object BooleanCombine{
 
     fun isInside(point: Vec3, bound: FaceBound, workplane : Workplane) : Boolean{
         val projPoint = workplane.project2d(point)
-        val points = bound.edgeLoop.map { workplane.project2d(it.edge.start!!.point) }
+        val points = bound.loop.map { workplane.project2d(it.edge.start!!.point) }
         return isPointInPolygon(projPoint, points)
     }
 

@@ -1,7 +1,6 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.LineSegment
-import com.codecad.core.LineSegmentExpr
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
@@ -172,12 +171,12 @@ fun SketchEdgeLoop.toFace(workplane: Workplane) : Face{
     val result = Face(surface, faceBounds)
 
     val projPoints = points.map { workplane.unproject(it) }.toList().toTypedArray()
-    val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.OuterBound)
+    val bound = FaceBound(Loop.polygon(*projPoints), FaceBoundKind.OuterBound)
     faceBounds.add(bound)
 
     for( hole in children ){
         val projPoints = hole.points.map { workplane.unproject(it) }.toList().toTypedArray()
-        val bound = FaceBound(EdgeLoop.polygon(*projPoints), FaceBoundKind.InnerBound)
+        val bound = FaceBound(Loop.polygon(*projPoints), FaceBoundKind.InnerBound)
         faceBounds.add(bound)
     }
     return result

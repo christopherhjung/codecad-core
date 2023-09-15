@@ -7,6 +7,7 @@ import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.scope.Scope
+import kotlin.math.abs
 import kotlin.math.pow
 
 class Plane(val normal: Vec3, val distance: Double){
@@ -98,6 +99,12 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
 
 class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
     val y get() = normal.cross(x)
+
+
+    init {
+        assert(abs(normal.length() - 1.0) < 1e-5)
+        assert(abs(x.length() - 1.0) < 1e-5)
+    }
 
     fun withOrigin(origin: Vec3) : Workplane {
         return Workplane(origin, normal, x)

@@ -73,6 +73,10 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
         return this / length()
     }
 
+    override fun toString(): String {
+        return "Vec3($x, $y, $z)"
+    }
+
     companion object{
         val ZERO = Vec3(0.0,0.0,0.0)
         val DirectionX = Vec3(1.0, 0.0, 0.0)
