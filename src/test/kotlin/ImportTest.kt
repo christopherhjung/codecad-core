@@ -9,12 +9,15 @@ class ImportTest {
     @Test
     fun importTest(){
         val stlImporter = StlImporter()
-        val bytes = File("cyl.stl").readBytes()
+        val bytes = File("testStl.stl").readBytes()
         val buffer = ByteBuffer.wrap(bytes)
         val context = stlImporter.import(buffer)
 
-        val solid = Solidify.mergePlaneFaces(context.volumes.first())
+        var obj = context.volumes.first()
+        obj = Solidify.mergePlaneFaces(obj)
 
-        ExportHelper.saveStep(solid, "stl")
+        println(obj.toString())
+        //ExportHelper.saveStep(obj.shells.first().faces[4], "stl")
+        ExportHelper.saveStep(obj, "stl")
     }
 }

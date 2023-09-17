@@ -9,7 +9,7 @@ import com.codecad.core.brep.WorkplaneExpr
 class Line(var origin : Vec3, var direction : Vec3) : Curve(){
     companion object{
         fun fromTo(start : Vec3, end : Vec3) : Line {
-            return Line(start, (end - start).normalized())
+            return Line((start + end) / 2.0, (end - start).normalized())
         }
     }
 

@@ -1,23 +1,21 @@
 package com.codecad.core.brep
 
-import com.codecad.core.brep.curve.BSpline
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
 
 enum class Sense{
-    None, CW, CCW;
+    Same/*CW*/, Opposite;/*CCW*/
 
     fun invert() : Sense{
         return when(this){
-            None -> None
-            CW -> CCW
-            CCW -> CW
+            Same -> Opposite
+            Opposite -> Same
         }
     }
 }
 
-class EdgeBound(val start: Vertex, val end : Vertex, val sense: Sense = Sense.None)
+class EdgeBound(val start: Vertex, val end : Vertex, val sense: Sense = Sense.Same)
 
 class Edge(var curve: Curve, val bound : EdgeBound? = null){
     companion object{

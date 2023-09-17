@@ -3,6 +3,7 @@ package com.codecad.core.ast.vec
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
+import java.util.*
 import kotlin.math.acos
 import kotlin.math.asin
 import kotlin.math.pow
@@ -74,7 +75,7 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
     }
 
     override fun toString(): String {
-        return "Vec3($x, $y, $z)"
+        return "Vec3(${"%.2f".format(Locale.US, x)}, ${"%.2f".format(Locale.US, y)}, ${"%.2f".format(Locale.US, z)})"
     }
 
     companion object{

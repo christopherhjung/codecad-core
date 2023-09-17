@@ -76,11 +76,12 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
                 sb.append(sep)
                     .append(bound.start)
 
+                /*
                 if(bound.sense != Sense.None){
                     sb.append("(")
                         .append(bound.sense)
                         .append(")")
-                }
+                }*/
 
                 sep = "\n"
             }

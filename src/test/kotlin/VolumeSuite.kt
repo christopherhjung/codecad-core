@@ -167,10 +167,10 @@ object VolumeSuite {
         val cEdge = Edge.line(c1, c2)
         val dEdge = Edge.line(d1, d2)
 
-        val abArc = Edge.arc(workplane.withOrigin(lrCircle), a2, b1, Sense.CW)
-        val bcArc = Edge.arc(workplane.withOrigin(urCircle), b2, c1, Sense.CW)
-        val cdArc = Edge.arc(workplane.withOrigin(ulCircle), c2, d1, Sense.CW)
-        val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.CW)
+        val abArc = Edge.arc(workplane.withOrigin(lrCircle), a2, b1, Sense.Same)
+        val bcArc = Edge.arc(workplane.withOrigin(urCircle), b2, c1, Sense.Same)
+        val cdArc = Edge.arc(workplane.withOrigin(ulCircle), c2, d1, Sense.Same)
+        val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.Same)
 
         val surface = PlaneSurface(workplane)
         val loop = Loop.forward(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
@@ -194,7 +194,7 @@ object VolumeSuite {
         //val cVertex = Vertex(cPoint.point)
         //val dVertex = Vertex(dPoint.point)
 
-        val aEdge = Edge(spline, EdgeBound(aVertex, aVertex, Sense.None))
+        val aEdge = Edge(spline, EdgeBound(aVertex, aVertex, Sense.Same))
         val surface = PlaneSurface(workplane)
         val loop = Loop.of(aEdge)
         val face = Face(surface, listOf(FaceBound(loop, FaceBoundKind.OuterBound)))

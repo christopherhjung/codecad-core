@@ -167,8 +167,8 @@ class StepExport : ModelExport{
             if(bound != null){
                 val start = createVertexPoint(bound.start)
                 val end = createVertexPoint(bound.end)
-                val sense = bound.sense != Sense.CCW
-                createEdgeCurve(start, end, curve, sense)
+                val sameSense = bound.sense == Sense.Same
+                createEdgeCurve(start, end, curve, sameSense)
             }else if(edgeCurve is Circle){
                 val vertex = circleSeam.computeIfAbsent(edge){
                     Vertex(edgeCurve.rightmostPoint())
@@ -444,9 +444,9 @@ class StepExport : ModelExport{
                 stepOrientedEdges.add(stepOrientedEdge)
             }
 
-            val stepSense = faceBound.sense == FaceBoundKind.OuterBound
+            val orientation = true
             val stepEdgeLoop = createEdgeLoop(stepOrientedEdges)
-            val stepFaceBound = createFaceBound(stepEdgeLoop, stepSense)
+            val stepFaceBound = createFaceBound(stepEdgeLoop, orientation)
             stepBounds.add(stepFaceBound)
         }
 

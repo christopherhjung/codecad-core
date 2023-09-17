@@ -6,8 +6,6 @@ import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
 
 object Solidify {
-
-
     fun solidify(volume: Volume) : Volume{
         val volume = mergePlaneFaces(volume)
 
@@ -101,13 +99,17 @@ object Solidify {
             loops.removeAll(loop)
         }
 
-        faceBoundLoops.sortByDescending { it.computeArea() }
-
-        var faceKind = FaceBoundKind.OuterBound
+        val max = faceBoundLoops.maxBy { it.computeArea() }
         for( faceBoundLoop in faceBoundLoops ){
-            val faceBound = FaceBound(faceBoundLoop, faceKind)
+            val faceBoundKind = if(faceBoundLoop === max){
+                FaceBoundKind.OuterBound
+            }
+            else
+            {
+                FaceBoundKind.InnerBound
+            }
+            val faceBound = FaceBound(faceBoundLoop, faceBoundKind)
             bounds.add(faceBound)
-            faceKind = FaceBoundKind.InnerBound
         }
 
         return mergeFace

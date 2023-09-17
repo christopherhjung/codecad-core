@@ -8,6 +8,7 @@ import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.abs
 
 
 private class StlVertex(val vertex: Vertex, val idx: Int){
@@ -93,10 +94,17 @@ class StlImporter : Importer {
 
             val loop = Loop.combine(abEdge, bcEdge, caEdge)
             val center = (a.point + b.point + c.point) / 3.0
-            val direction = (a.point - center).normalized()
+            val direction = if(abs(normal.x) < 1e-5){
+                Vec3.DirectionX
+            }else if(abs(normal.y) < 1e-5){
+                Vec3.DirectionY
+            }else if(abs(normal.z) < 1e-5){
+                Vec3.DirectionZ
+            }else{
+                (a.point - center).normalized()
+            }
 
             val workplane = Workplane(center, normal, direction)
-
             val face = Face(PlaneSurface(workplane), listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
             faces.add(face)

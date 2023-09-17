@@ -235,8 +235,8 @@ class MeshGenerator {
                         val offsetPoint = projEndPoint.rotate(-startTheta)
                         val offsetTheta = offsetPoint.absoluteAngle()
                         val theta = startTheta + theta * when(bound.sense){
-                            Sense.CCW -> offsetTheta
-                            Sense.CW  -> (offsetTheta - 2.0 * Math.PI)
+                            Sense.Opposite -> offsetTheta
+                            Sense.Same  -> (offsetTheta - 2.0 * Math.PI)
                             else -> throw RuntimeException("Missing Sense")
                         }
 
