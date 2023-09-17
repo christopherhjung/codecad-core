@@ -1,5 +1,6 @@
 import com.codecad.core.World
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.mesh.Matrix
 import org.junit.jupiter.api.Test
 import kotlin.math.sqrt
@@ -34,6 +35,8 @@ class CircleTest {
         val v1 = Vec2(1.0, 1.0) + offset
         val v2 = Vec2(2.0, 4.0) + offset
         val v3 = Vec2(5.0, 3.0) + offset
+        val points = listOf(v1, v2, v3)
+
         val A = Matrix(3, 3, doubleArrayOf(
             v1.x, v1.y, 1.0,
             v2.x, v2.y, 1.0,
@@ -55,6 +58,42 @@ class CircleTest {
         val center = Vec2(a, b) / 2.0
         val r = sqrt(4.0 * c + a * a + b * b) / 2.0
 
+
+        println("x0: ${center.x}, y0: ${center.y}, r: $r")
+    }
+
+    @Test
+    fun sphereTest(){
+        val offset = Vec2(0.0, 0.0)
+        val v1 = Vec3(1.0, 1.0)
+        val v2 = Vec3(2.0, 4.0)
+        val v3 = Vec3(5.0, 3.0)
+        val v4 = Vec3(5.0, 3.0)
+        val points = listOf(v1, v2, v3)
+
+        val A = Matrix(3, 4, doubleArrayOf(
+            v1.x, v1.y, v1.z, 1.0,
+            v2.x, v2.y, v2.z, 1.0,
+            v3.x, v3.y, v3.z, 1.0,
+            v4.x, v4.y, v4.z, 1.0
+        ))
+
+        val B = Matrix(3, 1, doubleArrayOf(
+            v1.squaredLength(),
+            v2.squaredLength(),
+            v3.squaredLength(),
+            v4.squaredLength()
+        ))
+
+        val AT = A.transpose()
+        val AP = AT * (A*AT).inverse()
+        val xHat = AP * B
+        val a = xHat[0, 0]
+        val b = xHat[0, 1]
+        val c = xHat[0, 2]
+        val d = xHat[0, 3]
+        val center = Vec3(a, b, c) / 2.0
+        val r = sqrt(4.0 * d + a * a + b * b + c * c) / 2.0
 
         println("x0: ${center.x}, y0: ${center.y}, r: $r")
     }
