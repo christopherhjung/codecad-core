@@ -14,7 +14,7 @@ class ImportTest {
         val context = stlImporter.import(buffer)
 
         var obj = context.volumes.first()
-        obj = Solidify.mergePlaneFaces(obj)
+        obj = Solidify.solidify(obj)
 
         println(obj.toString())
         //ExportHelper.saveStep(obj.shells.first().faces[4], "stl")
