@@ -157,7 +157,7 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
     companion object{
         val XY = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
         val YZ = Workplane(Vec3.ZERO, Vec3.DirectionX, Vec3.DirectionY)
-        val ZX = Workplane(Vec3.ZERO, Vec3.DirectionY, Vec3.DirectionX)
+        val ZX = Workplane(Vec3.ZERO, Vec3.DirectionY, Vec3.DirectionZ)
 
         fun intersect(lhs : Workplane, rhs : Workplane) : Line {
             return Plane.intersect(lhs.toPlane(), rhs.toPlane())
