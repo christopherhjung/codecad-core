@@ -2,6 +2,7 @@ package com.codecad.core.ast.vec
 
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.rollover
 import com.codecad.core.scope.Scope
 import java.util.*
 import kotlin.math.acos

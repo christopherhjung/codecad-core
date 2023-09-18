@@ -94,7 +94,7 @@ class StlImporter : Importer {
             val caEdge = createEdge(c, a)
 
             if(abs(normal.length() - 1.0) > 1e-5){
-                normal = (b.point - a.point).cross(c.point - a.point).normalized()
+                normal = Workplane.normal(a.point, b.point, c.point)
             }
 
             val loop = Loop.combine(abEdge, bcEdge, caEdge)

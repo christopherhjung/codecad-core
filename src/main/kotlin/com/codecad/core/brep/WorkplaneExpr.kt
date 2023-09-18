@@ -6,6 +6,7 @@ import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.curve.Line
+import com.codecad.core.rollover
 import com.codecad.core.scope.Scope
 import kotlin.math.abs
 import kotlin.math.pow
@@ -160,6 +161,19 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
 
         fun intersect(lhs : Workplane, rhs : Workplane) : Line {
             return Plane.intersect(lhs.toPlane(), rhs.toPlane())
+        }
+
+        fun normal(vararg points : Vec3) : Vec3{
+            return normal(points.toList())
+        }
+
+        fun normal(points : Iterable<Vec3>) : Vec3{
+            return points.rollover()
+                .map { it.second - it.first }
+                .rollover()
+                .map { it.first.cross(it.second) }
+                .maxBy { it.length() }
+                .normalized()
         }
     }
 }
