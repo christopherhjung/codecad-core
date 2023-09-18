@@ -4,12 +4,11 @@ import com.codecad.core.ast.vec.Matrix
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.Workplane
-import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.SphericalSurface
 import kotlin.math.sqrt
 
 object Regression {
-    fun of(A : Matrix, B: Matrix) : Matrix{
+    fun solve(A : Matrix, B: Matrix) : Matrix{
         /*val AT = A.transpose()
         val AP = AT.matMul(A*AT).inverse()
         return AP.matMul(B)*/
@@ -20,7 +19,7 @@ object Regression {
     }
 
     fun fitCircle(points: List<Vec2>) : Pair<Vec2, Double>{
-        val aArr = DoubleArray(4 * points.size)
+        val aArr = DoubleArray(3 * points.size)
         val bArr = DoubleArray(points.size)
 
         for( (idx, point) in points.withIndex() ){
@@ -33,7 +32,7 @@ object Regression {
         val A = Matrix(points.size, 3, aArr)
         val B = Matrix(points.size, 1, bArr)
 
-        val xHat = of(A, B)
+        val xHat = solve(A, B)
         val a = xHat[0, 0]
         val b = xHat[0, 1]
         val c = xHat[0, 2]
@@ -58,7 +57,7 @@ object Regression {
         val A = Matrix(points.size, 4, aArr)
         val B = Matrix(points.size, 1, bArr)
 
-        val xHat = of(A, B)
+        val xHat = solve(A, B)
         val a = xHat[0, 0]
         val b = xHat[0, 1]
         val c = xHat[0, 2]
