@@ -4,6 +4,7 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.regression.Regression
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 import kotlin.test.assertEquals
 
 class CircleTest {
@@ -33,14 +34,13 @@ class CircleTest {
         val v5 = Vec2(5.0, 15.0)
         val points = listOf(v1, v2, v3, v4, v5)
 
-        val (center, radius) = Regression.fitEllipsis(points)
-        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
+        val (center, direction, a, b) = Regression.fitEllipsis(points)
+        println("x0: ${center.x}, y0: ${center.y}, r: $direction")
 
-        //Vec2(x=8.750000000000004, y=5.000000000000001)
-        //8.750000000000005
-
-        assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
-        assertEquals(radius, 2.2360679774997885, 1e-5)
+        assertEquals((center - Vec2(4.999999999999996, 4.999999999999994)).length(), 0.0, 1e-5)
+        assertEquals((direction - Vec2(x=0.0, y=1.0)).length(), 0.0, 1e-5)
+        assertEquals(abs(a - 9.999999999999988), 0.0, 1e-5)
+        assertEquals(abs(b - 5.7735026918962555), 0.0, 1e-5)
     }
 
     @Test

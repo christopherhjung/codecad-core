@@ -39,7 +39,9 @@ object Regression {
         return Pair(center, r)
     }
 
-    fun fitEllipsis(points: List<Vec2>) : Pair<Vec2, Double>{
+    data class Ellipsis2D(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
+
+    fun fitEllipsis(points: List<Vec2>) : Ellipsis2D{
         val aArr = DoubleArray(5 * points.size)
         val bArr = DoubleArray(points.size)
 
@@ -63,7 +65,6 @@ object Regression {
         val E = xHat[0, 3]
         val F = xHat[0, 4]
 
-
         val B24AC = B*B-4*A*C
         val inv = 1/B24AC
         val factor = 2*(A*E*E + C*D*D - B*D*E + B24AC*F)
@@ -73,6 +74,7 @@ object Regression {
         val b = -sqrt(factor * (A+C - sqrtAC2B2)) * inv
         val x0 = (2*C*D-B*E) * inv
         val y0 = (2*A*E-B*D) * inv
+        val center = Vec2(x0, y0)
         val direction = if(abs(B) < 1e-8){
             if(A < C){
                 Vec2(1.0, 0.0)
@@ -80,12 +82,10 @@ object Regression {
                 Vec2(0.0, 1.0)
             }
         }else{
-            //atan((C-A- sqrtAC2B2) / B)
-
             Vec2(1.0, (C-A- sqrtAC2B2) / B).normalized()
         }
 
-        return Pair(Vec2(x0, y0), 0.0)
+        return Ellipsis2D(center, direction, a, b)
     }
 
     fun acot(x : Double) : Double{
