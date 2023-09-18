@@ -107,14 +107,6 @@ object Solidify {
 
         val bounds = arrayListOf<FaceBound>()
         val mergeFace = Face(parentFace.surface, bounds)
-/*
-        if(faces.size == 16){
-            val byteArray = StlExport().export(Context.of(Volume(listOf(Shell(faces.toList())))))
-            val outStream = FileOutputStream("debug.stl")
-            outStream.write(byteArray)
-            outStream.close()
-            println("ready")
-        }*/
 
         val max = faceBoundLoops.maxBy { it.computeArea() }
         for( faceBoundLoop in faceBoundLoops ){

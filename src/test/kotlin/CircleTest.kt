@@ -4,36 +4,13 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.regression.Regression
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
-import kotlin.math.sqrt
 import kotlin.test.assertEquals
 
 class CircleTest {
     private val world = World()
 
-
     @Test
-    fun cylinderTest(){
-        val offset = Vec2(0.0, 0.0)
-        val v1 = Vec2(1.0, 1.0) + offset
-        val v2 = Vec2(2.0, 4.0) + offset
-        val v3 = Vec2(5.0, 3.0) + offset
-        val mat = Matrix(3, 4, doubleArrayOf(
-            v1.squaredLength(), v1.x, v1.y, 1.0,
-            v2.squaredLength(), v2.x, v2.y, 1.0,
-            v3.squaredLength(), v3.x, v3.y, 1.0
-        ))
-
-        val fac = 1.0 / mat.withoutColumn(0).det()
-        val x0 = 0.5 * mat.withoutColumn(1).det() * fac
-        val y0 = -0.5 * mat.withoutColumn(2).det() * fac
-        val r = sqrt(x0 * x0 + y0 * y0 + mat.withoutColumn(3).det() * fac)
-
-        println("x0: $x0, y0: $y0, r: $r")
-    }
-
-    @Test
-    fun cylinderTest2(){
+    fun circleRegressionFit(){
         val offset = Vec2(0.0, 0.0)
         val v1 = Vec2(1.0, 1.0) + offset
         val v2 = Vec2(2.0, 4.0) + offset
@@ -42,6 +19,25 @@ class CircleTest {
 
         val (center, radius) = Regression.fitCircle(points)
         println("x0: ${center.x}, y0: ${center.y}, r: $radius")
+
+        assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
+        assertEquals(radius, 2.2360679774997885, 1e-5)
+    }
+
+    @Test
+    fun ellipsisRegressionFit(){
+        val v1 = Vec2(0.0, 0.0)
+        val v2 = Vec2(10.0, 0.0)
+        val v3 = Vec2(10.0, 10.0)
+        val v4 = Vec2(0.0, 10.0)
+        val v5 = Vec2(5.0, 15.0)
+        val points = listOf(v1, v2, v3, v4, v5)
+
+        val (center, radius) = Regression.fitEllipsis(points)
+        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
+
+        //Vec2(x=8.750000000000004, y=5.000000000000001)
+        //8.750000000000005
 
         assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
         assertEquals(radius, 2.2360679774997885, 1e-5)
