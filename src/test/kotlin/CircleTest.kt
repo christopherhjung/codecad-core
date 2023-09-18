@@ -19,7 +19,6 @@ class CircleTest {
         val points = listOf(v1, v2, v3)
 
         val (center, radius) = Regression.fitCircle(points)
-        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
 
         assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
         assertEquals(radius, 2.2360679774997885, 1e-5)
@@ -35,12 +34,11 @@ class CircleTest {
         val points = listOf(v1, v2, v3, v4, v5)
 
         val (center, direction, a, b) = Regression.fitEllipsis(points)
-        println("x0: ${center.x}, y0: ${center.y}, r: $direction")
 
         assertEquals((center - Vec2(4.999999999999996, 4.999999999999994)).length(), 0.0, 1e-5)
         assertEquals((direction - Vec2(x=0.0, y=1.0)).length(), 0.0, 1e-5)
-        assertEquals(abs(a - 9.999999999999988), 0.0, 1e-5)
-        assertEquals(abs(b - 5.7735026918962555), 0.0, 1e-5)
+        assertEquals(a, 9.999999999999988, 1e-5)
+        assertEquals(b , 5.7735026918962555, 1e-5)
     }
 
     @Test
@@ -53,7 +51,6 @@ class CircleTest {
 
         val (center, radius) = Regression.fitSphere(points)
 
-        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
         assertEquals((center - Vec3(5.00, 0.9166666666666617, 0.35)).length(), 0.0, 1e-5)
         assertEquals(radius, 5.0953682671400475, 1e-5)
     }
