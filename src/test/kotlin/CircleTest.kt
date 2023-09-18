@@ -4,7 +4,9 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.regression.Regression
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 import kotlin.math.sqrt
+import kotlin.test.assertEquals
 
 class CircleTest {
     private val world = World()
@@ -30,6 +32,35 @@ class CircleTest {
         println("x0: $x0, y0: $y0, r: $r")
     }
 
+    @Test
+    fun cylinderTest2(){
+        val offset = Vec2(0.0, 0.0)
+        val v1 = Vec2(1.0, 1.0) + offset
+        val v2 = Vec2(2.0, 4.0) + offset
+        val v3 = Vec2(5.0, 3.0) + offset
+        val points = listOf(v1, v2, v3)
+
+        val (center, radius) = Regression.fitCircle(points)
+        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
+
+        assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
+        assertEquals(radius, 2.2360679774997885, 1e-5)
+    }
+
+    @Test
+    fun sphereTest(){
+        val v1 = Vec3(0.0, 0.0, 0.0)
+        val v2 = Vec3(10.0, 0.0, 0.0)
+        val v3 = Vec3(5.0, 6.0, 0.0)
+        val v4 = Vec3(5.0, 3.0, 5.0)
+        val points = listOf(v1, v2, v3, v4)
+
+        val (center, radius) = Regression.fitSphere(points)
+
+        println("x0: ${center.x}, y0: ${center.y}, r: $radius")
+        assertEquals((center - Vec3(5.00, 0.9166666666666617, 0.35)).length(), 0.0, 1e-5)
+        assertEquals(radius, 5.0953682671400475, 1e-5)
+    }
 
     @Test
     fun lineFitting(){
