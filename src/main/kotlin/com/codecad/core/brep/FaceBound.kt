@@ -67,14 +67,28 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
         return area.length() / 2
     }
 
+    fun validate() : Boolean{
+        val visited = hashSetOf<Vertex>()
+        for( loop in this ){
+            if(!visited.add(loop.edge.start!!)){
+                return false
+            }
+        }
+
+        return true
+    }
+
     fun toString(sb: StringBuilder){
         var sep = ""
+        var visited = hashSetOf<Vertex>()
         for(edgeLoop in this){
             val orientedEdge = edgeLoop.edge
             val bound = orientedEdge.bound
             if(bound != null){
                 sb.append(sep)
                     .append(bound.start)
+                    .append("->")
+                    .append(bound.end)
 
                 /*
                 if(bound.sense != Sense.None){
@@ -84,6 +98,11 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
                 }*/
 
                 sep = "\n"
+            }
+
+            if(!visited.add(orientedEdge.start!!)){
+                sb.append("Error!!!")
+                break
             }
         }
     }
@@ -179,6 +198,7 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
 class EdgeLoopIterator(val init : Loop) : Iterator<Loop>{
     var first = true
     var current = init
+    var watchdog = 0
     override fun hasNext(): Boolean {
         return first || init !== current
     }
@@ -187,6 +207,11 @@ class EdgeLoopIterator(val init : Loop) : Iterator<Loop>{
         val result = current
         current = current.next
         first = false
+        if(watchdog > 10000){
+            println("watchdog")
+            throw RuntimeException("sss")
+        }
+        watchdog++
         return result
     }
 

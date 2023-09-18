@@ -7,4 +7,12 @@ data class Vertex(val point: Vec3){
     override fun toString(): String {
         return point.toString()
     }
+
+    override fun hashCode(): Int {
+        return System.identityHashCode(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return this === other
+    }
 }

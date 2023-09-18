@@ -102,6 +102,9 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
 
 
     init {
+        if(abs(normal.length() - 1.0) >= 1e-5){
+            println("sss")
+        }
         assert(abs(normal.length() - 1.0) < 1e-5)
         assert(abs(x.length() - 1.0) < 1e-5)
     }

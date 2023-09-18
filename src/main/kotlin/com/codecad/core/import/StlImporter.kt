@@ -83,14 +83,19 @@ class StlImporter : Importer {
 
         val faces = arrayListOf<Face>()
         for (i in 0 until count) {
-            val normal = nextVec3()
+            var normal = nextVec3()
             val a = nextVertex()
             val b = nextVertex()
             val c = nextVertex()
 
+
             val abEdge = createEdge(a, b)
             val bcEdge = createEdge(b, c)
             val caEdge = createEdge(c, a)
+
+            if(abs(normal.length() - 1.0) > 1e-5){
+                normal = (b.point - a.point).cross(c.point - a.point).normalized()
+            }
 
             val loop = Loop.combine(abEdge, bcEdge, caEdge)
             val center = (a.point + b.point + c.point) / 3.0

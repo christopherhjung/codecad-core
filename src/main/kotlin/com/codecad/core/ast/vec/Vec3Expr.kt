@@ -26,6 +26,10 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
         return Vec3(x * value, y * value, z * value)
     }
 
+    operator fun div(value: Int) : Vec3 {
+        return div(value.toDouble())
+    }
+
     operator fun div(right: Double) : Vec3 {
         return Vec3(x / right, y / right, z / right)
     }
