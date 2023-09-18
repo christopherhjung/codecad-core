@@ -15,7 +15,11 @@ object Regression {
         return AP.matMul(B)
     }
 
-    fun fitCircle(points: List<Vec2>) : Pair<Vec2, Double>{
+    data class CircleFit(val center : Vec2, val radius: Double)
+    data class SphereFit(val center : Vec3, val radius: Double)
+    data class EllipsisFit(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
+
+    fun fitCircle(points: List<Vec2>) : CircleFit{
         val aArr = DoubleArray(3 * points.size)
         val bArr = DoubleArray(points.size)
 
@@ -36,12 +40,10 @@ object Regression {
         val center = Vec2(a, b) / 2.0
         val r = sqrt(4.0 * c + a * a + b * b) / 2.0
 
-        return Pair(center, r)
+        return CircleFit(center, r)
     }
 
-    data class Ellipsis2D(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
-
-    fun fitEllipsis(points: List<Vec2>) : Ellipsis2D{
+    fun fitEllipsis(points: List<Vec2>) : EllipsisFit{
         val aArr = DoubleArray(5 * points.size)
         val bArr = DoubleArray(points.size)
 
@@ -85,14 +87,14 @@ object Regression {
             Vec2(1.0, (C-A- sqrtAC2B2) / B).normalized()
         }
 
-        return Ellipsis2D(center, direction, a, b)
+        return EllipsisFit(center, direction, a, b)
     }
 
     fun acot(x : Double) : Double{
         return (Math.PI / 2.0) - atan(x)
     }
 
-    fun fitSphere(points : List<Vec3>) : Pair<Vec3, Double>{
+    fun fitSphere(points : List<Vec3>) : SphereFit{
         val aArr = DoubleArray(4 * points.size)
         val bArr = DoubleArray(points.size)
 
@@ -116,6 +118,6 @@ object Regression {
         val radius = sqrt(4.0 * d + a * a + b * b + c * c) / 2.0
 
         //return SphericalSurface(Workplane(center, Vec3.DirectionZ, Vec3.DirectionX), r)
-        return Pair(center, radius)
+        return SphereFit(center, radius)
     }
 }
