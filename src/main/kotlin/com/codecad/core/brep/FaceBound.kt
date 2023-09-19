@@ -1,6 +1,7 @@
 package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3
+import com.codecad.core.mesh.Solidify
 import com.codecad.core.rollover
 
 enum class FaceBoundKind{
@@ -53,7 +54,16 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
     }
 
     override fun iterator(): Iterator<Loop> {
-        return EdgeLoopIterator(this)
+        return LoopIterator(this)
+    }
+
+    fun star() : Iterable<Loop>{
+        val loop = this
+        return object : Iterable<Loop>{
+            override fun iterator(): Iterator<Loop> {
+                return StarLoopIterator(loop)
+            }
+        }
     }
 
     fun computeArea() : Double{
@@ -205,7 +215,22 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
     }
 }
 
-class EdgeLoopIterator(val init : Loop) : Iterator<Loop>{
+class StarLoopIterator(loop : Loop) : Iterator<Loop>{
+    var backLoop = loop.twin!!
+    var currentNext = loop.next
+
+    override fun hasNext(): Boolean {
+        return currentNext !== backLoop
+    }
+
+    override fun next(): Loop {
+        val result = currentNext
+        currentNext = currentNext.twin!!.next
+        return result
+    }
+}
+
+class LoopIterator(val init : Loop) : Iterator<Loop>{
     var first = true
     var current = init
     var watchdog = 0

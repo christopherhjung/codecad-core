@@ -8,6 +8,10 @@ import kotlin.math.atan
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+data class CircleFit(val center : Vec2, val radius: Double)
+data class SphereFit(val center : Vec3, val radius: Double)
+data class EllipseFit(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
+
 object Regression {
     fun solve(A : Matrix, B: Matrix) : Matrix?{
         val AT = A.transpose()
@@ -16,10 +20,6 @@ object Regression {
         val AP = ATA.inverse().matMul(AT)
         return AP.matMul(B)
     }
-
-    data class CircleFit(val center : Vec2, val radius: Double)
-    data class SphereFit(val center : Vec3, val radius: Double)
-    data class EllipsisFit(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
 
     fun fitCircle(points: List<Vec2>) : CircleFit?{
         val aArr = DoubleArray(3 * points.size)
@@ -45,7 +45,7 @@ object Regression {
         return CircleFit(center, r)
     }
 
-    fun fitEllipse(points: List<Vec2>) : EllipsisFit?{
+    fun fitEllipse(points: List<Vec2>) : EllipseFit?{
         val aArr = DoubleArray(5 * points.size)
         val bArr = DoubleArray(points.size)
 
@@ -90,7 +90,7 @@ object Regression {
             Vec2(1.0, (C-A- sqrtAC2B2) / B).normalized()
         }
 
-        return EllipsisFit(center, direction, a, b)
+        return EllipseFit(center, direction, a, b)
     }
 
     fun acot(x : Double) : Double{

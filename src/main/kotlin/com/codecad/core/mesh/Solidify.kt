@@ -2,11 +2,13 @@ package com.codecad.core.mesh
 
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
-import com.codecad.core.regression.Regression
 import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
-import kotlin.math.abs
+import java.lang.Integer.min
+import java.util.*
+import kotlin.collections.HashSet
 
 object Solidify {
     fun solidify(volume: Volume) : Volume{
@@ -133,39 +135,68 @@ object Solidify {
         return mergeFace
     }
 
+    fun edgeDirection(loop: Loop) : Vec3{
+        val orientedEdge = loop.edge
+        val edge = orientedEdge.edge
+        val curve = edge.curve
+
+        return if(curve is Line){
+            val dir = curve.direction
+
+            if(orientedEdge.orientation == EdgeOrientation.Forward){
+                dir
+            }else{
+                dir.negate()
+            }
+        }else{
+            (orientedEdge.end!!.point - orientedEdge.start!!.point).normalized()
+        }
+    }
+
+    class MergeNode(val size : Int, val start : Loop, val end : Loop, val normal: Vec3?)
     private fun mergeCircularFaces(shell : Shell) : Shell{
         for( face in shell.faces ){
             val surface = face.surface
             if(surface !is PlaneSurface) continue
 
             for( bound in face.bounds ){
-                for( loop in bound.loop ){
-                    val nearFace = loop.twin!!.face
-                    val edge = loop.edge
+                trace(bound.loop)
 
-                    val points = loop.nextPoints(5)
-                        .map { surface.workplane.project2d(it) }
-
-                    if(points.size == 5){
-                        println("ssss")
-
-                        val (center, direction, a, b) = Regression.fitEllipse(points)!!
-                        val (centerCircle, radius) = Regression.fitCircle(points)!!
-
-                        if(abs(a - b) < 1e-3){
-                            println("circle!")
-                        }
-
-                        var center3D = surface.workplane.unproject(center)
-                        var direction3d = surface.workplane.unprojectDir(direction)
-
-                        println("center: $center, direction: $direction, a: $a, b: $b")
-                        println("--")
-                    }
-                }
+                println("xx")
             }
         }
 
         return shell
+    }
+
+    private fun traceOld(loop: Loop){
+        val visited = hashSetOf<Loop>()
+        val worklist = LinkedList<MergeNode>()
+        worklist.add(MergeNode(1, loop, loop, null))
+
+        while(worklist.isNotEmpty()){
+            val node = worklist.removeFirst()
+
+            val prevSize = node.size
+            val nextStart = if(prevSize == 5){
+                node.start.next
+            }else{
+                node.start
+            }
+            val nextSize = min(prevSize + 1, 5)
+            val lastNormal = node.normal
+            val lastLoop = node.end
+
+            val lastDir = edgeDirection(lastLoop)
+            for(nextLoop in lastLoop.star()){
+                if(!visited.add(nextLoop)) continue
+
+                val nextDir = edgeDirection(nextLoop)
+                val loopNormal = lastDir.cross(nextDir).normalized()
+
+                val nextNormal = lastNormal ?: loopNormal
+                worklist.add(MergeNode(nextSize, nextStart, nextLoop, nextNormal))
+            }
+        }
     }
 }

@@ -42,7 +42,7 @@ class Plane(val normal: Vec3, val distance: Double){
         }
 
         fun intersect(lhs : Plane, rhs : Plane) : Line {
-            val direction = lhs.normal.cross(rhs.normal)
+            val direction = lhs.normal.cross(rhs.normal).normalized()
             val origin = projectPlane(lhs, rhs) + projectPlane(rhs, lhs)
             return Line(origin, direction)
         }
@@ -51,7 +51,7 @@ class Plane(val normal: Vec3, val distance: Double){
 
 
 class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr) : Expr(origin.world){
-    val y get() = normal.cross(x)
+    val y get() = normal.cross(x).normalized()
 
     init {
         if(kotlin.math.abs(normal.length().evalDouble() - 1.0) > 1e-5){
