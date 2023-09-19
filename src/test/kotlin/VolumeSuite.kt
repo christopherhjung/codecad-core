@@ -15,7 +15,7 @@ object VolumeSuite {
             bottomWorkplane.normal,
             bottomWorkplane.normal
         )
-        val zeroXYWorkplane = Workplane(Vec3.ZERO, bottomWorkplane.normal, bottomWorkplane.normal)
+        val zeroXYWorkplane = Workplane(Vec3.Zero, bottomWorkplane.normal, bottomWorkplane.normal)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
@@ -45,7 +45,7 @@ object VolumeSuite {
     fun createPipe(bottomWorkplane: Workplane, outerRadius: Double, innerRadius: Double, height: Double) : Volume {
 
         val topWorkplane = bottomWorkplane.move(bottomWorkplane.normal * height)
-        val zeroXYWorkplane = bottomWorkplane.withOrigin(Vec3.ZERO)
+        val zeroXYWorkplane = bottomWorkplane.withOrigin(Vec3.Zero)
 
         val topEdge = Edge(Circle(topWorkplane, outerRadius))
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))

@@ -2,7 +2,6 @@ package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.rollover
-import com.codecad.core.sketch.SketchEdge
 
 enum class FaceBoundKind{
     OuterBound, InnerBound
@@ -58,13 +57,24 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
     }
 
     fun computeArea() : Double{
-        var area = Vec3.ZERO
+        var area = Vec3.Zero
         for( loop in this ){
             val edge = loop.edge
             area += edge.start!!.point.cross(edge.end!!.point)
         }
 
         return area.length() / 2
+    }
+
+    fun nextPoints(num: Int) : List<Vec3>{
+        val result = arrayListOf<Vec3>()
+        for( (idx, loop) in this.withIndex() ){
+            if(idx == num){
+                break
+            }
+            result.add(loop.edge.start!!.point)
+        }
+        return result
     }
 
     fun validate() : Boolean{

@@ -323,7 +323,7 @@ class StepExport : ModelExport{
         val productDefinition = addNamedObject("PRODUCT_DEFINITION", "''", productDefFormWithSpecSource, productDefinitionContext)
         val productDefinitionShape = addNamedObject("PRODUCT_DEFINITION_SHAPE", "''", productDefinition)
 
-        val point = createCartesianPoint(Vec3.ZERO)
+        val point = createCartesianPoint(Vec3.Zero)
         val normal = createDirection(Vec3(0.0, 0.0, 1.0))
         val xAxis = createDirection(Vec3(1.0, 0.0, 0.0))
         val axisPlacement = createAxisPlacement(point, normal, xAxis)

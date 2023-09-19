@@ -20,7 +20,7 @@ object Extruder{
         val offset = normal * height
         val extrudeFaceNormal = offset.normalized()
 
-        val baseFace = offsetFace(face, Vec3.ZERO, extrudeFaceNormal.negate())
+        val baseFace = offsetFace(face, Vec3.Zero, extrudeFaceNormal.negate())
         val extrudeFace = offsetFace(face, offset, extrudeFaceNormal)
 
         val faces = arrayListOf<Face>()

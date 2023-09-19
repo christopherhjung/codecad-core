@@ -1,7 +1,6 @@
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.Workplane
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.part.BooleanCombine
@@ -20,14 +19,14 @@ class BrepTest {
 
     @Test
     fun cylinderTest(){
-        val bottomWorkplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val bottomWorkplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val volume = VolumeSuite.createCylinder(bottomWorkplane, 50.0, 200.0)
         ExportHelper.saveStep(volume)
     }
 
     @Test
     fun pipeTest(){
-        val bottomWorkplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val bottomWorkplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
         ExportHelper.saveStep(volume)
     }
@@ -35,14 +34,14 @@ class BrepTest {
     @Test
     fun pipeTiltTest(){
         val xzWorkplane = (Vec3.DirectionX + Vec3.DirectionY).normalized()
-        val bottomWorkplane = Workplane(Vec3.ZERO, xzWorkplane, Vec3.DirectionY)
+        val bottomWorkplane = Workplane(Vec3.Zero, xzWorkplane, Vec3.DirectionY)
         val volume = VolumeSuite.createPipe(bottomWorkplane, 50.0, 10.0, 200.0)
         ExportHelper.saveStep(volume)
     }
 
     @Test
     fun pipeTiltExtrudeTest(){
-        val bottomWorkplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val bottomWorkplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.createCircleWithHole(bottomWorkplane, 50.0, 10.0)
 
         val volume = Extruder.extrude(face, Vec3.DirectionZ, 10.0)
@@ -51,7 +50,7 @@ class BrepTest {
 
     @Test
     fun planetest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.createPlane(workplane, 50.0)
 
         val volume = Extruder
@@ -61,14 +60,14 @@ class BrepTest {
 
     @Test
     fun roundplanetest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         ExportHelper.saveStep(face)
     }
 
     @Test
     fun roundPlaneExtrudeTest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         val volume = Extruder
             .extrude(face, Vec3.DirectionZ, 10.0)
@@ -77,7 +76,7 @@ class BrepTest {
 
     @Test
     fun circleExtrudeTest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.createCircleWithHole(workplane, 50.0, 5.0)
         val volume = Extruder
             .extrude(face, Vec3.DirectionZ, 10.0)
@@ -86,14 +85,14 @@ class BrepTest {
 
     @Test
     fun splineFaceTest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.splineCircle(workplane, 50.0)
         ExportHelper.saveStep(face)
     }
 
     @Test
     fun splineVolumeTest(){
-        val workplane = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
+        val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
         val face = VolumeSuite.splineCircle(workplane, 50.0)
         val volume = Extruder
             .extrude(face, Vec3.DirectionZ, 10.0)
@@ -105,7 +104,7 @@ class BrepTest {
         val workplane = Workplane(Vec3(100.0, 0.0, 0.0), Vec3.DirectionY, Vec3.DirectionX)
         val face = VolumeSuite.createPlane(workplane, 10.0)
         val volume = Revolver()
-            .revolve(face, Line(Vec3.ZERO, Vec3.DirectionZ), 2.0)
+            .revolve(face, Line(Vec3.Zero, Vec3.DirectionZ), 2.0)
         ExportHelper.saveStep(volume, "revolve")
         ExportHelper.saveStep(face, "face")
     }
@@ -115,7 +114,7 @@ class BrepTest {
         val workplane = Workplane(Vec3(100.0, 0.0, 0.0), Vec3.DirectionY, Vec3.DirectionX)
         val face = VolumeSuite.createCircle(workplane, 10.0)
         val volume = Revolver()
-            .revolve(face, Line(Vec3.ZERO, Vec3.DirectionZ), 2.0)
+            .revolve(face, Line(Vec3.Zero, Vec3.DirectionZ), 2.0)
         ExportHelper.saveStep(volume, "revolve")
         ExportHelper.saveStep(face, "face")
     }
@@ -125,7 +124,7 @@ class BrepTest {
         val workplane = Workplane(Vec3(100.0, 0.0, 0.0), Vec3.DirectionY, Vec3.DirectionX)
         val face = VolumeSuite.roundedPlane(workplane, 10.0, 5.0)
         val volume = Revolver()
-            .revolve(face, Line(Vec3.ZERO, Vec3.DirectionZ), 1.0)
+            .revolve(face, Line(Vec3.Zero, Vec3.DirectionZ), 1.0)
         println(volume.toString())
         ExportHelper.saveStep(volume, "revolve")
         ExportHelper.saveStep(face, "face")
@@ -136,7 +135,7 @@ class BrepTest {
         val workplane = Workplane(Vec3(50.0,0.0,0.0), Vec3.DirectionY, Vec3.DirectionX)
         val face = VolumeSuite.createCircle(workplane, 10.0)
         val volume = Revolver()
-            .revolve(face, Line(Vec3.ZERO, Vec3.DirectionZ), 5.0)
+            .revolve(face, Line(Vec3.Zero, Vec3.DirectionZ), 5.0)
         println(volume.toString())
         ExportHelper.saveStep(volume, "revolve")
     }
@@ -146,7 +145,7 @@ class BrepTest {
         val workplane = Workplane(Vec3(50.0,0.0,0.0), Vec3.DirectionY, Vec3.DirectionX)
         val face = VolumeSuite.createTriangle(workplane, 10.0)
         val volume = Revolver()
-            .revolve(face, Line(Vec3.ZERO, Vec3.DirectionZ), 5.0)
+            .revolve(face, Line(Vec3.Zero, Vec3.DirectionZ), 5.0)
         println(volume.toString())
         //ExportHelper.saveStep(volume.shells.first().faces[2], "revolve")
         ExportHelper.saveStep(volume, "revolve")

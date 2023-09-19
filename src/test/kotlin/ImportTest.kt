@@ -9,7 +9,7 @@ class ImportTest {
     @Test
     fun importTest(){
         val stlImporter = StlImporter()
-        val bytes = File("mpcnc.stl").readBytes()
+        val bytes = File("skew.stl").readBytes()
         val buffer = ByteBuffer.wrap(bytes)
         val context = stlImporter.import(buffer)
 

@@ -4,10 +4,11 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.regression.Regression
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.test.assertEquals
 
-class CircleTest {
+class RegressionTest {
     private val world = World()
 
     @Test
@@ -18,7 +19,7 @@ class CircleTest {
         val v3 = Vec2(5.0, 3.0) + offset
         val points = listOf(v1, v2, v3)
 
-        val (center, radius) = Regression.fitCircle(points)
+        val (center, radius) = Regression.fitCircle(points)!!
 
         assertEquals((center - Vec2(3.0, 2.0)).length(), 0.0, 1e-5)
         assertEquals(radius, 2.2360679774997885, 1e-5)
@@ -33,13 +34,23 @@ class CircleTest {
         val v5 = Vec2(5.0, 15.0)
         val points = listOf(v1, v2, v3, v4, v5)
 
-        val (center, direction, a, b) = Regression.fitEllipsis(points)
+        val (center, direction, a, b) = Regression.fitEllipse(points)!!
 
         assertEquals((center - Vec2(4.999999999999996, 4.999999999999994)).length(), 0.0, 1e-5)
         assertEquals((direction - Vec2(x=0.0, y=1.0)).length(), 0.0, 1e-5)
         assertEquals(a, 9.999999999999988, 1e-5)
         assertEquals(b , 5.7735026918962555, 1e-5)
     }
+
+    @Test
+    fun ellipsisRegressionFit2(){
+        val points = (0 until 5).map{Vec2(cos(it / 5.0 * Math.PI * 2), sin(it / 5.0 * Math.PI * 2))}
+
+        val (center, direction, a, b) = Regression.fitEllipse(points)!!
+
+        println("s")
+    }
+
 
     @Test
     fun sphereTest(){
@@ -49,7 +60,7 @@ class CircleTest {
         val v4 = Vec3(5.0, 3.0, 5.0)
         val points = listOf(v1, v2, v3, v4)
 
-        val (center, radius) = Regression.fitSphere(points)
+        val (center, radius) = Regression.fitSphere(points)!!
 
         assertEquals((center - Vec3(5.00, 0.9166666666666617, 0.35)).length(), 0.0, 1e-5)
         assertEquals(radius, 5.0953682671400475, 1e-5)

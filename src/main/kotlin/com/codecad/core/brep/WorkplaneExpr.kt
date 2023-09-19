@@ -122,8 +122,16 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
         return unproject(point.x, point.y)
     }
 
+    fun unprojectDir(point: Vec2) : Vec3 {
+        return unprojectDir(point.x, point.y)
+    }
+
     fun unproject(x: Double, y: Double) : Vec3 {
-        return this.x * x + this.y * y + origin
+        return unprojectDir(x, y) + origin
+    }
+
+    fun unprojectDir(x: Double, y: Double) : Vec3 {
+        return this.x * x + this.y * y
     }
 
     fun project2d(point: Vec3) : Vec2 {
@@ -155,9 +163,9 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
     }
 
     companion object{
-        val XY = Workplane(Vec3.ZERO, Vec3.DirectionZ, Vec3.DirectionX)
-        val YZ = Workplane(Vec3.ZERO, Vec3.DirectionX, Vec3.DirectionY)
-        val ZX = Workplane(Vec3.ZERO, Vec3.DirectionY, Vec3.DirectionZ)
+        val XY = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
+        val YZ = Workplane(Vec3.Zero, Vec3.DirectionX, Vec3.DirectionY)
+        val ZX = Workplane(Vec3.Zero, Vec3.DirectionY, Vec3.DirectionZ)
 
         fun intersect(lhs : Workplane, rhs : Workplane) : Line {
             return Plane.intersect(lhs.toPlane(), rhs.toPlane())

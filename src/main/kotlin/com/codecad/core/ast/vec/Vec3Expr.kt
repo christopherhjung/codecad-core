@@ -2,7 +2,6 @@ package com.codecad.core.ast.vec
 
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.rollover
 import com.codecad.core.scope.Scope
 import java.util.*
 import kotlin.math.acos
@@ -84,7 +83,7 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
     }
 
     companion object{
-        val ZERO = Vec3(0.0,0.0,0.0)
+        val Zero = Vec3(0.0,0.0,0.0)
         val DirectionX = Vec3(1.0, 0.0, 0.0)
         val DirectionY = Vec3(0.0, 1.0, 0.0)
         val DirectionZ = Vec3(0.0, 0.0, 1.0)

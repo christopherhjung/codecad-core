@@ -1,13 +1,10 @@
 package com.codecad.core.face
 
-import com.codecad.common.PointD
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.times
-import kotlin.math.abs
-import kotlin.math.sign
 
 class RaycastResult(val hit: Vec3, val distance: Double, val valid: Boolean = true){
-    constructor(valid: Boolean) : this(Vec3.ZERO, 0.0, valid)
+    constructor(valid: Boolean) : this(Vec3.Zero, 0.0, valid)
 }
 
 class Ray(val origin : Vec3, val direction : Vec3){
