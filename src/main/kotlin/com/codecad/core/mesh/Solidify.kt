@@ -4,11 +4,13 @@ import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
+import com.codecad.core.regression.Regression
 import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
-import java.lang.Integer.min
 import java.util.*
 import kotlin.collections.HashSet
+import kotlin.math.asin
+import kotlin.math.sin
 
 object Solidify {
     fun solidify(volume: Volume) : Volume{
@@ -135,7 +137,7 @@ object Solidify {
         return mergeFace
     }
 
-    fun edgeDirection(loop: Loop) : Vec3{
+    fun direction(loop: Loop) : Vec3{
         val orientedEdge = loop.edge
         val edge = orientedEdge.edge
         val curve = edge.curve
@@ -153,7 +155,6 @@ object Solidify {
         }
     }
 
-    class MergeNode(val size : Int, val start : Loop, val end : Loop, val normal: Vec3?)
     private fun mergeCircularFaces(shell : Shell) : Shell{
         for( face in shell.faces ){
             val surface = face.surface
@@ -169,34 +170,76 @@ object Solidify {
         return shell
     }
 
-    private fun traceOld(loop: Loop){
-        val visited = hashSetOf<Loop>()
+    class MergeNode(val loops : List<Loop>, val end : Loop, val dir: Vec3, val normal: Vec3?){
+        val size get() = loops.size
+
+        fun evolve(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : MergeNode{
+            val loops = ArrayList<Loop>(loops.size + 1)
+            loops.addAll(this.loops)
+            loops.add(nextLoop)
+
+            return MergeNode(loops, nextLoop, nextDir, nextNormal)
+        }
+    }
+
+    val maxAngle = Math.PI / 3.0
+
+    private fun getVertices(loops: List<Loop>) : List<Vertex>{
+        return loops.map { it.edge.start!! } + listOf(loops.last().edge.end!!)
+    }
+
+    private fun trace(loop: Loop){
         val worklist = LinkedList<MergeNode>()
-        worklist.add(MergeNode(1, loop, loop, null))
+        worklist.add(MergeNode(listOf(loop), loop, direction(loop),null))
 
         while(worklist.isNotEmpty()){
             val node = worklist.removeFirst()
-
-            val prevSize = node.size
-            val nextStart = if(prevSize == 5){
-                node.start.next
-            }else{
-                node.start
-            }
-            val nextSize = min(prevSize + 1, 5)
             val lastNormal = node.normal
-            val lastLoop = node.end
+            val lastDir = node.dir
+            for(nextLoop in node.end.star()){
+                val nextDir = direction(nextLoop)
+                val turn = lastDir.cross(nextDir)
+                if(asin(turn.length()) > maxAngle) continue
 
-            val lastDir = edgeDirection(lastLoop)
-            for(nextLoop in lastLoop.star()){
-                if(!visited.add(nextLoop)) continue
-
-                val nextDir = edgeDirection(nextLoop)
-                val loopNormal = lastDir.cross(nextDir).normalized()
+                val loopNormal = turn.normalized()
+                if(lastNormal != null){
+                    val normalDiff = (loopNormal - lastNormal).length()
+                    if(normalDiff > 1e-3) continue
+                }
 
                 val nextNormal = lastNormal ?: loopNormal
-                worklist.add(MergeNode(nextSize, nextStart, nextLoop, nextNormal))
+                val nextNode = node.evolve(nextLoop, nextDir, nextNormal)
+
+                if(nextNode.size == 4){
+                    fit(nextNode)
+                }else{
+                    worklist.add(nextNode)
+                }
             }
         }
+    }
+
+    fun fit(node : MergeNode){
+        val vertices = getVertices(node.loops)
+        val points3d = vertices.map { it.point }
+
+        val origin = points3d.first()
+        val normal = node.normal!!
+        val x = direction(node.loops.first())
+        val workplane = Workplane(origin, normal, x)
+
+        val points = vertices.map { workplane.project2d(it.point) }
+        val elipse = Regression.fitEllipse(points)
+
+        println(elipse)
+        println(elipse)
+
+        val center = workplane.unproject(elipse!!.center)
+        val direction = workplane.unprojectDir(elipse.direction)
+        val a = elipse.a
+        val b = elipse.b
+
+        println("center: $center,dir: $direction,a: $a,b: $b")
+        print("")
     }
 }
