@@ -13,7 +13,7 @@ data class SketchEdge(val source: SketchVertex, val target : SketchVertex){
         }
 
         val ZERO = run{
-            val vertex = SketchVertex(Vec2.ZERO)
+            val vertex = SketchVertex(Vec2.Zero)
             val edge = SketchEdge(vertex, vertex)
             edge.next = edge
             edge

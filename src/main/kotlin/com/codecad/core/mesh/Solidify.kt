@@ -2,6 +2,9 @@ package com.codecad.core.mesh
 
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Curve
+import com.codecad.core.brep.curve.Ellipse
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.regression.Regression
@@ -9,7 +12,7 @@ import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
 import java.util.*
 import kotlin.collections.HashSet
-import kotlin.math.asin
+import kotlin.math.abs
 import kotlin.math.sin
 
 object Solidify {
@@ -161,10 +164,15 @@ object Solidify {
             if(surface !is PlaneSurface) continue
 
             for( bound in face.bounds ){
-                trace(bound.loop)
-
-                println("xx")
+                for( loop in bound.loop ){
+                    trace(loop)
+                }
             }
+        }
+
+        for( (loop, curve) in loop2Curve ){
+            val twinCurves = loop2Curve[loop.twin!!]
+            println("test")
         }
 
         return shell
@@ -173,19 +181,19 @@ object Solidify {
     class MergeNode(val loops : List<Loop>, val end : Loop, val dir: Vec3, val normal: Vec3?){
         val size get() = loops.size
 
-        fun evolve(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : MergeNode{
+        fun expand(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : MergeNode{
             val loops = ArrayList<Loop>(loops.size + 1)
             loops.addAll(this.loops)
             loops.add(nextLoop)
 
-            return MergeNode(loops, nextLoop, nextDir, nextNormal)
+            return MergeNode(loops, nextLoop, nextDir, normal ?: nextNormal)
         }
     }
 
-    val maxAngle = Math.PI / 3.0
+    val MaxTurn = sin(Math.PI / 6.0)
 
     private fun getVertices(loops: List<Loop>) : List<Vertex>{
-        return loops.map { it.edge.start!! } + listOf(loops.last().edge.end!!)
+        return loops.map { it.edge.start!! } + loops.last().edge.end!!
     }
 
     private fun trace(loop: Loop){
@@ -199,7 +207,7 @@ object Solidify {
             for(nextLoop in node.end.star()){
                 val nextDir = direction(nextLoop)
                 val turn = lastDir.cross(nextDir)
-                if(asin(turn.length()) > maxAngle) continue
+                if(turn.length() > MaxTurn) continue
 
                 val loopNormal = turn.normalized()
                 if(lastNormal != null){
@@ -207,10 +215,9 @@ object Solidify {
                     if(normalDiff > 1e-3) continue
                 }
 
-                val nextNormal = lastNormal ?: loopNormal
-                val nextNode = node.evolve(nextLoop, nextDir, nextNormal)
+                val nextNode = node.expand(nextLoop, nextDir, loopNormal)
 
-                if(nextNode.size == 4){
+                if(nextNode.size == 5){
                     fit(nextNode)
                 }else{
                     worklist.add(nextNode)
@@ -219,6 +226,7 @@ object Solidify {
         }
     }
 
+    val loop2Curve = hashMapOf<Loop, MutableList<Curve>>()
     fun fit(node : MergeNode){
         val vertices = getVertices(node.loops)
         val points3d = vertices.map { it.point }
@@ -229,17 +237,27 @@ object Solidify {
         val workplane = Workplane(origin, normal, x)
 
         val points = vertices.map { workplane.project2d(it.point) }
-        val elipse = Regression.fitEllipse(points)
+        val ellipse = Regression.matchEllipse(points, 1e-3) ?: return
 
-        println(elipse)
-        println(elipse)
+        val center = workplane.unproject(ellipse.center)
+        val dir3d = workplane.unprojectDir(ellipse.direction)
+        val major = ellipse.major
+        val minor = ellipse.minor
 
-        val center = workplane.unproject(elipse!!.center)
-        val direction = workplane.unprojectDir(elipse.direction)
-        val a = elipse.a
-        val b = elipse.b
+        val curveWorkplane = Workplane(center, normal, dir3d)
 
-        println("center: $center,dir: $direction,a: $a,b: $b")
-        print("")
+        val curve = if(abs(major-minor) < 1e-3){
+            Circle(curveWorkplane, (major+minor)/2)
+        }else{
+            Ellipse(curveWorkplane, major, minor)
+        }
+
+        println("center: $center,dir: $dir3d,major: $major,minor: $minor")
+
+        for( loop in node.loops ){
+            loop2Curve.computeIfAbsent(loop) {
+                arrayListOf()
+            }.add(curve)
+        }
     }
 }

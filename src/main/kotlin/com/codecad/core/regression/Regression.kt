@@ -10,7 +10,7 @@ import kotlin.math.sqrt
 
 data class CircleFit(val center : Vec2, val radius: Double)
 data class SphereFit(val center : Vec3, val radius: Double)
-data class EllipseFit(val center : Vec2, val direction : Vec2, val a: Double, val b: Double)
+data class EllipseFit(val center : Vec2, val direction : Vec2, val major: Double, val minor: Double)
 
 object Regression {
     fun solve(A : Matrix, B: Matrix) : Matrix?{
@@ -93,6 +93,24 @@ object Regression {
         return EllipseFit(center, direction, a, b)
     }
 
+    fun matchEllipse(points: List<Vec2>, error: Double) : EllipseFit?{
+        val ellipse = fitEllipse(points) ?: return null
+        val errorSq = error.pow(2)
+        points.forEach{
+            val offset = it - ellipse.center
+            val pointOnEllipse = offset.skew(ellipse.direction)
+
+            val r = (pointOnEllipse.x / ellipse.major).pow(2) +
+                    (pointOnEllipse.y / ellipse.minor).pow(2)
+
+            if(abs(r - 1.0) >= errorSq){
+                return null
+            }
+        }
+
+        return ellipse
+    }
+
     fun acot(x : Double) : Double{
         return (Math.PI / 2.0) - atan(x)
     }
@@ -119,8 +137,6 @@ object Regression {
         val d = xHat[0, 3]
         val center = Vec3(a, b, c) / 2.0
         val radius = sqrt(4.0 * d + a * a + b * b + c * c) / 2.0
-
-        //return SphericalSurface(Workplane(center, Vec3.DirectionZ, Vec3.DirectionX), r)
         return SphereFit(center, radius)
     }
 }

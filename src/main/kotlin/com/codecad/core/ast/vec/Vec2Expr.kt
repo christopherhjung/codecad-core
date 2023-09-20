@@ -7,11 +7,25 @@ import kotlin.math.*
 
 data class Vec2(val x: Double, val y: Double){
     companion object{
-        val ZERO = Vec2(0.0, 0.0)
+        val Zero = Vec2(0.0, 0.0)
+
+        fun project(lhs: Vec2, rhs: Vec2) : Vec2{
+            return rhs * ( lhs.dot(rhs) / rhs.squaredLength() )
+        }
+    }
+
+    fun skew(newDir : Vec2) : Vec2{
+        val x = dot(newDir)
+        val y = sqrt(squaredLength() - x.pow(2))
+        return Vec2(x, y)
     }
 
     fun absoluteAngle() : Double{
         return atan2(y, x)
+    }
+
+    fun negate() : Vec2{
+        return Vec2(-x, -y)
     }
 
     fun rotate(center: Vec2, angle: Double) : Vec2 {
@@ -97,8 +111,6 @@ data class Vec2(val x: Double, val y: Double){
         result = 31 * result + y.hashCode()
         return result
     }
-
-
 }
 
 class Vec2Expr(world : World, val x: Expr, val y: Expr) : Expr(world) {
