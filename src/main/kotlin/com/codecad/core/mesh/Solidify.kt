@@ -11,6 +11,7 @@ import com.codecad.core.regression.Regression
 import com.codecad.core.sketch.Unifier
 import com.codecad.core.volume.Volume
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.math.abs
 import kotlin.math.sin
@@ -45,7 +46,6 @@ object Solidify {
                     val twinFaceNormal = twinFaceSurface.workplane.normal
 
                     val normalDiff = (faceNormal - twinFaceNormal).length()
-
                     if(normalDiff < 1e-3){
                         val twinFaceNode = faceUnifier.get(twinFace)
                         faceUnifier.unify(faceNode, twinFaceNode)
@@ -74,8 +74,10 @@ object Solidify {
         return Shell(faces)
     }
 
+    val deletedFaces = hashSetOf<Face>()
     private fun mergeFace(parentFace : Face, faces: Set<Face>) : Face{
         val loops = hashSetOf<Loop>()
+        deletedFaces.addAll(faces)
 
         var mergedOrigin = Vec3.Zero
         for( face in faces ){
@@ -137,6 +139,7 @@ object Solidify {
             bounds.add(FaceBound(faceBoundLoop, faceBoundKind))
         }
 
+        mergeFace.finish()
         return mergeFace
     }
 
@@ -163,11 +166,14 @@ object Solidify {
             val surface = face.surface
             if(surface !is PlaneSurface) continue
 
+            traceFace(face)
+
+            /*
             for( bound in face.bounds ){
                 for( loop in bound.loop ){
-                    trace(loop)
+                    traceEdge(loop)
                 }
-            }
+            }*/
         }
 
         for( (loop, curve) in loop2Curve ){
@@ -178,27 +184,87 @@ object Solidify {
         return shell
     }
 
-    class MergeNode(val loops : List<Loop>, val end : Loop, val dir: Vec3, val normal: Vec3?){
-        val size get() = loops.size
+    class FaceFitNode(val face: Face, val faces : List<Face>, val normal: Vec3, val axis: Vec3 = Vec3.Zero){
+        val size get() = faces.size
 
-        fun expand(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : MergeNode{
-            val loops = ArrayList<Loop>(loops.size + 1)
-            loops.addAll(this.loops)
-            loops.add(nextLoop)
-
-            return MergeNode(loops, nextLoop, nextDir, normal ?: nextNormal)
+        fun expand(face : Face, nextNormal: Vec3, nextAxis : Vec3) : FaceFitNode{
+            val faces = ArrayList<Face>(faces.size + 1)
+            faces.addAll(this.faces)
+            faces.add(face)
+            return FaceFitNode(face, faces, nextNormal,  axis + nextAxis)
         }
     }
 
-    val MaxTurn = sin(Math.PI / 6.0)
+    private fun traceFace(face: Face){
+        val surface = face.surface as PlaneSurface
+        val worklist = LinkedList<FaceFitNode>()
+        worklist.add(FaceFitNode(face, arrayListOf(face), surface.workplane.normal))
 
+        while(worklist.isNotEmpty()){
+            val node = worklist.removeFirst()
+            val lastNormal = node.normal
+            val lastFace = node.face
+            val lastAxis = node.axis
+
+            for( bound in lastFace.bounds ){
+                if(!bound.loop.validate()){
+                    println("error")
+                }
+                for( loop in bound.loop ){
+                    val currentFace = loop.twin!!.face
+                    if(node.faces.contains(currentFace)) continue
+                    val currentSurface = currentFace.surface as PlaneSurface
+                    val currentNormal = currentSurface.workplane.normal
+
+                    val angle = Vec3.angle(lastNormal, currentNormal) / Math.PI * 180.0
+                    val axis = lastNormal.cross(currentNormal)
+                    if(axis.length() > MaxTurn || lastAxis.dot(axis) < 0.0 ){
+                        continue
+                    }
+
+                    if(lastAxis.length() > 1e-5 && axis.length() >= 1e-5){
+                        val axisDeviation = Vec3.angle(axis, lastAxis) / Math.PI * 180.0
+                        if(axisDeviation > 10.0) continue
+                    }
+
+
+                    val nextNode = node.expand(currentFace, currentNormal, axis)
+
+                    if(nextNode.size == 5){
+                        fitFace(nextNode)
+                    }else{
+                        worklist.add(nextNode)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun fitFace(node: FaceFitNode){
+        println(node.axis.normalized())
+    }
+
+
+    val MaxTurn = sin(Math.PI / 6.0)
     private fun getVertices(loops: List<Loop>) : List<Vertex>{
         return loops.map { it.edge.start!! } + loops.last().edge.end!!
     }
 
-    private fun trace(loop: Loop){
-        val worklist = LinkedList<MergeNode>()
-        worklist.add(MergeNode(listOf(loop), loop, direction(loop),null))
+    class EdgeFitNode(val loops : List<Loop>, val end : Loop, val dir: Vec3, val normal: Vec3?){
+        val size get() = loops.size
+
+        fun expand(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : EdgeFitNode{
+            val loops = ArrayList<Loop>(loops.size + 1)
+            loops.addAll(this.loops)
+            loops.add(nextLoop)
+
+            return EdgeFitNode(loops, nextLoop, nextDir, normal ?: nextNormal)
+        }
+    }
+
+    private fun traceEdge(loop: Loop){
+        val worklist = LinkedList<EdgeFitNode>()
+        worklist.add(EdgeFitNode(listOf(loop), loop, direction(loop),null))
 
         while(worklist.isNotEmpty()){
             val node = worklist.removeFirst()
@@ -218,7 +284,7 @@ object Solidify {
                 val nextNode = node.expand(nextLoop, nextDir, loopNormal)
 
                 if(nextNode.size == 5){
-                    fit(nextNode)
+                    fitEdge(nextNode)
                 }else{
                     worklist.add(nextNode)
                 }
@@ -227,7 +293,7 @@ object Solidify {
     }
 
     val loop2Curve = hashMapOf<Loop, MutableList<Curve>>()
-    fun fit(node : MergeNode){
+    fun fitEdge(node : EdgeFitNode){
         val vertices = getVertices(node.loops)
         val points3d = vertices.map { it.point }
 
@@ -252,7 +318,7 @@ object Solidify {
             Ellipse(curveWorkplane, major, minor)
         }
 
-        println("center: $center,dir: $dir3d,major: $major,minor: $minor")
+        //println("center: $center,dir: $dir3d,major: $major,minor: $minor")
 
         for( loop in node.loops ){
             loop2Curve.computeIfAbsent(loop) {

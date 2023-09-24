@@ -46,6 +46,11 @@ class Plane(val normal: Vec3, val distance: Double){
             val origin = projectPlane(lhs, rhs) + projectPlane(rhs, lhs)
             return Line(origin, direction)
         }
+
+        fun from(origin: Vec3, normal: Vec3) : Plane{
+            val distance = Vec3.project(origin, normal).length()
+            return Plane(normal, distance)
+        }
     }
 }
 
@@ -101,13 +106,9 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
 class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
     val y get() = normal.cross(x)
 
-
     init {
-        if(abs(normal.length() - 1.0) >= 1e-5){
-            println("sss")
-        }
-        assert(abs(normal.length() - 1.0) < 1e-5)
-        assert(abs(x.length() - 1.0) < 1e-5)
+        assert(abs(normal.squaredLength() - 1.0) < 1e-5)
+        assert(abs(x.squaredLength() - 1.0) < 1e-5)
     }
 
     fun withOrigin(origin: Vec3) : Workplane {
@@ -146,8 +147,7 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
     }
 
     fun toPlane() : Plane{
-        val distance = Vec3.project(origin, normal).length()
-        return Plane(normal, distance)
+        return Plane.from(origin, normal)
     }
 
     fun distanceTo(p: Vec3) : Double{

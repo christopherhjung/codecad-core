@@ -15,7 +15,11 @@ enum class Sense{
     }
 }
 
-class EdgeBound(val start: Vertex, val end : Vertex, val sense: Sense = Sense.Same)
+class EdgeBound(val start: Vertex, val end : Vertex, val sense: Sense = Sense.Same){
+    init {
+        assert(start !== end)
+    }
+}
 
 class Edge(var curve: Curve, val bound : EdgeBound? = null){
     companion object{

@@ -16,7 +16,7 @@ object Regression {
     fun solve(A : Matrix, B: Matrix) : Matrix?{
         val AT = A.transpose()
         val ATA = AT.matMul(A)
-        if(abs(ATA.det()) < 1e-10) return null
+        if(abs(ATA.det()) < 1e-8) return null
         val AP = ATA.inverse().matMul(AT)
         return AP.matMul(B)
     }

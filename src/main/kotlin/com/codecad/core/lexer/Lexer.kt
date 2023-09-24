@@ -89,11 +89,13 @@ class Lexer(code: String) {
         mark = idx
     }
 
-    private val string: String
-        private get() = getString(idx - mark)
-
-    private fun getString(length: Int): String {
-        return String(chars, mark, length)
+    private fun getString(length: Int = 0): String {
+        val correctedLength = if(length <= 0){
+            idx - mark + length
+        }else{
+            length
+        }
+        return String(chars, mark, correctedLength)
     }
 
     private fun token(kind: Token.Kind, symbol: String? = null): Token {
@@ -263,14 +265,24 @@ class Lexer(code: String) {
                     shift()
                 }
                 if(accept('.')){
+                    if(accept('E') || accept('e')){
+                        accept('-')
+                        accept('+')
+                        while (isNumeric) {
+                            shift()
+                        }
+
+                        return token(Token.Kind.Real, getString())
+                    }
+
                     while (isNumeric) {
                         shift()
                     }
 
-                    return token(Token.Kind.Real, string)
+                    return token(Token.Kind.Real, getString())
                 }
 
-                return token(Token.Kind.Number, string)
+                return token(Token.Kind.Number, getString())
             }
             if (isAlpha) {
                 mark()
@@ -278,7 +290,7 @@ class Lexer(code: String) {
                 while (isAlphaNumeric) {
                     shift()
                 }
-                val value = string
+                val value = getString()
                 when (value) {
                     "true", "false" -> return token(Token.Kind.Boolean, value)
                     "fn" -> return token(Token.Kind.Fn)
@@ -306,7 +318,7 @@ class Lexer(code: String) {
                     }
                     shift()
                 }
-                return token(Token.Kind.String, getString(idx - mark - 1))
+                return token(Token.Kind.String, getString(-1 ))
             }
             return if (isEOL) {
                 token(Token.Kind.EOL)

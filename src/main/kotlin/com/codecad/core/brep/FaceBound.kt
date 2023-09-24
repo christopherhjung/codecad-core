@@ -90,7 +90,7 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
     fun validate() : Boolean{
         val visited = hashSetOf<Vertex>()
         for( loop in this ){
-            if(!visited.add(loop.edge.start!!)){
+            if(!visited.add(loop.edge.start!!) || loop.face != face){
                 return false
             }
         }
@@ -100,7 +100,7 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
 
     fun toString(sb: StringBuilder){
         var sep = ""
-        var visited = hashSetOf<Vertex>()
+        val visited = hashSetOf<Vertex>()
         for(edgeLoop in this){
             val orientedEdge = edgeLoop.edge
             val bound = orientedEdge.bound
@@ -244,6 +244,7 @@ class LoopIterator(val init : Loop) : Iterator<Loop>{
         first = false
         if(watchdog > 10000){
             println("watchdog")
+            init.toString()
             throw RuntimeException("sss")
         }
         watchdog++
