@@ -130,9 +130,7 @@ class StepLexer(code: String) {
                 if (accept('*')) { // arbitrary comment
                     var depth = 1
                     while (true) {
-                        if (isEOL) {
-                            return token(StepToken.Kind.Error)
-                        }
+                        if (isEOL) return token(StepToken.Kind.Error)
                         if (accept('/')) {
                             if (accept('*')) {
                                 depth += 1
@@ -230,9 +228,7 @@ class StepLexer(code: String) {
             if (accept('\'')) {
                 mark()
                 while (!accept('\'')) {
-                    if (isEOL) {
-                        return token(StepToken.Kind.Error)
-                    }
+                    if (isEOL) return token(StepToken.Kind.Error)
                     shift()
                 }
                 return token(StepToken.Kind.String, getString(-1))

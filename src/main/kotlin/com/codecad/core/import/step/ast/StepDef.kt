@@ -31,6 +31,15 @@ open class StepDef{
     fun asObject() : StepObject{
         return this as StepObject
     }
+
+    fun asVec3() : Vec3{
+        val xyz = asTuple().elems
+        return Vec3(
+            xyz[0].doubleValue(),
+            xyz[1].doubleValue(),
+            xyz[2].doubleValue()
+        )
+    }
 }
 
 class StepObject(val type : String, val args: Array<StepDef>) : StepDef(){
@@ -249,23 +258,9 @@ val StepObject.minor : Double get() = when(type){
 
 fun StepObject.vec(context : GeometricContext) : Vec3{
     return when(type){
-        "VERTEX_POINT" -> (args[1].asObject()).vec(context)
-        "CARTESIAN_POINT" -> {
-            val xyz = args[1].asTuple().elems
-            Vec3(
-                xyz[0].doubleValue(),
-                xyz[1].doubleValue(),
-                xyz[2].doubleValue()
-            ) * context.lengthFactor
-        }
-        "DIRECTION" -> {
-            val xyz = args[1].asTuple().elems
-            Vec3(
-                xyz[0].doubleValue(),
-                xyz[1].doubleValue(),
-                xyz[2].doubleValue()
-            )
-        }
+        "VERTEX_POINT" -> args[1].asObject().vec(context)
+        "CARTESIAN_POINT" -> args[1].asVec3() * context.lengthFactor
+        "DIRECTION" -> args[1].asVec3()
         "VECTOR" -> args[1].asObject().vec(context) * args[2].doubleValue()
         else -> throw RuntimeException()
     }
