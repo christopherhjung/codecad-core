@@ -109,7 +109,7 @@ class StepLexer(code: String) {
             }
 
             if (accept('=')) {
-                token(StepToken.Kind.Assign)
+                return token(StepToken.Kind.Assign)
             }
             if (accept('*')) {
                 return token(StepToken.Kind.Star)
