@@ -15,7 +15,6 @@ class ImportStepTest {
         val importer = StepImporter()
         val context = importer.import(stepFile)
 
-
         println()
     }
 }

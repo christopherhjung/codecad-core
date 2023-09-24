@@ -101,6 +101,19 @@ class StepLexer(code: String) {
         return accept(' ') || accept('\t') || accept('\n') || accept('\r')
     }
 
+    private fun lexChar() : StepToken.Kind?{
+        return when(currChar()){
+            '=' -> StepToken.Kind.Assign
+            '*' -> StepToken.Kind.Star
+            '$' -> StepToken.Kind.Dollar
+            '(' -> StepToken.Kind.LeftParen
+            ')' -> StepToken.Kind.RightParen
+            ',' -> StepToken.Kind.Comma
+            ';' -> StepToken.Kind.Semi
+            else -> null
+        }
+    }
+
     operator fun next(): StepToken {
         while (!isEOL) {
             if(acceptWhitespace()){
@@ -108,21 +121,11 @@ class StepLexer(code: String) {
                 continue
             }
 
-            if (accept('=')) {
-                return token(StepToken.Kind.Assign)
+            lexChar()?.let {
+                shift()
+                return token(it)
             }
-            if (accept('*')) {
-                return token(StepToken.Kind.Star)
-            }
-            if (accept('$')) {
-                return token(StepToken.Kind.Dollar)
-            }
-            if (accept('(')) {
-                return token(StepToken.Kind.LeftParen)
-            }
-            if (accept(')')) {
-                return token(StepToken.Kind.RightParen)
-            }
+
             if (accept('/')) {
                 if (accept('*')) { // arbitrary comment
                     var depth = 1
@@ -174,12 +177,6 @@ class StepLexer(code: String) {
                     else -> token(StepToken.Kind.Enum, value)
                 }
             }
-            if (accept(',')) {
-                return token(StepToken.Kind.Comma)
-            }
-            if (accept(';')) {
-                return token(StepToken.Kind.Semi)
-            }
             if(accept('#')){
                 mark()
                 shift()
@@ -204,15 +201,12 @@ class StepLexer(code: String) {
                             while (isNumeric) {
                                 shift()
                             }
-
-                            return token(StepToken.Kind.Real, getString())
-                        }
-
-                        if(isNumeric){
+                        }else if(isNumeric){
                             shift()
-                        }else{
-                            return token(StepToken.Kind.Real, getString())
+                            continue
                         }
+
+                        return token(StepToken.Kind.Real, getString())
                     }
                 }
 
