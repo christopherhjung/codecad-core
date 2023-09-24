@@ -152,9 +152,7 @@ class StepLexer(code: String) {
                 }
                 if (accept('/')) {
                     while (true) {
-                        if (isEOL) {
-                            return token(StepToken.Kind.EOL)
-                        }
+                        if (isEOL) return token(StepToken.Kind.EOL)
                         if (accept('\n')) {
                             break
                         } else {
@@ -171,8 +169,7 @@ class StepLexer(code: String) {
                     shift()
                 }
 
-                val value = getString(-1)
-                return when(value){
+                return when(val value = getString(-1)){
                     "T", "F" -> token(StepToken.Kind.Boolean, value)
                     else -> token(StepToken.Kind.Enum, value)
                 }
@@ -196,8 +193,10 @@ class StepLexer(code: String) {
                 if(accept('.')){
                     while(true){
                         if(accept('E') || accept('e')){
-                            accept('-')
-                            accept('+')
+                            if(!accept('-')){
+                                accept('+')
+                            }
+
                             while (isNumeric) {
                                 shift()
                             }
@@ -223,8 +222,8 @@ class StepLexer(code: String) {
                     value == "HEADER" -> token(StepToken.Kind.Header)
                     value == "DATA" -> token(StepToken.Kind.Data)
                     value == "ENDSEC" -> token(StepToken.Kind.EndSec)
-                    value.startsWith("ISO") -> token(StepToken.Kind.BeginIso, value.substring(4))
-                    value.startsWith("END-ISO") -> token(StepToken.Kind.EndIso, value.substring(8))
+                    value.startsWith("ISO") -> token(StepToken.Kind.BeginIso, value)
+                    value.startsWith("END-ISO") -> token(StepToken.Kind.EndIso, value.substring(4))
                     else -> token(StepToken.Kind.Ident, value)
                 }
             }

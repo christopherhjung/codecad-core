@@ -89,8 +89,15 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
 
     fun validate() : Boolean{
         val visited = hashSetOf<Vertex>()
+        if(edge.bound == null){
+            return true
+        }
+
         for( loop in this ){
-            if(!visited.add(loop.edge.start!!) || loop.face != face){
+            if(!visited.add(loop.edge.start!!)){
+                return false
+            }
+            if(loop.face != face){
                 return false
             }
         }

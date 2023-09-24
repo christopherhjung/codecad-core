@@ -7,17 +7,62 @@ import com.codecad.core.import.step.ast.*
 import com.codecad.core.part.Context
 import com.codecad.core.volume.Volume
 
+class GeometricContext(val lengthFactor : Double, val angleUnit : Double)
+val DefaultGeometricContext = GeometricContext(1.0, 1.0)
+
 class StepImporter{
     private val vertices = hashMapOf<StepObject, Vertex>()
     private val edges = hashMapOf<StepObject, Edge>()
+    private val edge2loop = hashMapOf<Edge, Loop>()
+    private lateinit var geometricContext : GeometricContext
+
+    fun importSIUnit(siUnit : StepObject) : Double{
+        val lengthPrefix = when(siUnit.args[0]){
+            StepString("MILLI") -> 1e-3
+            StepString("KILO") -> 1e3
+            else -> 1.0
+        } * 1e3
+
+        val lengthUnit = when(siUnit.args[1]){
+            StepString("RADIAN") -> 1.0
+            StepString("METRE") -> 1.0
+            else -> 1.0
+        }
+
+        return lengthPrefix * lengthUnit
+    }
+
+    fun importGeometricContext(obj : StepDef) : GeometricContext{
+        if(obj !is StepMultiObject) throw RuntimeException()
+        val unitContext = obj.findObject("GLOBAL_UNIT_ASSIGNED_CONTEXT")!!
+        val units = unitContext.args[0].asTuple()
+
+        val lengthUnitObj = units.elems[0] as StepMultiObject
+        val lengthUnit = lengthUnitObj.findObject("SI_UNIT")!!
+        val lengthFactor = importSIUnit(lengthUnit)
+
+
+        val angleUnitObj = units.elems[1] as StepMultiObject
+        val angleUnit = angleUnitObj.findObject("SI_UNIT")!!
+        val angleFactor = importSIUnit(angleUnit)
+
+        return GeometricContext(lengthFactor, angleFactor)
+    }
+
+    fun setupGeometricContext(obj : StepDef){
+        geometricContext = importGeometricContext(obj)
+    }
 
     fun import(file : StepFile) : Context {
         val context = Context()
 
-        for(styledItem in file.styledItems){
-            val solid = styledItem.brep
-            if(solid.type == "MANIFOLD_SOLID_BREP"){
-                context.volumes.add(importSolid(solid))
+        for(geo in file.geometrics){
+            setupGeometricContext(geo.geometricContext)
+            for(styledItem in geo.styledItems){
+                val solid = styledItem.brep
+                if(solid.type == "MANIFOLD_SOLID_BREP"){
+                    context.volumes.add(importSolid(solid))
+                }
             }
         }
 
@@ -39,8 +84,10 @@ class StepImporter{
 
     fun importFace(advancedFace: StepObject) : Face {
         val faceBounds = advancedFace.faceBounds.map { importFaceBound(it) }
-        val surface = advancedFace.surface
-        return Face(surface, faceBounds)
+        val surface = advancedFace.surface(geometricContext)
+        val face = Face(surface, faceBounds)
+
+        return face
     }
 
     fun importFaceBound(faceBound : StepObject) : FaceBound {
@@ -59,12 +106,22 @@ class StepImporter{
             OrientedEdge(edge, orientation)
         })
 
+        for( loopSegment in loop ){
+            val edge = loopSegment.edge.edge
+            edge2loop.putIfAbsent(edge, loopSegment)?.let {
+                assert(it.twin == null)
+                assert(it.edge.edge === loopSegment.edge.edge)
+                it.twin = loopSegment
+                loopSegment.twin = it
+            }
+        }
+
         return FaceBound(loop, FaceBoundKind.OuterBound)
     }
 
     fun createVertex(obj : StepObject) : Vertex{
         return vertices.computeIfAbsent(obj){
-            Vertex(obj.vec)
+            Vertex(obj.vec(geometricContext))
         }
     }
 
@@ -79,7 +136,7 @@ class StepImporter{
                 EdgeBound(createVertex(start), createVertex(end))
             }
 
-            Edge(it.curve, edgeBound)
+            Edge(it.curve(geometricContext), edgeBound)
         }
     }
 }

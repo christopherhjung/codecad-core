@@ -1,10 +1,11 @@
 package com.codecad.core.import.step.ast
 
-import com.codecad.core.ast.primitive.TupleExpr
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.Workplane
 import com.codecad.core.brep.curve.*
 import com.codecad.core.brep.surface.*
+import com.codecad.core.import.step.DefaultGeometricContext
+import com.codecad.core.import.step.GeometricContext
 
 open class StepDef{
     open fun bind(scope : Map<Int, StepDef>) : StepDef{
@@ -54,6 +55,10 @@ class StepMultiObject(val objs: Array<StepObject>) : StepDef(){
 
         return this
     }
+
+    fun findObject(type: String) : StepObject?{
+        return objs.find { it.type == type }
+    }
 }
 
 class StepTuple(val elems : Array<StepDef>) : StepDef(){
@@ -100,10 +105,20 @@ data class StepBoolean(val value : Boolean) : StepDef(){
 }
 object StepNull : StepDef()
 
+val StepFile.geometrics get() = findObjects("MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION")
 
+val StepObject.geometricContext get() = when(type){
+    "MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION"
+        -> args[2] as StepMultiObject
+    else -> throw RuntimeException()
+}
 
+val StepObject.styledItems get() = when(type){
+    "MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION"
+        -> args[1].asTuple().elems.filterIsInstance<StepObject>()
+    else -> throw RuntimeException()
+}
 
-val StepFile.styledItems get() = findObjects("STYLED_ITEM")
 val StepObject.brep get() = when(type){
     "STYLED_ITEM" -> args[2].asObject()
     else -> throw RuntimeException()
@@ -114,31 +129,33 @@ val StepObject.shell get() = when(type){
 }
 
 val StepObject.advancedFaces get() = when(type){
-    "CLOSED_SHELL" -> (args[1].asTuple()).elems
+    "CLOSED_SHELL" -> args[1].asTuple().elems
     else -> throw RuntimeException()
 }.map { it.asObject() }
 
 val StepObject.faceBounds get() = when(type){
-    "ADVANCED_FACE" -> (args[1].asTuple()).elems
+    "ADVANCED_FACE" -> args[1].asTuple().elems
     else -> throw RuntimeException()
 }.map { it.asObject() }
 
-val StepObject.surface : Surface get() = when(type){
-    "ADVANCED_FACE" -> (args[2].asObject()).surface
-    "PLANE" -> PlaneSurface(workplane)
-    "CYLINDRICAL_SURFACE" -> CylindricalSurface(workplane, args[2].doubleValue())
-    "TOROIDAL_SURFACE" -> ToroidalSurface(workplane, major, minor)
-    "CONICAL_SURFACE" -> ConicalSurface(workplane, args[2].doubleValue(), args[3].doubleValue())
-    "B_SPLINE_SURFACE_WITH_KNOTS" -> {
-        val uDegree = args[1].intValue()
-        val vDegree = args[2].intValue()
-        val controlPoints = args[3].asTuple().elems.map {
-            it.asTuple().vecs.map { BSplineControlPoint(it, 1.0) }.toTypedArray()
-        }.toTypedArray()
+fun StepObject.surface(context: GeometricContext) : Surface{
+    return when(type){
+        "ADVANCED_FACE" -> (args[2].asObject()).surface(context)
+        "PLANE" -> PlaneSurface(workplane(context))
+        "CYLINDRICAL_SURFACE" -> CylindricalSurface(workplane(context), args[2].doubleValue())
+        "TOROIDAL_SURFACE" -> ToroidalSurface(workplane(context), major, minor)
+        "CONICAL_SURFACE" -> ConicalSurface(workplane(context), args[2].doubleValue(), args[3].doubleValue())
+        "B_SPLINE_SURFACE_WITH_KNOTS" -> {
+            val uDegree = args[1].intValue()
+            val vDegree = args[2].intValue()
+            val controlPoints = args[3].asTuple().elems.map {
+                it.asTuple().vecs(context).map { BSplineControlPoint(it, 1.0) }.toTypedArray()
+            }.toTypedArray()
 
-        BSplineSurface(uDegree, vDegree, controlPoints)
+            BSplineSurface(uDegree, vDegree, controlPoints)
+        }
+        else -> throw RuntimeException()
     }
-    else -> throw RuntimeException()
 }
 
 val StepObject.edgeLoop get() = when(type){
@@ -174,27 +191,29 @@ val StepObject.end get() = when(type){
     else -> throw RuntimeException()
 }
 
-val StepObject.curve : Curve get() = when(type){
-    "EDGE_CURVE" -> (args[3].asObject()).curve
-    "LINE" -> Line(start.vec, end.vec)
-    "CIRCLE" -> Circle(workplane, radius)
-    "ELLIPSE" -> Ellipse(workplane, major, minor)
-    "B_SPLINE_CURVE_WITH_KNOTS" -> {
-        val dim = args[1].intValue()
-        val vecs = args[2].vecs
-        args[4].booleanValue()
-        args[5].booleanValue()
-        val weights = args[7].doubleArray()
+fun StepObject.curve(context: GeometricContext) : Curve{
+    return when(type){
+        "EDGE_CURVE" -> (args[3].asObject()).curve(context)
+        "LINE" -> Line(start.vec(context), end.vec(context))
+        "CIRCLE" -> Circle(workplane(context), radius)
+        "ELLIPSE" -> Ellipse(workplane(context), major, minor)
+        "B_SPLINE_CURVE_WITH_KNOTS" -> {
+            val degree = args[1].intValue()
+            val vecs = args[2].vecs(context)
+            args[4].booleanValue()
+            args[5].booleanValue()
+            val weights = args[7].doubleArray()
 
-        val controls = vecs.zip(weights).map {
-            BSplineControlPoint(it.first, it.second)
-        }.toTypedArray()
-        BSpline(controls)
+            val controls = vecs.zip(weights).map {
+                BSplineControlPoint(it.first, it.second)
+            }.toTypedArray()
+            BSpline(controls)
+        }
+        else -> throw RuntimeException()
     }
-    else -> throw RuntimeException()
 }
 
-val StepObject.workplane get() = run {
+fun StepObject.workplane(context: GeometricContext) : Workplane{
     val axisPlacement = when(type){
         "CIRCLE",
         "ELLIPSE",
@@ -206,10 +225,10 @@ val StepObject.workplane get() = run {
         else -> throw RuntimeException()
     }
 
-    Workplane(
-        (axisPlacement[1].asObject()).vec,
-        (axisPlacement[2].asObject()).vec,
-        (axisPlacement[3].asObject()).vec
+    return Workplane(
+        axisPlacement[1].asObject().vec(context),
+        axisPlacement[2].asObject().vec(context),
+        axisPlacement[3].asObject().vec(context)
     )
 }
 
@@ -228,23 +247,33 @@ val StepObject.minor : Double get() = when(type){
     else -> throw RuntimeException()
 }
 
-val StepObject.vec : Vec3 get() = when(type){
-    "VERTEX_POINT" -> (args[1].asObject()).vec
-    "CARTESIAN_POINT", "DIRECTION" -> {
-        val xyz = (args[1].asTuple()).elems
-        Vec3(
-            xyz[0].doubleValue(),
-            xyz[1].doubleValue(),
-            xyz[2].doubleValue()
-        )
+fun StepObject.vec(context : GeometricContext) : Vec3{
+    return when(type){
+        "VERTEX_POINT" -> (args[1].asObject()).vec(context)
+        "CARTESIAN_POINT" -> {
+            val xyz = args[1].asTuple().elems
+            Vec3(
+                xyz[0].doubleValue(),
+                xyz[1].doubleValue(),
+                xyz[2].doubleValue()
+            ) * context.lengthFactor
+        }
+        "DIRECTION" -> {
+            val xyz = args[1].asTuple().elems
+            Vec3(
+                xyz[0].doubleValue(),
+                xyz[1].doubleValue(),
+                xyz[2].doubleValue()
+            )
+        }
+        "VECTOR" -> args[1].asObject().vec(context) * args[2].doubleValue()
+        else -> throw RuntimeException()
     }
-    "VECTOR" -> (args[1].asObject()).vec * args[2].doubleValue()
-    else -> throw RuntimeException()
 }
 
-val StepDef.vecs : List<Vec3> get() = let{
+fun StepDef.vecs(context : GeometricContext) : List<Vec3>{
     if(this !is StepTuple) throw RuntimeException()
-    elems.map{ (it.asObject()).vec }
+    return elems.map{ it.asObject().vec(context) }
 }
 
 fun StepDef.doubleArray() : List<Double>{
