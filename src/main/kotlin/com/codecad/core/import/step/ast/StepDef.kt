@@ -26,6 +26,10 @@ open class StepDef{
     fun asTuple() : StepTuple{
         return this as StepTuple
     }
+
+    fun asObject() : StepObject{
+        return this as StepObject
+    }
 }
 
 class StepObject(val type : String, val args: Array<StepDef>) : StepDef(){
@@ -45,7 +49,7 @@ class StepObject(val type : String, val args: Array<StepDef>) : StepDef(){
 class StepMultiObject(val objs: Array<StepObject>) : StepDef(){
     override fun bind(scope: Map<Int, StepDef>): StepDef {
         for( idx in objs.indices ){
-            objs[idx] = objs[idx].bind(scope) as StepObject
+            objs[idx] = objs[idx].bind(scope).asObject()
         }
 
         return this
@@ -101,26 +105,26 @@ object StepNull : StepDef()
 
 val StepFile.styledItems get() = findObjects("STYLED_ITEM")
 val StepObject.brep get() = when(type){
-    "STYLED_ITEM" -> args[2] as StepObject
+    "STYLED_ITEM" -> args[2].asObject()
     else -> throw RuntimeException()
 }
 val StepObject.shell get() = when(type){
-    "MANIFOLD_SOLID_BREP" -> args[1] as StepObject
+    "MANIFOLD_SOLID_BREP" -> args[1].asObject()
     else -> throw RuntimeException()
 }
 
 val StepObject.advancedFaces get() = when(type){
-    "CLOSED_SHELL" -> (args[1] as StepTuple).elems
+    "CLOSED_SHELL" -> (args[1].asTuple()).elems
     else -> throw RuntimeException()
-}.map { it as StepObject }
+}.map { it.asObject() }
 
 val StepObject.faceBounds get() = when(type){
-    "ADVANCED_FACE" -> (args[1] as StepTuple).elems
+    "ADVANCED_FACE" -> (args[1].asTuple()).elems
     else -> throw RuntimeException()
-}.map { it as StepObject }
+}.map { it.asObject() }
 
 val StepObject.surface : Surface get() = when(type){
-    "ADVANCED_FACE" -> (args[2] as StepObject).surface
+    "ADVANCED_FACE" -> (args[2].asObject()).surface
     "PLANE" -> PlaneSurface(workplane)
     "CYLINDRICAL_SURFACE" -> CylindricalSurface(workplane, args[2].doubleValue())
     "TOROIDAL_SURFACE" -> ToroidalSurface(workplane, major, minor)
@@ -138,40 +142,40 @@ val StepObject.surface : Surface get() = when(type){
 }
 
 val StepObject.edgeLoop get() = when(type){
-    "FACE_BOUND" -> args[1] as StepObject
+    "FACE_BOUND" -> args[1].asObject()
     else -> throw RuntimeException()
 }
 
 val StepObject.orientedEdges get() = when(type){
-    "EDGE_LOOP" -> (args[1] as StepTuple).elems.filterIsInstance<StepObject>()
+    "EDGE_LOOP" -> args[1].asTuple().elems.filterIsInstance<StepObject>()
     else -> throw RuntimeException()
 }
 
 val StepObject.edgeCurves get() = when(type){
-    "ORIENTED_EDGE" -> args[3] as StepObject
+    "ORIENTED_EDGE" -> args[3].asObject()
     else -> throw RuntimeException()
 }
 
 val StepObject.sense get() = when(type){
-    "ORIENTED_EDGE", "EDGE_CURVE" -> (args[4] as StepBoolean).value
-    "ADVANCED_FACE" -> (args[3] as StepBoolean).value
+    "ORIENTED_EDGE", "EDGE_CURVE" -> args[4].booleanValue()
+    "ADVANCED_FACE" -> args[3].booleanValue()
     else -> throw RuntimeException()
 }
 
 val StepObject.start get() = when(type){
-    "EDGE_CURVE" -> args[1] as StepObject
-    "LINE" -> args[1] as StepObject
+    "EDGE_CURVE" -> args[1].asObject()
+    "LINE" -> args[1].asObject()
     else -> throw RuntimeException()
 }
 
 val StepObject.end get() = when(type){
-    "EDGE_CURVE" -> args[2] as StepObject
-    "LINE" -> args[2] as StepObject
+    "EDGE_CURVE" -> args[2].asObject()
+    "LINE" -> args[2].asObject()
     else -> throw RuntimeException()
 }
 
 val StepObject.curve : Curve get() = when(type){
-    "EDGE_CURVE" -> (args[3] as StepObject).curve
+    "EDGE_CURVE" -> (args[3].asObject()).curve
     "LINE" -> Line(start.vec, end.vec)
     "CIRCLE" -> Circle(workplane, radius)
     "ELLIPSE" -> Ellipse(workplane, major, minor)
@@ -198,14 +202,14 @@ val StepObject.workplane get() = run {
         "CYLINDRICAL_SURFACE",
         "TOROIDAL_SURFACE",
         "CONICAL_SURFACE"
-            -> args[1] as StepObject
+            -> args[1].asObject()
         else -> throw RuntimeException()
     }
 
     Workplane(
-        (axisPlacement[1] as StepObject).vec,
-        (axisPlacement[2] as StepObject).vec,
-        (axisPlacement[3] as StepObject).vec
+        (axisPlacement[1].asObject()).vec,
+        (axisPlacement[2].asObject()).vec,
+        (axisPlacement[3].asObject()).vec
     )
 }
 
@@ -225,22 +229,22 @@ val StepObject.minor : Double get() = when(type){
 }
 
 val StepObject.vec : Vec3 get() = when(type){
-    "VERTEX_POINT" -> (args[1] as StepObject).vec
+    "VERTEX_POINT" -> (args[1].asObject()).vec
     "CARTESIAN_POINT", "DIRECTION" -> {
-        val xyz = (args[1] as StepTuple).elems
+        val xyz = (args[1].asTuple()).elems
         Vec3(
             xyz[0].doubleValue(),
             xyz[1].doubleValue(),
             xyz[2].doubleValue()
         )
     }
-    "VECTOR" -> (args[1] as StepObject).vec * args[2].doubleValue()
+    "VECTOR" -> (args[1].asObject()).vec * args[2].doubleValue()
     else -> throw RuntimeException()
 }
 
 val StepDef.vecs : List<Vec3> get() = let{
     if(this !is StepTuple) throw RuntimeException()
-    elems.map{ (it as StepObject).vec }
+    elems.map{ (it.asObject()).vec }
 }
 
 fun StepDef.doubleArray() : List<Double>{
@@ -250,33 +254,4 @@ fun StepDef.doubleArray() : List<Double>{
 
 
 
-/*
-
-
-fun importSolid(solid: StepObject){
-    val shell = solid[1] as StepObject
-    if(shell.type == "CLOSED_SHELL"){
-        importClosedShell(shell)
-    }
-}
-
-fun importClosedShell(shell: StepObject) : Shell {
-    val advancedFaces = shell[1] as StepTuple
-    return Shell(advancedFaces.elems.map { importFace(it as StepObject) })
-}
-
-fun importFace(advancedFace: StepObject) : Face {
-    println("s")
-    val faceBounds = (advancedFace[1] as StepTuple).elems.map { importFaceBound(it as StepObject) }
-    val surface = advancedFace[1] as StepObject
-
-
-    throw RuntimeException()
-}
-
-fun importFaceBound(faceBound : StepObject){
-    val edgeLoop = faceBound[1]
-
-}
-*/
 
