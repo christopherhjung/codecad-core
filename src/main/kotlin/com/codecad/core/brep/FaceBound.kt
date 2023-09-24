@@ -68,9 +68,19 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
 
     fun computeArea() : Double{
         var area = Vec3.Zero
+
         for( loop in this ){
             val edge = loop.edge
-            area += edge.start!!.point.cross(edge.end!!.point)
+            val bound = edge.bound
+
+            if(bound != null){
+                area += bound.start.point.cross(bound.end.point)
+            }else{
+                val edge = edge.edge
+                val curve = edge.curve
+
+
+            }
         }
 
         return area.length() / 2

@@ -388,7 +388,6 @@ class StepExport : ModelExport{
         val sb = StringBuilder()
         sb.append("(0.0")
         val width = 1.0 / (segments - 1)
-
         for( i in 1 until segments - 1 ){
             sb.append(",")
             sb.append(i * width)

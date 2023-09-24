@@ -137,8 +137,12 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
 
     fun project2d(point: Vec3) : Vec2 {
         val fromOrigin = point - origin
-        val x = x.dot(fromOrigin) / x.squaredLength()
-        val y = y.dot(fromOrigin) / y.squaredLength()
+        return projectDir2d(fromOrigin)
+    }
+
+    fun projectDir2d(dir: Vec3) : Vec2 {
+        val x = x.dot(dir) / x.squaredLength()
+        val y = y.dot(dir) / y.squaredLength()
         return Vec2(x,y)
     }
 

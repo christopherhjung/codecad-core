@@ -1,5 +1,6 @@
 package com.codecad.core.lexer
 
+import com.codecad.core.import.step.lexer.StepToken
 import org.apache.commons.lang3.CharUtils
 
 class Lexer(code: String) {
@@ -264,22 +265,23 @@ class Lexer(code: String) {
                 while (isNumeric) {
                     shift()
                 }
-                if(accept('.')){
-                    if(accept('E') || accept('e')){
-                        accept('-')
-                        accept('+')
-                        while (isNumeric) {
+                if(accept('.')) {
+                    while (true) {
+                        if (accept('E') || accept('e')) {
+                            if (!accept('-')) {
+                                accept('+')
+                            }
+
+                            while (isNumeric) {
+                                shift()
+                            }
+                        } else if (isNumeric) {
                             shift()
+                            continue
                         }
 
                         return token(Token.Kind.Real, getString())
                     }
-
-                    while (isNumeric) {
-                        shift()
-                    }
-
-                    return token(Token.Kind.Real, getString())
                 }
 
                 return token(Token.Kind.Number, getString())
@@ -290,25 +292,25 @@ class Lexer(code: String) {
                 while (isAlphaNumeric) {
                     shift()
                 }
-                val value = getString()
-                when (value) {
-                    "true", "false" -> return token(Token.Kind.Boolean, value)
-                    "fn" -> return token(Token.Kind.Fn)
-                    "if" -> return token(Token.Kind.If)
-                    "else" -> return token(Token.Kind.Else)
-                    "break" -> return token(Token.Kind.Break)
-                    "continue" -> return token(Token.Kind.Continue)
-                    "while" -> return token(Token.Kind.While)
-                    "return" -> return token(Token.Kind.Return)
-                    "null" -> return token(Token.Kind.Null)
-                    "and" -> return token(Token.Kind.And)
-                    "or" -> return token(Token.Kind.Or)
-                    "let" -> return token(Token.Kind.Let)
-                    "for" -> return token(Token.Kind.For)
-                    "in" -> return token(Token.Kind.In)
-                    "sketch" -> return token(Token.Kind.Sketch)
+
+                return when (val value = getString()) {
+                    "true", "false" -> token(Token.Kind.Boolean, value)
+                    "fn" -> token(Token.Kind.Fn)
+                    "if" -> token(Token.Kind.If)
+                    "else" -> token(Token.Kind.Else)
+                    "break" -> token(Token.Kind.Break)
+                    "continue" -> token(Token.Kind.Continue)
+                    "while" -> token(Token.Kind.While)
+                    "return" -> token(Token.Kind.Return)
+                    "null" -> token(Token.Kind.Null)
+                    "and" -> token(Token.Kind.And)
+                    "or" -> token(Token.Kind.Or)
+                    "let" -> token(Token.Kind.Let)
+                    "for" -> token(Token.Kind.For)
+                    "in" -> token(Token.Kind.In)
+                    "sketch" -> token(Token.Kind.Sketch)
+                    else -> token(Token.Kind.Ident, value)
                 }
-                return token(Token.Kind.Ident, value)
             }
             if (accept('\"')) {
                 mark()
