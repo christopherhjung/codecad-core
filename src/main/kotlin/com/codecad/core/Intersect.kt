@@ -7,15 +7,13 @@ import kotlin.math.sqrt
 
 object Intersect {
     fun of(line1: LineSegment, line2: LineSegment): Vec2? {
-        val (p0_x, p0_y) = line1.p0
-        val (p2_x, p2_y) = line2.p0
-
         val s1 = line1.p1 - line1.p0
         val s2 = line2.p1 - line2.p0
+        val sd = line1.p0 - line2.p0
 
         val a = 1.0 / s1.crossZ(s2)
-        val s = (-s1.y * (p0_x - p2_x) + s1.x * (p0_y - p2_y)) * a
-        val t = (s2.x * (p0_y - p2_y) - s2.y * (p0_x - p2_x)) * a
+        val s = s1.crossZ(sd) * a
+        val t = s2.crossZ(sd) * a
 
         val epsilon = 1e-5
         if (s - epsilon > 0 && s + epsilon < 1 && t - epsilon > 0 && t + epsilon < 1) {

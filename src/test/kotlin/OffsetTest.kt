@@ -53,7 +53,7 @@ class OffsetTest {
         offsetFace(face, 1.0)*/
 
         val c1 = Circle2d(Vec2(0.0, 0.0), 1.0)
-        val c2 = Circle2d(Vec2(1.0, 1.0), 1.0)
+        val c2 = Circle2d(Vec2(4.9, 0.0), 5.0)
 
         println(Intersect.of(c1, c2).toList())
     }

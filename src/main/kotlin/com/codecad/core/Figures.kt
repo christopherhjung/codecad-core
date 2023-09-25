@@ -45,7 +45,9 @@ class LineSegment(var p0: Vec2, var p1: Vec2) {
         get() = difference.normalized()
 }
 
-data class Circle2d(val center : Vec2, val radius: Double)
+abstract class Conic2d(val center : Vec2, val radius: Double)
+class Circle2d(center : Vec2, radius: Double) : Conic2d(center, radius)
+class Arc2d(val p0 : Vec2, val p1: Vec2, center : Vec2) : Conic2d(center, (center - p0).length())
 
 abstract class SketchConic(vararg params: Expr) : Entity(*params){
     abstract val center : Vec2Expr
