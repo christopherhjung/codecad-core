@@ -20,6 +20,14 @@ data class Vec2(val x: Double, val y: Double){
         return Vec2(x, y)
     }
 
+    fun rightTurn(vec: Vec2) : Vec2{
+        return Vec2(x + vec.y, y - vec.x)
+    }
+
+    fun leftTurn(vec: Vec2) : Vec2{
+        return Vec2(x - vec.y, y + vec.x)
+    }
+
     fun absoluteAngle() : Double{
         return atan2(y, x)
     }

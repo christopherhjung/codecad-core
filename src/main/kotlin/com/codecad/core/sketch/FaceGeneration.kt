@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.LineSegment
+import com.codecad.core.SketchCircle
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
@@ -199,7 +200,10 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
 }
 
 private fun isLeft(p0: Vec2, p1: Vec2, p2: Vec2): Double {
-    return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
+    return (p1 - p0).crossZ(p2 - p0)
+
+
+    //return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
 /*
 fun isPointInPolygon3d(point: Vec2, polygon: Iterable<Vec3>): Boolean {

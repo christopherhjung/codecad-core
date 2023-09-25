@@ -1,6 +1,7 @@
 package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec3
+import com.codecad.core.brep.curve.Circle
 import com.codecad.core.mesh.Solidify
 import com.codecad.core.rollover
 
@@ -74,16 +75,24 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
             val bound = edge.bound
 
             if(bound != null){
-                area += bound.start.point.cross(bound.end.point)
+                area += bound.start.point.cross(bound.end.point) * 0.5
             }else{
                 val edge = edge.edge
                 val curve = edge.curve
 
+                when(curve){
+                    is Circle -> {
+                        val workplane = curve.workplane
+                        val normal = workplane.normal
 
+
+
+                    }
+                }
             }
         }
 
-        return area.length() / 2
+        return area.length()
     }
 
     fun nextPoints(num: Int) : List<Vec3>{

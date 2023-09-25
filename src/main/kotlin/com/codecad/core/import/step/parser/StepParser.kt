@@ -66,9 +66,10 @@ class StepParser private constructor(private val lexer: StepLexer) {
                 val idx = instance.symbol?.toIntOrNull() ?: throw RuntimeException("")
                 expect(StepToken.Kind.Assign)
                 map[idx] = parseValue()
+                expect(StepToken.Kind.Semi)
+            }else{
+                next()
             }
-
-            next()
         }
 
         for( def in map.values ){
