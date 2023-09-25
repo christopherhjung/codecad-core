@@ -9,6 +9,7 @@ data class Vec2(val x: Double, val y: Double){
     companion object{
         val Zero = Vec2(0.0, 0.0)
 
+        //projects lhs onto rhs
         fun project(lhs: Vec2, rhs: Vec2) : Vec2{
             return rhs * ( lhs.dot(rhs) / rhs.squaredLength() )
         }

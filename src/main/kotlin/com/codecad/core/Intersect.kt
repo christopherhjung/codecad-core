@@ -1,6 +1,7 @@
 package com.codecad.core
 
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -27,22 +28,25 @@ object Intersect {
     fun of(lhs: Circle2d, rhs: Circle2d) : Array<Vec2>{
         val r1 = lhs.radius
         val r2 = rhs.radius
-        val radiusSum = r1 + r2
         val p1 = lhs.center
         val p2 = rhs.center
         val distance = p2.distance(p1)
-        val dir = (p2 - p1) / distance
+        val radiusSum = r1 + r2
         return if(distance > radiusSum){
             emptyArray()
-        }else if(abs(distance - radiusSum) < 1e-10){
-            arrayOf(p1 + dir * r1)
-        }else{
-            val a = 0.5 * (r1*r1 - r2*r2 + distance*distance) / distance
-            val p3 = p1 + dir * a
-            val h = dir * sqrt(r1*r1 - a*a)
-            val i1 = p3.rightTurn(h)
-            val i2 = p3.leftTurn(h)
-            arrayOf(i1, i2)
+        }else {
+            val dir = (p2 - p1) / distance
+
+            if(abs(distance - radiusSum) < 1e-10){
+                arrayOf(p1 + dir * r1)
+            }else{
+                val a = 0.5 * (r1*r1 - r2*r2 + distance*distance) / distance
+                val p3 = p1 + dir * a
+                val h = dir * sqrt(r1*r1 - a*a)
+                val i1 = p3.rightTurn(h)
+                val i2 = p3.leftTurn(h)
+                arrayOf(i1, i2)
+            }
         }
     }
 }
