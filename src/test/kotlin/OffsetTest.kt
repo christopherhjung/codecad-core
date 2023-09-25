@@ -1,5 +1,6 @@
 import com.codecad.core.Circle2d
 import com.codecad.core.Intersect
+import com.codecad.core.LineSegment
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Face
 import com.codecad.core.brep.curve.Line
@@ -54,6 +55,18 @@ class OffsetTest {
 
         val c1 = Circle2d(Vec2(0.0, 0.0), 1.0)
         val c2 = Circle2d(Vec2(4.9, 0.0), 5.0)
+
+        println(Intersect.of(c1, c2).toList())
+    }
+
+    @Test
+    fun importTest2(){
+        /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
+        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
+        offsetFace(face, 1.0)*/
+
+        val c1 = LineSegment(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
+        val c2 = Circle2d(Vec2(0.5, 0.0), 0.5)
 
         println(Intersect.of(c1, c2).toList())
     }
