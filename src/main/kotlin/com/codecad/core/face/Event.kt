@@ -1,12 +1,15 @@
 package com.codecad.core.face
 
-import com.codecad.core.LineSegment
+import com.codecad.core.SketchArc
+import com.codecad.core.SketchCircle
+import com.codecad.core.SketchLine
+import com.codecad.core.SketchEntity
 import com.codecad.core.ast.vec.Vec2
 
 
 data class Event(
     val pos: Vec2,
-    val line: LineSegment,
+    val entity: SketchEntity,
     val origin: Boolean
 ) : Comparable<Event> {
     override fun compareTo(other: Event): Int {
@@ -18,7 +21,7 @@ data class Event(
     }
 }
 
-fun isForward(line: LineSegment) : Boolean{
+fun isForward(line: SketchLine) : Boolean{
     return when{
         line.p0.x < line.p1.x -> true
         line.p0.x > line.p1.x -> false
@@ -26,12 +29,26 @@ fun isForward(line: LineSegment) : Boolean{
     }
 }
 
-fun events(lines: List<LineSegment>) : List<Event>{
+fun events(figures: List<SketchEntity>) : List<Event>{
     val events = ArrayList<Event>()
-    for (line in lines) {
-        val forwards = isForward(line)
-        events.add(Event(line.p0, line, forwards))
-        events.add(Event(line.p1, line, !forwards))
+    for (figure in figures) {
+        when(figure){
+            is SketchLine -> {
+                val first = isForward(figure)
+                events.add(Event(figure.p0, figure, first))
+                events.add(Event(figure.p1, figure, !first))
+            }
+
+            is SketchCircle -> {
+                events.add(Event(figure.center - Vec2.DirX * figure.radius, figure, true))
+                events.add(Event(figure.center + Vec2.DirX * figure.radius, figure, false))
+            }
+
+            is SketchArc -> {
+                events.add(Event(figure.center - Vec2.DirX * figure.radius, figure, true))
+                events.add(Event(figure.center + Vec2.DirX * figure.radius, figure, false))
+            }
+        }
     }
     events.sort()
     return events

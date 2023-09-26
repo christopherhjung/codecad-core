@@ -231,9 +231,9 @@ class MeshGenerator {
                         val projStartPoint = workplane.project2d(startPoint)
                         val projEndPoint = workplane.project2d(endPoint)
 
-                        val startTheta = projStartPoint.absoluteAngle()
+                        val startTheta = projStartPoint.atan2()
                         val offsetPoint = projEndPoint.rotate(-startTheta)
-                        val offsetTheta = offsetPoint.absoluteAngle()
+                        val offsetTheta = offsetPoint.atan2()
                         val theta = startTheta + theta * when(bound.sense){
                             Sense.Opposite -> offsetTheta
                             Sense.Same  -> (offsetTheta - 2.0 * Math.PI)

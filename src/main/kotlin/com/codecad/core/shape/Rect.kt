@@ -1,6 +1,6 @@
 package com.codecad.core.shape
 
-import com.codecad.core.LineSegmentExpr
+import com.codecad.core.SketchLineExpr
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2Expr
 import com.codecad.core.part.Sketch
@@ -13,10 +13,10 @@ class Rect() : Shape() {
 
     lateinit var center: Vec2Expr
 
-    lateinit var top: LineSegmentExpr
-    lateinit var right: LineSegmentExpr
-    lateinit var bottom: LineSegmentExpr
-    lateinit var left: LineSegmentExpr
+    lateinit var top: SketchLineExpr
+    lateinit var right: SketchLineExpr
+    lateinit var bottom: SketchLineExpr
+    lateinit var left: SketchLineExpr
 
     lateinit var width: Expr
     lateinit var height: Expr

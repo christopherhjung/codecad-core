@@ -28,6 +28,16 @@ object Utils {
             throw InterpreterException("Value not iterable")
         }
     }
+
+    fun normalizeAngle(angle : Double) : Double{
+        return if(angle >= 2*Math.PI){
+            angle - 2 * Math.PI
+        }else if(angle < 0.0){
+            angle + 2 * Math.PI
+        }else{
+            angle
+        }
+    }
 }
 
 

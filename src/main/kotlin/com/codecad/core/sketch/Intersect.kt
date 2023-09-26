@@ -1,77 +1,67 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.LineSegment
+import com.codecad.core.*
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.face.Event
 import com.codecad.core.face.events
 
 
-fun findIntersection(line1: LineSegment, line2: LineSegment): Vec2? {
-    val p0_x = line1.p0.x
-    val p0_y = line1.p0.y
-    val p1_x = line1.p1.x
-    val p1_y = line1.p1.y
-    val p2_x = line2.p0.x
-    val p2_y = line2.p0.y
-    val p3_x = line2.p1.x
-    val p3_y = line2.p1.y
+val Comp2D = Comparator.comparing<Vec2, Double> { it.x }.thenComparing(Comparator.comparing { it.y });
+fun cutLines(curves: List<SketchEntity>): List<SketchEntity> {
+    val events = events(curves)
 
-    val s1_x = p1_x - p0_x
-    val s1_y = p1_y - p0_y
-    val s2_x = p3_x - p2_x
-    val s2_y = p3_y - p2_y
-
-    val a = 1.0 / (s1_x * s2_y - s2_x * s1_y)
-    val s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) * a
-    val t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) * a
-
-    val epsilon = 1e-5
-    if (s - epsilon > 0 && s + epsilon < 1 && t - epsilon > 0 && t + epsilon < 1) {
-        val x = p0_x + (t * s1_x)
-        val y = p0_y + (t * s1_y)
-        return Vec2(x, y)
+    val sectionMap = HashMap<SketchEntity, MutableList<Vec2>>()
+    fun addSection(entity: SketchEntity, pos : Vec2 ){
+        sectionMap.computeIfAbsent(entity){ mutableListOf() }.add(pos)
     }
 
-    return null
-}
-
-val Comp2D = Comparator.comparing<Vec2, Double> { it.x }.then(Comparator.comparing { it.y });
-fun cutLines(lines: List<LineSegment>): List<LineSegment> {
-    val events = events(lines)
-
-    val sectionMap = HashMap<LineSegment, MutableList<Vec2>>()
-    fun addSection(line: LineSegment, pos : Vec2 ){
-        sectionMap.computeIfAbsent(line){ mutableListOf() }.add(pos)
-    }
-
-    val actives = HashMap<LineSegment, Event>()
+    val actives = HashMap<SketchEntity, Event>()
     for (event in events) {
         if (event.origin) {
             for (active in actives.values) {
-                findIntersection(active.line, event.line)?.let {
-                    addSection(event.line, it)
-                    addSection(active.line, it)
+                val intersectionPoints = Intersect.of(active.entity, event.entity)
+                intersectionPoints.forEach {
+                    addSection(event.entity, it)
+                    addSection(active.entity, it)
                 }
             }
 
-            actives[event.line] = event
+            actives[event.entity] = event
         } else {
-            actives.remove(event.line)
+            actives.remove(event.entity)
         }
     }
 
-    val result = mutableListOf<LineSegment>()
-    for( line in lines ){
-        val sections = sectionMap[line]
+    val result = mutableListOf<SketchEntity>()
+    for( curve in curves ){
+        val sections = sectionMap[curve]
         if( sections != null ){
-            sections.add(line.p0)
-            sections.add(line.p1)
-            sections.sortWith(Comp2D)
-            for((lhs, rhs) in sections.zipWithNext()){
-                result.add(LineSegment(lhs, rhs))
+            when(curve){
+                is SketchLine -> {
+                    sections.add(curve.p0)
+                    sections.add(curve.p1)
+                    sections.sortWith(Comp2D)
+                    for((lhs, rhs) in sections.zipWithNext()){
+                        result.add(SketchLine(lhs, rhs))
+                    }
+                }
+                is SketchCircle -> {
+                    sections.sortWith(RotaryVec2Comparator(curve.center))
+                    for((lhs, rhs) in sections.rollover()){
+                        result.add(SketchArc(lhs, rhs, curve.center))
+                    }
+                }
+                is SketchArc -> {
+                    sections.add(curve.p0)
+                    sections.add(curve.p1)
+                    sections.sortWith(RotaryVec2Comparator(curve.center, (curve.p0 - curve.center)))
+                    for((lhs, rhs) in sections.zipWithNext()){
+                        result.add(SketchArc(lhs, rhs, curve.center))
+                    }
+                }
             }
         }else{
-            result.add(line)
+            result.add(curve)
         }
     }
 

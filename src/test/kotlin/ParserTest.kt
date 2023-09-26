@@ -91,14 +91,14 @@ class ParserTest {
         scope.setObject("len", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
             val world = scope.world
-            val lhs = args[0] as LineSegmentExpr
+            val lhs = args[0] as SketchLineExpr
             val rhs = Expr.orLiteral(world, args[1])
             return@ObjectFunction sketch.len(lhs, rhs)
         }, true)
         scope.setObject("perp", ObjectFunction{ scope, args ->
             val sketch = scope.sketch
-            val seg0 = args[0] as LineSegmentExpr
-            val seg1 = args[1] as LineSegmentExpr
+            val seg0 = args[0] as SketchLineExpr
+            val seg1 = args[1] as SketchLineExpr
             return@ObjectFunction sketch.perp(seg0, seg1)
         }, true)
         scope.setObject("origin", world.ZeroVec2, true)

@@ -1,7 +1,7 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.LineSegment
-import com.codecad.core.SketchCircle
+import com.codecad.core.SketchLine
+import com.codecad.core.SketchEntity
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
@@ -14,19 +14,17 @@ import kotlin.collections.HashSet
 import kotlin.math.abs
 
 
-
 enum class FaceType{
     Root, Surface, Hole
 }
 
-
-fun createFaceTree(lines: List<LineSegment>): SketchEdgeLoop {
+fun createFaceTree(entities: List<SketchEntity>): SketchEdgeLoop {
     val pointMap = HashMap<Vec2, SketchVertex>()
     fun corner(point: Vec2) : SketchVertex {
         return pointMap.computeIfAbsent(point) { SketchVertex(it) }
     }
-
-    val sections = cutLines(lines)
+/*
+    val sections = cutLines(entities)
     val edges = HashSet<SketchEdge>()
     for (section in sections) {
         val left = corner(section.p0)
@@ -40,10 +38,10 @@ fun createFaceTree(lines: List<LineSegment>): SketchEdgeLoop {
         right.edges.add(b)
         edges.add(a)
         edges.add(b)
-    }
+    }*/
 
     finalizeCorners(pointMap.values)
-    return generateFaces(edges)
+    return generateFaces(listOf())
 }
 
 
@@ -201,9 +199,6 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
 
 private fun isLeft(p0: Vec2, p1: Vec2, p2: Vec2): Double {
     return (p1 - p0).crossZ(p2 - p0)
-
-
-    //return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
 /*
 fun isPointInPolygon3d(point: Vec2, polygon: Iterable<Vec3>): Boolean {
@@ -226,7 +221,7 @@ private fun isLeft3d(p0: Vec3, p1: Vec3, p2: Vec3, normal : Vec3): Double {
     return (p1 - p0).cross(p2 - p1).dot(normal)
 }
 */
-fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<LineSegment>{
+fun sketchToLines(sketch: Sketch, ignoreConstruction: Boolean = false) : List<SketchLine>{
     /*val unifier = Unifier<Vec2>{ lhs,rhs ->
         lhs.distance(rhs) < 0.001
     }

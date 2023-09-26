@@ -8,6 +8,8 @@ import kotlin.math.*
 data class Vec2(val x: Double, val y: Double){
     companion object{
         val Zero = Vec2(0.0, 0.0)
+        val DirX = Vec2(1.0, 0.0)
+        val DirY = Vec2(0.0, 1.0)
 
         //projects lhs onto rhs
         fun project(lhs: Vec2, rhs: Vec2) : Vec2{
@@ -29,8 +31,21 @@ data class Vec2(val x: Double, val y: Double){
         return Vec2(x - vec.y, y + vec.x)
     }
 
-    fun absoluteAngle() : Double{
+    fun atan2() : Double{
         return atan2(y, x)
+    }
+
+    fun absoluteAngle(center : Vec2): Double {
+        return (this - center).absoluteAngle()
+    }
+
+    fun absoluteAngle(): Double {
+        val angle = atan2(y, x)
+        return if(angle < 0.0){
+            2 * Math.PI + angle
+        }else{
+            angle
+        }
     }
 
     fun negate() : Vec2{
