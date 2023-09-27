@@ -48,6 +48,11 @@ data class Vec2(val x: Double, val y: Double){
         }
     }
 
+    fun angleTo(other : Vec2) : Double{
+        val dir = this - other
+        return atan2(dir.x, dir.y)
+    }
+
     fun negate() : Vec2{
         return Vec2(-x, -y)
     }

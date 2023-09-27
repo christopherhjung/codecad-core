@@ -11,6 +11,20 @@ class RotaryComparatorTest {
         val second = Vec2(-1.0, 1.0)
         assertEquals(-1, comp.compare(first, second))
     }
+    @Test
+    fun lineCircleCut10(){
+        val comp = RotaryVec2Comparator(Vec2.Zero, Vec2.DirX)
+        val first = Vec2(0.0, 1.0)
+        val second = Vec2(0.0, -1.0)
+        assertEquals(-1, comp.compare(first, second))
+    }
+    @Test
+    fun lineCircleCut11(){
+        val comp = RotaryVec2Comparator(Vec2.Zero, Vec2.DirX)
+        val first =  Vec2.DirX
+        val second = Vec2(0.0, -1.0)
+        assertEquals(-1, comp.compare(first, second))
+    }
 
     @Test
     fun segmentTestReference(){

@@ -31,13 +31,25 @@ object Utils {
 
     fun normalizeAngle(angle : Double) : Double{
         return if(angle >= 2*Math.PI){
+            angle % (2 * Math.PI)
+        }else if(angle < 0.0){
+            2 * Math.PI - (-angle) % (2 * Math.PI)
+        }else{
+            angle
+        }
+    }
+
+    /*
+
+    fun normalizeAngle(angle : Double) : Double{
+        return if(angle >= 2*Math.PI){
             angle - 2 * Math.PI
         }else if(angle < 0.0){
             angle + 2 * Math.PI
         }else{
             angle
         }
-    }
+    }*/
 }
 
 

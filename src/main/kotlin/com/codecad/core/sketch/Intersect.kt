@@ -54,7 +54,7 @@ fun cutLines(curves: List<SketchEntity>): List<SketchEntity> {
                 is SketchArc -> {
                     sections.add(curve.p0)
                     sections.add(curve.p1)
-                    sections.sortWith(RotaryVec2Comparator(curve.center, (curve.p0 - curve.center)))
+                    sections.sortWith(RotaryVec2Comparator(curve.center, curve.p0 - curve.center))
                     for((lhs, rhs) in sections.zipWithNext()){
                         result.add(SketchArc(lhs, rhs, curve.center))
                     }
