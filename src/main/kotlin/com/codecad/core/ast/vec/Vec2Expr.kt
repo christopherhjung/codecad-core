@@ -15,6 +15,52 @@ data class Vec2(val x: Double, val y: Double){
         fun project(lhs: Vec2, rhs: Vec2) : Vec2{
             return rhs * ( lhs.dot(rhs) / rhs.squaredLength() )
         }
+
+        private fun halfSector(cross : Double) : Boolean{
+            return cross < 0.0
+        }
+
+        private fun sector(halfSector: Boolean, dot : Double) : Int{
+            return if(halfSector){
+                if(dot < 0.0){
+                    3
+                }else{
+                    4
+                }
+            }else{
+                if(dot > 0.0){
+                    1
+                }else{
+                    2
+                }
+            }
+        }
+
+        fun rotaryCmp(reference: Vec2, lhs: Vec2, rhs: Vec2) : Int{
+            val lhsCross = reference.crossZ(lhs)
+            val rhsCross = reference.crossZ(rhs)
+
+            val lhsHalfSector = halfSector(lhsCross)
+            val rhsHalfSector = halfSector(rhsCross)
+            val halfSectorCmp = lhsHalfSector.compareTo(rhsHalfSector)
+
+            if(halfSectorCmp != 0){
+                return halfSectorCmp
+            }
+
+            val lhsDot = reference.dot(lhs)
+            val rhsDot = reference.dot(rhs)
+
+            val lhsSector = sector(lhsHalfSector, lhsDot)
+            val rhsSector = sector(rhsHalfSector, rhsDot)
+            val sectorCmp = lhsSector.compareTo(rhsSector)
+
+            if(sectorCmp != 0){
+                return sectorCmp
+            }
+
+            return 0.0.compareTo(lhs.crossZ(rhs))
+        }
     }
 
     fun skew(newDir : Vec2) : Vec2{

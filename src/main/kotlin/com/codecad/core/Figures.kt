@@ -68,11 +68,12 @@ class SketchCircle(center : Vec2, radius: Double) : SketchConic(center, radius){
     }
 }
 class SketchArc(val p0 : Vec2, val p1: Vec2, center : Vec2) : SketchConic(center, (center - p0).length()){
-    val referenceAngle = p0.absoluteAngle(center)
+    private val p0Dir = p0 - center
+    private val p1Dir = p1 - center
+
     override fun inside(p : Vec2) : Boolean{
-        val pAng1 = Utils.normalizeAngle(p.absoluteAngle(center) - referenceAngle)
-        val pAng2 = Utils.normalizeAngle(p1.absoluteAngle(center) - referenceAngle)
-        return pAng1 <= pAng2
+        val cmp = Vec2.rotaryCmp(p0Dir, p - center, p1Dir)
+        return cmp != 1
     }
 }
 
