@@ -10,7 +10,6 @@ import com.codecad.core.part.Sketch
 import com.codecad.core.rollover
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 import kotlin.math.abs
 
 
@@ -47,7 +46,7 @@ fun createFaceTree(entities: List<SketchEntity>): SketchEdgeLoop {
 
 fun finalizeCorners(vertices : Collection<SketchVertex>){
     for(corner in vertices){
-        corner.edges.sortWith(RotaryComparator)
+        corner.edges.sortWith(RotaryEdgeComparator)
 
         for((top, bottom) in corner.edges.rollover()){
             assert(top.twin.target === bottom.source)

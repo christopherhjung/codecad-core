@@ -1,0 +1,16 @@
+package com.codecad.core.sketch
+
+import com.codecad.core.ast.vec.Vec2
+
+object RotaryEdgeComparator : Comparator<SketchEdge>{
+    override fun compare(lhs: SketchEdge, rhs: SketchEdge): Int {
+        return Vec2.rotaryCmp(Vec2.DirX, lhs.target.point - lhs.source.point, rhs.target.point - rhs.source.point)
+    }
+}
+
+class RotaryVertexComparator(private val center : Vec2, private val reference : Vec2 = Vec2.DirX) : Comparator<Vec2>{
+    override fun compare(lhs: Vec2, rhs: Vec2): Int {
+        return Vec2.rotaryCmp(reference, lhs - center, rhs - center)
+    }
+}
+
