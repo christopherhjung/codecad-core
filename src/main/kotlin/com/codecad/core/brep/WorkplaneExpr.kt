@@ -102,13 +102,6 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
 
 
 
-fun Workplane<Vec3>.withOrigin(origin: Vec3) : Workplane<Vec3> {
-    return Workplane(origin, normal, x)
-}
-
-fun Workplane<Vec3>.withNormal(normal: Vec3) : Workplane<Vec3> {
-    return Workplane(origin, normal, x)
-}
 
 
 
@@ -159,6 +152,15 @@ class Workplane<T : Vec<T>>(val origin: T, val normal: T, val x: T){
         assert(abs(normal.squaredLength() - 1.0) < 1e-5)
         assert(abs(x.squaredLength() - 1.0) < 1e-5)
     }
+
+    fun withOrigin(origin: T) : Workplane<T> {
+        return Workplane(origin, normal, x)
+    }
+
+    fun withNormal(normal: T) : Workplane<T> {
+        return Workplane(origin, normal, x)
+    }
+
 
     fun move(offset: T) : Workplane<T>{
         return Workplane(origin + offset, normal, x)

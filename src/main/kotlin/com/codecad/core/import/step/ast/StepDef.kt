@@ -200,7 +200,7 @@ val StepObject.end get() = when(type){
     else -> throw RuntimeException()
 }
 
-fun StepObject.curve(context: GeometricContext) : Curve{
+fun StepObject.curve(context: GeometricContext) : Curve<Vec3>{
     return when(type){
         "EDGE_CURVE" -> (args[3].asObject()).curve(context)
         "LINE" -> Line(start.vec(context), end.vec(context))
@@ -222,7 +222,7 @@ fun StepObject.curve(context: GeometricContext) : Curve{
     }
 }
 
-fun StepObject.workplane(context: GeometricContext) : Workplane{
+fun StepObject.workplane(context: GeometricContext) : Workplane<Vec3>{
     val axisPlacement = when(type){
         "CIRCLE",
         "ELLIPSE",

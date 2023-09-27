@@ -12,11 +12,11 @@ enum class CombineKind{
     Add, Subtract, Intersect
 }
 
-class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve){
+class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>){
 }
 
 object BooleanCombine{
-    val curves = arrayListOf<Curve>()
+    val curves = arrayListOf<Curve<Vec3>>()
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
 
@@ -54,7 +54,7 @@ object BooleanCombine{
 
     var count = 0
     var test = 0
-    fun cutEdge(lhsEdge: Edge, rhsFace: Face, rhsPlane : Plane){
+    fun cutEdge(lhsEdge: Edge<Vec3>, rhsFace: Face, rhsPlane : Plane){
         when(val curve = lhsEdge.curve){
             is Line -> {
                 val intersection = rhsPlane.intersect(curve)
@@ -77,13 +77,13 @@ object BooleanCombine{
         return true
     }
 
-    fun isInside(point: Vec3, bound: FaceBound, workplane : Workplane) : Boolean{
+    fun isInside(point: Vec3, bound: FaceBound, workplane : Workplane<Vec3>) : Boolean{
         val projPoint = workplane.project2d(point)
         val points = bound.loop.map { workplane.project2d(it.edge.start!!.point) }
         return isPointInPolygon(projPoint, points)
     }
 
-    fun combine(lhsFace: Face, rhsFace: Face) : Curve{
+    fun combine(lhsFace: Face, rhsFace: Face) : Curve<Vec3>{
         val lhsSurface = lhsFace.surface
         val rhsSurface = rhsFace.surface
 
@@ -104,7 +104,7 @@ object BooleanCombine{
         throw RuntimeException("Not implemented")
     }
 
-    fun combine(lhsSurface: PlaneSurface, rhsSurface: PlaneSurface) : Line{
+    fun combine(lhsSurface: PlaneSurface, rhsSurface: PlaneSurface) : Line<Vec3>{
         return Workplane.intersect(lhsSurface.workplane, rhsSurface.workplane)
     }
 }

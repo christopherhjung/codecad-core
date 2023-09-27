@@ -10,7 +10,7 @@ enum class FaceBoundKind{
     OuterBound, InnerBound
 }
 
-class FaceBound(var loop : Loop, var sense: FaceBoundKind){
+class FaceBound(var loop : Loop<Vec3>, var sense: FaceBoundKind){
 
 }
 enum class EdgeOrientation{
@@ -45,6 +45,33 @@ class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrienta
     }
 }
 
+
+fun Loop<Vec3>.computeArea() : Double{
+    var area = Vec3.Zero
+
+    for( loop in this ){
+        val edge = loop.edge
+        val bound = edge.bound
+
+        if(bound != null){
+            area += bound.start.point.cross(bound.end.point) * 0.5
+        }else{
+            val edge = edge.edge
+            val curve = edge.curve
+
+            when(curve){
+                is Circle -> {
+                    val workplane = curve.workplane
+                    val normal = workplane.normal
+
+                }
+            }
+        }
+    }
+
+    return area.length()
+}
+
 class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     lateinit var prev : Loop<T>
     lateinit var next : Loop<T>
@@ -55,7 +82,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         return prev === next
     }
 
-    override fun iterator(): Iterator<Loop> {
+    override fun iterator(): Iterator<Loop<T>> {
         return LoopIterator(this)
     }
 
@@ -68,33 +95,6 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         }
     }
 
-    fun computeArea() : Double{
-        var area = Vec3.Zero
-
-        for( loop in this ){
-            val edge = loop.edge
-            val bound = edge.bound
-
-            if(bound != null){
-                area += bound.start.point.cross(bound.end.point) * 0.5
-            }else{
-                val edge = edge.edge
-                val curve = edge.curve
-
-                when(curve){
-                    is Circle -> {
-                        val workplane = curve.workplane
-                        val normal = workplane.normal
-
-
-
-                    }
-                }
-            }
-        }
-
-        return area.length()
-    }
 
     fun nextPoints(num: Int) : List<T>{
         val result = arrayListOf<T>()
@@ -161,26 +161,26 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 
     companion object{
-        fun of(edge: Edge) : Loop {
+        fun <T : Vec<T>> of(edge: Edge<T>) : Loop<T> {
             val loop = Loop(OrientedEdge(edge))
             loop.next = loop
             loop.prev = loop
             return loop
         }
 
-        fun forward(vararg edges: Edge) : Loop {
+        fun <T : Vec<T>> forward(vararg edges: Edge<T>) : Loop<T> {
             return of(edges.map { OrientedEdge(it, EdgeOrientation.Forward) })
         }
 
-        fun of(vararg edges: OrientedEdge) : Loop {
+        fun <T : Vec<T>> of(vararg edges: OrientedEdge<T>) : Loop<T> {
             return of(edges.toList())
         }
 
-        fun combine(vararg loops: Loop) : Loop {
+        fun <T : Vec<T>> combine(vararg loops: Loop<T>) : Loop<T> {
             return ofLoops(loops.toList())
         }
 
-        fun of(edges: Iterable<OrientedEdge>) : Loop {
+        fun <T : Vec<T>> of(edges: Iterable<OrientedEdge<T>>) : Loop<T> {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
@@ -202,7 +202,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             return firstLoop
         }
 
-        fun ofLoops(loops: Iterable<Loop>) : Loop {
+        fun <T : Vec<T>> ofLoops(loops: Iterable<Loop<T>>) : Loop<T> {
             val iterator = loops.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
@@ -222,16 +222,16 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             return firstLoop
         }
 
-        fun polygon(vararg vertices: Vec3) : Loop{
+        fun <T : Vec<T>> polygon(vararg vertices: T) : Loop<T>{
             return polygon(vertices.map { Vertex(it) })
         }
 
-        fun polygon(vararg vertices: Vertex) : Loop{
+        fun <T : Vec<T>> polygon(vararg vertices: Vertex<T>) : Loop<T>{
             return polygon(vertices.asIterable())
         }
 
-        fun polygon(vertices: Iterable<Vertex>) : Loop{
-            val edges = arrayListOf<OrientedEdge>()
+        fun <T : Vec<T>> polygon(vertices: Iterable<Vertex<T>>) : Loop<T>{
+            val edges = arrayListOf<OrientedEdge<T>>()
 
             for((lhs, rhs) in vertices.asIterable().rollover() ){
                 edges.add(OrientedEdge(Edge.line(lhs, rhs)))
@@ -242,7 +242,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 }
 
-class StarLoopIterator(loop : Loop) : Iterator<Loop>{
+class StarLoopIterator<T : Vec<T>>(loop : Loop<T>) : Iterator<Loop<T>>{
     var backLoop = loop.twin!!
     var currentNext = loop.next
 
@@ -250,14 +250,14 @@ class StarLoopIterator(loop : Loop) : Iterator<Loop>{
         return currentNext !== backLoop
     }
 
-    override fun next(): Loop {
+    override fun next(): Loop<T> {
         val result = currentNext
         currentNext = currentNext.twin!!.next
         return result
     }
 }
 
-class LoopIterator(val init : Loop) : Iterator<Loop>{
+class LoopIterator<T : Vec<T>>(val init : Loop<T>) : Iterator<Loop<T>>{
     var first = true
     var current = init
     var watchdog = 0
@@ -265,7 +265,7 @@ class LoopIterator(val init : Loop) : Iterator<Loop>{
         return first || init !== current
     }
 
-    override fun next(): Loop {
+    override fun next(): Loop<T> {
         val result = current
         current = current.next
         first = false

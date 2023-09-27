@@ -8,7 +8,7 @@ import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.volume.Volume
 
 object VolumeSuite {
-    fun createCylinder(bottomWorkplane: Workplane, outerRadius: Double, height: Double) : Volume {
+    fun createCylinder(bottomWorkplane: Workplane<Vec3>, outerRadius: Double, height: Double) : Volume {
 
         val topWorkplane = Workplane(
             bottomWorkplane.origin + bottomWorkplane.normal * height,
@@ -42,7 +42,7 @@ object VolumeSuite {
         return volume
     }
 
-    fun createPipe(bottomWorkplane: Workplane, outerRadius: Double, innerRadius: Double, height: Double) : Volume {
+    fun createPipe(bottomWorkplane: Workplane<Vec3>, outerRadius: Double, innerRadius: Double, height: Double) : Volume {
 
         val topWorkplane = bottomWorkplane.move(bottomWorkplane.normal * height)
         val zeroXYWorkplane = bottomWorkplane.withOrigin(Vec3.Zero)
@@ -87,7 +87,7 @@ object VolumeSuite {
     }
 
 
-    fun createCircleWithHole(bottomWorkplane: Workplane, outerRadius: Double, innerRadius: Double) : Face {
+    fun createCircleWithHole(bottomWorkplane: Workplane<Vec3>, outerRadius: Double, innerRadius: Double) : Face {
         val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
         val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))
 
@@ -101,7 +101,7 @@ object VolumeSuite {
         return face
     }
 
-    fun createCircle(bottomWorkplane: Workplane, radius: Double) : Face {
+    fun createCircle(bottomWorkplane: Workplane<Vec3>, radius: Double) : Face {
         val bottomEdge = Edge(Circle(bottomWorkplane, radius))
         val bottomSurface = PlaneSurface(bottomWorkplane)
         val bottomLoop = Loop.of(bottomEdge)
@@ -109,7 +109,7 @@ object VolumeSuite {
         return face
     }
 
-    fun createPlane(workplane: Workplane, size: Double) : Face {
+    fun createPlane(workplane: Workplane<Vec3>, size: Double) : Face {
         val halfSize = size / 2.0
 
         val a = Vertex(workplane.unproject(-halfSize, -halfSize))
@@ -125,7 +125,7 @@ object VolumeSuite {
         return face
     }
 
-    fun createTriangle(workplane: Workplane, size: Double) : Face {
+    fun createTriangle(workplane: Workplane<Vec3>, size: Double) : Face {
         val halfSize = size / 2.0
 
         val a = Vertex(workplane.unproject(-halfSize, -halfSize))
@@ -140,7 +140,7 @@ object VolumeSuite {
         return face
     }
 
-    fun roundedPlane(workplane: Workplane, size: Double, radius: Double) : Face {
+    fun roundedPlane(workplane: Workplane<Vec3>, size: Double, radius: Double) : Face {
         val origin = workplane.origin
         val halfSize = size / 2.0
         val halfLength = halfSize - radius
@@ -179,7 +179,7 @@ object VolumeSuite {
         return face
     }
 
-    fun splineCircle(workplane: Workplane, radius: Double) : Face {
+    fun splineCircle(workplane: Workplane<Vec3>, radius: Double) : Face {
         val origin = workplane.origin
 
         val aPoint = BSplineControlPoint(workplane.unproject(-radius, -radius), 1.0)

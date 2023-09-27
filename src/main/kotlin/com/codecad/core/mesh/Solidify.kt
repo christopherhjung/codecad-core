@@ -76,7 +76,7 @@ object Solidify {
 
     val deletedFaces = hashSetOf<Face>()
     private fun mergeFace(parentFace : Face, faces: Set<Face>) : Face{
-        val loops = hashSetOf<Loop>()
+        val loops = hashSetOf<Loop<Vec3>>()
         deletedFaces.addAll(faces)
 
         var mergedOrigin = Vec3.Zero
@@ -99,7 +99,7 @@ object Solidify {
 
         mergedOrigin /= faces.size
 
-        val faceBoundLoops = arrayListOf<Loop>()
+        val faceBoundLoops = arrayListOf<Loop<Vec3>>()
         while(loops.isNotEmpty()){
             var currentLoop = loops.first()
             val initLoop = currentLoop
@@ -143,7 +143,7 @@ object Solidify {
         return mergeFace
     }
 
-    fun direction(loop: Loop) : Vec3{
+    fun direction(loop: Loop<Vec3>) : Vec3{
         val orientedEdge = loop.edge
         val edge = orientedEdge.edge
         val curve = edge.curve
@@ -246,15 +246,15 @@ object Solidify {
 
 
     val MaxTurn = sin(Math.PI / 6.0)
-    private fun getVertices(loops: List<Loop>) : List<Vertex>{
+    private fun getVertices(loops: List<Loop<Vec3>>) : List<Vertex<Vec3>>{
         return loops.map { it.edge.start!! } + loops.last().edge.end!!
     }
 
-    class EdgeFitNode(val loops : List<Loop>, val end : Loop, val dir: Vec3, val normal: Vec3?){
+    class EdgeFitNode(val loops : List<Loop<Vec3>>, val end : Loop<Vec3>, val dir: Vec3, val normal: Vec3?){
         val size get() = loops.size
 
-        fun expand(nextLoop : Loop, nextDir : Vec3, nextNormal : Vec3) : EdgeFitNode{
-            val loops = ArrayList<Loop>(loops.size + 1)
+        fun expand(nextLoop : Loop<Vec3>, nextDir : Vec3, nextNormal : Vec3) : EdgeFitNode{
+            val loops = ArrayList<Loop<Vec3>>(loops.size + 1)
             loops.addAll(this.loops)
             loops.add(nextLoop)
 
@@ -262,7 +262,7 @@ object Solidify {
         }
     }
 
-    private fun traceEdge(loop: Loop){
+    private fun traceEdge(loop: Loop<Vec3>){
         val worklist = LinkedList<EdgeFitNode>()
         worklist.add(EdgeFitNode(listOf(loop), loop, direction(loop),null))
 
@@ -292,7 +292,7 @@ object Solidify {
         }
     }
 
-    val loop2Curve = hashMapOf<Loop, MutableList<Curve>>()
+    val loop2Curve = hashMapOf<Loop<Vec3>, MutableList<Curve<Vec3>>>()
     fun fitEdge(node : EdgeFitNode){
         val vertices = getVertices(node.loops)
         val points3d = vertices.map { it.point }

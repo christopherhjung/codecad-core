@@ -26,8 +26,8 @@ object Extruder{
         val faces = arrayListOf<Face>()
         faces.add(baseFace)
 
-        val map = hashMapOf<Vertex, Edge>()
-        fun extrusionLine(start: Vertex, end: Vertex) : Edge {
+        val map = hashMapOf<Vertex<Vec3>, Edge<Vec3>>()
+        fun extrusionLine(start: Vertex<Vec3>, end: Vertex<Vec3>) : Edge<Vec3> {
             return map.computeIfAbsent(start){ Edge.line(start, end) }
         }
 
@@ -94,14 +94,14 @@ object Extruder{
     }
 
     private fun offsetFace(face : Face, offset : Vec3, normal: Vec3) : Face {
-        val map = hashMapOf<Vertex, Vertex>()
-        fun remap(vertex: Vertex) : Vertex {
+        val map = hashMapOf<Vertex<Vec3>, Vertex<Vec3>>()
+        fun remap(vertex: Vertex<Vec3>) : Vertex<Vec3> {
             return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
         }
 
         val faceBounds = arrayListOf<FaceBound>()
         for( faceBound in face.bounds ) {
-            val edges = arrayListOf<OrientedEdge>()
+            val edges = arrayListOf<OrientedEdge<Vec3>>()
             for (currentEdgeLoop in faceBound.loop) {
                 val orientedEdge = currentEdgeLoop.edge
                 val edge = orientedEdge.edge

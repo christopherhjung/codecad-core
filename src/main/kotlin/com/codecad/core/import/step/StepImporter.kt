@@ -14,7 +14,7 @@ val DefaultGeometricContext = GeometricContext(1.0, 1.0)
 class StepImporter{
     private val vertices = hashMapOf<StepObject, Vertex<Vec3>>()
     private val edges = hashMapOf<StepObject, Edge<Vec3>>()
-    private val edge2loop = hashMapOf<Edge<Vec3>, Loop>()
+    private val edge2loop = hashMapOf<Edge<Vec3>, Loop<Vec3>>()
     private lateinit var geometricContext : GeometricContext
 
     fun importSIUnit(siUnit : StepObject) : Double{

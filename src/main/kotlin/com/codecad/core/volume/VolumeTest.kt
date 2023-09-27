@@ -1,16 +1,17 @@
 package com.codecad.core.volume
 
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
 
 class Debugger{
     var indent = 0
-    val vertices = hashMapOf<Vertex, Int>()
+    val vertices = hashMapOf<Vertex<Vec3>, Int>()
     val faces = hashMapOf<Face, Int>()
     val vertexBuilder = StringBuilder()
     val faceBuilder = StringBuilder()
 
-    fun getVertexIndex(vertex: Vertex) : Int{
+    fun getVertexIndex(vertex: Vertex<Vec3>) : Int{
         return vertices.computeIfAbsent(vertex){
             val nextIdx = vertices.size
             vertexBuilder.append(nextIdx).append(" = ").append(vertex.point).append("\n")

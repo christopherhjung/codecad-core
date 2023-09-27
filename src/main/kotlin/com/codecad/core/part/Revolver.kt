@@ -13,7 +13,7 @@ import kotlin.math.abs
 
 class Revolver(){
 
-    fun revolve(face: Face, axis: Line, theta: Double) : Volume {
+    fun revolve(face: Face, axis: Line<Vec3>, theta: Double) : Volume {
         val quat = Quaternion.fromAxis(axis.direction, theta)
 
         val shells = arrayListOf<Shell>()

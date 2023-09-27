@@ -11,20 +11,8 @@ import java.nio.ByteOrder
 import kotlin.math.abs
 
 
-private class StlVertex(val vertex: Vertex, val idx: Int){
+private class StlVertex(val vertex: Vertex<Vec3>, val idx: Int){
     val point get() = vertex.point
-}
-
-class VertexPair(val lhs: Vertex, val rhs: Vertex){
-    override fun equals(other: Any?): Boolean {
-        return this === other || other is VertexPair &&
-                ( ( lhs == other.lhs && rhs == other.rhs )
-                || ( lhs == other.rhs && rhs == other.lhs ) )
-    }
-
-    override fun hashCode(): Int {
-        return System.identityHashCode(lhs) xor System.identityHashCode(rhs)
-    }
 }
 
 class StlImporter : Importer {
@@ -35,8 +23,8 @@ class StlImporter : Importer {
         val count = buffer.getInt()
 
         val vertices = HashMap<Vec3, StlVertex>()
-        val edges = HashMap<Pair<StlVertex, StlVertex>, Edge>()
-        val loops = HashMap<Pair<StlVertex, StlVertex>, Loop>()
+        val edges = HashMap<Pair<StlVertex, StlVertex>, Edge<Vec3>>()
+        val loops = HashMap<Pair<StlVertex, StlVertex>, Loop<Vec3>>()
         var idx = 0
         fun nextVec3() : Vec3{
             val x = buffer.getFloat()
@@ -51,7 +39,7 @@ class StlImporter : Importer {
             return vertices.computeIfAbsent(point){StlVertex(Vertex(point), idx++)}
         }
 
-        fun createEdge(lhs: StlVertex, rhs: StlVertex) : Loop{
+        fun createEdge(lhs: StlVertex, rhs: StlVertex) : Loop<Vec3>{
             val pair = if(lhs.idx < rhs.idx){
                 Pair(lhs, rhs)
             }else{

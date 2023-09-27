@@ -46,9 +46,9 @@ class StepExport : ModelExport{
     private val DefaultColor = Color(157, 207, 237);
 
     private val data = StringBuilder()
-    private val vertices = hashMapOf<Vertex, Id>()
-    private val edges = hashMapOf<Edge, Id>()
-    private val circleSeam = hashMapOf<Edge, Vertex>()
+    private val vertices = hashMapOf<Vertex<Vec3>, Id>()
+    private val edges = hashMapOf<Edge<Vec3>, Id>()
+    private val circleSeam = hashMapOf<Edge<Vec3>, Vertex<Vec3>>()
     private var index = 10
 
     data class Id(val value : Int)
@@ -158,7 +158,7 @@ class StepExport : ModelExport{
         return addNamedObject("EDGE_CURVE", start, end, curve, sense)
     }
 
-    private fun createEdgeCurve(edge: Edge) : Id{
+    private fun createEdgeCurve(edge: Edge<Vec3>) : Id{
         return edges.computeIfAbsent(edge){
             val bound = edge.bound
 
@@ -180,7 +180,7 @@ class StepExport : ModelExport{
         }
     }
 
-    private fun createVertexPoint(vertex: Vertex) : Id{
+    private fun createVertexPoint(vertex: Vertex<Vec3>) : Id{
         return vertices.computeIfAbsent(vertex){
             addNamedObject("VERTEX_POINT", createCartesianPoint(vertex.point))
         }
@@ -337,7 +337,7 @@ class StepExport : ModelExport{
         addNamedObject("SHAPE_REPRESENTATION_RELATIONSHIP", "''", shapeRepresentation, shapeRep)
     }
 
-    private fun createAxisPlacement(workplane: Workplane) : Id{
+    private fun createAxisPlacement(workplane: Workplane<Vec3>) : Id{
         return createAxisPlacement(createCartesianPoint(workplane.origin), createDirection(workplane.normal), createDirection(workplane.x))
     }
 
@@ -396,7 +396,7 @@ class StepExport : ModelExport{
         return sb.toString()
     }
 
-    private fun createCurve(curve: Curve) : Id{
+    private fun createCurve(curve: Curve<Vec3>) : Id{
         return when(curve){
             is Line -> createLine(createCartesianPoint(curve.origin), createVector(curve.direction))
             is Circle -> createCircle(createAxisPlacement(curve.workplane), curve.radius)

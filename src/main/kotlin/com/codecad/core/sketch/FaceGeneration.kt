@@ -3,6 +3,7 @@ package com.codecad.core.sketch
 import com.codecad.core.SketchLine
 import com.codecad.core.SketchEntity
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.face.SketchEdgeLoop
@@ -158,7 +159,7 @@ fun collectSurfaces(parentSurface : SketchEdgeLoop, surfaces : MutableList<Sketc
     }
 }
 
-fun SketchEdgeLoop.toFace(workplane: Workplane) : Face{
+fun SketchEdgeLoop.toFace(workplane: Workplane<Vec3>) : Face{
     val points = when (type) {
         FaceType.Root -> emptyList()
         else -> points.toList()

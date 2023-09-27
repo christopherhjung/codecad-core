@@ -17,8 +17,8 @@ import kotlin.math.abs
 
 
 class MeshGenerator {
-    val orientedEdgePoints = HashMap<OrientedEdge, List<Vec3>>()
-    val edgePoints = HashMap<Edge, List<Vec3>>()
+    val orientedEdgePoints = HashMap<OrientedEdge<Vec3>, List<Vec3>>()
+    val edgePoints = HashMap<Edge<Vec3>, List<Vec3>>()
 
     val map = HashMap<Vec3, Int>()
     val indices = arrayListOf<Int>()
@@ -67,7 +67,7 @@ class MeshGenerator {
         }else if(surface is CylindricalSurface){
             val projector = CylinderProjector(surface.workplane, surface.radius)
 
-            class CylindricalVertex(val edge: OrientedEdge, val vertexPoint : Vec3, val projPoint: Vec2) : Comparable<CylindricalVertex>{
+            class CylindricalVertex(val edge: OrientedEdge<Vec3>, val vertexPoint : Vec3, val projPoint: Vec2) : Comparable<CylindricalVertex>{
                 lateinit var prev : CylindricalVertex
                 lateinit var next : CylindricalVertex
                 val nextList = arrayListOf<CylindricalVertex>()
@@ -179,7 +179,7 @@ class MeshGenerator {
         }
     }
 
-    fun sweepVertices(loop: Loop) : List<Vec3>{
+    fun sweepVertices(loop: Loop<Vec3>) : List<Vec3>{
         val vertices = arrayListOf<Vec3>()
         for(current in loop){
             vertices.addAll(sweepOrientedEdge(current.edge))
@@ -188,13 +188,13 @@ class MeshGenerator {
         return vertices
     }
 
-    fun sweepOrientedEdge(edge: OrientedEdge) : List<Vec3>{
+    fun sweepOrientedEdge(edge: OrientedEdge<Vec3>) : List<Vec3>{
         return orientedEdgePoints.computeIfAbsent(edge){
             sweepOrientedEdgeImpl(it)
         }
     }
 
-    fun sweepOrientedEdgeImpl(orientedEdge: OrientedEdge) : List<Vec3>{
+    fun sweepOrientedEdgeImpl(orientedEdge: OrientedEdge<Vec3>) : List<Vec3>{
         val edge = orientedEdge.edge
         val curve = edge.curve
         val bound = orientedEdge.bound

@@ -4,6 +4,7 @@ import com.codecad.core.*
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.primitive.ParamExpr
 import com.codecad.core.ast.vec.Vec2Expr
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.constraint.*
 import com.codecad.core.brep.curve.Circle
@@ -15,7 +16,7 @@ import com.codecad.core.sketch.toFace
 import java.util.*
 
 
-class Sketch(val partStudio: PartStudio, val workplane : Workplane, val name: String) {
+class Sketch(val partStudio: PartStudio, val workplane : Workplane<Vec3>, val name: String) {
     val params = HashSet<ParamExpr>()
     val constraints = HashSet<Constraint>()
     val world = partStudio.world

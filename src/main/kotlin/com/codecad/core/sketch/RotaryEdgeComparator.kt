@@ -11,7 +11,11 @@ object RotaryEdgeComparator : Comparator<SketchEdge>{
 
 class RotaryVertexComparator(private val center : Vec2, private val reference : Vec2 = Vec2.DirX) : Comparator<Vertex<Vec2>>{
     override fun compare(lhs: Vertex<Vec2>, rhs: Vertex<Vec2>): Int {
-        return Vec2.rotaryCmp(reference, lhs.point - center, rhs.point - center)
+        return compare(lhs.point, rhs.point)
+    }
+
+    fun compare(lhs: Vec2, rhs: Vec2): Int {
+        return Vec2.rotaryCmp(reference, lhs - center, rhs - center)
     }
 }
 
