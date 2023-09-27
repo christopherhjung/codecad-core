@@ -1,34 +1,35 @@
 package com.codecad.core.brep.curve
 
 import com.codecad.core.ast.primitive.Expr
+import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.Workplane
 import com.codecad.core.brep.WorkplaneExpr
 
-class Line(var origin : Vec3, var direction : Vec3) : Curve(){
+class Line<T : Vec<T>>(var origin : T, var direction : T) : Curve<T>(){
     companion object{
-        fun fromTo(start : Vec3, end : Vec3) : Line {
+        fun <T : Vec<T>> fromTo(start : T, end : T) : Line<T> {
             return Line((start + end) / 2.0, (end - start).normalized())
         }
     }
 
-    override fun move(offset: Vec3): Curve {
+    override fun move(offset: T): Curve<T> {
         return Line(origin + offset, direction)
     }
 
-    fun projectPoint(point: Vec3) : Vec3{
+    fun projectPoint(point: T) : T{
         val offset = point - origin
-        return origin + Vec3.project(offset, direction)
+        return origin + offset.projectOn(direction)
     }
 
-    fun alignWorkplane(point: Vec3) : Workplane{
+    fun alignWorkplane(point: T) : Workplane<T>{
         val center = projectPoint(point)
         val radial = point - center
         return Workplane(center, direction, radial.normalized())
     }
 
-    fun distanceTo(point: Vec3) : Double {
+    fun distanceTo(point: T) : Double {
         return (point - projectPoint(point)).length()
     }
 }

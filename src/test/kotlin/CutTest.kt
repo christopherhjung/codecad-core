@@ -19,7 +19,7 @@ class CutTest {
     @Test
     fun lineArcCut(){
         val lines = cutLines(listOf(
-            SketchArc(Vec2(5.0, 1.0), Vec2(-5.0, -1.0), Vec2.Zero),
+            SketchArc(Vec2(5.0, -1.0), Vec2(-5.0, -1.0), Vec2.Zero),
             SketchLine(Vec2(-10.0, 0.0), Vec2(10.0, 0.0))
         ))
 

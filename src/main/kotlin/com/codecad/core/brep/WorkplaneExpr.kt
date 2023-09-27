@@ -1,10 +1,7 @@
 package com.codecad.core.brep
 
 import com.codecad.core.ast.primitive.Expr
-import com.codecad.core.ast.vec.Vec2
-import com.codecad.core.ast.vec.Vec2Expr
-import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
+import com.codecad.core.ast.vec.*
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.rollover
 import com.codecad.core.scope.Scope
@@ -20,7 +17,7 @@ class Plane(val normal: Vec3, val distance: Double){
         return point - normal * distanceTo(point)
     }
 
-    fun intersect(rhs : Line) : Vec3? {
+    fun intersect(rhs : Line<Vec3>) : Vec3? {
         val p0 = rhs.origin
         val dir = rhs.origin
 
@@ -41,7 +38,7 @@ class Plane(val normal: Vec3, val distance: Double){
             return a.normal * factor
         }
 
-        fun intersect(lhs : Plane, rhs : Plane) : Line {
+        fun intersect(lhs : Plane, rhs : Plane) : Line<Vec3> {
             val direction = lhs.normal.cross(rhs.normal).normalized()
             val origin = projectPlane(lhs, rhs) + projectPlane(rhs, lhs)
             return Line(origin, direction)
@@ -67,7 +64,7 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
         }
     }
 
-    override fun eval(scope: Scope): Workplane {
+    override fun eval(scope: Scope): Workplane<Vec3> {
         return Workplane(origin.eval(), normal.eval(), x.eval())
     }
 
@@ -103,66 +100,71 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
     }
 }
 
-class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
-    val y get() = normal.cross(x)
+
+
+fun Workplane<Vec3>.withOrigin(origin: Vec3) : Workplane<Vec3> {
+    return Workplane(origin, normal, x)
+}
+
+fun Workplane<Vec3>.withNormal(normal: Vec3) : Workplane<Vec3> {
+    return Workplane(origin, normal, x)
+}
+
+
+
+fun Workplane<Vec3>.unproject(point: Vec2) : Vec3 {
+    return unproject(point.x, point.y)
+}
+
+fun Workplane<Vec3>.unprojectDir(point: Vec2) : Vec3 {
+    return unprojectDir(point.x, point.y)
+}
+
+fun Workplane<Vec3>.unproject(x: Double, y: Double) : Vec3 {
+    return unprojectDir(x, y) + origin
+}
+
+fun Workplane<Vec3>.unprojectDir(x: Double, y: Double) : Vec3 {
+    val yAxis = normal.cross(this.x)
+    return this.x * x + yAxis * y
+}
+
+fun Workplane<Vec3>.project2d(point: Vec3) : Vec2 {
+    val fromOrigin = point - origin
+    return projectDir2d(fromOrigin)
+}
+
+fun Workplane<Vec3>.projectDir2d(dir: Vec3) : Vec2 {
+    val x = x.dot(dir) / x.squaredLength()
+    val yAxis = normal.cross(this.x)
+    val y = yAxis.dot(dir) / yAxis.squaredLength()
+    return Vec2(x,y)
+}
+
+fun Workplane<Vec3>.project3d(point: Vec3) : Vec3 {
+    return toPlane().project(point)
+}
+
+fun Workplane<Vec3>.toPlane() : Plane{
+    return Plane.from(origin, normal)
+}
+
+fun Workplane<Vec3>.distanceTo(p: Vec3) : Double{
+    return toPlane().distanceTo(p)
+}
+
+class Workplane<T : Vec<T>>(val origin: T, val normal: T, val x: T){
 
     init {
         assert(abs(normal.squaredLength() - 1.0) < 1e-5)
         assert(abs(x.squaredLength() - 1.0) < 1e-5)
     }
 
-    fun withOrigin(origin: Vec3) : Workplane {
-        return Workplane(origin, normal, x)
-    }
-
-    fun withNormal(normal: Vec3) : Workplane {
-        return Workplane(origin, normal, x)
-    }
-
-    fun unproject(point: Vec2) : Vec3 {
-        return unproject(point.x, point.y)
-    }
-
-    fun unprojectDir(point: Vec2) : Vec3 {
-        return unprojectDir(point.x, point.y)
-    }
-
-    fun unproject(x: Double, y: Double) : Vec3 {
-        return unprojectDir(x, y) + origin
-    }
-
-    fun unprojectDir(x: Double, y: Double) : Vec3 {
-        return this.x * x + this.y * y
-    }
-
-    fun project2d(point: Vec3) : Vec2 {
-        val fromOrigin = point - origin
-        return projectDir2d(fromOrigin)
-    }
-
-    fun projectDir2d(dir: Vec3) : Vec2 {
-        val x = x.dot(dir) / x.squaredLength()
-        val y = y.dot(dir) / y.squaredLength()
-        return Vec2(x,y)
-    }
-
-    fun project3d(point: Vec3) : Vec3 {
-        return toPlane().project(point)
-    }
-
-    fun toPlane() : Plane{
-        return Plane.from(origin, normal)
-    }
-
-    fun distanceTo(p: Vec3) : Double{
-        return toPlane().distanceTo(p)
-    }
-
-    fun move(offset: Vec3) : Workplane{
+    fun move(offset: T) : Workplane<T>{
         return Workplane(origin + offset, normal, x)
     }
 
-    fun invert() : Workplane{
+    fun invert() : Workplane<T>{
         return Workplane(origin, normal.negate(), x)
     }
 
@@ -171,7 +173,7 @@ class Workplane(val origin: Vec3, val normal: Vec3, val x: Vec3){
         val YZ = Workplane(Vec3.Zero, Vec3.DirectionX, Vec3.DirectionY)
         val ZX = Workplane(Vec3.Zero, Vec3.DirectionY, Vec3.DirectionZ)
 
-        fun intersect(lhs : Workplane, rhs : Workplane) : Line {
+        fun intersect(lhs : Workplane<Vec3>, rhs : Workplane<Vec3>) : Line<Vec3> {
             return Plane.intersect(lhs.toPlane(), rhs.toPlane())
         }
 

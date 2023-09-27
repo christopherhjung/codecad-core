@@ -1,23 +1,58 @@
 package com.codecad.core
 
     import com.codecad.core.ast.vec.Vec2
+    import com.codecad.core.brep.Edge
+    import com.codecad.core.brep.curve.Circle
+    import com.codecad.core.brep.curve.Line
     import kotlin.math.abs
     import kotlin.math.sqrt
+
+
+fun Edge<Vec2>.inside(p : Vec2) : Boolean{
+    return when(val curve = curve){
+        is Line -> {
+            val bound = bound!!
+            val p0 = bound.start.point
+            val p1 = bound.end.point
+            ((p0.x <= p.x) == (p.x <= p1.x)) && ((p0.y <= p.y) == (p.y <= p1.y))
+        }
+        is Circle -> {
+            val bound = bound ?: return true
+            val center = curve.workplane.origin
+            val p0 = bound.start.point - center
+            val p1 = bound.end.point - center
+            val cmp = Vec2.rotaryCmp(p0, p - center, p1)
+            return cmp != 1
+        }
+        else -> true
+    }
+}
 
 object Intersect {
     private const val epsilon = 1e-8
 
-    fun of(lhs: SketchEntity, rhs: SketchEntity) : List<Vec2>{
-        return when(lhs){
-            is SketchLine -> when(rhs){
-                is SketchLine -> of(lhs, rhs)
-                is SketchConic -> of(lhs, rhs)
+    fun of(lhs: Edge<Vec2>, rhs: Edge<Vec2>) : List<Vec2>{
+        val lhsCurve = lhs.curve
+        val rhsCurve = rhs.curve
+
+        return when(lhsCurve){
+            is Line -> when(rhsCurve){
+                is Line -> ofLineLine(lhsCurve, rhsCurve).filter {
+                    lhs.inside(it) && rhs.inside(it)
+                }
+                is Circle -> ofLineCircle(lhsCurve, rhsCurve).filter {
+                    lhs.inside(it) && rhs.inside(it)
+                }
                 else -> null
             }
 
-            is SketchConic -> when(rhs){
-                is SketchLine -> of(rhs, lhs)
-                is SketchConic -> of(lhs, rhs)
+            is Circle -> when(rhsCurve){
+                is Line -> ofLineCircle(rhsCurve, lhsCurve).filter {
+                    lhs.inside(it) && rhs.inside(it)
+                }
+                is Circle -> ofCircles(rhsCurve, lhsCurve).filter {
+                    lhs.inside(it) && rhs.inside(it)
+                }
                 else -> null
             }
 
@@ -25,10 +60,10 @@ object Intersect {
         } ?: throw RuntimeException()
     }
 
-    fun of(line1: SketchLine, line2: SketchLine): List<Vec2> {
-        val s1 = line1.p1 - line1.p0
-        val s2 = line2.p1 - line2.p0
-        val sd = line1.p0 - line2.p0
+    private fun ofLineLine(line1: Line<Vec2>, line2: Line<Vec2>): List<Vec2> {
+        val s1 = line1.direction
+        val s2 = line2.direction
+        val sd = line1.origin - line2.origin
 
         val a = s1.crossZ(s2)
         if(a < epsilon) return emptyList()
@@ -41,36 +76,27 @@ object Intersect {
         if( insideUnitInterval(s) ) {
             val t = s2.crossZ(sd) / a
             if(insideUnitInterval(t)){
-                return listOf(line1.p0 + s1 * t)
+                return listOf(line1.origin + s1 * t)
             }
         }
 
         return emptyList()
     }
 
-    fun of(lhs: SketchLine, rhs: SketchConic) : List<Vec2>{
-        return ofLineCircle(lhs, rhs).filter {
-            lhs.inside(it) && rhs.inside(it)
-        }
-    }
-
-    private fun ofLineCircle(line: SketchLine, circle: SketchConic) : List<Vec2>{
+    private fun ofLineCircle(line: Line<Vec2>, circle: Circle<Vec2>) : List<Vec2>{
         val r1 = circle.radius
-        val start2c = circle.center - line.p0
-        val dir = (line.p1 - line.p0).normalized()
-        val l2projC = line.p0 + Vec2.project(start2c, dir)
-        val c2l = l2projC - circle.center
+        val center = circle.workplane.origin
+        val start2c = center - line.origin
+        val dir = line.direction
+        val l2projC = line.origin + Vec2.project(start2c, dir)
+        val c2l = l2projC - center
         val c2lDistance = c2l.length() - r1
 
         return if(c2lDistance > epsilon){
             emptyList()
         }else{
             if(abs(c2lDistance) < epsilon){
-                if(line.inside(l2projC)){
-                    listOf(l2projC)
-                }else{
-                    emptyList()
-                }
+                listOf(l2projC)
             }else{
                 val h = dir * sqrt(r1 * r1 - c2l.squaredLength())
                 val first = l2projC - h
@@ -80,18 +106,12 @@ object Intersect {
         }
     }
 
-    fun of(lhs: SketchConic, rhs: SketchConic) : List<Vec2>{
-        return ofCircles(lhs, rhs).filter {
-            lhs.inside(it) && rhs.inside(it)
-        }
-    }
-
-    private fun ofCircles(lhs: SketchConic, rhs: SketchConic) : List<Vec2>{
+    private fun ofCircles(lhs: Circle<Vec2>, rhs: Circle<Vec2>) : List<Vec2>{
         val r1 = lhs.radius
         val r2 = rhs.radius
-        val p1 = lhs.center
-        val p2 = rhs.center
-        val distance = p2.distance(p1)
+        val p1 = lhs.workplane.origin
+        val p2 = rhs.workplane.origin
+        val distance = p2.distanceTo(p1)
         val radiusSum = r1 + r2
         return if(distance > radiusSum){
             emptyList()

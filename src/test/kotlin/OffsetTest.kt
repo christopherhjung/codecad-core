@@ -56,7 +56,7 @@ class OffsetTest {
         val c1 = SketchCircle(Vec2(0.0, 0.0), 1.0)
         val c2 = SketchCircle(Vec2(4.9, 0.0), 5.0)
 
-        println(Intersect.of(c1, c2).toList())
+        println(Intersect.ofLineLine(c1, c2).toList())
     }
 
     private fun assertContentEquals(expected: Vec2, actual: Vec2, error: Double){
@@ -76,7 +76,7 @@ class OffsetTest {
         val c1 = SketchLine(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
         val c2 = SketchCircle(Vec2(0.5, 0.4), 0.5)
 
-        assertContentEquals(listOf(Vec2(0.2, 0.0), Vec2(0.8, 0.0)), Intersect.of(c1, c2), 1e-8)
+        assertContentEquals(listOf(Vec2(0.2, 0.0), Vec2(0.8, 0.0)), Intersect.ofLineLine(c1, c2), 1e-8)
     }
 
     @Test
@@ -84,7 +84,7 @@ class OffsetTest {
         val c1 = SketchLine(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
         val c2 = SketchCircle(Vec2(0.8, 0.4), 0.5)
 
-        assertContentEquals(listOf(Vec2(0.5, 0.0)), Intersect.of(c1, c2), 1e-8)
+        assertContentEquals(listOf(Vec2(0.5, 0.0)), Intersect.ofLineLine(c1, c2), 1e-8)
     }
 
     @Test
@@ -92,7 +92,7 @@ class OffsetTest {
         val c1 = SketchLine(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
         val c2 = SketchCircle(Vec2(-0.2, 0.4), 0.5)
 
-        assertContentEquals(listOf(Vec2(0.1, 0.0)), Intersect.of(c1, c2), 1e-8)
+        assertContentEquals(listOf(Vec2(0.1, 0.0)), Intersect.ofLineLine(c1, c2), 1e-8)
     }
 
     @Test
@@ -100,6 +100,6 @@ class OffsetTest {
         val c1 = SketchLine(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
         val c2 = SketchCircle(Vec2(0.5, 0.0), 0.5)
 
-        assertContentEquals(listOf(Vec2(0.0, 0.0), Vec2(1.0, 0.0)), Intersect.of(c1, c2), 1e-8)
+        assertContentEquals(listOf(Vec2(0.0, 0.0), Vec2(1.0, 0.0)), Intersect.ofLineLine(c1, c2), 1e-8)
     }
 }

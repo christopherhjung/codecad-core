@@ -5,7 +5,41 @@ import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
 import kotlin.math.*
 
-data class Vec2(val x: Double, val y: Double){
+interface Vec<T : Vec<T>>{
+    fun dot(other: T) : Double
+
+    operator fun times(value: Double) : T
+
+    operator fun div(value: Int) : T{
+        return div(value.toDouble())
+    }
+
+    operator fun div(right: Double) : T
+
+    operator fun plus(right: T) : T
+
+    operator fun minus(right: T) : T
+
+    operator fun minus(right: Double) : T
+
+    fun squaredLength(): Double
+
+    fun length(): Double
+
+    fun squaredDistance(other: T): Double
+
+    fun distanceTo(other: T): Double
+
+    fun negate() : T
+
+    fun scaleTo(factor : Double) : T
+
+    fun normalized() : T
+
+    fun projectOn(rhs: T) : T
+}
+
+data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
     companion object{
         val Zero = Vec2(0.0, 0.0)
         val DirX = Vec2(1.0, 0.0)
@@ -63,6 +97,10 @@ data class Vec2(val x: Double, val y: Double){
         }
     }
 
+    override fun projectOn(rhs: Vec2): Vec2 {
+        return project(this, rhs)
+    }
+
     fun skew(newDir : Vec2) : Vec2{
         val x = dot(newDir)
         val y = sqrt(squaredLength() - x.pow(2))
@@ -99,7 +137,7 @@ data class Vec2(val x: Double, val y: Double){
         return atan2(dir.x, dir.y)
     }
 
-    fun negate() : Vec2{
+    override fun negate() : Vec2{
         return Vec2(-x, -y)
     }
 
@@ -117,51 +155,55 @@ data class Vec2(val x: Double, val y: Double){
         )
     }
 
-    fun dot(right: Vec2) : Double {
-        return x * right.x + y * right.y
+    override fun dot(other: Vec2) : Double {
+        return x * other.x + y * other.y
     }
 
     fun crossZ(right: Vec2) : Double {
         return x * right.y - y * right.x
     }
 
-    operator fun times(value: Double) : Vec2 {
+    override operator fun times(value: Double) : Vec2 {
         return Vec2(x * value, y * value)
     }
 
-    operator fun div(right: Double) : Vec2 {
+    override operator fun div(right: Double) : Vec2 {
         return Vec2(x / right, y / right)
     }
 
-    operator fun plus(right: Vec2) : Vec2 {
+    override operator fun plus(right: Vec2) : Vec2 {
         return Vec2(x + right.x, y + right.y)
     }
 
-    operator fun minus(right: Vec2) : Vec2 {
+    override operator fun minus(right: Vec2) : Vec2 {
         return Vec2(x - right.x, y - right.y)
     }
 
-    operator fun minus(right: Double) : Vec2 {
+    override operator fun minus(right: Double) : Vec2 {
         return Vec2(x - right, y - right)
     }
 
-    fun squaredLength(): Double {
+    override fun squaredLength(): Double {
         return x.pow(2) + y.pow(2)
     }
 
-    fun length(): Double {
+    override fun length(): Double {
         return sqrt(squaredLength())
     }
 
-    fun squaredDistance(other: Vec2): Double {
+    override fun squaredDistance(other: Vec2): Double {
         return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
     }
 
-    fun distance(other: Vec2): Double {
+    override fun distanceTo(other: Vec2): Double {
         return sqrt(squaredDistance(other))
     }
 
-    fun normalized() : Vec2 {
+    override fun scaleTo(factor: Double): Vec2 {
+        return this * (factor / length())
+    }
+
+    override fun normalized() : Vec2 {
         return this / length()
     }
 

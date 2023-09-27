@@ -1,5 +1,6 @@
 package com.codecad.core.brep
 
+import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.mesh.Solidify
@@ -23,7 +24,7 @@ enum class EdgeOrientation{
     }
 }
 
-class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrientation.Forward){
+class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrientation = EdgeOrientation.Forward){
     val start get() = if(orientation == EdgeOrientation.Forward) edge.bound?.start else edge.bound?.end
     val end get() = if(orientation == EdgeOrientation.Forward) edge.bound?.end else edge.bound?.start
     val bound get() = if(orientation == EdgeOrientation.Forward) edge.bound else edge.bound?.let {
@@ -32,7 +33,7 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
 
     override fun equals(other: Any?): Boolean {
         return this === other ||
-                other is OrientedEdge &&
+                other is OrientedEdge<*> &&
                 edge == other.edge &&
                 orientation == other.orientation
     }
@@ -44,11 +45,11 @@ class OrientedEdge(val edge : Edge, val orientation : EdgeOrientation = EdgeOrie
     }
 }
 
-class Loop(var edge : OrientedEdge) : Iterable<Loop>{
-    lateinit var prev : Loop
-    lateinit var next : Loop
+class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
+    lateinit var prev : Loop<T>
+    lateinit var next : Loop<T>
     lateinit var face : Face
-    var twin : Loop? = null
+    var twin : Loop<T>? = null
 
     fun isClosed() : Boolean{
         return prev === next
@@ -58,10 +59,10 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
         return LoopIterator(this)
     }
 
-    fun star() : Iterable<Loop>{
+    fun star() : Iterable<Loop<T>>{
         val loop = this
-        return object : Iterable<Loop>{
-            override fun iterator(): Iterator<Loop> {
+        return object : Iterable<Loop<T>>{
+            override fun iterator(): Iterator<Loop<T>> {
                 return StarLoopIterator(loop)
             }
         }
@@ -95,8 +96,8 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
         return area.length()
     }
 
-    fun nextPoints(num: Int) : List<Vec3>{
-        val result = arrayListOf<Vec3>()
+    fun nextPoints(num: Int) : List<T>{
+        val result = arrayListOf<T>()
         for( (idx, loop) in this.withIndex() ){
             if(idx == num){
                 break
@@ -107,7 +108,7 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
     }
 
     fun validate() : Boolean{
-        val visited = hashSetOf<Vertex>()
+        val visited = hashSetOf<Vertex<T>>()
         if(edge.bound == null){
             return true
         }
@@ -126,7 +127,7 @@ class Loop(var edge : OrientedEdge) : Iterable<Loop>{
 
     fun toString(sb: StringBuilder){
         var sep = ""
-        val visited = hashSetOf<Vertex>()
+        val visited = hashSetOf<Vertex<T>>()
         for(edgeLoop in this){
             val orientedEdge = edgeLoop.edge
             val bound = orientedEdge.bound

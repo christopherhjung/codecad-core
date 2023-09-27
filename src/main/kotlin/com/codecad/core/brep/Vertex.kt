@@ -3,16 +3,8 @@ package com.codecad.core.brep
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.ast.vec.Vec3Expr
 
-data class Vertex(val point: Vec3){
+data class Vertex<T : Any>(val point: T){
     override fun toString(): String {
         return point.toString()
-    }
-
-    override fun hashCode(): Int {
-        return System.identityHashCode(this)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return this === other
     }
 }

@@ -9,9 +9,9 @@ import kotlin.math.asin
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-data class Vec3(val x: Double, val y: Double, val z: Double)
+data class Vec3(val x: Double, val y: Double, val z: Double) : Vec<Vec3>
 {
-    fun dot(other: Vec3) : Double {
+    override fun dot(other: Vec3) : Double {
         return x * other.x + y * other.y + z * other.z
     }
 
@@ -22,60 +22,56 @@ data class Vec3(val x: Double, val y: Double, val z: Double)
         return Vec3(x, y, z)
     }
 
-    operator fun times(value: Double) : Vec3 {
+    override operator fun times(value: Double) : Vec3 {
         return Vec3(x * value, y * value, z * value)
     }
 
-    operator fun div(value: Int) : Vec3 {
-        return div(value.toDouble())
-    }
-
-    operator fun div(right: Double) : Vec3 {
+    override operator fun div(right: Double) : Vec3 {
         return Vec3(x / right, y / right, z / right)
     }
 
-    operator fun plus(right: Vec3) : Vec3 {
+    override operator fun plus(right: Vec3) : Vec3 {
         return Vec3(x + right.x, y + right.y, z + right.z)
     }
 
-    operator fun minus(right: Vec3) : Vec3 {
+    override operator fun minus(right: Vec3) : Vec3 {
         return Vec3(x - right.x, y - right.y, z - right.z)
     }
 
-    operator fun minus(right: Double) : Vec3 {
+    override operator fun minus(right: Double) : Vec3 {
         return Vec3(x - right, y - right, z - right)
     }
 
-    fun squaredLength(): Double {
+    override fun squaredLength(): Double {
         return x.pow(2) + y.pow(2) + z.pow(2)
     }
 
-    fun length(): Double {
+    override fun length(): Double {
         return sqrt(squaredLength())
     }
 
-    fun squaredDistance(other: Vec3): Double {
+    override fun squaredDistance(other: Vec3): Double {
         return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
     }
 
-    fun distanceTo(other: Vec3): Double {
+    override fun distanceTo(other: Vec3): Double {
         return sqrt(squaredDistance(other))
     }
 
-    fun toExpr(world: World) : Vec3Expr{
-        return world.vec3(world.literal(x), world.literal(y), world.literal(z))
-    }
-
-    fun negate() : Vec3{
+    override fun negate() : Vec3{
         return Vec3(-x,-y,-z)
     }
 
-    fun scaleTo(expr : Double) : Vec3{
-        return normalized() * expr
+    override fun scaleTo(factor : Double) : Vec3{
+        return normalized() * factor
     }
 
-    fun normalized() : Vec3 {
+    override fun normalized() : Vec3 {
         return this / length()
+    }
+
+    override fun projectOn(rhs: Vec3): Vec3 {
+        return project(this, rhs)
     }
 
     override fun toString(): String {

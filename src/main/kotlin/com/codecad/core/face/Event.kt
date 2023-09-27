@@ -1,15 +1,15 @@
 package com.codecad.core.face
 
-import com.codecad.core.SketchArc
-import com.codecad.core.SketchCircle
-import com.codecad.core.SketchLine
-import com.codecad.core.SketchEntity
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.brep.Edge
+import com.codecad.core.brep.EdgeBound
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
 
 
 data class Event(
     val pos: Vec2,
-    val entity: SketchEntity,
+    val edge: Edge<Vec2>,
     val origin: Boolean
 ) : Comparable<Event> {
     override fun compareTo(other: Event): Int {
@@ -21,32 +21,35 @@ data class Event(
     }
 }
 
-fun isForward(line: SketchLine) : Boolean{
+fun isForward(edge: EdgeBound<Vec2>) : Boolean{
+    val start = edge.start.point
+    val end = edge.start.point
+
     return when{
-        line.p0.x < line.p1.x -> true
-        line.p0.x > line.p1.x -> false
-        else -> line.p0.y < line.p1.y
+        start.x < end.x -> true
+        start.x > end.x -> false
+        else -> start.y < end.y
     }
 }
 
-fun events(figures: List<SketchEntity>) : List<Event>{
+fun events(edges: List<Edge<Vec2>>) : List<Event>{
     val events = ArrayList<Event>()
-    for (figure in figures) {
-        when(figure){
-            is SketchLine -> {
-                val first = isForward(figure)
-                events.add(Event(figure.p0, figure, first))
-                events.add(Event(figure.p1, figure, !first))
+    for (edge in edges) {
+        val curve = edge.curve
+        when(curve){
+            is Line -> {
+                val bound = edge.bound!!
+                val first = isForward(bound)
+                events.add(Event(bound.start.point, edge, first))
+                events.add(Event(bound.end.point, edge, !first))
             }
 
-            is SketchCircle -> {
-                events.add(Event(figure.center - Vec2.DirX * figure.radius, figure, true))
-                events.add(Event(figure.center + Vec2.DirX * figure.radius, figure, false))
-            }
+            is Circle -> {
+                val center = curve.workplane.origin
+                val radius = curve.radius
 
-            is SketchArc -> {
-                events.add(Event(figure.center - Vec2.DirX * figure.radius, figure, true))
-                events.add(Event(figure.center + Vec2.DirX * figure.radius, figure, false))
+                events.add(Event(center - Vec2.DirX * radius, edge, true))
+                events.add(Event(center + Vec2.DirX * radius, edge, false))
             }
         }
     }

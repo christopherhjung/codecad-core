@@ -1,5 +1,6 @@
 package com.codecad.core.import.step
 
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.import.step.ast.StepFile
 import com.codecad.core.import.step.ast.StepObject
@@ -11,9 +12,9 @@ class GeometricContext(val lengthFactor : Double, val angleUnit : Double)
 val DefaultGeometricContext = GeometricContext(1.0, 1.0)
 
 class StepImporter{
-    private val vertices = hashMapOf<StepObject, Vertex>()
-    private val edges = hashMapOf<StepObject, Edge>()
-    private val edge2loop = hashMapOf<Edge, Loop>()
+    private val vertices = hashMapOf<StepObject, Vertex<Vec3>>()
+    private val edges = hashMapOf<StepObject, Edge<Vec3>>()
+    private val edge2loop = hashMapOf<Edge<Vec3>, Loop>()
     private lateinit var geometricContext : GeometricContext
 
     fun importSIUnit(siUnit : StepObject) : Double{
@@ -119,13 +120,13 @@ class StepImporter{
         return FaceBound(loop, FaceBoundKind.OuterBound)
     }
 
-    fun createVertex(obj : StepObject) : Vertex{
+    fun createVertex(obj : StepObject) : Vertex<Vec3>{
         return vertices.computeIfAbsent(obj){
             Vertex(obj.vec(geometricContext))
         }
     }
 
-    fun createEdge(obj : StepObject) : Edge{
+    fun createEdge(obj : StepObject) : Edge<Vec3>{
         return edges.computeIfAbsent(obj){
             val start = it.start
             val end = it.end
