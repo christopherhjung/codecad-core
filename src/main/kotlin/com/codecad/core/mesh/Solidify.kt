@@ -126,7 +126,7 @@ object Solidify {
         val workplane = parentSurface.workplane.withOrigin(mergedOrigin)
         val mergedSurface = PlaneSurface(workplane)
 
-        val bounds = arrayListOf<FaceBound>()
+        val bounds = arrayListOf<FaceBound<Vec3>>()
         val mergeFace = Face(mergedSurface, bounds)
 
         val max = faceBoundLoops.maxBy { it.computeArea() }

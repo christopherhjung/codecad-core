@@ -99,7 +99,7 @@ object Extruder{
             return map.computeIfAbsent(vertex){ Vertex(vertex.point + offset) }
         }
 
-        val faceBounds = arrayListOf<FaceBound>()
+        val faceBounds = arrayListOf<FaceBound<Vec3>>()
         for( faceBound in face.bounds ) {
             val edges = arrayListOf<OrientedEdge<Vec3>>()
             for (currentEdgeLoop in faceBound.loop) {

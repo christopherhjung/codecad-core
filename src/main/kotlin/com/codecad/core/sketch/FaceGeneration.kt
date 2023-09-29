@@ -1,7 +1,6 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.SketchLine
-import com.codecad.core.SketchEntity
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
@@ -10,53 +9,72 @@ import com.codecad.core.face.SketchEdgeLoop
 import com.codecad.core.part.Sketch
 import com.codecad.core.rollover
 import java.util.*
+import kotlin.Comparator
 import kotlin.collections.HashMap
-import kotlin.math.abs
 
 
 enum class FaceType{
     Root, Surface, Hole
 }
 
-fun createFaceTree(entities: List<SketchEntity>): SketchEdgeLoop {
-    val pointMap = HashMap<Vec2, SketchVertex>()
-    fun corner(point: Vec2) : SketchVertex {
-        return pointMap.computeIfAbsent(point) { SketchVertex(it) }
+
+data class VertexHelper(val point: Vertex<Vec2>){
+    val loops = mutableListOf<Loop<Vec2>>()
+
+    fun addLoop(edge: Loop<Vec2>){
+        if(edge.edge.start !== point){
+            throw RuntimeException("ss")
+        }
+
+        loops.add(edge)
     }
-/*
-    val sections = cutLines(entities)
-    val edges = HashSet<SketchEdge>()
-    for (section in sections) {
-        val left = corner(section.p0)
-        val right = corner(section.p1)
-        val a = SketchEdge(left, right)
-        val b = SketchEdge(right, left)
+}
 
-        a.twin = b
-        b.twin = a
-        left.edges.add(a)
-        right.edges.add(b)
-        edges.add(a)
-        edges.add(b)
-    }*/
+fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
+    val cutEdges = cutLines(edges)
+    val helpers = arrayListOf<VertexHelper>()
+    val helperMap = HashMap<Vertex<Vec2>, VertexHelper>()
+    fun createHelper(point: Vertex<Vec2>) : VertexHelper {
+        return helperMap.computeIfAbsent(point) { VertexHelper(it) }
+    }
 
-    finalizeCorners(pointMap.values)
-    return generateFaces(listOf())
+    for (cutEdge in cutEdges) {
+        val bound = cutEdge.bound ?: continue
+        val left = createHelper(bound.start)
+        val right = createHelper(bound.end)
+        val forwardEdge = OrientedEdge(cutEdge, EdgeOrientation.Forward)
+        val backwardEdge = OrientedEdge(cutEdge, EdgeOrientation.Backward)
+
+        val forwardLoop = Loop(forwardEdge)
+        val backwardLoop = Loop(backwardEdge)
+
+        forwardLoop.twin = backwardLoop
+        backwardLoop.twin = forwardLoop
+        left.addLoop(forwardLoop)
+        right.addLoop(backwardLoop)
+        helpers.add(left)
+        helpers.add(right)
+    }
+
+    finalizeCorners(helperMap.values)
+    return generateFaces(helperMap.values.flatMap { it.loops })
 }
 
 
-fun finalizeCorners(vertices : Collection<SketchVertex>){
-    for(corner in vertices){
-        corner.edges.sortWith(RotaryEdgeComparator)
-
-        for((top, bottom) in corner.edges.rollover()){
-            assert(top.twin.target === bottom.source)
-            top.twin.next = bottom
+fun finalizeCorners(helpers : Collection<VertexHelper>){
+    for(helper in helpers){
+        helper.loops.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
+        for((top, bottom) in helper.loops.rollover()){
+            //assert(top.twin.target === bottom.source)
+            top.twin!!.let {
+                it.next = bottom
+                bottom.prev = it
+            }
         }
     }
 }
-
-fun computeArea(start : SketchEdge) : Double{
+/*
+fun computeArea(start : VertexHelper) : Double{
     var curr = start
     var area = 0.0
     while(true){
@@ -67,51 +85,49 @@ fun computeArea(start : SketchEdge) : Double{
     }
 
     return area / 2
-}
+}*/
 
-fun generateFaces(edges: Collection<SketchEdge>) : SketchEdgeLoop {
-    val visited = hashSetOf<SketchEdge>()
+fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
+    val visited = hashSetOf<Loop<Vec2>>()
+    val faceBounds = arrayListOf<FaceBound<Vec2>>()
 
-    val holes = arrayListOf<SketchEdgeLoop>()
-    for( root in edges ){
-        if(visited.contains(root)) continue
+    val queue = LinkedList(loops)
+    while( queue.isNotEmpty() ){
+        val start = queue.pollFirst()
+        if(!visited.add(start)) continue
 
-        var hole : SketchEdgeLoop? = null
-        val surfaces = arrayListOf<SketchEdgeLoop>()
-        val queue = LinkedList<SketchEdge>()
+        var currentLoop = start
+        var endLoop = start
+        var idx = 0
+        do{
+            if(++idx >= 100) break
+            visited.add(currentLoop)
+            var nextLoop = currentLoop.next
 
-        queue.add(root)
-        while( queue.isNotEmpty() ){
-            val start = queue.pollFirst()
-            if(!visited.add(start)) continue
+            if(currentLoop.edge.edge === nextLoop.edge.edge){
+                visited.add(nextLoop)
+                val prevLoop = currentLoop.prev
+                nextLoop = nextLoop.next
 
-            val area = computeArea(start)
-            val sketchLoop = SketchEdgeLoop(start)
-            sketchLoop.area = abs(area)
+                prevLoop.next = nextLoop
+                nextLoop.prev = prevLoop
 
-            if(area > 0){
-                sketchLoop.type = FaceType.Surface
-                surfaces.add(sketchLoop)
-            }else if(hole == null){
-                sketchLoop.type = FaceType.Hole
-                hole = sketchLoop
-            }else{
-                throw Error("double hole!")
+                if(endLoop.edge.edge === currentLoop.edge.edge){
+                    endLoop = nextLoop
+                }
+
+                currentLoop = nextLoop
+                continue
             }
 
-            for( curr in start.loop() ){
-                visited.add(curr)
-                val twin = curr.twin
-                queue.add(twin)
-            }
-        }
+            currentLoop = nextLoop
+        }while(currentLoop !== endLoop)
 
-        if(hole == null) throw Error("No hole found")
-        hole.children = surfaces
-        holes.add(hole)
+        faceBounds.add(FaceBound(currentLoop, FaceBoundKind.OuterBound))
     }
 
-    return nestHoles(holes)
+    val face = SketchFace(faceBounds)
+    return face//nestHoles(holes)
 }
 
 fun nestHoles(holes : MutableList<SketchEdgeLoop>) : SketchEdgeLoop{
@@ -159,26 +175,17 @@ fun collectSurfaces(parentSurface : SketchEdgeLoop, surfaces : MutableList<Sketc
     }
 }
 
-fun SketchEdgeLoop.toFace(workplane: Workplane<Vec3>) : Face{
-    val points = when (type) {
-        FaceType.Root -> emptyList()
-        else -> points.toList()
-    }
-
+fun SketchFace.toFace(workplane: Workplane<Vec3>) : Face{
     val surface = PlaneSurface(workplane)
-    val faceBounds = arrayListOf<FaceBound>()
-    val result = Face(surface, faceBounds)
+    val faceBounds = bounds.map { faceBound ->
+        val loop = faceBound.loop.project {
+            workplane.unproject(it)
+        }
 
-    val projPoints = points.map { workplane.unproject(it) }.toList().toTypedArray()
-    val bound = FaceBound(Loop.polygon(*projPoints), FaceBoundKind.OuterBound)
-    faceBounds.add(bound)
-
-    for( hole in children ){
-        val projPoints = hole.points.map { workplane.unproject(it) }.toList().toTypedArray()
-        val bound = FaceBound(Loop.polygon(*projPoints), FaceBoundKind.InnerBound)
-        faceBounds.add(bound)
+        FaceBound(loop, faceBound.sense)
     }
-    return result
+
+    return Face(surface, faceBounds)
 }
 
 fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {

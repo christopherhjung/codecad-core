@@ -115,6 +115,14 @@ data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
         return Vec2(x - vec.y, y + vec.x)
     }
 
+    fun normalLeft() : Vec2{
+        return Vec2(-y, x)
+    }
+
+    fun normalRight() : Vec2{
+        return Vec2(y, -x)
+    }
+
     fun atan2() : Double{
         return atan2(y, x)
     }

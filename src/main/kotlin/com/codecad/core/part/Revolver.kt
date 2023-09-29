@@ -32,7 +32,7 @@ class Revolver(){
                     ToroidalSurface(surfaceWorkplane, radius, circleCurve.radius)
                 }
 
-                val faceBounds = arrayListOf<FaceBound>()
+                val faceBounds = arrayListOf<FaceBound<Vec3>>()
                 val faces = arrayListOf<Face>()
                 if(true){ // try revolve endstops
                     val newCenter = quat.rotate(surfaceWorkplane.origin, center)
@@ -64,7 +64,7 @@ class Revolver(){
                 faces.add(revolveFace)
                 shells.add(Shell(faces))
             }else{
-                val faceBounds = arrayListOf<FaceBound>()
+                val faceBounds = arrayListOf<FaceBound<Vec3>>()
                 val surfaces = arrayListOf<Surface>()
                 for (currentEdgeLoop in edgeLoop) {
                     val orientedEdge = currentEdgeLoop.edge

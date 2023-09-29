@@ -166,13 +166,14 @@ class Sketch(val partStudio: PartStudio, val workplane : Workplane<Vec3>, val na
         println("time: ${end - start}ms")
 
         val lines = sketchToLines(this, ignoreConstruction = true)
-
+/*
         val rootHole = createFaceTree(lines)
         val surfaces = collectSurfaces(rootHole)
         for(surface in surfaces){
-            val face = surface.toFace(workplane)
-            partStudio.addFace(face)
-        }
+            //TODO
+            //val face = surface.toFace(workplane)
+            //partStudio.addFace(face)
+        }*/
     }
 
     fun generate(){

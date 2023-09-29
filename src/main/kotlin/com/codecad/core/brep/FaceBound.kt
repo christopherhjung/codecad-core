@@ -10,7 +10,7 @@ enum class FaceBoundKind{
     OuterBound, InnerBound
 }
 
-class FaceBound(var loop : Loop<Vec3>, var sense: FaceBoundKind){
+class FaceBound<T : Vec<T>>(var loop : Loop<T>, var sense: FaceBoundKind){
 
 }
 enum class EdgeOrientation{
@@ -42,6 +42,10 @@ class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrienta
         var result = edge.hashCode()
         result = 31 * result + orientation.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "OrientedEdge(start=$start, end=$end)"
     }
 }
 
@@ -86,6 +90,14 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         return LoopIterator(this)
     }
 
+    fun <R : Vec<R>> project(block : (T) -> R) : Loop<R>{
+        for( (lhs, rhs) in rollover() ){
+
+        }
+
+        return null!!
+    }
+
     fun star() : Iterable<Loop<T>>{
         val loop = this
         return object : Iterable<Loop<T>>{
@@ -95,7 +107,6 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         }
     }
 
-
     fun nextPoints(num: Int) : List<T>{
         val result = arrayListOf<T>()
         for( (idx, loop) in this.withIndex() ){
@@ -103,6 +114,17 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                 break
             }
             result.add(loop.edge.start!!.point)
+        }
+        return result
+    }
+
+    fun nextVertices(num: Int) : List<Vertex<T>>{
+        val result = arrayListOf<Vertex<T>>()
+        for( (idx, loop) in this.withIndex() ){
+            if(idx == num){
+                break
+            }
+            result.add(loop.edge.start!!)
         }
         return result
     }
@@ -136,6 +158,8 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                     .append(bound.start)
                     .append("->")
                     .append(bound.end)
+                    .append(" -- ")
+                    .append(orientedEdge.edge.curve)
 
                 /*
                 if(bound.sense != Sense.None){
@@ -147,7 +171,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                 sep = "\n"
             }
 
-            if(!visited.add(orientedEdge.start!!)){
+            if(false && !visited.add(orientedEdge.start!!)){
                 sb.append("Error!!!")
                 break
             }
@@ -270,8 +294,7 @@ class LoopIterator<T : Vec<T>>(val init : Loop<T>) : Iterator<Loop<T>>{
         current = current.next
         first = false
         if(watchdog > 10000){
-            println("watchdog")
-            init.toString()
+            //println("watchdog")
             throw RuntimeException("sss")
         }
         watchdog++

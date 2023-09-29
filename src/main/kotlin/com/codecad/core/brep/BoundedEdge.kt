@@ -31,7 +31,7 @@ class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>? = null){
         }
 
         fun <T : Vec<T>> line(start: T, end: T) : Edge<T> {
-            return Edge(Line.fromTo(start, end), EdgeBound(Vertex<T>(start), Vertex<T>(end)))
+            return Edge(Line.fromTo(start, end), EdgeBound(Vertex(start), Vertex(end)))
         }
 
         fun <T : Vec<T>> circle(workplane: Workplane<T>, radius: Double) : Edge<T> {
@@ -47,7 +47,7 @@ class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>? = null){
         }
 
         fun circle(center: Vec2, radius: Double) : Edge<Vec2> {
-            return Edge(Circle(Workplane(center, Vec2.Zero, Vec2.DirX), radius), null)
+            return Edge(Circle(Workplane(center, Vec2.DirY, Vec2.DirX), radius), null)
         }
     }
 }

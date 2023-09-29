@@ -32,4 +32,8 @@ class Line<T : Vec<T>>(var origin : T, var direction : T) : Curve<T>(){
     fun distanceTo(point: T) : Double {
         return (point - projectPoint(point)).length()
     }
+
+    override fun toString(): String {
+        return "Line(origin=$origin, direction=$direction)"
+    }
 }

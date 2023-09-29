@@ -1,11 +1,37 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.brep.EdgeOrientation
+import com.codecad.core.brep.OrientedEdge
 import com.codecad.core.brep.Vertex
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
 
-object RotaryEdgeComparator : Comparator<SketchEdge>{
-    override fun compare(lhs: SketchEdge, rhs: SketchEdge): Int {
-        return Vec2.rotaryCmp(Vec2.DirX, lhs.target.point - lhs.source.point, rhs.target.point - rhs.source.point)
+fun tangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
+    val edge = orientedEdge.edge
+    return when(val curve = edge.curve){
+        is Line -> if(orientedEdge.orientation == EdgeOrientation.Forward){
+            curve.direction
+        }else{
+            curve.direction.negate()
+        }
+
+        is Circle -> {
+            val origin = curve.workplane.origin
+            val bound = edge.bound!!
+            if(orientedEdge.orientation == EdgeOrientation.Forward){
+                (origin - bound.start.point).normalLeft()
+            }else{
+                (origin - bound.end.point).normalRight()
+            }
+        }
+        else -> Vec2.Zero
+    }
+}
+
+object RotaryEdgeComparator : Comparator<OrientedEdge<Vec2>>{
+    override fun compare(lhs: OrientedEdge<Vec2>, rhs: OrientedEdge<Vec2>): Int {
+        return Vec2.rotaryCmp(Vec2.DirX, tangent(lhs), tangent(rhs))
     }
 }
 
