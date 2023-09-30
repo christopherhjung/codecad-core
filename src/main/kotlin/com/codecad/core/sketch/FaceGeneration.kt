@@ -88,10 +88,10 @@ fun computeArea(start : VertexHelper) : Double{
 }*/
 
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
-    val visited = hashSetOf<Loop<Vec2>>()
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
-
     val queue = LinkedList(loops)
+
+    val edgeMarker = 1
     while( queue.isNotEmpty() ){
         val start = queue.pollFirst()
         if(start.marker) continue
@@ -99,11 +99,11 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
 
         var currentLoop = start
         var endLoop = start
-        do{
-            currentLoop.marker = true
+        while(true){
             var nextLoop = currentLoop.next
+            val currentEdge = currentLoop.edge.edge
 
-            if(currentLoop.edge.edge === nextLoop.edge.edge){
+            if(currentEdge === nextLoop.edge.edge){
                 nextLoop.marker = true
                 val prevLoop = currentLoop.prev
                 nextLoop = nextLoop.next
@@ -111,16 +111,16 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
                 prevLoop.next = nextLoop
                 nextLoop.prev = prevLoop
 
-                if(endLoop.edge.edge === currentLoop.edge.edge){
+                if(endLoop.edge.edge === currentEdge){
                     endLoop = nextLoop
                 }
-
-                currentLoop = nextLoop
-                continue
+            }else if(currentLoop === endLoop){
+                break
             }
 
+            nextLoop.marker = true
             currentLoop = nextLoop
-        }while(currentLoop !== endLoop)
+        }
 
         faceBounds.add(FaceBound(currentLoop, FaceBoundKind.OuterBound))
     }
