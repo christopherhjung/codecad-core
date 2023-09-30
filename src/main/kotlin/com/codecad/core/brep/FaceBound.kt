@@ -80,7 +80,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     lateinit var prev : Loop<T>
     lateinit var next : Loop<T>
     lateinit var face : Face
-    var marker : Boolean = false
+    var marker : Marker = Marker()
     var twin : Loop<T>? = null
 
     fun isClosed() : Boolean{
@@ -150,7 +150,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
 
     fun toString(sb: StringBuilder){
         var sep = ""
-        val visited = hashSetOf<Vertex<T>>()
+        val visited = hashSetOf<OrientedEdge<T>>()
         for(edgeLoop in this){
             val orientedEdge = edgeLoop.edge
             val bound = orientedEdge.bound
@@ -172,7 +172,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                 sep = "\n"
             }
 
-            if(false && !visited.add(orientedEdge.start!!)){
+            if(!visited.add(orientedEdge)){
                 sb.append("Error!!!")
                 break
             }
