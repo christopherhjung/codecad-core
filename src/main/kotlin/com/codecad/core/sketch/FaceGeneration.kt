@@ -94,18 +94,17 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     val queue = LinkedList(loops)
     while( queue.isNotEmpty() ){
         val start = queue.pollFirst()
-        if(!visited.add(start)) continue
+        if(start.marker) continue
+        start.marker = true
 
         var currentLoop = start
         var endLoop = start
-        var idx = 0
         do{
-            if(++idx >= 100) break
-            visited.add(currentLoop)
+            currentLoop.marker = true
             var nextLoop = currentLoop.next
 
             if(currentLoop.edge.edge === nextLoop.edge.edge){
-                visited.add(nextLoop)
+                nextLoop.marker = true
                 val prevLoop = currentLoop.prev
                 nextLoop = nextLoop.next
 

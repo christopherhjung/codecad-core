@@ -80,6 +80,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     lateinit var prev : Loop<T>
     lateinit var next : Loop<T>
     lateinit var face : Face
+    var marker : Boolean = false
     var twin : Loop<T>? = null
 
     fun isClosed() : Boolean{
