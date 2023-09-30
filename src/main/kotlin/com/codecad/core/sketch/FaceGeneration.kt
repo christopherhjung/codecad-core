@@ -104,7 +104,6 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
             val currentEdge = currentLoop.edge.edge
 
             if(currentEdge === nextLoop.edge.edge){
-                nextLoop.marker = true
                 val prevLoop = currentLoop.prev
                 nextLoop = nextLoop.next
 
