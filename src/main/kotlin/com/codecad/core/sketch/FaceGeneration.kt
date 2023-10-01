@@ -89,8 +89,12 @@ fun computeArea(start : VertexHelper) : Double{
 
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
-    val queue = LinkedList(loops)
 
+    fun createBound(loop: Loop<Vec2>){
+        faceBounds.add(FaceBound(loop, FaceBoundKind.OuterBound))
+    }
+
+    val queue = LinkedList(loops)
     val initMarker = Marker()
     for( loop in loops ){
         loop.marker = initMarker
@@ -114,7 +118,7 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
                     afterTwin.prev = beforeCurrent
                     twin.next = currentLoop
                     currentLoop.prev = twin
-                    faceBounds.add(FaceBound(beforeCurrent, FaceBoundKind.OuterBound))
+                    createBound(beforeCurrent)
                 }
 
                 val beforeTwin = twin.prev
@@ -124,7 +128,7 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
 
             if(nextLoop.marker === loopMarker){
                 if(nextLoop.next !== nextLoop.twin){
-                    faceBounds.add(FaceBound(nextLoop, FaceBoundKind.OuterBound))
+                    createBound(nextLoop)
                 }
                 break
             }
@@ -132,8 +136,6 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
             nextLoop.marker = loopMarker
             currentLoop = nextLoop
         }
-
-        println(faceBounds)
     }
 
     return SketchFace(faceBounds)
