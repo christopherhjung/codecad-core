@@ -42,7 +42,6 @@ data class VertexHelper(val point: Vertex<Vec2>){
 
 fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
     val cutEdges = cutLines(edges)
-    val helpers = arrayListOf<VertexHelper>()
     val helperMap = HashMap<Vertex<Vec2>, VertexHelper>()
     fun createHelper(point: Vertex<Vec2>) : VertexHelper {
         return helperMap.computeIfAbsent(point) { VertexHelper(it) }
@@ -62,28 +61,12 @@ fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
         backwardLoop.twin = forwardLoop
         left.addLoop(forwardLoop)
         right.addLoop(backwardLoop)
-        helpers.add(left)
-        helpers.add(right)
     }
 
-    helperMap.values.forEach { it.finalize() }
-    return generateFaces(helperMap.values.flatMap { it.loops })
+    val helpers = helperMap.values
+    helpers.forEach { it.finalize() }
+    return generateFaces(helpers.flatMap { it.loops })
 }
-
-
-/*
-fun computeArea(start : VertexHelper) : Double{
-    var curr = start
-    var area = 0.0
-    while(true){
-        val currPos = curr.target.point
-        area += curr.source.point.crossZ(currPos)
-        if(curr.target === start.source) break
-        curr = curr.next!!
-    }
-
-    return area / 2
-}*/
 
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     val faceBounds = arrayListOf<FaceBound<Vec2>>()

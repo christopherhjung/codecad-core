@@ -12,7 +12,6 @@ import com.codecad.core.face.Event
 import com.codecad.core.face.events
 
 
-val Comp2D = Comparator.comparing<Vec2, Double> { it.x }.thenComparing(Comparator.comparing { it.y });
 val VertexComp2D = Comparator.comparing<Vertex<Vec2>, Double> { it.point.x }.thenComparing(Comparator.comparing { it.point.y });
 fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     val events = events(edges)
