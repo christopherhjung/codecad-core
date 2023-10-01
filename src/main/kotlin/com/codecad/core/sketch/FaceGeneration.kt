@@ -97,12 +97,11 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     }
 
     while( queue.isNotEmpty() ){
-        val start = queue.pollFirst()
-        if(start.marker !== initMarker) continue
+        var currentLoop = queue.pollFirst()
+        if(currentLoop.marker !== initMarker) continue
 
         val loopMarker = Marker()
-        start.marker = loopMarker
-        var currentLoop = start
+        currentLoop.marker = loopMarker
         while(true){
             val twin = currentLoop.twin!!
             val nextLoop = currentLoop.next
@@ -130,8 +129,6 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
                 break
             }
 
-            println(nextLoop.edge)
-            System.out.flush()
             nextLoop.marker = loopMarker
             currentLoop = nextLoop
         }
