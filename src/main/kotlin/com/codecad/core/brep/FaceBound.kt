@@ -3,7 +3,6 @@ package com.codecad.core.brep
 import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.curve.Circle
-import com.codecad.core.mesh.Solidify
 import com.codecad.core.rollover
 
 enum class FaceBoundKind{
@@ -54,23 +53,24 @@ fun Loop<Vec3>.computeArea() : Double{
     var area = Vec3.Zero
 
     for( loop in this ){
-        val edge = loop.edge
-        val bound = edge.bound
+        val orientedEdge = loop.edge
+        val edge = orientedEdge.edge
+        val bound = orientedEdge.bound
+        val curve = edge.curve
 
-        if(bound != null){
-            area += bound.start.point.cross(bound.end.point) * 0.5
-        }else{
-            val edge = edge.edge
-            val curve = edge.curve
-
-            when(curve){
-                is Circle -> {
-                    val workplane = curve.workplane
-                    val normal = workplane.normal
-
-                }
-            }
+        if(bound == null){
+            val radius = (curve as Circle).radius
+            return Math.PI * radius * radius
         }
+
+        if(curve is Circle){
+            val workplane = curve.workplane
+            val radius = curve.radius
+
+
+        }
+
+        area += bound.start.point.cross(bound.end.point) * 0.5
     }
 
     return area.length()

@@ -28,6 +28,16 @@ data class VertexHelper(val point: Vertex<Vec2>){
 
         loops.add(edge)
     }
+
+    fun finalize(){
+        loops.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
+        for((top, bottom) in loops.rollover()){
+            top.twin!!.let {
+                it.next = bottom
+                bottom.prev = it
+            }
+        }
+    }
 }
 
 fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
@@ -56,23 +66,11 @@ fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
         helpers.add(right)
     }
 
-    finalizeCorners(helperMap.values)
+    helperMap.values.forEach { it.finalize() }
     return generateFaces(helperMap.values.flatMap { it.loops })
 }
 
 
-fun finalizeCorners(helpers : Collection<VertexHelper>){
-    for(helper in helpers){
-        helper.loops.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
-        for((top, bottom) in helper.loops.rollover()){
-            //assert(top.twin.target === bottom.source)
-            top.twin!!.let {
-                it.next = bottom
-                bottom.prev = it
-            }
-        }
-    }
-}
 /*
 fun computeArea(start : VertexHelper) : Double{
     var curr = start
