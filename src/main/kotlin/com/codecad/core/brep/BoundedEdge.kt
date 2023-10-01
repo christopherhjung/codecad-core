@@ -26,7 +26,6 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
 
 class Marker
 class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>? = null){
-    var marker : Marker = Marker()
 
     companion object{
         fun <T : Vec<T>> line(start: Vertex<T>, end: Vertex<T>) : Edge<T> {

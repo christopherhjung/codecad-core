@@ -90,89 +90,48 @@ fun computeArea(start : VertexHelper) : Double{
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
     val queue = LinkedList(loops)
-    val loopMarker = Marker()
+
+    val initMarker = Marker()
+    for( loop in loops ){
+        loop.marker = initMarker
+    }
 
     while( queue.isNotEmpty() ){
         val start = queue.pollFirst()
-        if(start.marker === loopMarker) continue
+        if(start.marker !== initMarker) continue
+
+        val loopMarker = Marker()
         start.marker = loopMarker
-
-        var endLoop = start.prev
-        if(endLoop.prev === start){
-            endLoop.marker = loopMarker
-            continue
-        }
-
-        val edgeMarker = Marker()
         var currentLoop = start
-        /*var endLoop : Loop<Vec2> = null
         while(true){
-            var prevLoop = currentLoop.prev
-            endLoop = prevLoop
-            if(prevLoop.prev === currentLoop){
-                endLoop.marker = loopMarker
-                endLoop = null
-                break
-            }
+            val twin = currentLoop.twin!!
+            val nextLoop = currentLoop.next
 
-            val currentEdge = currentLoop.edge.edge
-            val prevEdge = prevLoop.edge.edge
-
-            if(currentEdge === prevEdge){
-                val nextLoop = currentLoop.next
-                val beforePrev = prevLoop.prev
-
-                nextLoop.prev = beforePrev
-                beforePrev.next = nextLoop
-            }
-        }
-
-        if(endLoop == null) break*/
-
-        while(true){
-            var nextLoop = currentLoop.next
-            val currentEdge = currentLoop.edge.edge
-            println(currentLoop.edge)
-            System.out.flush()
-            System.out.flush()
-
-            if(currentEdge.marker === edgeMarker){
-                if(nextLoop.marker === loopMarker){
-                    val beforeCurrent = currentLoop.prev
-                    val afterNext = nextLoop.next
-                    beforeCurrent.next = afterNext
-                    afterNext.prev = beforeCurrent
+            if(twin.marker == loopMarker){
+                val beforeCurrent = currentLoop.prev
+                if(beforeCurrent !== twin){
+                    val afterTwin = twin.next
+                    beforeCurrent.next = afterTwin
+                    afterTwin.prev = beforeCurrent
+                    twin.next = currentLoop
+                    currentLoop.prev = twin
                     faceBounds.add(FaceBound(beforeCurrent, FaceBoundKind.OuterBound))
-                    break
                 }
 
-                val twin = currentLoop.twin!!
-                val twinPrev = twin.prev
-                twinPrev.next = nextLoop
-                nextLoop.prev = twinPrev
+                val beforeTwin = twin.prev
+                nextLoop.prev = beforeTwin
+                beforeTwin.next = nextLoop
+            }
 
-                if(twin.next !== currentLoop){
-                    twin.prev = currentLoop
-                    currentLoop.next = twin
-                    faceBounds.add(FaceBound(currentLoop, FaceBoundKind.OuterBound))
+            if(nextLoop.marker === loopMarker){
+                if(nextLoop.next !== nextLoop.twin){
+                    faceBounds.add(FaceBound(nextLoop, FaceBoundKind.OuterBound))
                 }
-
-
-                //println("------------------------")
-                //println("cut out ${currentLoop.edge}")
-                //println(nextLoop.count())
-                //println(nextLoop)
-                //System.out.flush()
-                endLoop = twinPrev
-            }else if(currentLoop === endLoop){
-                if(currentLoop !== currentLoop.next){
-                    faceBounds.add(FaceBound(currentLoop, FaceBoundKind.OuterBound))
-                }
-
                 break
             }
 
-            currentEdge.marker = edgeMarker
+            println(nextLoop.edge)
+            System.out.flush()
             nextLoop.marker = loopMarker
             currentLoop = nextLoop
         }
@@ -180,8 +139,7 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
         println(faceBounds)
     }
 
-    val face = SketchFace(faceBounds)
-    return face//nestHoles(holes)
+    return SketchFace(faceBounds)
 }
 
 fun nestHoles(holes : MutableList<SketchEdgeLoop>) : SketchEdgeLoop{
