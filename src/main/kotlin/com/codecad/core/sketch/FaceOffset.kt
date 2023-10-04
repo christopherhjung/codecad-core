@@ -47,51 +47,29 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             Vertex(nextBound.start.point + nextStartNormal * offset)
         }
 
-        val offsetEdge = when(curve){
+        val offsetCurve = when(curve){
             is Line -> {
-                val offsetOrigin = curve.origin + currentEndOffsetVec
-                val offsetLine = Line(offsetOrigin, curve.direction)
-
-                Edge(offsetLine,
-                    EdgeBound(
-                        currentStartVertex,
-                        currentEndVertex,
-                        bound.sense
-                    )
-                )
+                Line(curve.origin + currentEndOffsetVec, curve.direction)
             }
             is Circle -> {
-                val center = curve.workplane.origin
                 val radius = curve.radius
-
                 if(radius + offset < 0.0){
-                    /*val centerVertex = Vertex(center)
-
-                    val firstEdge = Edge.line(
-                        currentStartVertex,
-                        centerVertex,
-                    )
-
-                    val secondEdge = Edge.line(
-                        centerVertex,
-                        currentEndVertex,
-                    )*/
-
                     throw RuntimeException("xxx")
                 }else{
-                    val offsetCircle = Circle(curve.workplane, radius + offset)
-
-                    Edge(offsetCircle,
-                        EdgeBound(
-                            currentStartVertex,
-                            currentEndVertex,
-                            bound.sense
-                        )
-                    )
+                    Circle(curve.workplane, radius + offset)
                 }
             }
             else -> throw RuntimeException()
         }
+
+        val offsetEdge =
+            Edge(offsetCurve,
+                EdgeBound(
+                    currentStartVertex,
+                    currentEndVertex,
+                    bound.sense
+                )
+            )
 
         val offsetLoop = Loop(OrientedEdge(offsetEdge, EdgeOrientation.Forward))
 
