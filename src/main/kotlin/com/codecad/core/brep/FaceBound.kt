@@ -30,6 +30,17 @@ class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrienta
             EdgeBound(it.end, it.start, it.sense.invert())
         }
 
+    fun normalized() : Edge<T>{
+        return if(orientation == EdgeOrientation.Forward){
+            edge
+        }else{
+            val bound = edge.bound?.let {
+                EdgeBound(it.end, it.start, it.sense.invert())
+            }
+            Edge(edge.curve.invert(), bound)
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         return this === other ||
                 other is OrientedEdge<*> &&
@@ -50,7 +61,7 @@ class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrienta
 
 
 fun Loop<Vec3>.computeArea() : Double{
-    var area = Vec3.Zero
+    var polygonArea = Vec3.Zero
 
     for( loop in this ){
         val orientedEdge = loop.edge
@@ -63,18 +74,25 @@ fun Loop<Vec3>.computeArea() : Double{
             return Math.PI * radius * radius
         }
 
+        val start = bound.start.point
+        val end = bound.end.point
+
         if(curve is Circle){
-            val workplane = curve.workplane
+            val center = curve.workplane.origin
             val radius = curve.radius
+
+            //val angle = start.angleTo(end)
 
 
         }
 
-        area += bound.start.point.cross(bound.end.point) * 0.5
+        polygonArea += start.cross(end)
     }
 
-    return area.length()
+    return polygonArea.length() * 0.5
 }
+
+
 
 class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     lateinit var prev : Loop<T>
@@ -97,6 +115,11 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         }
 
         return null!!
+    }
+
+    fun followedBy(next : Loop<T>){
+        this.next = next
+        next.prev = this
     }
 
     fun star() : Iterable<Loop<T>>{
@@ -186,26 +209,29 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 
     companion object{
-        fun <T : Vec<T>> of(edge: Edge<T>) : Loop<T> {
+        fun <T : Vec<T>> wireCircular(edge: Edge<T>) : Loop<T> {
             val loop = Loop(OrientedEdge(edge))
-            loop.next = loop
-            loop.prev = loop
+            loop.followedBy(loop)
             return loop
         }
 
-        fun <T : Vec<T>> forward(vararg edges: Edge<T>) : Loop<T> {
-            return of(edges.map { OrientedEdge(it, EdgeOrientation.Forward) })
+        fun <T : Vec<T>> wrap(edge: Edge<T>) : Loop<T> {
+            return Loop(OrientedEdge(edge, EdgeOrientation.Forward))
         }
 
-        fun <T : Vec<T>> of(vararg edges: OrientedEdge<T>) : Loop<T> {
-            return of(edges.toList())
+        fun <T : Vec<T>> wireCircular(vararg edges: Edge<T>) : Loop<T> {
+            return wireCircular(edges.map { OrientedEdge(it, EdgeOrientation.Forward) })
+        }
+
+        fun <T : Vec<T>> wireCircular(vararg edges: OrientedEdge<T>) : Loop<T> {
+            return wireCircular(edges.toList())
         }
 
         fun <T : Vec<T>> combine(vararg loops: Loop<T>) : Loop<T> {
             return ofLoops(loops.toList())
         }
 
-        fun <T : Vec<T>> of(edges: Iterable<OrientedEdge<T>>) : Loop<T> {
+        fun <T : Vec<T>> wireCircular(edges: Iterable<OrientedEdge<T>>) : Loop<T> {
             val iterator = edges.iterator()
             if(!iterator.hasNext()) throw RuntimeException("One is required")
 
@@ -215,15 +241,12 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             var currentEdgeLoop = firstLoop
 
             while(iterator.hasNext()){
-                val currentEdge = iterator.next()
-                currentEdgeLoop = Loop(currentEdge)
-                currentEdgeLoop.prev = prevEdgeLoop
-                prevEdgeLoop.next = currentEdgeLoop
+                currentEdgeLoop = Loop(iterator.next())
+                prevEdgeLoop.followedBy(currentEdgeLoop)
                 prevEdgeLoop = currentEdgeLoop
             }
 
-            firstLoop.prev = currentEdgeLoop
-            currentEdgeLoop.next = firstLoop
+            currentEdgeLoop.followedBy(firstLoop)
             return firstLoop
         }
 
@@ -237,13 +260,11 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
 
             while(iterator.hasNext()){
                 currentEdgeLoop = iterator.next()
-                currentEdgeLoop.prev = prevEdgeLoop
-                prevEdgeLoop.next = currentEdgeLoop
+                prevEdgeLoop.followedBy(currentEdgeLoop)
                 prevEdgeLoop = currentEdgeLoop
             }
 
-            firstLoop.prev = currentEdgeLoop
-            currentEdgeLoop.next = firstLoop
+            currentEdgeLoop.followedBy(firstLoop)
             return firstLoop
         }
 
@@ -262,7 +283,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                 edges.add(OrientedEdge(Edge.line(lhs, rhs)))
             }
 
-            return of(*edges.toTypedArray())
+            return wireCircular(*edges.toTypedArray())
         }
     }
 }

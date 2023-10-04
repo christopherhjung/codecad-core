@@ -3,46 +3,13 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
+import com.codecad.core.sketch.offsetFace
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class OffsetTest {
 
-    fun offsetFace(face: Face, offset : Double) : List<Face>{
-        val surface = face.surface as PlaneSurface
-        val workplane = surface.workplane
-        val faceNormal = workplane.normal
-        for(bound in face.bounds){
-            val area = bound.loop.computeArea()
-            println(area)
-            for( loop in bound.loop ){
-                val orientedEdge = loop.edge
-                val edge = orientedEdge.edge
-                val curve = edge.curve
 
-                when(curve){
-                    is Line -> {
-                        val origin = curve.origin
-                        val direction = curve.direction
-
-                        val projOrigin = workplane.project2d(origin)
-                        val projDirection = workplane.projectDir2d(direction)
-
-                        //TODO: can remove normalized?
-                        val offsetVec = faceNormal.cross(direction).scaleTo(offset)
-
-                        val offsetLine = Line(origin + offsetVec, direction)
-
-                        println(projOrigin)
-                        println(projDirection)
-                        println(projDirection)
-                    }
-                }
-            }
-        }
-
-        return listOf()
-    }
 
     @Test
     fun importTest(){
@@ -50,53 +17,22 @@ class OffsetTest {
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         offsetFace(face, 1.0)*/
 
-        val c1 = Edge.circle(Vec2(0.0, 0.0), 1.0)
-        val c2 = Edge.circle(Vec2(4.9, 0.0), 5.0)
+        val topLeft = Vertex(Vec2(-1.0, 1.0))
+        val bottomLeft = Vertex(Vec2(-1.0, -1.0))
+        val bottomRight = Vertex(Vec2(1.0, -1.0))
+        val topRight = Vertex(Vec2(1.0, 1.0))
 
-        println(Intersect.of(c1, c2).toList())
+        val left = Edge.line(topLeft, bottomLeft)
+        val bottom = Edge.line(bottomLeft, bottomRight)
+        val right = Edge.line(bottomRight, topRight)
+        val top = Edge.line(topRight, topLeft)
+
+        val loop = Loop.wireCircular(left, bottom, right, top)
+        val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
+
+        val offsetFace = offsetFace(sketchFace, -0.1)
+
+        println(offsetFace)
     }
 
-    private fun assertContentEquals(expected: Vec2, actual: Vec2, error: Double){
-        assertEquals(expected.x, actual.x, error)
-        assertEquals(expected.y, actual.y, error)
-    }
-
-    private fun assertContentEquals(expected: List<Vec2>, actual: List<Vec2>, error: Double){
-        assertEquals(expected.size, actual.size)
-        for( (p1, p2) in expected.zip(actual) ){
-            assertContentEquals(p1, p2, error)
-        }
-    }
-
-    @Test
-    fun lineCircleIntersecionBetween(){
-        val c1 = Edge.line(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
-        val c2 = Edge.circle(Vec2(0.5, 0.4), 0.5)
-
-        assertContentEquals(listOf(Vec2(0.2, 0.0), Vec2(0.8, 0.0)), Intersect.of(c1, c2), 1e-8)
-    }
-
-    @Test
-    fun lineCircleIntersecionRight(){
-        val c1 = Edge.line(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
-        val c2 = Edge.circle(Vec2(0.8, 0.4), 0.5)
-
-        assertContentEquals(listOf(Vec2(0.5, 0.0)), Intersect.of(c1, c2), 1e-8)
-    }
-
-    @Test
-    fun lineCircleIntersecionLeft(){
-        val c1 = Edge.line(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
-        val c2 = Edge.circle(Vec2(-0.2, 0.4), 0.5)
-
-        assertContentEquals(listOf(Vec2(0.1, 0.0)), Intersect.of(c1, c2), 1e-8)
-    }
-
-    @Test
-    fun lineCircleIntersecionOnLine(){
-        val c1 = Edge.line(Vec2(0.0, 0.0), Vec2(1.0, 0.0))
-        val c2 = Edge.circle(Vec2(0.5, 0.0), 0.5)
-
-        assertContentEquals(listOf(Vec2(0.0, 0.0), Vec2(1.0, 0.0)), Intersect.of(c1, c2), 1e-8)
-    }
 }

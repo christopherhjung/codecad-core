@@ -1,28 +1,100 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.ast.vec.Vec2
-import com.codecad.core.brep.EdgeOrientation
-import com.codecad.core.brep.OrientedEdge
-import com.codecad.core.brep.Vertex
+import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 
-fun tangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
-    val edge = orientedEdge.edge
-    return when(val curve = edge.curve){
-        is Line -> if(orientedEdge.orientation == EdgeOrientation.Forward){
-            curve.direction
-        }else{
-            curve.direction.negate()
-        }
+fun startTangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
+    return if(orientedEdge.orientation == EdgeOrientation.Forward){
+        startTangent(orientedEdge.edge)
+    }else{
+        endTangent(orientedEdge.edge)
+    }
+}
 
+fun startNormal(orientedEdge: OrientedEdge<Vec2>) : Vec2{
+    return if(orientedEdge.orientation == EdgeOrientation.Forward){
+        startNormal(orientedEdge.edge)
+    }else{
+        endNormal(orientedEdge.edge).negate()
+    }
+}
+
+fun endNormal(orientedEdge: OrientedEdge<Vec2>) : Vec2{
+    return if(orientedEdge.orientation == EdgeOrientation.Forward){
+        endNormal(orientedEdge.edge)
+    }else{
+        startNormal(orientedEdge.edge).negate()
+    }
+}
+
+fun startTangent(edge: Edge<Vec2>) : Vec2{
+    return when(val curve = edge.curve){
+        is Line -> curve.direction
         is Circle -> {
-            val origin = curve.workplane.origin
-            val bound = edge.bound!!
-            if(orientedEdge.orientation == EdgeOrientation.Forward){
-                (origin - bound.start.point).normalLeft()
-            }else{
-                (origin - bound.end.point).normalRight()
+            val center = curve.workplane.origin
+            val bound = edge.bound ?: return Vec2.Zero
+            (center - bound.start.point).apply {
+                if(bound.sense == Sense.Same){
+                    rotateCCW()
+                }else{
+                    rotateCW()
+                }
+            }
+        }
+        else -> Vec2.Zero
+    }
+}
+
+fun endTangent(edge: Edge<Vec2>) : Vec2{
+    return when(val curve = edge.curve){
+        is Line -> curve.direction.negate()
+        is Circle -> {
+            val center = curve.workplane.origin
+            val bound = edge.bound ?: return Vec2.Zero
+            (center - bound.end.point).apply {
+                if(bound.sense == Sense.Same){
+                    rotateCW()
+                }else{
+                    rotateCCW()
+                }
+            }
+        }
+        else -> Vec2.Zero
+    }
+}
+
+fun startNormal(edge: Edge<Vec2>) : Vec2{
+    return when(val curve = edge.curve){
+        is Line -> curve.direction.rotateCW()
+        is Circle -> {
+            val center = curve.workplane.origin
+            val bound = edge.bound ?: return Vec2.Zero
+            (bound.start.point - center).apply {
+                if(bound.sense == Sense.Same){
+                    this
+                }else{
+                    negate()
+                }
+            }
+        }
+        else -> Vec2.Zero
+    }
+}
+
+fun endNormal(edge: Edge<Vec2>) : Vec2{
+    return when(val curve = edge.curve){
+        is Line -> curve.direction.rotateCW()
+        is Circle -> {
+            val center = curve.workplane.origin
+            val bound = edge.bound ?: return Vec2.Zero
+            (bound.end.point - center).apply {
+                if(bound.sense == Sense.Same){
+                    this
+                }else{
+                    negate()
+                }
             }
         }
         else -> Vec2.Zero
@@ -31,7 +103,7 @@ fun tangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
 
 object RotaryEdgeComparator : Comparator<OrientedEdge<Vec2>>{
     override fun compare(lhs: OrientedEdge<Vec2>, rhs: OrientedEdge<Vec2>): Int {
-        return Vec2.rotaryCmp(Vec2.DirX, tangent(lhs), tangent(rhs))
+        return Vec2.rotaryCmp(Vec2.DirX, startTangent(lhs), startTangent(rhs))
     }
 }
 

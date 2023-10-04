@@ -23,8 +23,8 @@ object VolumeSuite {
         val topSurface = PlaneSurface(topWorkplane)
         val bottomSurface = PlaneSurface(bottomWorkplane)
 
-        val topLoop = Loop.of(topEdge)
-        val bottomLoop = Loop.of(bottomEdge)
+        val topLoop = Loop.wireCircular(topEdge)
+        val bottomLoop = Loop.wireCircular(bottomEdge)
 
         val topFace = Face(topSurface, listOf(FaceBound(topLoop, FaceBoundKind.OuterBound)))
         val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomLoop, FaceBoundKind.OuterBound)))
@@ -56,11 +56,11 @@ object VolumeSuite {
         val topSurface = PlaneSurface(topWorkplane)
         val bottomSurface = PlaneSurface(bottomWorkplane)
 
-        val topLoop = Loop.of(topEdge)
-        val bottomLoop = Loop.of(bottomEdge)
+        val topLoop = Loop.wireCircular(topEdge)
+        val bottomLoop = Loop.wireCircular(bottomEdge)
 
-        val topHoleLoop = Loop.of(topHoleEdge)
-        val bottomHoleLoop = Loop.of(bottomHoleEdge)
+        val topHoleLoop = Loop.wireCircular(topHoleEdge)
+        val bottomHoleLoop = Loop.wireCircular(bottomHoleEdge)
 
         val topFace = Face(topSurface, listOf(FaceBound(topLoop, FaceBoundKind.OuterBound), FaceBound(topHoleLoop, FaceBoundKind.InnerBound)))
         val bottomFace = Face(bottomSurface, listOf(FaceBound(bottomLoop, FaceBoundKind.OuterBound), FaceBound(bottomHoleLoop, FaceBoundKind.InnerBound)))
@@ -93,8 +93,8 @@ object VolumeSuite {
 
         val bottomSurface = PlaneSurface(bottomWorkplane)
 
-        val bottomLoop = Loop.of(bottomEdge)
-        val bottomHoleLoop = Loop.of(bottomHoleEdge)
+        val bottomLoop = Loop.wireCircular(bottomEdge)
+        val bottomHoleLoop = Loop.wireCircular(bottomHoleEdge)
 
         val face = Face(bottomSurface, listOf(FaceBound(bottomLoop, FaceBoundKind.OuterBound), FaceBound(bottomHoleLoop, FaceBoundKind.InnerBound)))
 
@@ -104,7 +104,7 @@ object VolumeSuite {
     fun createCircle(bottomWorkplane: Workplane<Vec3>, radius: Double) : Face {
         val bottomEdge = Edge(Circle(bottomWorkplane, radius))
         val bottomSurface = PlaneSurface(bottomWorkplane)
-        val bottomLoop = Loop.of(bottomEdge)
+        val bottomLoop = Loop.wireCircular(bottomEdge)
         val face = Face(bottomSurface, listOf(FaceBound(bottomLoop, FaceBoundKind.OuterBound)))
         return face
     }
@@ -173,7 +173,7 @@ object VolumeSuite {
         val daArc = Edge.arc(workplane.withOrigin(llCircle), d2, a1, Sense.Same)
 
         val surface = PlaneSurface(workplane)
-        val loop = Loop.forward(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
+        val loop = Loop.wireCircular(aEdge, abArc, bEdge, bcArc, cEdge, cdArc, dEdge, daArc)
         val face = Face(surface, listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
         return face
@@ -196,7 +196,7 @@ object VolumeSuite {
 
         val aEdge = Edge(spline, EdgeBound(aVertex, aVertex, Sense.Same))
         val surface = PlaneSurface(workplane)
-        val loop = Loop.of(aEdge)
+        val loop = Loop.wireCircular(aEdge)
         val face = Face(surface, listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
         return face

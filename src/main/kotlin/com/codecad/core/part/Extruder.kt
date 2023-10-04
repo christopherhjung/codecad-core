@@ -45,7 +45,7 @@ object Extruder{
                     val endEdge = extrusionLine(baseEdgeBound.end, extrudeEdgeBound.end)
 
                     val bound = FaceBound(
-                        Loop.of(
+                        Loop.wireCircular(
                             baseOrientedEdge,
                             OrientedEdge(endEdge, baseOrientedEdge.orientation),
                             OrientedEdge(extrudeEdge, baseOrientedEdge.orientation.invert()),
@@ -122,7 +122,7 @@ object Extruder{
                 edges.add(OrientedEdge(Edge(offsetCurve, offsetBound), orientedEdge.orientation))
             }
 
-            faceBounds.add(FaceBound(Loop.of(edges), faceBound.sense))
+            faceBounds.add(FaceBound(Loop.wireCircular(edges), faceBound.sense))
         }
 
         val surface = face.surface as PlaneSurface

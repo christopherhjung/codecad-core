@@ -41,13 +41,13 @@ class Revolver(){
                     val rotatedCircle = Circle(rotatedWorkplane, circleCurve.radius)
                     val plane = PlaneSurface(rotatedWorkplane)
 
-                    val newFaceBound = FaceBound(Loop.of(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
+                    val newFaceBound = FaceBound(Loop.wireCircular(Edge(rotatedCircle)), FaceBoundKind.OuterBound)
 
                     val test = face.surface as ElementarySurface
                     val invertedWorkplane = test.workplane.invert()
                     val firstPlane = PlaneSurface(invertedWorkplane)
                     val invertedFaceBound = FaceBound(
-                        Loop.of(Edge(Circle(invertedWorkplane, circleCurve.radius))),
+                        Loop.wireCircular(Edge(Circle(invertedWorkplane, circleCurve.radius))),
                         FaceBoundKind.OuterBound
                     )
                     val rotated = Face(firstPlane, listOf(invertedFaceBound))
@@ -103,7 +103,7 @@ class Revolver(){
 
                     val revolveCurve = Circle(workplane, radius)
                     val revolveEdge = OrientedEdge(Edge(revolveCurve), EdgeOrientation.Forward)
-                    faceBounds.add(FaceBound(Loop.of(revolveEdge), FaceBoundKind.OuterBound))
+                    faceBounds.add(FaceBound(Loop.wireCircular(revolveEdge), FaceBoundKind.OuterBound))
                     surfaces.add(revolveSurface)
                 }
 

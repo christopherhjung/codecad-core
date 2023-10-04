@@ -94,7 +94,7 @@ class StepImporter{
     fun importFaceBound(faceBound : StepObject) : FaceBound<Vec3> {
         val edgeLoop = faceBound.edgeLoop
 
-        val loop = Loop.of(edgeLoop.orientedEdges.map{
+        val loop = Loop.wireCircular(edgeLoop.orientedEdges.map{
             val edgeCurve = it.edgeCurves
             val edge = createEdge(edgeCurve)
 

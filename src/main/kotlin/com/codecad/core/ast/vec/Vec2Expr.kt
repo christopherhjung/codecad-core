@@ -115,11 +115,11 @@ data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
         return Vec2(x - vec.y, y + vec.x)
     }
 
-    fun normalLeft() : Vec2{
+    fun rotateCCW() : Vec2{
         return Vec2(-y, x)
     }
 
-    fun normalRight() : Vec2{
+    fun rotateCW() : Vec2{
         return Vec2(y, -x)
     }
 
