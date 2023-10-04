@@ -2,6 +2,7 @@ package com.codecad.core.sketch
 
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 
 fun offsetFace(sketchFace: SketchFace, offset: Double) : SketchFace{
@@ -59,6 +60,36 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
                     )
                 )
             }
+            is Circle -> {
+                val center = curve.workplane.origin
+                val radius = curve.radius
+
+                if(radius + offset < 0.0){
+                    /*val centerVertex = Vertex(center)
+
+                    val firstEdge = Edge.line(
+                        currentStartVertex,
+                        centerVertex,
+                    )
+
+                    val secondEdge = Edge.line(
+                        centerVertex,
+                        currentEndVertex,
+                    )*/
+
+                    throw RuntimeException("xxx")
+                }else{
+                    val offsetCircle = Circle(curve.workplane, radius + offset)
+
+                    Edge(offsetCircle,
+                        EdgeBound(
+                            currentStartVertex,
+                            currentEndVertex,
+                            bound.sense
+                        )
+                    )
+                }
+            }
             else -> throw RuntimeException()
         }
 
@@ -70,7 +101,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             initOffsetLoop = offsetLoop
         }
 
-        lastLoop = if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
+        val nextOffsetLoop = if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
             val pointVertex = Vertex(bound.end.point)
             val first = Loop.wrap(Edge.line(currentEndVertex, pointVertex))
@@ -88,10 +119,11 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         }
 
         if(lastIter){
-            lastLoop.followedBy(initOffsetLoop!!)
+            nextOffsetLoop.followedBy(initOffsetLoop!!)
             break
         }
 
+        lastLoop = nextOffsetLoop
         currentLoop = nextLoop
         currentEdge = nextEdge
         currentStartVertex = nextStartVertex
