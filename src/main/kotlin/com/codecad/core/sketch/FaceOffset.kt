@@ -30,8 +30,8 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val nextEdge = nextLoop.edge.normalized()
         val nextBound = nextEdge.bound!!
 
-        val currentBound = currentEdge.bound!!
-        val currentCurve = currentEdge.curve
+        val bound = currentEdge.bound!!
+        val curve = currentEdge.curve
 
         val currentEndNormal = endNormal(currentEdge)
         val nextStartNormal = startNormal(nextEdge)
@@ -39,23 +39,23 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val lastIter = initLoop === nextLoop
         val currentEndOffsetVec = currentEndNormal * offset
 
-        val currentEndVertex = Vertex(currentBound.end.point + currentEndOffsetVec)
+        val currentEndVertex = Vertex(bound.end.point + currentEndOffsetVec)
         val nextStartVertex = if(lastIter){
             initStartVertex
         }else{
             Vertex(nextBound.start.point + nextStartNormal * offset)
         }
 
-        val offsetEdge = when(currentCurve){
+        val offsetEdge = when(curve){
             is Line -> {
-                val offsetOrigin = currentCurve.origin + currentEndOffsetVec
-                val offsetLine = Line(offsetOrigin, currentCurve.direction)
+                val offsetOrigin = curve.origin + currentEndOffsetVec
+                val offsetLine = Line(offsetOrigin, curve.direction)
 
                 Edge(offsetLine,
                     EdgeBound(
                         currentStartVertex,
                         currentEndVertex,
-                        currentBound.sense
+                        bound.sense
                     )
                 )
             }
@@ -72,7 +72,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
 
         lastLoop = if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
-            val pointVertex = Vertex(currentBound.end.point)
+            val pointVertex = Vertex(bound.end.point)
             val first = Loop.wrap(Edge.line(currentEndVertex, pointVertex))
             val second = Loop.wrap(Edge.line(pointVertex, nextStartVertex))
 
@@ -81,7 +81,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             second
         }else{
             //arc
-            val workplane = Workplane(currentBound.end.point, Vec2.DirY, Vec2.DirX)
+            val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)
             val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, Sense.Same))
             offsetLoop.followedBy(arc)
             arc
