@@ -32,10 +32,7 @@ data class VertexHelper(val point: Vertex<Vec2>){
     fun finalize(){
         loops.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
         for((top, bottom) in loops.rollover()){
-            top.twin!!.let {
-                it.next = bottom
-                bottom.prev = it
-            }
+            top.twin!!.followedBy(bottom)
         }
     }
 }
@@ -95,16 +92,13 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
                 val beforeCurrent = currentLoop.prev
                 if(beforeCurrent !== twin){
                     val afterTwin = twin.next
-                    beforeCurrent.next = afterTwin
-                    afterTwin.prev = beforeCurrent
-                    twin.next = currentLoop
-                    currentLoop.prev = twin
+                    beforeCurrent.followedBy(afterTwin)
+                    twin.followedBy(currentLoop)
                     createBound(beforeCurrent)
                 }
 
                 val beforeTwin = twin.prev
-                nextLoop.prev = beforeTwin
-                beforeTwin.next = nextLoop
+                beforeTwin.followedBy(nextLoop)
             }
 
             if(nextLoop.marker === loopMarker){

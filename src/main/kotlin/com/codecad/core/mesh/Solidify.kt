@@ -107,8 +107,7 @@ object Solidify {
             faceBoundLoops.add(currentLoop)
             while(true){
                 if(loops.remove(nextLoop)){
-                    currentLoop.next = nextLoop
-                    nextLoop.prev = currentLoop
+                    currentLoop.followedBy(nextLoop)
                     if(nextLoop === initLoop){
                         break
                     }
