@@ -40,11 +40,18 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val lastIter = initLoop === nextLoop
         val currentEndOffsetVec = currentEndNormal * offset
 
-        val currentEndVertex = Vertex(bound.end.point + currentEndOffsetVec)
         val nextStartVertex = if(lastIter){
             initStartVertex
         }else{
             Vertex(nextBound.start.point + nextStartNormal * offset)
+        }
+
+        val normalDiff = (currentEndNormal - nextStartNormal).squaredLength()
+
+        val currentEndVertex = if(normalDiff < 1e-5){
+            nextStartVertex
+        }else{
+            Vertex(bound.end.point + currentEndOffsetVec)
         }
 
         val offsetCurve = when(curve){
@@ -72,14 +79,15 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             )
 
         val offsetLoop = Loop(OrientedEdge(offsetEdge, EdgeOrientation.Forward))
-
         if(lastLoop != null){
             lastLoop.followedBy(offsetLoop)
         }else{
             initOffsetLoop = offsetLoop
         }
 
-        val nextOffsetLoop = if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
+        val nextOffsetLoop = if(currentEndVertex === nextStartVertex){
+            offsetLoop
+        }else if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
             val pointVertex = Vertex(bound.end.point)
             val first = Loop.wrap(Edge.line(currentEndVertex, pointVertex))
@@ -107,7 +115,6 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         currentStartVertex = nextStartVertex
     }
 
-    lastLoop?.followedBy(initOffsetLoop!!)
     return initOffsetLoop!!
 }
 
