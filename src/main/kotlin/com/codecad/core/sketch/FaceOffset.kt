@@ -61,7 +61,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             is Circle -> {
                 val radius = curve.radius
                 if(radius + offset < 0.0){
-                    throw RuntimeException("xxx")
+                    Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
                     Circle(curve.workplane, radius + offset)
                 }
