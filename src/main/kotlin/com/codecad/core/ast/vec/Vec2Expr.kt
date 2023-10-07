@@ -1,5 +1,6 @@
 package com.codecad.core.ast.vec
 
+import com.codecad.core.Utils
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
@@ -141,8 +142,7 @@ data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
     }
 
     fun angleTo(other : Vec2) : Double{
-        val dir = this - other
-        return atan2(dir.x, dir.y)
+        return Utils.normalizeAngle(atan2(other.y, other.x) - atan2(y, x))
     }
 
     override fun negate() : Vec2{

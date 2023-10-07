@@ -117,3 +117,14 @@ class RotaryVertexComparator(private val center : Vec2, private val reference : 
     }
 }
 
+
+class DirectionVertexComparator(private val reference : Vec2 = Vec2.DirX) : Comparator<Vertex<Vec2>>{
+    override fun compare(lhs: Vertex<Vec2>, rhs: Vertex<Vec2>): Int {
+        return compare(lhs.point, rhs.point)
+    }
+
+    fun compare(lhs: Vec2, rhs: Vec2): Int {
+        return 0.0.compareTo(reference.dot(rhs - lhs))
+    }
+}
+

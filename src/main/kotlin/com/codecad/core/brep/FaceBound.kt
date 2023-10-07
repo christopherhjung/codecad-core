@@ -183,7 +183,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                     .append("->")
                     .append(bound.end)
                     .append(" -- ")
-                    .append(orientedEdge.edge.curve)
+                    .append(orientedEdge.edge.curve::class.simpleName)
 
                 /*
                 if(bound.sense != Sense.None){
@@ -217,6 +217,14 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
 
         fun <T : Vec<T>> wrap(edge: Edge<T>) : Loop<T> {
             return Loop(OrientedEdge(edge, EdgeOrientation.Forward))
+        }
+
+        fun <T : Vec<T>> wireCircular(vararg vertices: Vertex<T>) : Loop<T> {
+            val edges = vertices.toList().rollover().map { (lhs, rhs) ->
+                OrientedEdge(Edge.line(lhs, rhs), EdgeOrientation.Forward)
+            }
+
+            return wireCircular(edges)
         }
 
         fun <T : Vec<T>> wireCircular(vararg edges: Edge<T>) : Loop<T> {

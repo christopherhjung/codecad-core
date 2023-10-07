@@ -88,7 +88,7 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
             val twin = currentLoop.twin!!
             val nextLoop = currentLoop.next
 
-            if(twin.marker == loopMarker){
+            if(twin.marker === loopMarker){
                 val beforeCurrent = currentLoop.prev
                 if(beforeCurrent !== twin){
                     val afterTwin = twin.next

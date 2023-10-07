@@ -1,11 +1,17 @@
-import com.codecad.core.Intersect
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
-import com.codecad.core.brep.surface.PlaneSurface
+import com.codecad.core.sketch.cutLines
 import com.codecad.core.sketch.offsetFace
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import javax.imageio.ImageIO
+
 
 class OffsetTest {
 
@@ -59,7 +65,134 @@ class OffsetTest {
 
         val offsetFace = offsetFace(sketchFace, -0.1)
 
+        for( bound in offsetFace.bounds ){
+            val edges = bound.loop.map { it.edge.edge }
+            val cutEdges = cutLines(edges)
+
+            println(cutEdges)
+        }
+
         println(offsetFace)
     }
 
+    @Test
+    fun hourGlass(){
+        /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
+        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
+        offsetFace(face, 1.0)*/
+
+        val topLeft = Vertex(Vec2(-1.01, 1.0))
+        val bottomLeft = Vertex(Vec2(-1.0, -1.0))
+        val topMid = Vertex(Vec2(0.0, 0.1))
+        val bottomMid = Vertex(Vec2(0.0, -0.1))
+        val bottomRight = Vertex(Vec2(1.0, -1.0))
+        val topRight = Vertex(Vec2(1.01, 1.0))
+
+        val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
+        val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
+
+        val offsetFace = offsetFace(sketchFace, -0.4)
+
+        for( bound in offsetFace.bounds ){
+            val edges = bound.loop.map { it.edge.edge }
+            val cutEdges = cutLines(edges)
+
+            println(cutEdges)
+            val printer = DebugPrinter(1024, 1024)
+
+
+            val rawEdges = loop.map { it.edge.edge }
+            printer.addEdges(rawEdges, Color.RED)
+            printer.addEdges(cutEdges)
+            printer.finish()
+        }
+
+        println(offsetFace)
+    }
+
+
+}
+
+
+class DebugPrinter(val width: Int, val height: Int){
+    val vertices = arrayListOf<Vec2>()
+    val image: BufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+    val graphics = image.createGraphics()
+
+    class PixelPointer(val x : Int, val y : Int)
+
+    fun addEdges(edges: List<Edge<Vec2>>, color: Color = Color.WHITE){
+        graphics.color = color
+        edges.forEach { drawEdge(it) }
+    }
+
+    fun projectSize(value : Double) : Int{
+        return (value * 256.0).toInt()
+    }
+
+    fun project(value : Double) : Int{
+        return (256.0 + value * 256.0).toInt()
+    }
+
+    fun from(vec2: Vec2) : PixelPointer{
+        return PixelPointer(project((vec2.x + 1.0)), project((vec2.y + 1.0)))
+    }
+
+    fun finish(){
+        graphics.color = Color.RED
+        vertices.forEach{
+            drawDot(from(it))
+        }
+
+        graphics.dispose()
+        try {
+            val out = FileOutputStream("debug.png")
+            ImageIO.write(image, "png", out)
+            out.close()
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun drawDot(pixelPointer: PixelPointer) {
+        val dotSize = 10 // Adjust the size of the dot as needed
+        val x: Int = pixelPointer.x - dotSize / 2
+        val y: Int = pixelPointer.y - dotSize / 2
+        graphics.fillOval(x, y, dotSize, dotSize)
+    }
+
+    fun drawEdge(edge: Edge<Vec2>){
+        val bound = edge.bound!!
+        vertices.add(bound.start.point)
+        vertices.add(bound.end.point)
+
+        when(val curve = edge.curve){
+            is Line -> {
+                val start = from(bound.start.point)
+                val end = from(bound.end.point)
+                graphics.drawLine(start.x, start.y, end.x, end.y)
+            }
+            is Circle -> {
+                val center = curve.workplane.origin
+                val radius = curve.radius
+                vertices.add(center)
+
+                val upperLeft = from(center - radius)
+
+                val (start, end) = if(bound.sense == Sense.Same){
+                    arrayOf(bound.start.point - center, bound.end.point - center)
+                }else{
+                    arrayOf(bound.end.point - center, bound.start.point - center)
+                }
+
+                val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
+                val arcAngle = -Math.toDegrees(start.angleTo(end))
+
+                val size = projectSize(radius * 2)
+                graphics.drawArc(upperLeft.x, upperLeft.y, size, size, startAngle.toInt(), arcAngle.toInt())
+            }
+        }
+    }
 }

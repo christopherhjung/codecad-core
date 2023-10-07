@@ -90,17 +90,18 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             offsetLoop
         }else if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
-            val pointVertex = Vertex(bound.end.point)
-            val first = Loop.wrap(Edge.line(currentEndVertex, pointVertex))
-            val second = Loop.wrap(Edge.line(pointVertex, nextStartVertex))
+            //val pointVertex = Vertex(bound.end.point)
+            val first = Loop.wrap(Edge.line(currentEndVertex, nextStartVertex))
+            //val second = Loop.wrap(Edge.line(pointVertex, nextStartVertex))
 
             offsetLoop.followedBy(first)
-            first.followedBy(second)
-            second
+            //first.followedBy(second)
+            //second
+            first
         }else{
             //arc
             val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)
-            val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, Sense.Same))
+            val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, Sense.Opposite))
             offsetLoop.followedBy(arc)
             arc
         }

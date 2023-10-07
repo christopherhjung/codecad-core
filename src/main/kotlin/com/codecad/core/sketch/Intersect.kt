@@ -11,8 +11,6 @@ import com.codecad.core.brep.curve.Line
 import com.codecad.core.face.Event
 import com.codecad.core.face.events
 
-
-val VertexComp2D = Comparator.comparing<Vertex<Vec2>, Double> { it.point.x }.thenComparing(Comparator.comparing { it.point.y });
 fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     val events = events(edges)
 
@@ -49,7 +47,7 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                     val bound = edge.bound!!
                     sections.add(bound.start)
                     sections.add(bound.end)
-                    sections.sortWith(VertexComp2D)
+                    sections.sortWith(DirectionVertexComparator(curve.direction))
                     for((lhs, rhs) in sections.zipWithNext()){
                         result.add(Edge(curve, EdgeBound(lhs, rhs, Sense.Same)))
                     }
@@ -60,9 +58,11 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                     if(bound != null){
                         sections.add(bound.start)
                         sections.add(bound.end)
-                        sections.sortWith(RotaryVertexComparator(center, bound.start.point - center))
+                        var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
+                        if(bound.sense == Sense.Opposite) comp = comp.reversed()
+                        sections.sortWith(comp)
                         for((lhs, rhs) in sections.zipWithNext()){
-                            result.add(Edge(curve, EdgeBound(lhs, rhs, Sense.Same)))
+                            result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
                         }
                     }else{
                         sections.sortWith(RotaryVertexComparator(center))

@@ -2,6 +2,7 @@ package com.codecad.core
 
     import com.codecad.core.ast.vec.Vec2
     import com.codecad.core.brep.Edge
+    import com.codecad.core.brep.Sense
     import com.codecad.core.brep.curve.Circle
     import com.codecad.core.brep.curve.Line
     import kotlin.math.abs
@@ -19,8 +20,21 @@ fun Edge<Vec2>.inside(p : Vec2) : Boolean{
         is Circle -> {
             val bound = bound ?: return true
             val center = curve.workplane.origin
-            val p0 = bound.start.point - center
-            val p1 = bound.end.point - center
+
+            val start = if(bound.sense == Sense.Same){
+                bound.start.point
+            }else{
+                bound.end.point
+            }
+
+            val end = if(bound.sense == Sense.Same){
+                bound.end.point
+            }else{
+                bound.start.point
+            }
+
+            val p0 = start - center
+            val p1 = end - center
             val cmp = Vec2.rotaryCmp(p0, p - center, p1)
             return cmp != 1
         }
@@ -31,33 +45,46 @@ fun Edge<Vec2>.inside(p : Vec2) : Boolean{
 object Intersect {
     private const val epsilon = 1e-8
 
+    fun hasCommonVertex(lhs: Edge<Vec2>, rhs: Edge<Vec2>) : Boolean{
+        val lhsBound = lhs.bound
+        val rhsBound = rhs.bound
+
+        if(lhsBound != null && rhsBound != null){
+            when(lhsBound.start){
+                rhsBound.start, rhsBound.end -> return true
+            }
+
+            when(lhsBound.end){
+                rhsBound.start, rhsBound.end -> return true
+            }
+        }
+
+        return false
+    }
+
     fun of(lhs: Edge<Vec2>, rhs: Edge<Vec2>) : List<Vec2>{
+        if(hasCommonVertex(lhs, rhs)) return emptyList()
+
         val lhsCurve = lhs.curve
         val rhsCurve = rhs.curve
 
         return when(lhsCurve){
             is Line -> when(rhsCurve){
-                is Line -> ofLineLine(lhsCurve, rhsCurve).filter {
-                    lhs.inside(it) && rhs.inside(it)
-                }
-                is Circle -> ofLineCircle(lhsCurve, rhsCurve).filter {
-                    lhs.inside(it) && rhs.inside(it)
-                }
-                else -> null
+                is Line -> ofLineLine(lhsCurve, rhsCurve)
+                is Circle -> ofLineCircle(lhsCurve, rhsCurve)
+                else -> throw RuntimeException()
             }
 
             is Circle -> when(rhsCurve){
-                is Line -> ofLineCircle(rhsCurve, lhsCurve).filter {
-                    lhs.inside(it) && rhs.inside(it)
-                }
-                is Circle -> ofCircles(rhsCurve, lhsCurve).filter {
-                    lhs.inside(it) && rhs.inside(it)
-                }
-                else -> null
+                is Line -> ofLineCircle(rhsCurve, lhsCurve)
+                is Circle -> ofCircles(rhsCurve, lhsCurve)
+                else -> throw RuntimeException()
             }
 
-            else -> null
-        } ?: throw RuntimeException()
+            else -> throw RuntimeException()
+        }.filter {
+            lhs.inside(it) && rhs.inside(it)
+        }
     }
 
     private fun ofLineLine(line1: Line<Vec2>, line2: Line<Vec2>): List<Vec2> {
@@ -66,21 +93,10 @@ object Intersect {
         val sd = line1.origin - line2.origin
 
         val a = s1.crossZ(s2)
-        if(a < epsilon) return emptyList()
+        if(abs(a) < epsilon) return emptyList()
 
-        fun insideUnitInterval(value: Double) : Boolean{
-            return value - epsilon > 0.0 && value + epsilon < 1.0
-        }
-
-        val s = s1.crossZ(sd) / a
-        if( insideUnitInterval(s) ) {
-            val t = s2.crossZ(sd) / a
-            if(insideUnitInterval(t)){
-                return listOf(line1.origin + s1 * t)
-            }
-        }
-
-        return emptyList()
+        val t = s2.crossZ(sd) / a
+        return listOf(line1.origin + s1 * t)
     }
 
     private fun ofLineCircle(line: Line<Vec2>, circle: Circle<Vec2>) : List<Vec2>{
