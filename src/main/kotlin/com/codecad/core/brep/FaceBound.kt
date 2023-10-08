@@ -141,6 +141,11 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 
     fun followedBy(next : Loop<T>){
+        val bound = edge.bound!!
+        val nextBound = next.edge.bound!!
+        if(bound.end !== nextBound.start){
+            throw RuntimeException("xxx")
+        }
         this.next = next
         next.prev = this
     }

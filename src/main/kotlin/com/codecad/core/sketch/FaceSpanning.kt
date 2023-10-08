@@ -21,12 +21,12 @@ enum class FaceType{
 data class VertexHelper(val point: Vertex<Vec2>){
     val loops = mutableListOf<Loop<Vec2>>()
 
-    fun addLoop(edge: Loop<Vec2>){
-        if(edge.edge.start !== point){
+    fun addLoop(loop: Loop<Vec2>){
+        if(loop.edge.start != point){
             throw RuntimeException("ss")
         }
 
-        loops.add(edge)
+        loops.add(loop)
     }
 
     fun finalizeCCW(){
@@ -37,14 +37,14 @@ data class VertexHelper(val point: Vertex<Vec2>){
     }
 
     fun finalizeMirrored(){
-        val forwards = loops.filter { it.edge.orientation == EdgeOrientation.Forward }.toMutableList()
-        val backwards = loops.filter { it.edge.orientation == EdgeOrientation.Backward }.toMutableList()
+        val forwards = loops.filter { it.edge.orientation == EdgeOrientation.Forward }
+            .sortedBy { System.identityHashCode(it.edge.edge.curve) }
 
-        forwards.sortBy { System.identityHashCode(it.edge.edge.curve) }
-        backwards.sortByDescending { System.identityHashCode(it.edge.edge.curve) }
+        val backwards = loops.filter { it.edge.orientation == EdgeOrientation.Backward }
+            .sortedByDescending { System.identityHashCode(it.edge.edge.curve) }
 
-        for((lhs, rhs) in forwards.zip(backwards)){
-            lhs.followedBy(rhs.twin!!)
+        for((fwd, bwd) in forwards.zip(backwards)){
+            bwd.twin!!.followedBy(fwd)
         }
     }
 }

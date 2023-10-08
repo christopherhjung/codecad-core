@@ -69,15 +69,8 @@ fun startNormal(edge: Edge<Vec2>) : Vec2{
     return when(val curve = edge.curve){
         is Line -> curve.direction.rotateCW()
         is Circle -> {
-            val center = curve.workplane.origin
             val bound = edge.bound ?: return Vec2.Zero
-            (bound.start.point - center).apply {
-                if(bound.sense == Sense.Same){
-                    this
-                }else{
-                    negate()
-                }
-            }
+            circleNormal(curve, bound.start, bound.sense)
         }
         else -> Vec2.Zero
     }
@@ -87,17 +80,21 @@ fun endNormal(edge: Edge<Vec2>) : Vec2{
     return when(val curve = edge.curve){
         is Line -> curve.direction.rotateCW()
         is Circle -> {
-            val center = curve.workplane.origin
             val bound = edge.bound ?: return Vec2.Zero
-            (bound.end.point - center).apply {
-                if(bound.sense == Sense.Same){
-                    this
-                }else{
-                    negate()
-                }
-            }
+            circleNormal(curve, bound.end, bound.sense)
         }
         else -> Vec2.Zero
+    }
+}
+
+fun circleNormal(curve: Circle<Vec2>, boundVertex: Vertex<Vec2>, sense: Sense) : Vec2{
+    val center = curve.workplane.origin
+    val toCenter = (boundVertex.point - center).normalized()
+
+    return if(sense == Sense.Same){
+        toCenter
+    }else{
+        toCenter.negate()
     }
 }
 

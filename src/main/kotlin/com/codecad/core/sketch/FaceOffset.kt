@@ -48,7 +48,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
 
         val normalDiff = (currentEndNormal - nextStartNormal).squaredLength()
 
-        val currentEndVertex = if(normalDiff < 1e-5){
+        val currentEndVertex = if(normalDiff < 1e-3){
             nextStartVertex
         }else{
             Vertex(bound.end.point + currentEndOffsetVec)
@@ -60,11 +60,18 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             }
             is Circle -> {
                 val radius = curve.radius
+
+                val newRadius = if(bound.sense == Sense.Same){
+                    radius + offset
+                }else{
+                    radius - offset
+                }
+
                 //TODO fix zero radius
-                if(radius + offset < 0.0){
+                if(newRadius < 0.0){
                     Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
-                    Circle(curve.workplane, radius + offset)
+                    Circle(curve.workplane, newRadius)
                 }
             }
             else -> throw RuntimeException()
@@ -91,12 +98,10 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         }else if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
             //val pointVertex = Vertex(bound.end.point)
-            val first = Loop.wrap(Edge.line(currentEndVertex, nextStartVertex))
             //val second = Loop.wrap(Edge.line(pointVertex, nextStartVertex))
 
+            val first = Loop.wrap(Edge.line(currentEndVertex, nextStartVertex))
             offsetLoop.followedBy(first)
-            //first.followedBy(second)
-            //second
             first
         }else{
             //arc
