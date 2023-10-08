@@ -81,12 +81,12 @@ class OffsetTest {
         val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
         offsetFace(face, 1.0)*/
 
-        val topLeft = Vertex(Vec2(-1.01, 1.0))
+        val topLeft = Vertex(Vec2(-1.0, 1.0))
         val bottomLeft = Vertex(Vec2(-1.0, -1.0))
         val topMid = Vertex(Vec2(0.0, 0.1))
         val bottomMid = Vertex(Vec2(0.0, -0.1))
         val bottomRight = Vertex(Vec2(1.0, -1.0))
-        val topRight = Vertex(Vec2(1.01, 1.0))
+        val topRight = Vertex(Vec2(1.0, 1.0))
 
         val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
