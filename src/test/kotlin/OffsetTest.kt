@@ -2,8 +2,7 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
-import com.codecad.core.sketch.cutLines
-import com.codecad.core.sketch.offsetFace
+import com.codecad.core.sketch.*
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -75,6 +74,15 @@ class OffsetTest {
         println(offsetFace)
     }
 
+    fun offsetFaceFull(sketchFace : SketchFace) : SketchFace{
+        val offsetFace = offsetFace(sketchFace, -0.4)
+        val edges = offsetFace.bounds.flatMap { bound -> bound.loop.map { it.edge.edge } }
+        val cutEdges = cutLines(edges)
+        val loops = connectVerticesMirrored(cutEdges)
+        val faces = generateFaces(loops)
+        return SketchFace(faces.bounds.filter { it.loop.computeAreaVec2() > 0.0 })
+    }
+
     @Test
     fun hourGlass(){
         /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
@@ -83,33 +91,23 @@ class OffsetTest {
 
         val topLeft = Vertex(Vec2(-1.0, 1.0))
         val bottomLeft = Vertex(Vec2(-1.0, -1.0))
-        val topMid = Vertex(Vec2(0.0, 0.1))
-        val bottomMid = Vertex(Vec2(0.0, -0.1))
+        val topMid = Vertex(Vec2(0.0, 0.5))
+        val bottomMid = Vertex(Vec2(0.0, -0.5))
         val bottomRight = Vertex(Vec2(1.0, -1.0))
         val topRight = Vertex(Vec2(1.0, 1.0))
 
         val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
-        val offsetFace = offsetFace(sketchFace, -0.4)
+        val offsetFace = offsetFaceFull(sketchFace)
 
-        for( bound in offsetFace.bounds ){
-            val edges = bound.loop.map { it.edge.edge }
-            val cutEdges = cutLines(edges)
-
-            println(cutEdges)
-            val printer = DebugPrinter(1024, 1024)
-
-
-            val rawEdges = loop.map { it.edge.edge }
-            printer.addEdges(rawEdges, Color.RED)
-            printer.addEdges(cutEdges)
-            printer.finish()
-        }
-
-        println(offsetFace)
+        val printer = DebugPrinter(1024, 1024)
+        val rawEdges = loop.map { it.edge.edge }
+        printer.add(rawEdges, Color.GREEN)
+        //printer.add(testFaces)
+        printer.add(offsetFace)
+        printer.finish()
     }
-
 
 }
 
@@ -121,9 +119,19 @@ class DebugPrinter(val width: Int, val height: Int){
 
     class PixelPointer(val x : Int, val y : Int)
 
-    fun addEdges(edges: List<Edge<Vec2>>, color: Color = Color.WHITE){
+    fun add(edges: List<Edge<Vec2>>, color: Color = Color.WHITE){
         graphics.color = color
         edges.forEach { drawEdge(it) }
+    }
+
+    fun add(face: SketchFace, color: Color = Color.WHITE){
+        graphics.color = color
+
+        face.bounds.forEach { bound ->
+            bound.loop.forEach { loop ->
+                drawEdge(loop.edge.edge)
+            }
+        }
     }
 
     fun projectSize(value : Double) : Int{
@@ -157,7 +165,7 @@ class DebugPrinter(val width: Int, val height: Int){
     }
 
     private fun drawDot(pixelPointer: PixelPointer) {
-        val dotSize = 10 // Adjust the size of the dot as needed
+        val dotSize = 4 // Adjust the size of the dot as needed
         val x: Int = pixelPointer.x - dotSize / 2
         val y: Int = pixelPointer.y - dotSize / 2
         graphics.fillOval(x, y, dotSize, dotSize)

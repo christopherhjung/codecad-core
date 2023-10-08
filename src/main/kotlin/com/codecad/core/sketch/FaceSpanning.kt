@@ -29,21 +29,33 @@ data class VertexHelper(val point: Vertex<Vec2>){
         loops.add(edge)
     }
 
-    fun finalize(){
+    fun finalizeCCW(){
         loops.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
         for((top, bottom) in loops.rollover()){
             top.twin!!.followedBy(bottom)
+        }
+    }
+
+    fun finalizeMirrored(){
+        val forwards = loops.filter { it.edge.orientation == EdgeOrientation.Forward }.toMutableList()
+        val backwards = loops.filter { it.edge.orientation == EdgeOrientation.Backward }.toMutableList()
+
+        forwards.sortBy { System.identityHashCode(it.edge.edge.curve) }
+        backwards.sortByDescending { System.identityHashCode(it.edge.edge.curve) }
+
+        for((lhs, rhs) in forwards.zip(backwards)){
+            lhs.followedBy(rhs.twin!!)
         }
     }
 }
 
 fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
     val cutEdges = cutLines(edges)
-    val loops = connectVertices(cutEdges)
+    val loops = connectVerticesCCW(cutEdges)
     return generateFaces(loops)
 }
 
-fun connectVertices(edges: List<Edge<Vec2>>) : List<Loop<Vec2>>{
+fun collectEdges(edges: List<Edge<Vec2>>) : Collection<VertexHelper>{
     val helperMap = HashMap<Vertex<Vec2>, VertexHelper>()
     fun createHelper(point: Vertex<Vec2>) : VertexHelper {
         return helperMap.computeIfAbsent(point) { VertexHelper(it) }
@@ -65,9 +77,19 @@ fun connectVertices(edges: List<Edge<Vec2>>) : List<Loop<Vec2>>{
         right.addLoop(backwardLoop)
     }
 
-    val helpers = helperMap.values
-    helpers.forEach { it.finalize() }
+    return helperMap.values
+}
+
+fun connectVerticesCCW(edges: List<Edge<Vec2>>) : List<Loop<Vec2>>{
+    val helpers = collectEdges(edges)
+    helpers.forEach { it.finalizeCCW() }
     return helpers.flatMap { it.loops }
+}
+
+fun connectVerticesMirrored(edges: List<Edge<Vec2>>) : List<Loop<Vec2>>{
+    val helpers = collectEdges(edges)
+    helpers.forEach { it.finalizeMirrored() }
+    return helpers.flatMap { it.loops }.filter { it.edge.orientation == EdgeOrientation.Forward }
 }
 
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {

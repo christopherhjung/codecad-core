@@ -101,7 +101,13 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         }else{
             //arc
             val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)
-            val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, Sense.Opposite))
+            val sense = if(offset > 0.0){
+                Sense.Same
+            }else{
+                Sense.Opposite
+            }
+
+            val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, sense))
             offsetLoop.followedBy(arc)
             arc
         }

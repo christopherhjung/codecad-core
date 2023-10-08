@@ -56,11 +56,20 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                     val bound = edge.bound
                     val center = curve.workplane.origin
                     if(bound != null){
-                        sections.add(bound.start)
-                        sections.add(bound.end)
                         var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
-                        if(bound.sense == Sense.Opposite) comp = comp.reversed()
+                        if(bound.sense == Sense.Opposite){
+                            comp = comp.reversed()
+                        }
                         sections.sortWith(comp)
+                        if(bound.sense == Sense.Opposite){
+                            sections.add(0, bound.start)
+                            sections.add(bound.end)
+                        }else{
+                            //TODO??
+                            sections.add(0, bound.end)
+                            sections.add(bound.start)
+                        }
+
                         for((lhs, rhs) in sections.zipWithNext()){
                             result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
                         }

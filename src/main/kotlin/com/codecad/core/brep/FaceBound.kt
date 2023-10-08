@@ -1,6 +1,7 @@
 package com.codecad.core.brep
 
 import com.codecad.core.ast.vec.Vec
+import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.rollover
@@ -92,6 +93,28 @@ fun Loop<Vec3>.computeArea() : Double{
     return polygonArea.length() * 0.5
 }
 
+fun Loop<Vec2>.computeAreaVec2() : Double{
+    var polygonArea = 0.0
+
+    for( loop in this ){
+        val orientedEdge = loop.edge
+        val edge = orientedEdge.edge
+        val bound = orientedEdge.bound
+        val curve = edge.curve
+
+        if(bound == null){
+            val radius = (curve as Circle).radius
+            return Math.PI * radius * radius
+        }
+
+        val start = bound.start.point
+        val end = bound.end.point
+
+        polygonArea += start.crossZ(end)
+    }
+
+    return polygonArea * 0.5
+}
 
 
 class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
