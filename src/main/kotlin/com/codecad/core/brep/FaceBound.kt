@@ -5,6 +5,8 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.rollover
+import kotlin.math.sign
+import kotlin.math.sin
 
 enum class FaceBoundKind{
     OuterBound, InnerBound
@@ -95,24 +97,56 @@ fun Loop<Vec3>.computeArea() : Double{
 
 fun Loop<Vec2>.computeAreaVec2() : Double{
     var polygonArea = 0.0
+    var extendArea = 0.0
+
+    if(isClosed()){
+        val curve = edge.edge.curve as Circle
+        val radius = curve.radius
+        return Math.PI * radius * radius
+    }
 
     for( loop in this ){
         val orientedEdge = loop.edge
         val edge = orientedEdge.edge
-        val bound = orientedEdge.bound
-        val curve = edge.curve
+        val bound = edge.bound!!
 
-        if(bound == null){
-            val radius = (curve as Circle).radius
-            return Math.PI * radius * radius
+        when(val curve = edge.curve){
+            is Circle -> {
+                val sense = bound.sense
+
+                val center = curve.workplane.origin
+                val radius = curve.radius
+
+                val startVec = bound.start.point - center
+                val endVec = bound.end.point - center
+                val angle = if(sense == Sense.Same){
+                    startVec.angleTo(endVec)
+                }else{
+                    endVec.angleTo(startVec)
+                }
+
+                val segmentArea = radius * radius * (angle - sin(angle))
+                extendArea += if(sense == Sense.Same){
+                    segmentArea
+                }else{
+                    -segmentArea
+                }
+            }
         }
 
         val start = bound.start.point
         val end = bound.end.point
 
-        polygonArea += start.crossZ(end)
+        val lineArea = if(orientedEdge.orientation == EdgeOrientation.Forward){
+            start.crossZ(end)
+        }else{
+            end.crossZ(start)
+        }
+
+        polygonArea += lineArea
     }
 
+    polygonArea += sign(polygonArea) * extendArea
     return polygonArea * 0.5
 }
 

@@ -99,15 +99,15 @@ class OffsetTest {
         val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
-        val offsetFace = offsetFaceFull(sketchFace, -0.55)
-        val offsetFace2 = offsetFace(offsetFace, 0.55)
 
         val printer = DebugPrinter(1024, 1024)
         val rawEdges = loop.map { it.edge.edge }
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-        printer.add(offsetFace)
-        printer.add(offsetFace2)
+        printer.add(offsetFaceFull(sketchFace, -0.10))
+        printer.add(offsetFaceFull(sketchFace, -0.30))
+        printer.add(offsetFaceFull(sketchFace, -0.50))
+        printer.add(offsetFaceFull(sketchFace, 0.60))
         printer.finish()
     }
 

@@ -92,6 +92,7 @@ fun connectVerticesMirrored(edges: List<Edge<Vec2>>) : List<Loop<Vec2>>{
     return helpers.flatMap { it.loops }.filter { it.edge.orientation == EdgeOrientation.Forward }
 }
 
+
 fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
 

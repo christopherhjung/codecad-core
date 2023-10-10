@@ -4,6 +4,7 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
+import kotlin.math.abs
 
 fun offsetFace(sketchFace: SketchFace, offset: Double) : SketchFace{
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
@@ -67,8 +68,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
                     radius - offset
                 }
 
-                //TODO fix zero radius
-                if(newRadius < 0.0){
+                if(newRadius < 1e-5){
                     Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
                     Circle(curve.workplane, newRadius)
@@ -117,18 +117,19 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             arc
         }
 
+        lastLoop = nextOffsetLoop
+
         if(lastIter){
-            nextOffsetLoop.followedBy(initOffsetLoop!!)
             break
         }
 
-        lastLoop = nextOffsetLoop
         currentLoop = nextLoop
         currentEdge = nextEdge
         currentStartVertex = nextStartVertex
     }
 
-    return initOffsetLoop!!
+    lastLoop!!.followedBy(initOffsetLoop!!)
+    return initOffsetLoop
 }
 
 
