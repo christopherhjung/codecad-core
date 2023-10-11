@@ -4,6 +4,8 @@ import com.codecad.core.SketchLine
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.face.SketchEdgeLoop
 import com.codecad.core.part.Sketch
@@ -11,6 +13,7 @@ import com.codecad.core.rollover
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.HashMap
+import kotlin.math.abs
 
 
 enum class FaceType{
@@ -221,6 +224,120 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
 private fun isLeft(p0: Vec2, p1: Vec2, p2: Vec2): Double {
     return (p1 - p0).crossZ(p2 - p0)
 }
+
+
+fun Loop<Vec2>.isInside(point: Vec2): Boolean {
+    var windingNumber = 0
+
+    if(isClosed()){
+        val circle = edge.edge.curve as Circle
+        return (point - circle.workplane.origin).length() <= circle.radius
+    }
+
+    for (loop in this) {
+        val edge = loop.edge.edge
+        val curve = edge.curve
+
+        val bound = edge.bound!!
+        val start = bound.start.point
+        val end = bound.end.point
+
+        when(curve){
+            is Line -> {
+                if (start.y <= point.y) {
+                    if (end.y > point.y && isLeft(start, end, point) > 0) {
+                        windingNumber++
+                    }
+                } else if (end.y <= point.y && isLeft(start, end, point) < 0) {
+                    windingNumber++
+                }
+            }
+            is Circle -> {
+                val radius = curve.radius
+                val center = curve.workplane.origin
+
+                if(abs(center.y - point.y) > radius){
+                    continue
+                }
+
+                val isCenterLeft = point.x < center.x
+                val isInside = center.distanceTo(point) <= radius
+
+                if(isCenterLeft && !isInside){
+                    continue
+                }
+
+                val sense = bound.sense
+
+                if(start.x <= center.x){
+                    if(center.x < end.x){
+                        if(sense == Sense.Same){
+                            if(start.y >= point.y){
+                                windingNumber++
+                            }
+
+                            if(end.y > point.y && !isInside){
+                                windingNumber++
+                            }
+                        }else{
+                            if(start.y <= point.y){
+                                windingNumber++
+                            }
+
+                            if(end.y < point.y && !isInside){
+                                windingNumber++
+                            }
+                        }
+                    }else{
+                        if(sense == Sense.Same){
+                            if(start.y >= point.y && point.y > end.y){
+                                windingNumber++
+                            }
+                        }else{
+                            if(end.y > point.y && point.y >= start.y){
+                                windingNumber++
+                            }
+                        }
+                    }
+                }else{
+                    if(end.x < center.x){
+                        if(sense == Sense.Same){
+                            if(start.y <= point.y && !isInside){
+                                windingNumber++
+                            }
+
+                            if(end.y < point.y){
+                                windingNumber++
+                            }
+                        }else{
+                            if(start.y >= point.y && !isInside){
+                                windingNumber++
+                            }
+
+                            if(end.y > point.y){
+                                windingNumber++
+                            }
+                        }
+                    }else if(!isInside){
+                        if(sense == Sense.Same){
+                            if(end.y > point.y && point.y >= start.y){
+                                windingNumber++
+                            }
+                        }else{
+                            if(start.y >= point.y && point.y > end.y){
+                                windingNumber++
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return windingNumber % 2 == 1
+}
+
+
 /*
 fun isPointInPolygon3d(point: Vec2, polygon: Iterable<Vec3>): Boolean {
     var windingNumber = 0
