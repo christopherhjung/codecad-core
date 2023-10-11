@@ -239,11 +239,12 @@ fun Loop<Vec2>.isInside(point: Vec2): Boolean {
         val curve = edge.curve
 
         val bound = edge.bound!!
-        val start = bound.start.point
-        val end = bound.end.point
 
         when(curve){
             is Line -> {
+                val start = bound.start.point
+                val end = bound.end.point
+
                 if (start.y <= point.y) {
                     if (end.y > point.y && isLeft(start, end, point) > 0) {
                         windingNumber++
@@ -253,88 +254,101 @@ fun Loop<Vec2>.isInside(point: Vec2): Boolean {
                 }
             }
             is Circle -> {
-                val radius = curve.radius
-                val center = curve.workplane.origin
-
-                if(abs(center.y - point.y) > radius){
-                    continue
-                }
-
-                val isCenterLeft = point.x < center.x
-                val isInside = center.distanceTo(point) <= radius
-
-                if(isCenterLeft && !isInside){
-                    continue
-                }
-
-                val sense = bound.sense
-
-                if(start.x <= center.x){
-                    if(center.x < end.x){
-                        if(sense == Sense.Same){
-                            if(start.y >= point.y){
-                                windingNumber++
-                            }
-
-                            if(end.y > point.y && !isInside){
-                                windingNumber++
-                            }
-                        }else{
-                            if(start.y <= point.y){
-                                windingNumber++
-                            }
-
-                            if(end.y < point.y && !isInside){
-                                windingNumber++
-                            }
-                        }
-                    }else{
-                        if(sense == Sense.Same){
-                            if(start.y >= point.y && point.y > end.y){
-                                windingNumber++
-                            }
-                        }else{
-                            if(end.y > point.y && point.y >= start.y){
-                                windingNumber++
-                            }
-                        }
-                    }
-                }else{
-                    if(end.x < center.x){
-                        if(sense == Sense.Same){
-                            if(start.y <= point.y && !isInside){
-                                windingNumber++
-                            }
-
-                            if(end.y < point.y){
-                                windingNumber++
-                            }
-                        }else{
-                            if(start.y >= point.y && !isInside){
-                                windingNumber++
-                            }
-
-                            if(end.y > point.y){
-                                windingNumber++
-                            }
-                        }
-                    }else if(!isInside){
-                        if(sense == Sense.Same){
-                            if(end.y > point.y && point.y >= start.y){
-                                windingNumber++
-                            }
-                        }else{
-                            if(start.y >= point.y && point.y > end.y){
-                                windingNumber++
-                            }
-                        }
-                    }
-                }
+                windingNumber += countBarriers(curve, bound, point)
             }
         }
     }
 
     return windingNumber % 2 == 1
+}
+
+private fun countBarriers(
+    curve: Circle<Vec2>,
+    bound: EdgeBound<Vec2>,
+    point: Vec2,
+) : Int {
+
+    val start = bound.start.point
+    val end = bound.end.point
+
+    var windingNumber = 0
+    val radius = curve.radius
+    val center = curve.workplane.origin
+
+    if (abs(center.y - point.y) > radius) {
+        return 0
+    }
+
+    val isCenterLeft = point.x < center.x
+    val isInside = center.distanceTo(point) <= radius
+
+    if (isCenterLeft && !isInside) {
+        return 0
+    }
+
+    if(bound.sense == Sense.Same){
+        if (start.x < center.x || start.y > center.y) {
+            if (center.x < end.x) {
+                if (start.y >= point.y) {
+                    windingNumber++
+                }
+
+                if (end.y > point.y && !isInside) {
+                    windingNumber++
+                }
+            } else {
+                if (start.y >= point.y && point.y > end.y) {
+                    windingNumber++
+                }
+            }
+        } else {
+            if (end.x < center.x) {
+                if (start.y <= point.y && !isInside) {
+                    windingNumber++
+                }
+
+                if (end.y < point.y) {
+                    windingNumber++
+                }
+            } else if (!isInside) {
+                if (end.y > point.y && point.y >= start.y) {
+                    windingNumber++
+                }
+            }
+        }
+    }else{
+        if (start.x < center.x || start.y > center.y) {
+            if (center.x < end.x) {
+                if (start.y <= point.y) {
+                    windingNumber++
+                }
+
+                if (end.y < point.y && !isInside) {
+                    windingNumber++
+                }
+            } else {
+                if (end.y > point.y && point.y >= start.y) {
+                    windingNumber++
+                }
+            }
+        } else {
+            if (end.x < center.x) {
+                if (start.y >= point.y && !isInside) {
+                    windingNumber++
+                }
+
+                if (end.y > point.y) {
+                    windingNumber++
+                }
+            } else if (!isInside) {
+                if (start.y >= point.y && point.y > end.y) {
+                    windingNumber++
+                }
+            }
+        }
+    }
+
+    return windingNumber
 }
 
 
