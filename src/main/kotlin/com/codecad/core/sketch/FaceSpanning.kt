@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.SketchLine
+import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
@@ -147,28 +148,50 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
     return SketchFace(faceBounds)
 }
 
-fun nestHoles(holes : MutableList<SketchEdgeLoop>) : SketchEdgeLoop{
-    holes.sortByDescending { it.area }
+open class FaceTree(
+    var area: Double = 0.0
+){
+    val children = arrayListOf<BoundedFaceTree>()
+}
 
-    val rootSurface = SketchEdgeLoop(SketchEdge.ZERO)
-    rootSurface.type = FaceType.Root
-    for( hole in holes ){
-        nestHoles(hole, rootSurface)
+class BoundedFaceTree(
+    val bound: FaceBound<Vec2>,
+    area: Double
+) : FaceTree(area)
+
+fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
+    val trees = holes.map { BoundedFaceTree(it, it.loop.computeAreaVec2()) }
+        .sortedByDescending { it.area }
+
+    val rootSurface = FaceTree()
+    for( tree in trees ){
+        nestHoles(tree, rootSurface)
     }
 
     return rootSurface
 }
 
-fun nestHoles(hole : SketchEdgeLoop, parentSurface: SketchEdgeLoop){
+fun nestHoles(hole : BoundedFaceTree, parentSurface: FaceTree){
     for( rootHole in parentSurface.children){
         if(rootHole.area <= hole.area) continue
 
         for( surface in rootHole.children ){
             if(surface.area <= hole.area) continue
 
-            if(isPointInPolygon(hole.root.source.point, surface.points)){
-                nestHoles(hole, surface)
-                return
+            for( loop in hole.bound.loop ){
+                val vertex = hole.bound.loop.edge.edge.bound!!.start
+                val surfaceLoop = surface.bound.loop
+
+                if(surfaceLoop.hasVertex(vertex)){
+                    continue
+                }
+
+                if(surfaceLoop.isInside(vertex.point)){
+                    nestHoles(hole, surface)
+                    return
+                }
+
+                break
             }
         }
     }
@@ -349,6 +372,17 @@ private fun countBarriers(
     }
 
     return windingNumber
+}
+
+fun <T : Vec<T>> Loop<T>.hasVertex(vertex: Vertex<T>): Boolean {
+    for (loop in this) {
+        val current = loop.edge.edge.bound!!.start
+        if(current === vertex){
+            return true
+        }
+    }
+
+    return false
 }
 
 

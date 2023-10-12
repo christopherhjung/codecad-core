@@ -80,7 +80,9 @@ class OffsetTest {
         val cutEdges = cutLines(edges)
         val loops = connectVerticesMirrored(cutEdges)
         val faces = generateFaces(loops)
-        return SketchFace(faces.bounds.filter { it.loop.computeAreaVec2() > 0.0 })
+        val faceBounds = faces.bounds
+        val trees = nestHoles(faceBounds)
+        return SketchFace(trees.children.map { it.bound }.filter { it.loop.computeAreaVec2() > 0.0 })
     }
 
     @Test
@@ -104,9 +106,9 @@ class OffsetTest {
         val rawEdges = loop.map { it.edge.edge }
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-        printer.add(offsetFaceFull(sketchFace, -0.10))
-        printer.add(offsetFaceFull(sketchFace, -0.30))
-        printer.add(offsetFaceFull(sketchFace, -0.50))
+        //printer.add(offsetFaceFull(sketchFace, -0.10))
+        //printer.add(offsetFaceFull(sketchFace, -0.30))
+        //printer.add(offsetFaceFull(sketchFace, -0.50))
         printer.add(offsetFaceFull(sketchFace, 0.60))
         printer.finish()
     }
