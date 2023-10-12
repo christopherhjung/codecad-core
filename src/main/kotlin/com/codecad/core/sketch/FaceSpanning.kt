@@ -149,21 +149,32 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
 }
 
 open class FaceTree(
-    var area: Double = 0.0
+    var area: Double,
+    val kind: FaceBoundKind
 ){
     val children = arrayListOf<BoundedFaceTree>()
 }
 
 class BoundedFaceTree(
     val bound: FaceBound<Vec2>,
-    area: Double
-) : FaceTree(area)
+    area: Double,
+    kind: FaceBoundKind
+) : FaceTree(area, kind)
+
 
 fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
-    val trees = holes.map { BoundedFaceTree(it, it.loop.computeAreaVec2()) }
+    val trees = holes.map {
+        val area = it.loop.computeAreaVec2()
+        val kind = if(area > 0.0){
+            FaceBoundKind.OuterBound
+        }else{
+            FaceBoundKind.InnerBound
+        }
+        BoundedFaceTree(it, abs(area), kind)
+    }
         .sortedByDescending { it.area }
 
-    val rootSurface = FaceTree()
+    val rootSurface = FaceTree(0.0, FaceBoundKind.InnerBound)
     for( tree in trees ){
         nestHoles(tree, rootSurface)
     }
@@ -171,33 +182,37 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
     return rootSurface
 }
 
-fun nestHoles(hole : BoundedFaceTree, parentSurface: FaceTree){
-    for( rootHole in parentSurface.children){
-        if(rootHole.area <= hole.area) continue
+fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
+    for( childFace in parentSurface.children){
+        if(abs(childFace.area) <= abs(newFace.area)) continue
 
-        for( surface in rootHole.children ){
-            if(surface.area <= hole.area) continue
+        val newLoop = newFace.bound.loop
+        for( loop in newLoop ){
+            val vertex = loop.edge.edge.bound!!.start
+            val surfaceLoop = childFace.bound.loop
 
-            for( loop in hole.bound.loop ){
-                val vertex = hole.bound.loop.edge.edge.bound!!.start
-                val surfaceLoop = surface.bound.loop
-
-                if(surfaceLoop.hasVertex(vertex)){
-                    continue
-                }
-
-                if(surfaceLoop.isInside(vertex.point)){
-                    nestHoles(hole, surface)
-                    return
-                }
-
-                break
+            if(surfaceLoop.hasVertex(vertex)){
+                continue
             }
+
+            if(surfaceLoop.isInside(vertex.point)){
+                nestHoles(newFace, childFace)
+                return
+            }
+
+            break
         }
     }
 
-    parentSurface.area -= hole.area
-    parentSurface.children.add(hole)
+    if(newFace.kind == parentSurface.kind){
+        return
+    }
+
+    if(parentSurface.kind == FaceBoundKind.OuterBound){
+        parentSurface.area -= newFace.area
+    }
+
+    parentSurface.children.add(newFace)
 }
 
 fun collectSurfaces(rootSurface: SketchEdgeLoop) : List<SketchEdgeLoop>{

@@ -82,7 +82,7 @@ class OffsetTest {
         val faces = generateFaces(loops)
         val faceBounds = faces.bounds
         val trees = nestHoles(faceBounds)
-        return SketchFace(trees.children.map { it.bound }.filter { it.loop.computeAreaVec2() > 0.0 })
+        return SketchFace(trees.children.map { it.bound })
     }
 
     @Test
@@ -102,13 +102,13 @@ class OffsetTest {
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
 
-        val printer = DebugPrinter(1024, 1024)
+        val printer = DebugPrinter(2048)
         val rawEdges = loop.map { it.edge.edge }
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-        //printer.add(offsetFaceFull(sketchFace, -0.10))
-        //printer.add(offsetFaceFull(sketchFace, -0.30))
-        //printer.add(offsetFaceFull(sketchFace, -0.50))
+        printer.add(offsetFaceFull(sketchFace, -0.10))
+        printer.add(offsetFaceFull(sketchFace, -0.30))
+        printer.add(offsetFaceFull(sketchFace, -0.50))
         printer.add(offsetFaceFull(sketchFace, 0.60))
         printer.finish()
     }
@@ -116,9 +116,9 @@ class OffsetTest {
 }
 
 
-class DebugPrinter(val width: Int, val height: Int){
+class DebugPrinter(val size: Int){
     val dots = arrayListOf<DotPointer>()
-    val image: BufferedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+    val image: BufferedImage = BufferedImage(size, size, BufferedImage.TYPE_INT_RGB)
     val graphics = image.createGraphics()
 
     class PixelPointer(val x : Int, val y : Int)
@@ -140,11 +140,11 @@ class DebugPrinter(val width: Int, val height: Int){
     }
 
     fun projectSize(value : Double) : Int{
-        return (value * 256.0).toInt()
+        return (value * size/4).toInt()
     }
 
     fun project(value : Double) : Int{
-        return (256.0 + value * 256.0).toInt()
+        return (size/4 + value * size/4).toInt()
     }
 
     fun from(vec2: Vec2) : PixelPointer{
@@ -177,8 +177,8 @@ class DebugPrinter(val width: Int, val height: Int){
 
     fun drawEdge(edge: Edge<Vec2>){
         val bound = edge.bound!!
-        dots.add(DotPointer(bound.start.point, Color.RED, 4))
-        dots.add(DotPointer(bound.end.point, Color.RED, 4))
+        dots.add(DotPointer(bound.start.point, Color.RED, 10))
+        dots.add(DotPointer(bound.end.point, Color.RED, 10))
 
         when(val curve = edge.curve){
             is Line -> {
@@ -189,7 +189,7 @@ class DebugPrinter(val width: Int, val height: Int){
             is Circle -> {
                 val center = curve.workplane.origin
                 val radius = curve.radius
-                dots.add(DotPointer(center, Color.BLUE, 4))
+                dots.add(DotPointer(center, Color.BLUE, 10))
 
                 val upperLeft = from(center - radius)
 

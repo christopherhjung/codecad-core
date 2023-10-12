@@ -9,7 +9,14 @@ import kotlin.math.sign
 import kotlin.math.sin
 
 enum class FaceBoundKind{
-    OuterBound, InnerBound
+    OuterBound, InnerBound;
+
+    fun invert() : FaceBoundKind{
+        return when(this){
+            OuterBound -> InnerBound
+            InnerBound -> OuterBound
+        }
+    }
 }
 
 class FaceBound<T : Vec<T>>(var loop : Loop<T>, var sense: FaceBoundKind){
