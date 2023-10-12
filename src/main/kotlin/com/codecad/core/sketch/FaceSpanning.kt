@@ -170,9 +170,9 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
         }else{
             FaceBoundKind.InnerBound
         }
+
         BoundedFaceTree(it, abs(area), kind)
-    }
-        .sortedByDescending { it.area }
+    }.sortedByDescending { it.area }
 
     val rootSurface = FaceTree(0.0, FaceBoundKind.InnerBound)
     for( tree in trees ){
@@ -184,7 +184,7 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
 
 fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
     for( childFace in parentSurface.children){
-        if(abs(childFace.area) <= abs(newFace.area)) continue
+        if(childFace.area <= newFace.area) continue
 
         val newLoop = newFace.bound.loop
         for( loop in newLoop ){
@@ -208,10 +208,7 @@ fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
         return
     }
 
-    if(parentSurface.kind == FaceBoundKind.OuterBound){
-        parentSurface.area -= newFace.area
-    }
-
+    parentSurface.area -= newFace.area
     parentSurface.children.add(newFace)
 }
 
