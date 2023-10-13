@@ -4,7 +4,11 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.sketch.*
 import org.junit.jupiter.api.Test
+import java.awt.BasicStroke
 import java.awt.Color
+import java.awt.geom.Arc2D
+import java.awt.geom.Ellipse2D
+import java.awt.geom.Line2D
 import java.awt.image.BufferedImage
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -90,7 +94,7 @@ class OffsetTest {
         val topLeft = Vertex(Vec2(-0.8, 1.0))
         val bottomLeft = Vertex(Vec2(-0.8, -1.0))
         val topMid = Vertex(Vec2(0.2, 0.1))
-        val bottomMid = Vertex(Vec2(-0.2, -0.8))
+        val bottomMid = Vertex(Vec2(-0.2, -1.2))
         val bottomRight = Vertex(Vec2(0.8, -1.0))
         val topRight = Vertex(Vec2(0.8, 1.0))
 
@@ -98,15 +102,34 @@ class OffsetTest {
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
 
-        val printer = DebugPrinter(2048)
+        val printer = DebugPrinter(4096)
         val rawEdges = loop.map { it.edge.edge }
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-        for( i in 1 until 50 ){
-            val offset = i / 50.0 * 2
-            if(i == 25) continue
-            printer.add(offsetFaceFull(sketchFace, 1.0 - offset))
+
+
+       val rawOffsetFace = offsetFace(sketchFace, -0.68)
+        val edges = rawOffsetFace.bounds.flatMap { bound -> bound.loop.map { it.edge.edge } }
+        val cutEdges = cutLines(edges)
+        val loops = connectVerticesMirrored(cutEdges)
+        val face = generateFaces(loops)
+        val faceBounds = face.bounds
+        val trees = nestHoles(faceBounds)
+
+
+        printer.add(face)
+
+        //val result = offsetFaceFull(sketchFace, -0.3)
+        //printer.add(result)
+        /*
+        result.bounds.forEach {
+            val area1 = it.loop.computeAreaVec2()
+            val area2 = it.loop.computeAreaVec2(true)
+            println(area1)
+            println(area2)
+            println(area2)
         }
+       */
 
 
         printer.finish()
@@ -115,13 +138,21 @@ class OffsetTest {
 }
 
 
-class DebugPrinter(val size: Int){
+class DebugPrinter(val size: Int, val scale : Double = 0.5){
     val dots = arrayListOf<DotPointer>()
     val image: BufferedImage = BufferedImage(size, size, BufferedImage.TYPE_INT_RGB)
     val graphics = image.createGraphics()
+    val invSize = 1.0 / size
 
-    class PixelPointer(val x : Int, val y : Int)
-    class DotPointer(val point: Vec2, val color: Color, val size: Int)
+    init {
+        graphics.stroke = BasicStroke(10.0f * invSize.toFloat())
+        val halfSize = size.toDouble() * 0.5
+        val quadSize = size.toDouble() * 0.25
+        graphics.translate(halfSize, halfSize)
+        graphics.scale(quadSize, -quadSize)
+    }
+
+    class DotPointer(val point: Vec2, val color: Color, val size: Double)
 
     fun add(edges: List<Edge<Vec2>>, color: Color = Color.WHITE){
         graphics.color = color
@@ -138,23 +169,11 @@ class DebugPrinter(val size: Int){
         }
     }
 
-    fun projectSize(value : Double) : Int{
-        return (value * size/4).toInt()
-    }
-
-    fun project(value : Double) : Int{
-        return (size/4 + value * size/4).toInt()
-    }
-
-    fun from(vec2: Vec2) : PixelPointer{
-        return PixelPointer(project((vec2.x + 1.0)), project((vec2.y + 1.0)))
-    }
-
     fun finish(){
         graphics.color = Color.BLUE
         dots.forEach{
             graphics.color = it.color
-            drawDot(from(it.point), it.size)
+            drawDot(it.point, it.size)
         }
         graphics.dispose()
         try {
@@ -168,29 +187,30 @@ class DebugPrinter(val size: Int){
         }
     }
 
-    private fun drawDot(pixelPointer: PixelPointer, dotSize : Int = 4) {
-        val x: Int = pixelPointer.x - dotSize / 2
-        val y: Int = pixelPointer.y - dotSize / 2
-        graphics.fillOval(x, y, dotSize, dotSize)
+    private fun drawDot(point: Vec2, dotSize : Double = 4.0) {
+        val scaledDotSize = invSize * dotSize
+        val x = point.x - scaledDotSize / 2
+        val y = point.y - scaledDotSize / 2
+        graphics.fill(Ellipse2D.Double(x, y, scaledDotSize, scaledDotSize))
     }
 
     fun drawEdge(edge: Edge<Vec2>){
         val bound = edge.bound!!
-        dots.add(DotPointer(bound.start.point, Color.RED, 10))
-        dots.add(DotPointer(bound.end.point, Color.RED, 10))
+        dots.add(DotPointer(bound.start.point, Color.RED, 30.0))
+        dots.add(DotPointer(bound.end.point, Color.RED, 30.0))
 
         when(val curve = edge.curve){
             is Line -> {
-                val start = from(bound.start.point)
-                val end = from(bound.end.point)
-                graphics.drawLine(start.x, start.y, end.x, end.y)
+                val start = bound.start.point
+                val end = bound.end.point
+                graphics.draw(Line2D.Double(start.x, start.y, end.x, end.y))
             }
             is Circle -> {
                 val center = curve.workplane.origin
                 val radius = curve.radius
-                dots.add(DotPointer(center, Color.BLUE, 10))
+                dots.add(DotPointer(center, Color.BLUE, 50.0))
 
-                val upperLeft = from(center - radius)
+                val upperLeft = center - radius
 
                 val start = if(bound.sense == Sense.Same){
                     bound.start.point
@@ -207,8 +227,10 @@ class DebugPrinter(val size: Int){
                 val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
                 val arcAngle = -Math.toDegrees(start.angleTo(end))
 
-                val size = projectSize(radius * 2)
-                graphics.drawArc(upperLeft.x, upperLeft.y, size, size, startAngle.toInt(), arcAngle.toInt())
+                val size = radius * 2
+                //graphics.drawArc(upperLeft.x, upperLeft.y, size, size, startAngle.toInt(), arcAngle.toInt())
+
+                graphics.draw(Arc2D.Double(upperLeft.x, upperLeft.y, size, size, startAngle, arcAngle, Arc2D.OPEN))
             }
         }
     }

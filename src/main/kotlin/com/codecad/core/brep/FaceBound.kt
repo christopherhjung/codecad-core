@@ -102,7 +102,7 @@ fun Loop<Vec3>.computeArea() : Double{
     return polygonArea.length() * 0.5
 }
 
-fun Loop<Vec2>.computeAreaVec2() : Double{
+fun Loop<Vec2>.computeAreaVec2(ignoreCurve : Boolean = false) : Double{
     var polygonArea = 0.0
 
     if(isClosed()){
@@ -111,31 +111,35 @@ fun Loop<Vec2>.computeAreaVec2() : Double{
         return Math.PI * radius * radius
     }
 
+
     for( loop in this ){
         val orientedEdge = loop.edge
         val edge = orientedEdge.edge
         val bound = edge.bound!!
+        var partialArea = 0.0
 
         when(val curve = edge.curve){
             is Circle -> {
-                val sense = bound.sense
+                if(!ignoreCurve){
+                    val sense = bound.sense
 
-                val center = curve.workplane.origin
-                val radius = curve.radius
+                    val center = curve.workplane.origin
+                    val radius = curve.radius
 
-                val startVec = bound.start.point - center
-                val endVec = bound.end.point - center
-                val angle = if(sense == Sense.Same){
-                    startVec.angleTo(endVec)
-                }else{
-                    endVec.angleTo(startVec)
-                }
+                    val startVec = bound.start.point - center
+                    val endVec = bound.end.point - center
+                    val angle = if(sense == Sense.Same){
+                        startVec.angleTo(endVec)
+                    }else{
+                        endVec.angleTo(startVec)
+                    }
 
-                val segmentArea = radius * radius * (angle - sin(angle))
-                if(sense == Sense.Same){
-                    polygonArea += segmentArea
-                }else{
-                    polygonArea -= segmentArea
+                    val segmentArea = radius * radius * (angle - sin(angle))
+                    partialArea = if(sense == Sense.Same){
+                        segmentArea
+                    }else{
+                        -segmentArea
+                    }
                 }
             }
         }
@@ -143,13 +147,13 @@ fun Loop<Vec2>.computeAreaVec2() : Double{
         val start = bound.start.point
         val end = bound.end.point
 
-        val lineArea = if(orientedEdge.orientation == EdgeOrientation.Forward){
-            start.crossZ(end)
-        }else{
-            end.crossZ(start)
-        }
+        partialArea += start.crossZ(end)
 
-        polygonArea += lineArea
+        if(orientedEdge.orientation == EdgeOrientation.Forward){
+            polygonArea += partialArea
+        }else{
+            polygonArea -= partialArea
+        }
     }
 
     return polygonArea * 0.5
