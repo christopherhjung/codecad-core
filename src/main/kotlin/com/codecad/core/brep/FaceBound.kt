@@ -104,7 +104,6 @@ fun Loop<Vec3>.computeArea() : Double{
 
 fun Loop<Vec2>.computeAreaVec2() : Double{
     var polygonArea = 0.0
-    var extendArea = 0.0
 
     if(isClosed()){
         val curve = edge.edge.curve as Circle
@@ -133,10 +132,10 @@ fun Loop<Vec2>.computeAreaVec2() : Double{
                 }
 
                 val segmentArea = radius * radius * (angle - sin(angle))
-                extendArea += if(sense == Sense.Same){
-                    segmentArea
+                if(sense == Sense.Same){
+                    polygonArea += segmentArea
                 }else{
-                    -segmentArea
+                    polygonArea -= segmentArea
                 }
             }
         }
@@ -153,7 +152,6 @@ fun Loop<Vec2>.computeAreaVec2() : Double{
         polygonArea += lineArea
     }
 
-    polygonArea += sign(polygonArea) * extendArea
     return polygonArea * 0.5
 }
 
@@ -166,7 +164,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     var twin : Loop<T>? = null
 
     fun isClosed() : Boolean{
-        return prev === next
+        return this === next
     }
 
     override fun iterator(): Iterator<Loop<T>> {

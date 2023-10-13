@@ -87,16 +87,12 @@ class OffsetTest {
 
     @Test
     fun hourGlass(){
-        /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
-        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
-        offsetFace(face, 1.0)*/
-
-        val topLeft = Vertex(Vec2(-1.0, 1.0))
-        val bottomLeft = Vertex(Vec2(-1.0, -1.0))
-        val topMid = Vertex(Vec2(0.0, 0.5))
-        val bottomMid = Vertex(Vec2(0.0, -0.5))
-        val bottomRight = Vertex(Vec2(1.0, -1.0))
-        val topRight = Vertex(Vec2(1.0, 1.0))
+        val topLeft = Vertex(Vec2(-0.8, 1.0))
+        val bottomLeft = Vertex(Vec2(-0.8, -1.0))
+        val topMid = Vertex(Vec2(0.2, 0.1))
+        val bottomMid = Vertex(Vec2(-0.2, -0.8))
+        val bottomRight = Vertex(Vec2(0.8, -1.0))
+        val topRight = Vertex(Vec2(0.8, 1.0))
 
         val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
@@ -106,10 +102,13 @@ class OffsetTest {
         val rawEdges = loop.map { it.edge.edge }
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-        printer.add(offsetFaceFull(sketchFace, -0.10))
-        printer.add(offsetFaceFull(sketchFace, -0.30))
-        printer.add(offsetFaceFull(sketchFace, -0.50))
-        printer.add(offsetFaceFull(sketchFace, 0.60))
+        for( i in 1 until 50 ){
+            val offset = i / 50.0 * 2
+            if(i == 25) continue
+            printer.add(offsetFaceFull(sketchFace, 1.0 - offset))
+        }
+
+
         printer.finish()
     }
 
@@ -193,11 +192,17 @@ class DebugPrinter(val size: Int){
 
                 val upperLeft = from(center - radius)
 
-                val (start, end) = if(bound.sense == Sense.Same){
-                    arrayOf(bound.start.point - center, bound.end.point - center)
+                val start = if(bound.sense == Sense.Same){
+                    bound.start.point
                 }else{
-                    arrayOf(bound.end.point - center, bound.start.point - center)
-                }
+                    bound.end.point
+                } - center
+
+                val end = if(bound.sense == Sense.Same){
+                    bound.end.point
+                }else{
+                    bound.start.point
+                } - center
 
                 val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
                 val arcAngle = -Math.toDegrees(start.angleTo(end))
