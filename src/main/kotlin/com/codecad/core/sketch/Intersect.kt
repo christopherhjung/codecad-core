@@ -71,3 +71,35 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
 
     return result
 }
+
+/*
+* for( edge in edges ){
+        val sections = sectionMap[edge]
+        val curve = edge.curve
+        if( sections != null ){
+            val bound = edge.bound
+            val comp = when(curve){
+                is Line -> DirectionVertexComparator(curve.direction)
+                is Circle -> {
+                    val center = curve.workplane.origin
+                    val rotComp = RotaryVertexComparator(center, bound.start.point - center)
+                    if(bound.sense == Sense.Same){
+                        rotComp
+                    }else{
+                        rotComp.reversed()
+                    }
+                }
+                else -> throw NotImplementedError()
+            }
+
+            sections.sortWith(comp)
+            sections.add(0, bound.start)
+            sections.add(bound.end)
+            for((lhs, rhs) in sections.zipWithNext()){
+                result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
+            }
+        }else{
+            result.add(edge)
+        }
+    }
+* */

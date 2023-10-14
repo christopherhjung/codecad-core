@@ -22,10 +22,6 @@ class OffsetTest {
 
     @Test
     fun importTest(){
-        /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
-        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
-        offsetFace(face, 1.0)*/
-
         val topLeft = Vertex(Vec2(-1.0, 1.0))
         val bottomLeft = Vertex(Vec2(-1.0, -1.0))
         val bottomRight = Vertex(Vec2(1.0, -1.0))
@@ -46,10 +42,6 @@ class OffsetTest {
 
     @Test
     fun importTest2(){
-        /*val workplane = Workplane(Vec3.Zero, Vec3.DirectionZ, Vec3.DirectionX)
-        val face = VolumeSuite.roundedPlane(workplane, 50.0, 5.0)
-        offsetFace(face, 1.0)*/
-
         val topLeft = Vertex(Vec2(-1.0, 1.0))
         val bottomLeft = Vertex(Vec2(-1.0, -1.0))
         val bottomRight = Vertex(Vec2(1.0, -1.0))
