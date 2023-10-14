@@ -1,12 +1,12 @@
 package com.codecad.core
 
-    import com.codecad.core.ast.vec.Vec2
-    import com.codecad.core.brep.Edge
-    import com.codecad.core.brep.Sense
-    import com.codecad.core.brep.curve.Circle
-    import com.codecad.core.brep.curve.Line
-    import kotlin.math.abs
-    import kotlin.math.sqrt
+import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.brep.Edge
+import com.codecad.core.brep.Sense
+import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Line
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 const val EPSILON = 1e-10
 fun Edge<Vec2>.inside(p : Vec2) : Boolean{
@@ -34,9 +34,7 @@ fun Edge<Vec2>.inside(p : Vec2) : Boolean{
 }
 
 object Intersect {
-    private const val epsilon = 1e-8
-
-    fun hasCommonVertex(lhs: Edge<Vec2>, rhs: Edge<Vec2>) : Boolean{
+    private fun hasCommonVertex(lhs: Edge<Vec2>, rhs: Edge<Vec2>) : Boolean{
         val lhsBound = lhs.bound
         val rhsBound = rhs.bound
 
@@ -82,7 +80,7 @@ object Intersect {
         val sd = line1.origin - line2.origin
 
         val a = s1.crossZ(s2)
-        if(abs(a) < epsilon) return emptyList()
+        if(abs(a) < EPSILON) return emptyList()
 
         val t = s2.crossZ(sd) / a
         return listOf(line1.origin + s1 * t)
@@ -97,10 +95,10 @@ object Intersect {
         val c2l = l2projC - center
         val c2lDistance = c2l.length() - r1
 
-        return if(c2lDistance > epsilon){
+        return if(c2lDistance > EPSILON){
             emptyList()
         }else{
-            if(abs(c2lDistance) < epsilon){
+            if(abs(c2lDistance) < EPSILON){
                 listOf(l2projC)
             }else{
                 val h = dir * sqrt(r1 * r1 - c2l.squaredLength())
@@ -123,7 +121,7 @@ object Intersect {
         }else {
             val dir = (p2 - p1) / distance
 
-            if(abs(distance - radiusSum) < epsilon){
+            if(abs(distance - radiusSum) < EPSILON){
                 listOf(p1 + dir * r1)
             }else{
                 val a = 0.5 * (r1*r1 - r2*r2 + distance*distance) / distance
