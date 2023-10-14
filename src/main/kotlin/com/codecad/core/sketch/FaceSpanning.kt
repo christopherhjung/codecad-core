@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.SketchLine
+import com.codecad.core.Utils
 import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
@@ -15,6 +16,8 @@ import java.util.*
 import kotlin.Comparator
 import kotlin.collections.HashMap
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 enum class FaceType{
@@ -181,7 +184,10 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
 
     val rootSurface = FaceTree(0.0, FaceBoundKind.InnerBound)
     for( tree in trees ){
-        nestHoles(tree, rootSurface)
+        val loop = tree.bound.loop
+        val edge = loop.edge.edge
+        val midpoint = midpoint(edge)
+        nestHoles(tree, midpoint, rootSurface)
     }
 
     removeOddNesting(rootSurface)
@@ -195,25 +201,43 @@ fun removeOddNesting(tree : FaceTree) {
     }
 }
 
-fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
+fun midpoint(edge: Edge<Vec2>) : Vec2{
+    val bound = edge.bound!!
+    val start = bound.start.point
+    val end = bound.end.point
+
+    return when(val curve = edge.curve){
+        is Line -> (end + start) / 2.0
+        is Circle -> {
+            val center = curve.workplane.origin
+            val radius = curve.radius
+            val alignedEdgeBound = bound.align()
+
+            val alignedStart = alignedEdgeBound.start.point - center
+            val alignedEnd = alignedEdgeBound.end.point - center
+
+            val diffAngle = alignedStart.angleTo(alignedEnd)
+            val endAngle = alignedStart.absoluteAngle()
+
+            val midpointAngle = Utils.normalizeAngle(diffAngle / 2.0 + endAngle)
+
+            val midpointX = center.x + radius * cos(midpointAngle)
+            val midpointY = center.y + radius * sin(midpointAngle)
+
+            return Vec2(midpointX, midpointY)
+        }
+        else -> throw RuntimeException()
+    }
+}
+
+fun nestHoles(newFace : BoundedFaceTree, midpoint: Vec2, parentSurface: FaceTree){
     for( childFace in parentSurface.children){
         if(childFace.area <= newFace.area) continue
 
-        val newLoop = newFace.bound.loop
-        for( loop in newLoop ){
-            val vertex = loop.edge.edge.bound!!.start
-            val surfaceLoop = childFace.bound.loop
-
-            if(surfaceLoop.hasVertex(vertex)){
-                continue
-            }
-
-            if(surfaceLoop.isInside(vertex.point)){
-                nestHoles(newFace, childFace)
-                return
-            }
-
-            break
+        val childLoop = childFace.bound.loop
+        if(childLoop.isInside(midpoint)){
+            nestHoles(newFace, midpoint, childFace)
+            return
         }
     }
 
@@ -331,7 +355,7 @@ private fun countBarriers(
     }
 
     if(bound.sense == Sense.Same){
-        if (start.x < center.x || start.y > center.y) {
+        if (start.x < center.x || start.y > end.y) {
             if (center.x < end.x) {
                 if (start.y >= point.y) {
                     windingNumber++
@@ -361,7 +385,7 @@ private fun countBarriers(
             }
         }
     }else{
-        if (start.x < center.x || start.y > center.y) {
+        if (start.x < center.x || start.y < end.y) {
             if (center.x < end.x) {
                 if (start.y <= point.y) {
                     windingNumber++

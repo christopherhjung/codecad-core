@@ -22,6 +22,14 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
     init {
         assert(start !== end)
     }
+
+    fun align() : EdgeBound<T>{
+        return if(sense == Sense.Same){
+            this
+        }else{
+            EdgeBound(end, start, Sense.Same)
+        }
+    }
 }
 
 class Marker

@@ -42,18 +42,14 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
         val sections = sectionMap[edge]
         val curve = edge.curve
         if( sections != null ){
+            val bound = edge.bound ?: throw RuntimeException("fix null bounds")
             when(curve){
                 is Line -> {
-                    val bound = edge.bound!!
                     sections.add(bound.start)
                     sections.add(bound.end)
                     sections.sortWith(DirectionVertexComparator(curve.direction))
-                    for((lhs, rhs) in sections.zipWithNext()){
-                        result.add(Edge(curve, EdgeBound(lhs, rhs, Sense.Same)))
-                    }
                 }
                 is Circle -> {
-                    val bound = edge.bound
                     val center = curve.workplane.origin
                     if(bound != null){
                         var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
@@ -63,18 +59,15 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                         sections.sortWith(comp)
                         sections.add(0, bound.start)
                         sections.add(bound.end)
-
-                        for((lhs, rhs) in sections.zipWithNext()){
-                            result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
-                        }
                     }else{
                         sections.sortWith(RotaryVertexComparator(center))
-                        for((lhs, rhs) in sections.rollover()){
-                            result.add(Edge(curve, EdgeBound(lhs, rhs, Sense.Same)))
-                        }
+                        sections.add(sections.first())
                     }
-
                 }
+            }
+
+            for((lhs, rhs) in sections.zipWithNext()){
+                result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
             }
         }else{
             result.add(edge)

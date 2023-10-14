@@ -20,18 +20,10 @@ fun Edge<Vec2>.inside(p : Vec2) : Boolean{
         is Circle -> {
             val bound = bound ?: return true
             val center = curve.workplane.origin
+            val alignedBound = bound.align()
 
-            val start = if(bound.sense == Sense.Same){
-                bound.start.point
-            }else{
-                bound.end.point
-            }
-
-            val end = if(bound.sense == Sense.Same){
-                bound.end.point
-            }else{
-                bound.start.point
-            }
+            val start = alignedBound.start.point
+            val end = alignedBound.end.point
 
             val p0 = start - center
             val p1 = end - center

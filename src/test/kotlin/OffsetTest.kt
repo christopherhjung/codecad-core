@@ -118,9 +118,14 @@ class OffsetTest {
 
         val millPath = offsetFaceFull(sketchFace, -0.4)
         val freeArea = offsetFaceFull(millPath, 0.4)
+        val x1 = offsetFaceFull(freeArea, -0.3)
+        val x2 = offsetFaceFull(x1, 0.3)
 
-        printer.add(millPath)
-        printer.add(freeArea)
+        //printer.add(millPath)
+        //printer.add(freeArea)
+        //printer.add(x1)
+        printer.add(x1)
+        printer.add(x2)
         printer.finish()
     }
 
@@ -223,17 +228,9 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
 
                 val upperLeft = center - radius
 
-                val start = if(bound.sense == Sense.Same){
-                    bound.start.point
-                }else{
-                    bound.end.point
-                } - center
-
-                val end = if(bound.sense == Sense.Same){
-                    bound.end.point
-                }else{
-                    bound.start.point
-                } - center
+                val alignedBound = bound.align()
+                val start = alignedBound.start.point - center
+                val end = alignedBound.end.point - center
 
                 val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
                 val arcAngle = -Math.toDegrees(start.angleTo(end))
