@@ -1,9 +1,11 @@
 package com.codecad.core.sketch
 
+import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
+import org.jetbrains.kotlin.cfg.pseudocodeTraverser.Edges
 import kotlin.math.abs
 
 fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
@@ -28,6 +30,7 @@ fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
     return SketchFace(faceBounds)
 }
 
+
 fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     var lastLoop : Loop<Vec2>? = null
     var initOffsetLoop : Loop<Vec2>? = null
@@ -38,6 +41,12 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     val initNormal = startNormal(currentEdge)
     val initBound = currentEdge.bound
     var currentStartVertex = Vertex(initBound.start.point + initNormal * offset)
+    val edges = arrayListOf<Edge<Vec2>>()
+
+    fun addEdge(edge: Edge<Vec2>){
+        edges.add(edge)
+    }
+
     while( true ){
         val nextLoop = currentLoop.next
         val nextEdge = nextLoop.edge.normalized()
@@ -76,13 +85,7 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
                 }
 
                 if(abs(newRadius) < 1e-5){
-                    if(lastIter){
-                        break
-                    }else{
-                        currentLoop = nextLoop
-                        currentEdge = nextEdge
-                        continue
-                    }
+                    null
                 }else if(newRadius < 0.0){
                     Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
@@ -92,44 +95,35 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             else -> throw RuntimeException()
         }
 
-        val offsetEdge =
-            Edge(offsetCurve,
-                EdgeBound(
-                    currentStartVertex,
-                    currentEndVertex,
-                    bound.sense
+        if(offsetCurve != null){
+            val offsetEdge =
+                Edge(offsetCurve,
+                    EdgeBound(
+                        currentStartVertex,
+                        currentEndVertex,
+                        bound.sense
+                    )
                 )
-            )
 
-        val offsetLoop = Loop(OrientedEdge(offsetEdge, EdgeOrientation.Forward))
-        if(lastLoop != null){
-            lastLoop.followedBy(offsetLoop)
-        }else{
-            initOffsetLoop = offsetLoop
+            addEdge(offsetEdge)
         }
 
-        val nextOffsetLoop = if(currentEndVertex === nextStartVertex){
-            offsetLoop
-        }else if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
-            //no arc
-            val first = Loop.wrap(Edge.line(currentEndVertex, nextStartVertex))
-            offsetLoop.followedBy(first)
-            first
-        }else{
-            //arc
-            val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)
-            val sense = if(offset > 0.0){
-                Sense.Same
+        if(currentEndVertex !== nextStartVertex){
+            if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
+                //no arc
+                addEdge(Edge.line(currentEndVertex, nextStartVertex))
             }else{
-                Sense.Opposite
+                //arc
+                val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)
+                val sense = if(offset > 0.0){
+                    Sense.Same
+                }else{
+                    Sense.Opposite
+                }
+
+                addEdge(Edge.arc(workplane, currentEndVertex, nextStartVertex, sense))
             }
-
-            val arc = Loop.wrap(Edge.arc(workplane, currentEndVertex, nextStartVertex, sense))
-            offsetLoop.followedBy(arc)
-            arc
         }
-
-        lastLoop = nextOffsetLoop
 
         if(lastIter){
             break
@@ -139,7 +133,7 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         currentEdge = nextEdge
         currentStartVertex = nextStartVertex
     }
-
+/*
     if(lastLoop == null || initOffsetLoop == null){
         throw RuntimeException()
     }
@@ -153,10 +147,41 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     val closedLastEdge = OrientedEdge(Edge(lastEdge.curve, EdgeBound(lastEdgeBound.start, firstEdgeBound.start, lastEdgeBound.sense)))
     lastLoop.edge = closedLastEdge
 
-    lastLoop.followedBy(initOffsetLoop)
-    return initOffsetLoop
+    lastLoop.followedBy(initOffsetLoop)*/
+    return finishOffsetLoop(edges)
 }
 
+fun finishOffsetLoop(edges: List<Edge<Vec2>>) : Loop<Vec2>{
+    val iterator = edges.iterator()
+    if(!iterator.hasNext()) throw RuntimeException("One is required")
+
+    val firstEdge = iterator.next()
+    val firstLoop = Loop(OrientedEdge(firstEdge))
+    var prevEdgeLoop = firstLoop
+    val firstEdgeBound = firstEdge.bound
+    var prevEdgeBound = firstEdgeBound
+    var currentEdgeLoop = firstLoop
+
+    while(iterator.hasNext()){
+        val nextEdge = iterator.next()
+        val nextEdgeBound = nextEdge.bound
+
+        val nextEdgeBoundFix = if(iterator.hasNext()){
+            EdgeBound(prevEdgeBound.end, nextEdgeBound.end, nextEdgeBound.sense)
+        }else{
+            EdgeBound(prevEdgeBound.end, firstEdgeBound.start, nextEdgeBound.sense)
+        }
+
+        val closedLastEdge = OrientedEdge(Edge(nextEdge.curve, nextEdgeBoundFix))
+        currentEdgeLoop = Loop(closedLastEdge)
+        prevEdgeBound = nextEdgeBound
+        prevEdgeLoop.followedBy(currentEdgeLoop)
+        prevEdgeLoop = currentEdgeLoop
+    }
+
+    currentEdgeLoop.followedBy(firstLoop)
+    return firstLoop
+}
 
 
 

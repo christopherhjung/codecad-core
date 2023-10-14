@@ -118,14 +118,20 @@ class OffsetTest {
 
         val printer = DebugPrinter(4096)
         val rawEdges = loop.map { it.edge.edge }
-        printer.add(rawEdges, Color.GREEN)
+        //printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
-
+/*
         for( i in 1 until 20 ){
             val offset = i / 40.0
             val result = offsetFace(sketchFace, offset)
             printer.add(result, Color.WHITE)
-        }
+        }*/
+
+        val i = 6
+        val x = offsetFace(sketchFace, i / 40.0)
+        val y = offsetFaceRaw(x, -i / 40.0)
+        printer.add(x)
+        printer.add(y)
 
         printer.finish()
     }
