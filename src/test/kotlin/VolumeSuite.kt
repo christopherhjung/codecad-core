@@ -17,8 +17,8 @@ object VolumeSuite {
         )
         val zeroXYWorkplane = Workplane(Vec3.Zero, bottomWorkplane.normal, bottomWorkplane.normal)
 
-        val topEdge = Edge(Circle(topWorkplane, outerRadius))
-        val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
+        val topEdge = Edge.circle(topWorkplane, outerRadius)
+        val bottomEdge = Edge.circle(bottomWorkplane, outerRadius)
 
         val topSurface = PlaneSurface(topWorkplane)
         val bottomSurface = PlaneSurface(bottomWorkplane)
@@ -47,11 +47,11 @@ object VolumeSuite {
         val topWorkplane = bottomWorkplane.move(bottomWorkplane.normal * height)
         val zeroXYWorkplane = bottomWorkplane.withOrigin(Vec3.Zero)
 
-        val topEdge = Edge(Circle(topWorkplane, outerRadius))
-        val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
+        val topEdge = Edge.circle(topWorkplane, outerRadius)
+        val bottomEdge = Edge.circle(bottomWorkplane, outerRadius)
 
-        val topHoleEdge = Edge(Circle(topWorkplane, innerRadius))
-        val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))
+        val topHoleEdge = Edge.circle(topWorkplane, innerRadius)
+        val bottomHoleEdge = Edge.circle(bottomWorkplane, innerRadius)
 
         val topSurface = PlaneSurface(topWorkplane)
         val bottomSurface = PlaneSurface(bottomWorkplane)
@@ -88,8 +88,8 @@ object VolumeSuite {
 
 
     fun createCircleWithHole(bottomWorkplane: Workplane<Vec3>, outerRadius: Double, innerRadius: Double) : Face {
-        val bottomEdge = Edge(Circle(bottomWorkplane, outerRadius))
-        val bottomHoleEdge = Edge(Circle(bottomWorkplane, innerRadius))
+        val bottomEdge = Edge.circle(bottomWorkplane, outerRadius)
+        val bottomHoleEdge = Edge.circle(bottomWorkplane, innerRadius)
 
         val bottomSurface = PlaneSurface(bottomWorkplane)
 
@@ -102,7 +102,7 @@ object VolumeSuite {
     }
 
     fun createCircle(bottomWorkplane: Workplane<Vec3>, radius: Double) : Face {
-        val bottomEdge = Edge(Circle(bottomWorkplane, radius))
+        val bottomEdge = Edge.circle(bottomWorkplane, radius)
         val bottomSurface = PlaneSurface(bottomWorkplane)
         val bottomLoop = Loop.wireCircular(bottomEdge)
         val face = Face(bottomSurface, listOf(FaceBound(bottomLoop, FaceBoundKind.OuterBound)))

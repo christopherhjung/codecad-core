@@ -41,14 +41,12 @@ object Intersect {
         val lhsBound = lhs.bound
         val rhsBound = rhs.bound
 
-        if(lhsBound != null && rhsBound != null){
-            when(lhsBound.start){
-                rhsBound.start, rhsBound.end -> return true
-            }
+        when(lhsBound.start){
+            rhsBound.start, rhsBound.end -> return true
+        }
 
-            when(lhsBound.end){
-                rhsBound.start, rhsBound.end -> return true
-            }
+        when(lhsBound.end){
+            rhsBound.start, rhsBound.end -> return true
         }
 
         return false

@@ -34,7 +34,7 @@ fun startTangent(edge: Edge<Vec2>) : Vec2{
         is Line -> curve.direction
         is Circle -> {
             val center = curve.workplane.origin
-            val bound = edge.bound ?: return Vec2.Zero
+            val bound = edge.bound
             (center - bound.start.point).apply {
                 if(bound.sense == Sense.Same){
                     rotateCCW()
@@ -52,7 +52,7 @@ fun endTangent(edge: Edge<Vec2>) : Vec2{
         is Line -> curve.direction.negate()
         is Circle -> {
             val center = curve.workplane.origin
-            val bound = edge.bound ?: return Vec2.Zero
+            val bound = edge.bound
             (center - bound.end.point).apply {
                 if(bound.sense == Sense.Same){
                     rotateCW()
@@ -69,7 +69,7 @@ fun startNormal(edge: Edge<Vec2>) : Vec2{
     return when(val curve = edge.curve){
         is Line -> curve.direction.rotateCW()
         is Circle -> {
-            val bound = edge.bound ?: return Vec2.Zero
+            val bound = edge.bound
             circleNormal(curve, bound.start, bound.sense)
         }
         else -> Vec2.Zero
@@ -80,7 +80,7 @@ fun endNormal(edge: Edge<Vec2>) : Vec2{
     return when(val curve = edge.curve){
         is Line -> curve.direction.rotateCW()
         is Circle -> {
-            val bound = edge.bound ?: return Vec2.Zero
+            val bound = edge.bound
             circleNormal(curve, bound.end, bound.sense)
         }
         else -> Vec2.Zero

@@ -45,24 +45,22 @@ class Debugger{
             for(edgeLoop in faceBound.loop){
                 val orientedEdge = edgeLoop.edge
                 val bound = orientedEdge.bound
-                if(bound != null){
-                    faceBuilder.append(sep)
-                        .append(getVertexIndex(bound.start))
-                        .append("->")
-                        .append(getVertexIndex(bound.end))
+                faceBuilder.append(sep)
+                    .append(getVertexIndex(bound.start))
+                    .append("->")
+                    .append(getVertexIndex(bound.end))
 
-                    faceBuilder.append("[")
-                        .append(getFaceIndex(edgeLoop.twin!!.face))
-                        .append("]")
+                faceBuilder.append("[")
+                    .append(getFaceIndex(edgeLoop.twin!!.face))
+                    .append("]")
 
                     /*
-                    if(bound.sense != Sense.None){
-                        faceBuilder.append("(")
-                            .append(bound.sense)
-                            .append(")")
-                    }*/
-                    sep = ", "
-                }
+                if(bound.sense != Sense.None){
+                    faceBuilder.append("(")
+                        .append(bound.sense)
+                        .append(")")
+                }*/
+                sep = ", "
             }
             faceBuilder.append(")\n")
         }

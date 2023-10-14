@@ -39,8 +39,32 @@ object Extruder{
                 val extrudeEdge = extrudeOrientedEdge.edge
                 val baseEdgeBound = baseEdge.bound
                 val extrudeEdgeBound = extrudeEdge.bound
-                val curve = baseEdge.curve
-                val sideFace = if(baseEdgeBound != null && extrudeEdgeBound != null){
+
+                val surface = when(val curve = baseEdge.curve) {
+                    is Line -> {
+                        val newNormal = curve.direction.cross(normal).normalized()
+                        val workplane = Workplane(baseEdgeBound.start.point, newNormal, curve.direction)
+                        PlaneSurface(workplane)
+                    }
+                    is Circle -> CylindricalSurface(curve.workplane, curve.radius)
+                    is BSpline -> {
+                        val bottomControls = curve.points
+                        val topSpline = extrudeEdge.curve as BSpline
+                        val topControls = topSpline.points
+
+                        val resultControls =
+                            bottomControls.zip(topControls).map {
+                                arrayOf(it.first, it.second)
+                            }.toTypedArray()
+
+                        BSplineSurface(curve.degree, 2, resultControls)
+                    }
+                    else -> throw RuntimeException()
+                }
+
+                val sideFace = if(baseEdgeBound.start === baseEdgeBound.end){
+                    Face(surface, listOf(baseBound, extrudeBound))
+                }else{
                     val startEdge = extrusionLine(baseEdgeBound.start, extrudeEdgeBound.start)
                     val endEdge = extrusionLine(baseEdgeBound.end, extrudeEdgeBound.end)
 
@@ -54,34 +78,7 @@ object Extruder{
                         FaceBoundKind.OuterBound
                     )
 
-                    val surface =  when(curve) {
-                        is Line -> {
-                            val newNormal = curve.direction.cross(normal).normalized()
-                            val workplane = Workplane(baseEdgeBound.start.point, newNormal, curve.direction)
-                            PlaneSurface(workplane)
-                        }
-                        is Circle -> CylindricalSurface(curve.workplane, curve.radius)
-                        is BSpline -> {
-                            val bottomControls = curve.points
-                            val topSpline = extrudeEdge.curve as BSpline
-                            val topControls = topSpline.points
-
-                            val resultControls =
-                                bottomControls.zip(topControls).map {
-                                    arrayOf(it.first, it.second)
-                                }.toTypedArray()
-
-                            BSplineSurface(curve.degree, 2, resultControls)
-                        }
-                        else -> throw RuntimeException()
-                    }
-
                     Face(surface, listOf(bound))
-                }else if(curve is Circle){
-                    val surface = CylindricalSurface(faceSurface.workplane, curve.radius)
-                    Face(surface, listOf(baseBound, extrudeBound))
-                }else{
-                    throw RuntimeException("Missing bounds!!")
                 }
 
                 faces.add(sideFace)
@@ -106,7 +103,7 @@ object Extruder{
                 val orientedEdge = currentEdgeLoop.edge
                 val edge = orientedEdge.edge
 
-                val offsetBound = edge.bound?.let {
+                val offsetBound = edge.bound.let {
                     EdgeBound(
                         remap(it.start),
                         remap(it.end),

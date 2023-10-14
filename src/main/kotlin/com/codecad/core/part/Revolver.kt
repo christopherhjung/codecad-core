@@ -34,7 +34,7 @@ class Revolver(){
 
                 val faceBounds = arrayListOf<FaceBound<Vec3>>()
                 val faces = arrayListOf<Face>()
-                if(true){ // try revolve endstops
+                /*if(true){ // try revolve endstops
                     val newCenter = quat.rotate(surfaceWorkplane.origin, center)
                     val radial = (newCenter - surfaceWorkplane.origin).normalized()
                     val rotatedWorkplane = Workplane(newCenter, axis.direction.cross(radial), radial)
@@ -58,7 +58,7 @@ class Revolver(){
                     faceBounds.add(invertedFaceBound)
                     faces.add(rotated)
                     faces.add(otherFace)
-                }
+                }*/
 
                 val revolveFace = Face(revolveSurface, faceBounds)
                 faces.add(revolveFace)
@@ -101,8 +101,7 @@ class Revolver(){
                         else -> throw RuntimeException("Not yet implemented")
                     }
 
-                    val revolveCurve = Circle(workplane, radius)
-                    val revolveEdge = OrientedEdge(Edge(revolveCurve), EdgeOrientation.Forward)
+                    val revolveEdge = OrientedEdge(Edge.circle(workplane, radius), EdgeOrientation.Forward)
                     faceBounds.add(FaceBound(Loop.wireCircular(revolveEdge), FaceBoundKind.OuterBound))
                     surfaces.add(revolveSurface)
                 }

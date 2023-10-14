@@ -69,7 +69,7 @@ fun collectEdges(edges: List<Edge<Vec2>>) : Collection<VertexHelper>{
     }
 
     for (cutEdge in edges) {
-        val bound = cutEdge.bound ?: continue
+        val bound = cutEdge.bound
         val left = createHelper(bound.start)
         val right = createHelper(bound.end)
         val forwardEdge = OrientedEdge(cutEdge, EdgeOrientation.Forward)
@@ -202,7 +202,7 @@ fun removeOddNesting(tree : FaceTree) {
 }
 
 fun midpoint(edge: Edge<Vec2>) : Vec2{
-    val bound = edge.bound!!
+    val bound = edge.bound
     val start = bound.start.point
     val end = bound.end.point
 
@@ -306,7 +306,7 @@ fun Loop<Vec2>.isInside(point: Vec2): Boolean {
         val edge = loop.edge.edge
         val curve = edge.curve
 
-        val bound = edge.bound!!
+        val bound = edge.bound
 
         when(curve){
             is Line -> {
@@ -421,7 +421,7 @@ private fun countBarriers(
 
 fun <T : Vec<T>> Loop<T>.hasVertex(vertex: Vertex<T>): Boolean {
     for (loop in this) {
-        val current = loop.edge.edge.bound!!.start
+        val current = loop.edge.edge.bound.start
         if(current === vertex){
             return true
         }

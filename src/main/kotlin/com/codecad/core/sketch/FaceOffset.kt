@@ -24,15 +24,15 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     var currentEdge = currentLoop.edge.normalized()
 
     val initNormal = startNormal(currentEdge)
-    val initBound = currentEdge.bound!!
+    val initBound = currentEdge.bound
     var currentStartVertex = Vertex(initBound.start.point + initNormal * offset)
     val initStartVertex = currentStartVertex
     while( true ){
         val nextLoop = currentLoop.next
         val nextEdge = nextLoop.edge.normalized()
-        val nextBound = nextEdge.bound!!
+        val nextBound = nextEdge.bound
 
-        val bound = currentEdge.bound!!
+        val bound = currentEdge.bound
         val curve = currentEdge.curve
 
         val currentEndNormal = endNormal(currentEdge)
@@ -139,8 +139,8 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     val lastEdge = lastLoop.edge.edge
     val firstEdge = initOffsetLoop.edge.edge
 
-    val lastEdgeBound = lastEdge.bound!!
-    val firstEdgeBound = firstEdge.bound!!
+    val lastEdgeBound = lastEdge.bound
+    val firstEdgeBound = firstEdge.bound
 
     val closedLastEdge = OrientedEdge(Edge(lastEdge.curve, EdgeBound(lastEdgeBound.start, firstEdgeBound.start, lastEdgeBound.sense)))
     lastLoop.edge = closedLastEdge

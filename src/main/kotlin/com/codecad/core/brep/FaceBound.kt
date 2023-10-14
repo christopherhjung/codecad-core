@@ -34,9 +34,9 @@ enum class EdgeOrientation{
 }
 
 class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrientation = EdgeOrientation.Forward){
-    val start get() = if(orientation == EdgeOrientation.Forward) edge.bound?.start else edge.bound?.end
-    val end get() = if(orientation == EdgeOrientation.Forward) edge.bound?.end else edge.bound?.start
-    val bound get() = if(orientation == EdgeOrientation.Forward) edge.bound else edge.bound?.let {
+    val start get() = if(orientation == EdgeOrientation.Forward) edge.bound.start else edge.bound.end
+    val end get() = if(orientation == EdgeOrientation.Forward) edge.bound.end else edge.bound.start
+    val bound get() = if(orientation == EdgeOrientation.Forward) edge.bound else edge.bound.let {
             EdgeBound(it.end, it.start, it.sense.invert())
         }
 
@@ -44,10 +44,7 @@ class OrientedEdge<T : Vec<T>>(val edge : Edge<T>, val orientation : EdgeOrienta
         return if(orientation == EdgeOrientation.Forward){
             edge
         }else{
-            val bound = edge.bound?.let {
-                EdgeBound(it.end, it.start, it.sense.invert())
-            }
-            Edge(edge.curve.invert(), bound)
+            Edge(edge.curve.invert(), edge.bound.align())
         }
     }
 
@@ -115,7 +112,7 @@ fun Loop<Vec2>.computeAreaVec2(ignoreCurve : Boolean = false) : Double{
     for( loop in this ){
         val orientedEdge = loop.edge
         val edge = orientedEdge.edge
-        val bound = edge.bound!!
+        val bound = edge.bound
         var partialArea = 0.0
 
         when(val curve = edge.curve){
@@ -184,8 +181,8 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 
     fun followedBy(next : Loop<T>){
-        val bound = edge.bound!!
-        val nextBound = next.edge.bound!!
+        val bound = edge.bound
+        val nextBound = next.edge.bound
         if(bound.end !== nextBound.start){
             throw RuntimeException("xxx")
         }
@@ -248,23 +245,21 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         for(edgeLoop in this){
             val orientedEdge = edgeLoop.edge
             val bound = orientedEdge.bound
-            if(bound != null){
-                sb.append(sep)
-                    .append(bound.start)
-                    .append("->")
-                    .append(bound.end)
-                    .append(" -- ")
-                    .append(orientedEdge.edge.curve::class.simpleName)
+            sb.append(sep)
+                .append(bound.start)
+                .append("->")
+                .append(bound.end)
+                .append(" -- ")
+                .append(orientedEdge.edge.curve::class.simpleName)
 
-                /*
-                if(bound.sense != Sense.None){
-                    sb.append("(")
-                        .append(bound.sense)
-                        .append(")")
-                }*/
+            /*
+        if(bound.sense != Sense.None){
+            sb.append("(")
+                .append(bound.sense)
+                .append(")")
+        }*/
 
-                sep = "\n"
-            }
+            sep = "\n"
 
             if(!visited.add(orientedEdge)){
                 sb.append("Error!!!")

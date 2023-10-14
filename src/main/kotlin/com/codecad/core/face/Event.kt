@@ -38,7 +38,7 @@ fun events(edges: List<Edge<Vec2>>) : List<Event>{
         val curve = edge.curve
         when(curve){
             is Line -> {
-                val bound = edge.bound!!
+                val bound = edge.bound
                 val first = isForward(bound)
                 events.add(Event(bound.start.point, edge, first))
                 events.add(Event(bound.end.point, edge, !first))

@@ -78,16 +78,15 @@ class OffsetTest {
         println(offsetFace)
     }
 
-    fun offsetFaceFull(sketchFace : SketchFace, offset: Double) : SketchFace{
-        if(offset == 0.0) return sketchFace
-        val rawOffsetFace = offsetFace(sketchFace, offset)
+    fun offsetFaceFull(sourceFace : SketchFace, offset: Double) : SketchFace{
+        if(offset == 0.0) return sourceFace
+        val rawOffsetFace = offsetFace(sourceFace, offset)
         val edges = rawOffsetFace.bounds.flatMap { bound -> bound.loop.map { it.edge.edge } }
         val cutEdges = cutLines(edges)
         val loops = connectVerticesMirrored(cutEdges)
-        val faces = generateFaces(loops)
-        val faceBounds = faces.bounds
-        val trees = nestHoles(faceBounds)
-        return SketchFace(trees.children.map { it.bound })
+        val offsetFace = generateFaces(loops)
+        val tree = nestHoles(offsetFace.bounds)
+        return SketchFace(tree.children.map { it.bound })
     }
 
     @Test
@@ -211,7 +210,7 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
     }
 
     fun drawEdge(edge: Edge<Vec2>){
-        val bound = edge.bound!!
+        val bound = edge.bound
         dots.add(DotPointer(bound.start.point, Color.RED, 30.0))
         dots.add(DotPointer(bound.end.point, Color.RED, 30.0))
 

@@ -42,7 +42,7 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
         val sections = sectionMap[edge]
         val curve = edge.curve
         if( sections != null ){
-            val bound = edge.bound ?: throw RuntimeException("fix null bounds")
+            val bound = edge.bound
             when(curve){
                 is Line -> {
                     sections.add(bound.start)

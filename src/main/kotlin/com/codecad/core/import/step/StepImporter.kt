@@ -131,12 +131,7 @@ class StepImporter{
             val start = it.start
             val end = it.end
 
-            val edgeBound = if(start === end){
-                null
-            }else{
-                EdgeBound(createVertex(start), createVertex(end))
-            }
-
+            val edgeBound = EdgeBound(createVertex(start), createVertex(end))
             Edge(it.curve(geometricContext), edgeBound)
         }
     }
