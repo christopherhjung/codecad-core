@@ -1,11 +1,9 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.ast.vec.Vec
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
-import org.jetbrains.kotlin.cfg.pseudocodeTraverser.Edges
 import kotlin.math.abs
 
 fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
@@ -163,22 +161,21 @@ fun finishOffsetLoop(edges: List<Edge<Vec2>>) : Loop<Vec2>{
     var currentEdgeLoop = firstLoop
 
     while(iterator.hasNext()){
-        val nextEdge = iterator.next()
-        val nextEdgeBound = nextEdge.bound
+        val currentEdge = iterator.next()
+        val currentEdgeBound = currentEdge.bound
 
-        val nextEdgeBoundFix = if(iterator.hasNext()){
-            EdgeBound(prevEdgeBound.end, nextEdgeBound.end, nextEdgeBound.sense)
-        }else{
-            EdgeBound(prevEdgeBound.end, firstEdgeBound.start, nextEdgeBound.sense)
-        }
+        val nextEdgeBoundFix = EdgeBound(prevEdgeBound.end, currentEdgeBound.end, currentEdgeBound.sense)
 
-        val closedLastEdge = OrientedEdge(Edge(nextEdge.curve, nextEdgeBoundFix))
+        val closedLastEdge = OrientedEdge(Edge(currentEdge.curve, nextEdgeBoundFix))
         currentEdgeLoop = Loop(closedLastEdge)
-        prevEdgeBound = nextEdgeBound
+
+        prevEdgeBound = currentEdgeBound
         prevEdgeLoop.followedBy(currentEdgeLoop)
         prevEdgeLoop = currentEdgeLoop
     }
 
+    val lastEdge = currentEdgeLoop.edge.edge
+    currentEdgeLoop.edge = OrientedEdge(Edge(lastEdge.curve, EdgeBound(prevEdgeBound.start, firstEdgeBound.start, prevEdgeBound.sense)))
     currentEdgeLoop.followedBy(firstLoop)
     return firstLoop
 }
