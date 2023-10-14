@@ -14,7 +14,7 @@ fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
     val loops = connectVerticesMirrored(cutEdges)
     val offsetFace = generateFaces(loops)
     val tree = nestHoles(offsetFace.bounds)
-    return SketchFace(tree.children.map { it.bound })
+    return SketchFace((tree.children + tree.children.flatMap { it.children }).map { it.bound })
 }
 
 

@@ -76,7 +76,7 @@ class OffsetTest {
         val bottomLeft = Vertex(Vec2(-0.8, -1.0))
         val extraLeft = Vertex(Vec2(-0.2, -1.0))
         val topMid = Vertex(Vec2(0.4, 0.4))
-        val bottomMid = Vertex(Vec2(-0.6, -0.4))
+        val bottomMid = Vertex(Vec2(-0.79, -0.4))
         val bottomRight = Vertex(Vec2(0.8, -1.0))
         val topRight = Vertex(Vec2(0.8, 1.0))
 
@@ -92,6 +92,37 @@ class OffsetTest {
 
         for( i in 1 until 25 ){
             val offset = -i / 25.0
+            val result = offsetFace(sketchFace, offset)
+            printer.add(result, Color.WHITE)
+        }
+
+        printer.finish()
+    }
+
+    @Test
+    fun outInside(){
+        val a = Vertex(Vec2(0.0, 0.0))
+        val b = Vertex(Vec2(1.0, 0.0))
+        val c = Vertex(Vec2(1.0, 0.8))
+        val d = Vertex(Vec2(0.9, 0.1))
+        val e = Vertex(Vec2(0.1, 0.1))
+        val f = Vertex(Vec2(0.1, 0.9))
+        val g = Vertex(Vec2(0.8, 1.0))
+        val h = Vertex(Vec2(0.0, 1.0))
+
+
+
+        val loop = Loop.wireCircular(a,b,c,d,e,f,g,h)
+        val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
+
+
+        val printer = DebugPrinter(4096)
+        val rawEdges = loop.map { it.edge.edge }
+        printer.add(rawEdges, Color.GREEN)
+        //printer.add(testFaces)
+
+        for( i in 1 until 20 ){
+            val offset = i / 40.0
             val result = offsetFace(sketchFace, offset)
             printer.add(result, Color.WHITE)
         }
