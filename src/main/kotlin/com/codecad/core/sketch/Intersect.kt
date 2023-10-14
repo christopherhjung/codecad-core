@@ -43,46 +43,13 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
         val curve = edge.curve
         if( sections != null ){
             val bound = edge.bound
-            when(curve){
-                is Line -> {
-                    sections.add(bound.start)
-                    sections.add(bound.end)
-                    sections.sortWith(DirectionVertexComparator(curve.direction))
-                }
-                is Circle -> {
-                    val center = curve.workplane.origin
-                    var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
-                    if(bound.sense == Sense.Opposite){
-                        comp = comp.reversed()
-                    }
-                    sections.sortWith(comp)
-                    sections.add(0, bound.start)
-                    sections.add(bound.end)
-                }
-            }
-
-            for((lhs, rhs) in sections.zipWithNext()){
-                result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
-            }
-        }else{
-            result.add(edge)
-        }
-    }
-
-    return result
-}
-
-/*
-* for( edge in edges ){
-        val sections = sectionMap[edge]
-        val curve = edge.curve
-        if( sections != null ){
-            val bound = edge.bound
+            val start = bound.start
+            val end = bound.end
             val comp = when(curve){
                 is Line -> DirectionVertexComparator(curve.direction)
                 is Circle -> {
                     val center = curve.workplane.origin
-                    val rotComp = RotaryVertexComparator(center, bound.start.point - center)
+                    val rotComp = RotaryVertexComparator(center, start.point - center)
                     if(bound.sense == Sense.Same){
                         rotComp
                     }else{
@@ -93,8 +60,8 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
             }
 
             sections.sortWith(comp)
-            sections.add(0, bound.start)
-            sections.add(bound.end)
+            sections.add(0, start)
+            sections.add(end)
             for((lhs, rhs) in sections.zipWithNext()){
                 result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
             }
@@ -102,4 +69,6 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
             result.add(edge)
         }
     }
-* */
+
+    return result
+}
