@@ -150,9 +150,14 @@ fun generateFaces(loops: Collection<Loop<Vec2>>) : SketchFace {
 
 open class FaceTree(
     var area: Double,
-    val kind: FaceBoundKind
-){
-    val children = arrayListOf<BoundedFaceTree>()
+    val kind: FaceBoundKind,
+    val children : MutableList<BoundedFaceTree> = arrayListOf()
+
+
+) {
+    override fun toString(): String {
+        return "FaceTree(area=$area, kind=$kind, children=$children)"
+    }
 }
 
 class BoundedFaceTree(
@@ -179,7 +184,15 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
         nestHoles(tree, rootSurface)
     }
 
+    removeOddNesting(rootSurface)
     return rootSurface
+}
+
+fun removeOddNesting(tree : FaceTree) {
+    tree.children.removeIf { it.kind == tree.kind }
+    tree.children.forEach {
+        removeOddNesting(it)
+    }
 }
 
 fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
@@ -202,10 +215,6 @@ fun nestHoles(newFace : BoundedFaceTree, parentSurface: FaceTree){
 
             break
         }
-    }
-
-    if(newFace.kind == parentSurface.kind){
-        return
     }
 
     parentSurface.area -= newFace.area
@@ -245,10 +254,10 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
 
     for ((p1, p2) in polygon.rollover()) {
         if (p1.y <= point.y) {
-            if (p2.y > point.y && isLeft(p1, p2, point) > 0) {
+            if (p2.y > point.y && isRight(p1, p2, point)) {
                 windingNumber++
             }
-        } else if (p2.y <= point.y && isLeft(p1, p2, point) < 0) {
+        } else if (p2.y <= point.y && isRight(p1, p2, point)) {
             windingNumber--
         }
     }
@@ -256,8 +265,8 @@ fun isPointInPolygon(point: Vec2, polygon: Iterable<Vec2>): Boolean {
     return windingNumber != 0
 }
 
-private fun isLeft(p0: Vec2, p1: Vec2, p2: Vec2): Double {
-    return (p1 - p0).crossZ(p2 - p0)
+private fun isRight(start: Vec2, end: Vec2, point: Vec2): Boolean {
+    return (end - start).crossZ(point - start) < 0.0
 }
 
 
@@ -281,10 +290,10 @@ fun Loop<Vec2>.isInside(point: Vec2): Boolean {
                 val end = bound.end.point
 
                 if (start.y <= point.y) {
-                    if (end.y > point.y && isLeft(start, end, point) > 0) {
+                    if (end.y > point.y && isRight(start, end, point)) {
                         windingNumber++
                     }
-                } else if (end.y <= point.y && isLeft(start, end, point) < 0) {
+                } else if (end.y <= point.y && isRight(end, start, point)) {
                     windingNumber++
                 }
             }
