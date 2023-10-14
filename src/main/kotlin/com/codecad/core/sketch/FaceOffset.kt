@@ -17,7 +17,6 @@ fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
     return SketchFace((tree.children + tree.children.flatMap { it.children }).map { it.bound })
 }
 
-
 fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
     for( bound in sketchFace.bounds ){
@@ -28,11 +27,7 @@ fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
     return SketchFace(faceBounds)
 }
 
-
 fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
-    var lastLoop : Loop<Vec2>? = null
-    var initOffsetLoop : Loop<Vec2>? = null
-
     var currentLoop = initLoop
     var currentEdge = currentLoop.edge.normalized()
 
@@ -56,11 +51,8 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val currentEndNormal = endNormal(currentEdge)
         val nextStartNormal = startNormal(nextEdge)
 
-        val lastIter = initLoop === nextLoop
         val currentEndOffsetVec = currentEndNormal * offset
-
         val nextStartVertex = Vertex(nextBound.start.point + nextStartNormal * offset)
-
         val normalDiff = (currentEndNormal - nextStartNormal).squaredLength()
 
         val currentEndVertex = if(normalDiff < 1e-5){
@@ -70,12 +62,9 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         }
 
         val offsetCurve = when(curve){
-            is Line -> {
-                Line(curve.origin + currentEndOffsetVec, curve.direction)
-            }
+            is Line -> Line(curve.origin + currentEndOffsetVec, curve.direction)
             is Circle -> {
                 val radius = curve.radius
-
                 val newRadius = if(bound.sense == Sense.Same){
                     radius + offset
                 }else{
@@ -123,7 +112,7 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             }
         }
 
-        if(lastIter){
+        if(initLoop === nextLoop){
             break
         }
 
@@ -131,21 +120,7 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         currentEdge = nextEdge
         currentStartVertex = nextStartVertex
     }
-/*
-    if(lastLoop == null || initOffsetLoop == null){
-        throw RuntimeException()
-    }
 
-    val lastEdge = lastLoop.edge.edge
-    val firstEdge = initOffsetLoop.edge.edge
-
-    val lastEdgeBound = lastEdge.bound
-    val firstEdgeBound = firstEdge.bound
-
-    val closedLastEdge = OrientedEdge(Edge(lastEdge.curve, EdgeBound(lastEdgeBound.start, firstEdgeBound.start, lastEdgeBound.sense)))
-    lastLoop.edge = closedLastEdge
-
-    lastLoop.followedBy(initOffsetLoop)*/
     return finishOffsetLoop(edges)
 }
 
