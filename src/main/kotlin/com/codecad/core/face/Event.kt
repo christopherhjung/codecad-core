@@ -5,7 +5,6 @@ import com.codecad.core.brep.Edge
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 
-
 const val OFFSET = 1e-8
 
 data class Event(
@@ -20,21 +19,17 @@ data class Event(
             else -> eventPos.compareTo(other.eventPos)
         }
     }
-
-    companion object{
-        fun new(eventPos: Double, edge: Edge<Vec2>, origin: Boolean) : Event{
-            val dir = if(origin){ -1 }else{ 1 }
-            val offset = eventPos + dir * OFFSET
-            return Event(offset, edge, origin)
-        }
-    }
 }
 
-fun isForward(start: Vec2, end : Vec2) : Boolean{
-    return when{
-        start.x < end.x -> true
-        start.x > end.x -> false
-        else -> start.y < end.y
+fun lineBB(edge: Edge<Vec2>) : Pair<Double, Double>{
+    val bound = edge.bound
+    val start = bound.start.point
+    val end = bound.end.point
+
+    return if(start.x < end.x){
+        Pair(start.x, end.x)
+    }else{
+        Pair(end.x, start.x)
     }
 }
 
@@ -60,26 +55,23 @@ fun circleBB(edge: Edge<Vec2>) : Pair<Double, Double>{
     return Pair(left(start, end), left(start.negateX(), end.negateX()))
 }
 
+fun bb(edge: Edge<Vec2>) : Pair<Double, Double>{
+    return when(edge.curve){
+        is Line -> lineBB(edge)
+        is Circle -> circleBB(edge)
+        else -> throw RuntimeException("not impl")
+    }
+}
+
 fun events(edges: List<Edge<Vec2>>) : List<Event>{
     val events = ArrayList<Event>()
 
-    fun addEvent(first : Vec2, second : Vec2, edge : Edge<Vec2>){
-        val orient = isForward(first, second)
-        events.add(Event.new(first.x, edge, orient))
-        events.add(Event.new(second.x, edge, !orient))
-    }
-
     for (edge in edges) {
-        when(edge.curve){
-            is Line -> edge.bound.let { addEvent(it.start.point, it.end.point, edge) }
-            is Circle -> {
-                val bb = circleBB(edge)
-
-                events.add(Event.new(bb.first, edge, true))
-                events.add(Event.new(bb.second, edge, false))
-            }
-        }
+        val bb = bb(edge)
+        events.add(Event(bb.first - OFFSET, edge, true))
+        events.add(Event(bb.second + OFFSET, edge, false))
     }
+
     events.sort()
     return events
 }

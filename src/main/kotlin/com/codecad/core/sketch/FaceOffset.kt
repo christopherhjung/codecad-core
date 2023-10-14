@@ -6,7 +6,19 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
 
-fun offsetFace(sketchFace: SketchFace, offset: Double) : SketchFace{
+fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
+    if(offset == 0.0) return sourceFace
+    val rawOffsetFace = offsetFaceRaw(sourceFace, offset)
+    val edges = rawOffsetFace.bounds.flatMap { bound -> bound.loop.map { it.edge.edge } }
+    val cutEdges = cutLines(edges)
+    val loops = connectVerticesMirrored(cutEdges)
+    val offsetFace = generateFaces(loops)
+    val tree = nestHoles(offsetFace.bounds)
+    return SketchFace(tree.children.map { it.bound })
+}
+
+
+fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
     for( bound in sketchFace.bounds ){
         val offsetLoop = offsetLoop(bound.loop, offset)
