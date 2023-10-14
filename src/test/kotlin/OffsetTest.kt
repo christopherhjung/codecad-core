@@ -99,7 +99,7 @@ class OffsetTest {
         val millPath = offsetFace(sketchFace, -0.4)
         val freeArea = offsetFace(millPath, 0.4)
         val x1 = offsetFace(freeArea, -0.3)
-        val x2 = offsetFace(x1, 0.3)
+        val x2 = offsetFace(x1, 0.2)
 
         //printer.add(millPath)
         //printer.add(freeArea)

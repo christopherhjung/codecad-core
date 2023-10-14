@@ -21,14 +21,14 @@ fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
 fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
     val faceBounds = arrayListOf<FaceBound<Vec2>>()
     for( bound in sketchFace.bounds ){
-        val offsetLoop = offsetLoop(bound.loop, offset)
+        val offsetLoop = offsetLoopRaw(bound.loop, offset)
         faceBounds.add(FaceBound(offsetLoop, FaceBoundKind.OuterBound))
     }
 
     return SketchFace(faceBounds)
 }
 
-fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
+fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     var lastLoop : Loop<Vec2>? = null
     var initOffsetLoop : Loop<Vec2>? = null
 
@@ -38,7 +38,6 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
     val initNormal = startNormal(currentEdge)
     val initBound = currentEdge.bound
     var currentStartVertex = Vertex(initBound.start.point + initNormal * offset)
-    val initStartVertex = currentStartVertex
     while( true ){
         val nextLoop = currentLoop.next
         val nextEdge = nextLoop.edge.normalized()
@@ -57,7 +56,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
 
         val normalDiff = (currentEndNormal - nextStartNormal).squaredLength()
 
-        val currentEndVertex = if(normalDiff < 1e-3){
+        val currentEndVertex = if(normalDiff < 1e-5){
             nextStartVertex
         }else{
             Vertex(bound.end.point + currentEndOffsetVec)
@@ -113,9 +112,6 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
             offsetLoop
         }else if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
             //no arc
-            //val pointVertex = Vertex(bound.end.point)
-            //val second = Loop.wrap(Edge.line(pointVertex, nextStartVertex))
-
             val first = Loop.wrap(Edge.line(currentEndVertex, nextStartVertex))
             offsetLoop.followedBy(first)
             first
