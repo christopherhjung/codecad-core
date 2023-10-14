@@ -74,12 +74,13 @@ class OffsetTest {
     fun hourGlass(){
         val topLeft = Vertex(Vec2(-0.8, 1.0))
         val bottomLeft = Vertex(Vec2(-0.8, -1.0))
-        val topMid = Vertex(Vec2(0.0, 0.2))
-        val bottomMid = Vertex(Vec2(0.0, -0.2))
+        val extraLeft = Vertex(Vec2(-0.2, -1.0))
+        val topMid = Vertex(Vec2(0.4, 0.4))
+        val bottomMid = Vertex(Vec2(-0.6, -0.4))
         val bottomRight = Vertex(Vec2(0.8, -1.0))
         val topRight = Vertex(Vec2(0.8, 1.0))
 
-        val loop = Loop.wireCircular(topLeft, bottomLeft, bottomMid, bottomRight, topRight, topMid)
+        val loop = Loop.wireCircular(topLeft, bottomLeft, extraLeft, bottomMid, bottomRight, topRight, topMid)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
 
@@ -88,24 +89,13 @@ class OffsetTest {
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
 
-        /*
-        for( i in 0 until 50 ){
-            if(i == 25) continue
-            val offset = 1.0 - i / 25.0
-            val result = offsetFaceFull(sketchFace, offset)
-            printer.add(result)
-        }*/
 
-        val millPath = offsetFace(sketchFace, -0.4)
-        val freeArea = offsetFace(millPath, 0.4)
-        val x1 = offsetFace(freeArea, -0.3)
-        val x2 = offsetFace(x1, 0.2)
+        for( i in 1 until 25 ){
+            val offset = -i / 25.0
+            val result = offsetFace(sketchFace, offset)
+            printer.add(result, Color.WHITE)
+        }
 
-        //printer.add(millPath)
-        //printer.add(freeArea)
-        printer.add(freeArea)
-        printer.add(x1)
-        printer.add(x2)
         printer.finish()
     }
 

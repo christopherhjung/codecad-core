@@ -8,13 +8,14 @@ package com.codecad.core
     import kotlin.math.abs
     import kotlin.math.sqrt
 
-
+const val EPSILON = 1e-10
 fun Edge<Vec2>.inside(p : Vec2) : Boolean{
     return when(val curve = curve){
         is Line -> {
             val p0 = bound.start.point
             val p1 = bound.end.point
-            ((p0.x <= p.x) == (p.x <= p1.x)) && ((p0.y <= p.y) == (p.y <= p1.y))
+            ((p0.x - EPSILON <= p.x) == (p.x <= p1.x + EPSILON)) &&
+            ((p0.y - EPSILON <= p.y) == (p.y <= p1.y + EPSILON))
         }
         is Circle -> {
             val center = curve.workplane.origin

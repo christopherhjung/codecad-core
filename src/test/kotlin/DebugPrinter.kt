@@ -61,7 +61,7 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
 
     fun add(face: SketchFace){
         face.bounds.forEach { bound ->
-            graphics.color = PASTEL_COLORS[idx++]
+            graphics.color = PASTEL_COLORS[idx++ % PASTEL_COLORS.size]
             bound.loop.forEach { loop ->
                 drawEdge(loop.edge.edge)
             }
