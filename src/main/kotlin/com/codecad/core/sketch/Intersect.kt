@@ -51,18 +51,13 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                 }
                 is Circle -> {
                     val center = curve.workplane.origin
-                    if(bound != null){
-                        var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
-                        if(bound.sense == Sense.Opposite){
-                            comp = comp.reversed()
-                        }
-                        sections.sortWith(comp)
-                        sections.add(0, bound.start)
-                        sections.add(bound.end)
-                    }else{
-                        sections.sortWith(RotaryVertexComparator(center))
-                        sections.add(sections.first())
+                    var comp : Comparator<Vertex<Vec2>> = RotaryVertexComparator(center, bound.start.point - center)
+                    if(bound.sense == Sense.Opposite){
+                        comp = comp.reversed()
                     }
+                    sections.sortWith(comp)
+                    sections.add(0, bound.start)
+                    sections.add(bound.end)
                 }
             }
 
