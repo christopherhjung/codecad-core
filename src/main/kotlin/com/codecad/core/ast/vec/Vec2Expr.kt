@@ -149,6 +149,14 @@ data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
         return Vec2(-x, -y)
     }
 
+    fun negateX() : Vec2{
+        return Vec2(-x, y)
+    }
+
+    fun negateY() : Vec2{
+        return Vec2(x, -y)
+    }
+
     fun rotate(center: Vec2, angle: Double) : Vec2 {
         return rotate(this - center, angle) + center
     }

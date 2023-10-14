@@ -27,7 +27,7 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
         return if(sense == Sense.Same){
             this
         }else{
-            EdgeBound(end, start, sense.invert())
+            EdgeBound(end, start, Sense.Same)
         }
     }
 }
