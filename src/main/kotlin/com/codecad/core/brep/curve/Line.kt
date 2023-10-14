@@ -10,7 +10,11 @@ import com.codecad.core.brep.WorkplaneExpr
 class Line<T : Vec<T>>(var origin : T, var direction : T) : Curve<T>(){
     companion object{
         fun <T : Vec<T>> fromTo(start : T, end : T) : Line<T> {
-            return Line((start + end) / 2.0, (end - start).normalized())
+            val diff = end - start
+            if(diff.length() < 1e-10){
+                throw RuntimeException("sxx")
+            }
+            return Line((start + end) / 2.0, diff.normalized())
         }
     }
 

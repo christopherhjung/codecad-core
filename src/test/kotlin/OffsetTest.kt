@@ -94,8 +94,8 @@ class OffsetTest {
     fun hourGlass(){
         val topLeft = Vertex(Vec2(-0.8, 1.0))
         val bottomLeft = Vertex(Vec2(-0.8, -1.0))
-        val topMid = Vertex(Vec2(0.2, 0.1))
-        val bottomMid = Vertex(Vec2(-0.2, -1.2))
+        val topMid = Vertex(Vec2(0.0, 0.2))
+        val bottomMid = Vertex(Vec2(0.0, -0.2))
         val bottomRight = Vertex(Vec2(0.8, -1.0))
         val topRight = Vertex(Vec2(0.8, 1.0))
 
@@ -108,22 +108,43 @@ class OffsetTest {
         printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)
 
+        /*
         for( i in 0 until 50 ){
+            if(i == 25) continue
             val offset = 1.0 - i / 25.0
             val result = offsetFaceFull(sketchFace, offset)
             printer.add(result)
-        }
+        }*/
+
+        val millPath = offsetFaceFull(sketchFace, -0.4)
+        val freeArea = offsetFaceFull(millPath, 0.4)
+
+        printer.add(millPath)
+        printer.add(freeArea)
         printer.finish()
     }
 
 }
 
+val PASTEL_COLORS = arrayOf(
+    Color(255, 182, 193),   // Pastel Pink
+    Color(174, 198, 207),   // Pastel Blue
+    Color(176, 229, 124),   // Pastel Green
+    Color(177, 156, 217),   // Pastel Purple
+    Color(255, 255, 153),   // Pastel Yellow
+    Color(255, 215, 0),     // Pastel Orange
+    Color(230, 230, 250),   // Pastel Lavender
+    Color(152, 251, 152),   // Pastel Mint
+    Color(255, 218, 185),   // Pastel Peach
+    Color(192, 192, 192)    // Pastel Gray
+)
 
 class DebugPrinter(val size: Int, val scale : Double = 0.5){
     val dots = arrayListOf<DotPointer>()
     val image: BufferedImage = BufferedImage(size, size, BufferedImage.TYPE_INT_RGB)
     val graphics = image.createGraphics()
     val invSize = 1.0 / size
+    var idx = 0
 
     init {
         graphics.stroke = BasicStroke(10.0f * invSize.toFloat())
@@ -140,10 +161,19 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
         edges.forEach { drawEdge(it) }
     }
 
-    fun add(face: SketchFace, color: Color = Color.WHITE){
+    fun add(face: SketchFace, color: Color){
         graphics.color = color
 
         face.bounds.forEach { bound ->
+            bound.loop.forEach { loop ->
+                drawEdge(loop.edge.edge)
+            }
+        }
+    }
+
+    fun add(face: SketchFace){
+        face.bounds.forEach { bound ->
+            graphics.color = PASTEL_COLORS[idx++]
             bound.loop.forEach { loop ->
                 drawEdge(loop.edge.edge)
             }

@@ -41,11 +41,7 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val lastIter = initLoop === nextLoop
         val currentEndOffsetVec = currentEndNormal * offset
 
-        val nextStartVertex = if(lastIter){
-            initStartVertex
-        }else{
-            Vertex(nextBound.start.point + nextStartNormal * offset)
-        }
+        val nextStartVertex = Vertex(nextBound.start.point + nextStartNormal * offset)
 
         val normalDiff = (currentEndNormal - nextStartNormal).squaredLength()
 
@@ -68,7 +64,15 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
                     radius - offset
                 }
 
-                if(newRadius < 1e-5){
+                if(abs(newRadius) < 1e-5){
+                    if(lastIter){
+                        break
+                    }else{
+                        currentLoop = nextLoop
+                        currentEdge = nextEdge
+                        continue
+                    }
+                }else if(newRadius < 0.0){
                     Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
                     Circle(curve.workplane, newRadius)
@@ -128,7 +132,20 @@ fun offsetLoop(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         currentStartVertex = nextStartVertex
     }
 
-    lastLoop!!.followedBy(initOffsetLoop!!)
+    if(lastLoop == null || initOffsetLoop == null){
+        throw RuntimeException()
+    }
+
+    val lastEdge = lastLoop.edge.edge
+    val firstEdge = initOffsetLoop.edge.edge
+
+    val lastEdgeBound = lastEdge.bound!!
+    val firstEdgeBound = firstEdge.bound!!
+
+    val closedLastEdge = OrientedEdge(Edge(lastEdge.curve, EdgeBound(lastEdgeBound.start, firstEdgeBound.start, lastEdgeBound.sense)))
+    lastLoop.edge = closedLastEdge
+
+    lastLoop.followedBy(initOffsetLoop)
     return initOffsetLoop
 }
 
