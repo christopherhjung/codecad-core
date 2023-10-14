@@ -103,7 +103,7 @@ class OffsetTest {
 
         //printer.add(millPath)
         //printer.add(freeArea)
-        //printer.add(x1)
+        printer.add(freeArea)
         printer.add(x1)
         printer.add(x2)
         printer.finish()

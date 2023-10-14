@@ -12,13 +12,11 @@ package com.codecad.core
 fun Edge<Vec2>.inside(p : Vec2) : Boolean{
     return when(val curve = curve){
         is Line -> {
-            val bound = bound!!
             val p0 = bound.start.point
             val p1 = bound.end.point
             ((p0.x <= p.x) == (p.x <= p1.x)) && ((p0.y <= p.y) == (p.y <= p1.y))
         }
         is Circle -> {
-            val bound = bound ?: return true
             val center = curve.workplane.origin
             val alignedBound = bound.align()
 
@@ -67,7 +65,7 @@ object Intersect {
 
             is Circle -> when(rhsCurve){
                 is Line -> ofLineCircle(rhsCurve, lhsCurve)
-                is Circle -> ofCircles(rhsCurve, lhsCurve)
+                is Circle -> ofCircles(lhsCurve, rhsCurve)
                 else -> throw RuntimeException()
             }
 
