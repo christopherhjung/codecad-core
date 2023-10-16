@@ -34,21 +34,17 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                     val vertex = Vertex(it)
 
                     val vertexNode = unifier.get(vertex)
-                    if(activeBound.start.point.near(it, EPSILON)){
-                        unifier.unify(vertexNode, activeBound.start)
+
+                    fun unify(boundVertex: Vertex<Vec2>){
+                        if(boundVertex.point.near(it, EPSILON)){
+                            unifier.unify(vertexNode, boundVertex)
+                        }
                     }
 
-                    if(activeBound.end.point.near(it, EPSILON)){
-                        unifier.unify(vertexNode, activeBound.end)
-                    }
-
-                    if(eventBound.start.point.near(it, EPSILON)){
-                        unifier.unify(vertexNode, eventBound.start)
-                    }
-
-                    if(eventBound.end.point.near(it, EPSILON)){
-                        unifier.unify(vertexNode, eventBound.end)
-                    }
+                    unify(activeBound.start)
+                    unify(activeBound.end)
+                    unify(eventBound.start)
+                    unify(eventBound.end)
 
                     addSection(event.edge, vertex)
                     addSection(active.edge, vertex)
