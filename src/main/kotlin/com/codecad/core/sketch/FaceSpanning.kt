@@ -12,6 +12,7 @@ import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.face.SketchEdgeLoop
 import com.codecad.core.part.Sketch
 import com.codecad.core.rollover
+import org.jetbrains.kotlin.utils.keysToMap
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.HashMap
@@ -44,14 +45,32 @@ data class VertexHelper(val point: Vertex<Vec2>){
     }
 
     fun finalizeMirrored(){
-        val forwards = loops.filter { it.edge.orientation == EdgeOrientation.Forward }
-            .sortedBy { System.identityHashCode(it.edge.edge.curve) }
+        val copy = loops.toMutableList()
+        copy.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
 
-        val backwards = loops.filter { it.edge.orientation == EdgeOrientation.Backward }
-            .sortedByDescending { System.identityHashCode(it.edge.edge.curve) }
+        var idx = 0
 
-        for((fwd, bwd) in forwards.zip(backwards)){
-            bwd.twin!!.followedBy(fwd)
+        while(copy.isNotEmpty()){
+            val currentIdx = idx % copy.size
+            idx++
+            val nextIdx = idx % copy.size
+
+            val current = copy[currentIdx]
+            val next = copy[nextIdx]
+
+            if(current.edge.orientation == EdgeOrientation.Forward){
+                if(next.edge.orientation == EdgeOrientation.Backward){
+                    if(currentIdx < nextIdx){
+                        copy.removeAt(nextIdx)
+                        copy.removeAt(currentIdx)
+                    }else{
+                        copy.removeAt(currentIdx)
+                        copy.removeAt(nextIdx)
+                    }
+
+                    next.twin!!.followedBy(current)
+                }
+            }
         }
     }
 }
