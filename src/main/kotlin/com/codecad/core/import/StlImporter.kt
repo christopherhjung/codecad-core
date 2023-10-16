@@ -122,7 +122,7 @@ class StlImporter : Importer {
 
         faces.forEach{
             val node = unifier.get(it)
-            val parent = unifier.find(node)
+            val parent = node.find()
 
             shellLists.computeIfAbsent(parent.value){
                 arrayListOf()

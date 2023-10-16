@@ -11,14 +11,14 @@ class Key(val obj : Any){
 }
 
 class Unifier<T : Any>(){
-    val nodes = hashMapOf<Key, UnionNode<T>>()
+    private val nodes = hashMapOf<Key, UnionNode<T>>()
 
-    fun find(x : UnionNode<T>) : UnionNode<T>{
-        return if(x.parent !== x){
-            x.parent = find(x.parent)
-            x.parent
+    fun parent( key: T ) : T{
+        val node = nodes[Key(key)]
+        return if(node == null){
+            key
         }else{
-            x
+            node.find().value
         }
     }
 
@@ -26,9 +26,13 @@ class Unifier<T : Any>(){
         return nodes.computeIfAbsent(Key(value)){UnionNode(value)}
     }
 
+    fun unify(x: UnionNode<T>, y: T){
+        unify(x, get(y))
+    }
+
     fun unify(x: UnionNode<T>, y: UnionNode<T>) {
-        val x = find(x)
-        val y = find(y)
+        val x = x.find()
+        val y = y.find()
 
         if (x == y) return
 

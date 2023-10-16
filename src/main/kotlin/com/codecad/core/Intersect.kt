@@ -2,18 +2,24 @@ package com.codecad.core
 
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Edge
-import com.codecad.core.brep.Sense
+import com.codecad.core.brep.Vertex
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 const val EPSILON = 1e-10
 fun Edge<Vec2>.inside(p : Vec2) : Boolean{
+    val p0 = bound.start.point
+    val p1 = bound.end.point
+
+    if(p0.near(p, EPSILON) || p1.near(p, EPSILON)){
+        return true
+    }
+
     return when(val curve = curve){
         is Line -> {
-            val p0 = bound.start.point
-            val p1 = bound.end.point
             ((p0.x - EPSILON <= p.x) == (p.x <= p1.x + EPSILON)) &&
             ((p0.y - EPSILON <= p.y) == (p.y <= p1.y + EPSILON))
         }
@@ -55,20 +61,20 @@ object Intersect {
         val lhsCurve = lhs.curve
         val rhsCurve = rhs.curve
 
-        return when(lhsCurve){
-            is Line -> when(rhsCurve){
+        return when (lhsCurve) {
+            is Line -> when (rhsCurve) {
                 is Line -> ofLineLine(lhsCurve, rhsCurve)
                 is Circle -> ofLineCircle(lhsCurve, rhsCurve)
-                else -> throw RuntimeException()
+                else -> throw NotImplementedError()
             }
 
-            is Circle -> when(rhsCurve){
+            is Circle -> when (rhsCurve) {
                 is Line -> ofLineCircle(rhsCurve, lhsCurve)
                 is Circle -> ofCircles(lhsCurve, rhsCurve)
-                else -> throw RuntimeException()
+                else -> throw NotImplementedError()
             }
 
-            else -> throw RuntimeException()
+            else -> throw NotImplementedError()
         }.filter {
             lhs.inside(it) && rhs.inside(it)
         }
@@ -134,3 +140,40 @@ object Intersect {
         }
     }
 }
+
+/*
+* val lhsBound = lhs.bound
+            val rhsBound = rhs.bound
+
+            val lhsResult = if (close(lhsBound.start.point, it)) {
+                lhsBound.start
+            } else if (close(lhsBound.end.point, it)) {
+                lhsBound.end
+            } else {
+                null
+            }
+
+            val rhsResult = if (close(rhsBound.start.point, it)) {
+                rhsBound.start
+            } else if (close(rhsBound.end.point, it)) {
+                rhsBound.end
+            } else {
+                null
+            }
+
+            if (lhsResult != null && rhsResult != null) {
+                if (System.identityHashCode(lhsResult) < System.identityHashCode(rhsResult)) {
+                    lhsResult
+                } else {
+                    rhsResult
+                }
+            } else if (lhsResult != null) {
+                lhsResult
+            } else if (rhsResult != null) {
+                rhsResult
+            } else if (lhs.inside(it) && rhs.inside(it)) {
+                Vertex(it)
+            } else {
+                null
+            }
+* */

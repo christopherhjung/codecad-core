@@ -12,6 +12,8 @@ import com.codecad.core.face.Event
 import com.codecad.core.face.events
 
 fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
+    val unifier = Unifier<Vertex<Vec2>>()
+
     val events = events(edges)
 
     val sectionMap = HashMap<Edge<Vec2>, MutableList<Vertex<Vec2>>>()
@@ -22,10 +24,32 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     val actives = HashMap<Edge<Vec2>, Event>()
     for (event in events) {
         if (event.origin) {
+            val eventEdge = event.edge
             for (active in actives.values) {
-                val intersectionPoints = Intersect.of(active.edge, event.edge)
+                val activeEdge = active.edge
+                val intersectionPoints = Intersect.of(activeEdge, eventEdge)
                 intersectionPoints.forEach {
+                    val activeBound = activeEdge.bound
+                    val eventBound = eventEdge.bound
                     val vertex = Vertex(it)
+
+                    val vertexNode = unifier.get(vertex)
+                    if(activeBound.start.point.near(it, EPSILON)){
+                        unifier.unify(vertexNode, activeBound.start)
+                    }
+
+                    if(activeBound.end.point.near(it, EPSILON)){
+                        unifier.unify(vertexNode, activeBound.end)
+                    }
+
+                    if(eventBound.start.point.near(it, EPSILON)){
+                        unifier.unify(vertexNode, eventBound.start)
+                    }
+
+                    if(eventBound.end.point.near(it, EPSILON)){
+                        unifier.unify(vertexNode, eventBound.end)
+                    }
+
                     addSection(event.edge, vertex)
                     addSection(active.edge, vertex)
                 }
@@ -39,31 +63,26 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
 
     val result = mutableListOf<Edge<Vec2>>()
     for( edge in edges ){
-        val sections = sectionMap[edge]
-        val curve = edge.curve
+        var sections = sectionMap[edge]
         if( sections != null ){
             val bound = edge.bound
-            val start = bound.start
-            val end = bound.end
-            val comp = when(curve){
-                is Line -> DirectionVertexComparator(curve.direction)
-                is Circle -> {
-                    val center = curve.workplane.origin
-                    val rotComp = RotaryVertexComparator(center, start.point - center)
-                    if(bound.sense == Sense.Same){
-                        rotComp
-                    }else{
-                        rotComp.reversed()
-                    }
-                }
-                else -> throw NotImplementedError()
-            }
+            val comp = createComparator(edge)
+            val start = unifier.parent(bound.start)
+            val end = unifier.parent(bound.end)
+
+            sections = sections
+                .map { unifier.parent(it) }
+                .filter { it !== start && it !== end }
+                .toMutableList()
 
             sections.sortWith(comp)
             sections.add(0, start)
             sections.add(end)
-            for((lhs, rhs) in sections.zipWithNext()){
-                result.add(Edge(curve, EdgeBound(lhs, rhs, bound.sense)))
+
+            sections
+                .zipWithNext()
+                .forEach{ (lhs, rhs) ->
+                result.add(Edge(edge.curve, EdgeBound(lhs, rhs, bound.sense)))
             }
         }else{
             result.add(edge)
@@ -71,4 +90,36 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     }
 
     return result
+}
+
+inline fun <T> Iterable<T>.distinctWithNext(): List<T> {
+    val list = ArrayList<T>()
+    var last : T? = null
+    for (e in this) {
+        if(e !== last){
+            list.add(e)
+        }else{
+            println("s")
+        }
+
+        last = e
+    }
+    return list
+}
+
+private fun createComparator(edge : Edge<Vec2>) : Comparator<Vertex<Vec2>>{
+    return when(val curve = edge.curve){
+        is Line -> DirectionVertexComparator(curve.direction)
+        is Circle -> {
+            val bound = edge.bound
+            val center = curve.workplane.origin
+            val rotComp = RotaryVertexComparator(center, bound.start.point - center)
+            if(bound.sense == Sense.Same){
+                rotComp
+            }else{
+                rotComp.reversed()
+            }
+        }
+        else -> throw NotImplementedError()
+    }
 }

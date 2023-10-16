@@ -129,7 +129,7 @@ class OffsetTest {
 
         val i = 6
         val x = offsetFace(sketchFace, i / 40.0)
-        val y = offsetFaceRaw(x, -i / 40.0)
+        val y = offsetFace(x, -i / 40.0)
         printer.add(x)
         printer.add(y)
 

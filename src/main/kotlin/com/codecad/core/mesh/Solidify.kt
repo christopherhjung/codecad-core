@@ -58,7 +58,7 @@ object Solidify {
 
         for( face in shell.faces ){
             val faceNode = faceUnifier.get(face)
-            val parentNode = faceUnifier.find(faceNode)
+            val parentNode = faceNode.find()
             planeFaces.computeIfAbsent(parentNode.value){ hashSetOf() }.add(face)
         }
 

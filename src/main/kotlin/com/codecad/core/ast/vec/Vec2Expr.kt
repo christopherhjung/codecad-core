@@ -1,5 +1,6 @@
 package com.codecad.core.ast.vec
 
+import com.codecad.core.EPSILON
 import com.codecad.core.Utils
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
@@ -94,12 +95,21 @@ data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
                 return sectorCmp
             }
 
-            return 0.0.compareTo(lhs.crossZ(rhs))
+            val cross = lhs.crossZ(rhs)
+            if(abs(cross) < EPSILON){
+                return 0
+            }
+
+            return 0.0.compareTo(cross)
         }
     }
 
     override fun projectOn(rhs: Vec2): Vec2 {
         return project(this, rhs)
+    }
+
+    fun near(other: Vec2, distance : Double) : Boolean{
+        return squaredDistance(other) < distance.pow(2)
     }
 
     fun skew(newDir : Vec2) : Vec2{

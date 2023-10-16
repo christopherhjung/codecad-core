@@ -33,6 +33,7 @@ fun lineBB(edge: Edge<Vec2>) : Pair<Double, Double>{
     }
 }
 
+
 fun circleBB(edge: Edge<Vec2>) : Pair<Double, Double>{
     val bound = edge.bound.align()
 
@@ -42,17 +43,20 @@ fun circleBB(edge: Edge<Vec2>) : Pair<Double, Double>{
     val start = bound.start.point - center
     val end = bound.end.point - center
 
-    fun left(start: Vec2, end: Vec2) : Double{
-        return if(start.y < 0.0 && start.x < end.x){
-            start.x
-        }else if(end.y >= 0.0){
-            end.x
+    fun left(x1: Double, y1: Double, x2: Double, y2: Double) : Double{
+        return if(y1 < 0.0 && x1 < x2){
+            x1
+        }else if(y2 >= 0.0){
+            x2
         }else{
-            center.x - radius
+            -radius
         }
     }
 
-    return Pair(left(start, end), left(start.negateX(), end.negateX()))
+    return Pair(
+        center.x + left(start.x, start.y, end.x, end.y),
+        center.x - left(-start.x, -start.y, -end.x, -end.y)
+    )
 }
 
 fun bb(edge: Edge<Vec2>) : Pair<Double, Double>{

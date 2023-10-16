@@ -23,6 +23,10 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
         assert(start !== end)
     }
 
+    fun isUnbounded() : Boolean {
+        return start === end
+    }
+
     fun align() : EdgeBound<T>{
         return if(sense == Sense.Same){
             this
