@@ -27,7 +27,7 @@ val PASTEL_COLORS = arrayOf(
     Color(192, 192, 192)    // Pastel Gray
 )
 
-class DebugPrinter(val size: Int, val scale : Double = 0.5){
+class DebugPrinter(val size: Int, val scale : Double = 1.0){
     val dots = arrayListOf<DotPointer>()
     val image: BufferedImage = BufferedImage(size, size, BufferedImage.TYPE_INT_RGB)
     val graphics = image.createGraphics()
@@ -40,6 +40,7 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
         val quadSize = size.toDouble() * 0.25
         graphics.translate(halfSize, halfSize)
         graphics.scale(quadSize, -quadSize)
+        graphics.scale(scale, scale)
     }
 
     class DotPointer(val point: Vec2, val color: Color, val size: Double)

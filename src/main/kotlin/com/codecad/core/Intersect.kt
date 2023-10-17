@@ -6,6 +6,7 @@ import com.codecad.core.brep.Vertex
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -126,7 +127,7 @@ object Intersect {
         val p2 = rhs.workplane.origin
         val distance = p2.distanceTo(p1)
         val radiusSum = r1 + r2
-        return if(distance > radiusSum || distance < abs(r1 - r2)){
+        return if(distance > radiusSum || distance <= max(r2 - r1, r1 - r2)){
             emptyList()
         } else {
             val dir = (p2 - p1) / distance

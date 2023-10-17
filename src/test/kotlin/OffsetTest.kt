@@ -89,14 +89,16 @@ class OffsetTest {
             FaceBound(loop2, FaceBoundKind.InnerBound)
         ))
 
-        val printer = DebugPrinter(4096)
+        val printer = DebugPrinter(4096, 2.0)
         printer.add(sketchFace, Color.GREEN)
 
         var offset = -0.05
+        var idx = 0
         while( offset > -1.0 ){
             val result = offsetFace(offsetFace(sketchFace, offset - 0.01), 0.01)
-            printer.add(result, Color.WHITE)
+            printer.add(result, Color.getHSBColor((idx / 8.0f ).toFloat(), 1.0f, 1.0f))
             offset -= 0.05
+            idx++
         }
         printer.finish()
     }
@@ -155,7 +157,7 @@ class OffsetTest {
         val loop = Loop.wireCircular(a,b,c,d,e,f,g,h)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
-        val printer = DebugPrinter(4096)
+        val printer = DebugPrinter(4096, 2.0)
         val rawEdges = loop.map { it.edge.edge }
         //printer.add(rawEdges, Color.GREEN)
         //printer.add(testFaces)

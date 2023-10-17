@@ -97,4 +97,12 @@ class IntersectTest {
         assertContentEquals(listOf(Vec2(0.0, 0.0), Vec2(1.0, 0.0)), Intersect.of(c1, c2), 1e-8)
     }
 
+    @Test
+    fun nestingCircles(){
+        val c1 = Edge.circle(Vec2(0.2, 0.0), 0.2)
+        val c2 = Edge.circle(Vec2(0.5, 0.0), 1.0)
+
+        assertContentEquals(emptyList(), Intersect.of(c1, c2), 1e-8)
+    }
+
 }
