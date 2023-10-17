@@ -91,12 +91,13 @@ class OffsetTest {
 
         val printer = DebugPrinter(4096)
         printer.add(sketchFace, Color.GREEN)
-        printer.add(offsetFace(sketchFace, -0.2), Color.BLUE)
-        //printer.add(testFaces)
 
-        //val result = buildPathTree(sketchFace, -0.05)
-        //result.print(printer)
-
+        var offset = -0.05
+        while( offset > -1.0 ){
+            val result = offsetFace(offsetFace(sketchFace, offset - 0.01), 0.01)
+            printer.add(result, Color.WHITE)
+            offset -= 0.05
+        }
         printer.finish()
     }
 
@@ -114,9 +115,12 @@ class OffsetTest {
     }
 
 
-    fun smoothOffset(face : SketchFace, offset: Double, factor: Double) : SketchFace{
+    fun smoothOffset2(face : SketchFace, offset: Double, factor: Double) : SketchFace{
         val first = offsetFace(face, offset + factor)
         return offsetFace(first, -factor)
+    }
+    fun smoothOffset(face : SketchFace, offset: Double, factor: Double) : SketchFace{
+        return offsetFace(face, offset)
     }
 
     fun buildPathTree(face : SketchFace, offset: Double) : PathTree{

@@ -42,6 +42,11 @@ interface Vec<T : Vec<T>>{
 }
 
 data class Vec2(val x: Double, val y: Double) : Vec<Vec2>{
+    init {
+        assert(!x.isNaN())
+        assert(!y.isNaN())
+    }
+
     companion object{
         val Zero = Vec2(0.0, 0.0)
         val DirX = Vec2(1.0, 0.0)

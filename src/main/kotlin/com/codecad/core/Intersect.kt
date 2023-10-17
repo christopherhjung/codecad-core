@@ -126,9 +126,9 @@ object Intersect {
         val p2 = rhs.workplane.origin
         val distance = p2.distanceTo(p1)
         val radiusSum = r1 + r2
-        return if(distance > radiusSum){
+        return if(distance > radiusSum || distance < abs(r1 - r2)){
             emptyList()
-        }else {
+        } else {
             val dir = (p2 - p1) / distance
 
             if(abs(distance - radiusSum) < EPSILON){
