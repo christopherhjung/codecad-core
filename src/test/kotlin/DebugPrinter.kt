@@ -95,13 +95,13 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
 
     fun drawEdge(edge: Edge<Vec2>){
         val bound = edge.bound
-        dots.add(DotPointer(bound.start.point, Color.RED, 30.0))
-        dots.add(DotPointer(bound.end.point, Color.RED, 30.0))
 
         when(val curve = edge.curve){
             is Line -> {
                 val start = bound.start.point
                 val end = bound.end.point
+                dots.add(DotPointer(start, Color.RED, 30.0))
+                dots.add(DotPointer(end, Color.RED, 30.0))
                 graphics.draw(Line2D.Double(start.x, start.y, end.x, end.y))
             }
             is Circle -> {
@@ -109,19 +109,23 @@ class DebugPrinter(val size: Int, val scale : Double = 0.5){
                 val radius = curve.radius
                 dots.add(DotPointer(center, Color.BLUE, 50.0))
 
+                val alignedBound = bound.align()
                 val upperLeft = center - radius
 
-                val alignedBound = bound.align()
-                val start = alignedBound.start.point - center
-                val end = alignedBound.end.point - center
-
-                val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
-                val arcAngle = -Math.toDegrees(start.angleTo(end))
-
                 val size = radius * 2
-                //graphics.drawArc(upperLeft.x, upperLeft.y, size, size, startAngle.toInt(), arcAngle.toInt())
+                if(alignedBound.isUnbounded()){
+                    graphics.draw(Arc2D.Double(upperLeft.x, upperLeft.y, size, size, 0.0, 360.0, Arc2D.OPEN))
+                }else{
+                    dots.add(DotPointer(bound.start.point, Color.RED, 30.0))
+                    dots.add(DotPointer(bound.end.point, Color.RED, 30.0))
 
-                graphics.draw(Arc2D.Double(upperLeft.x, upperLeft.y, size, size, startAngle, arcAngle, Arc2D.OPEN))
+                    val start = alignedBound.start.point - center
+                    val end = alignedBound.end.point - center
+
+                    val startAngle = -Math.toDegrees(Vec2.DirX.angleTo(start))
+                    val arcAngle = -Math.toDegrees(start.angleTo(end))
+                    graphics.draw(Arc2D.Double(upperLeft.x, upperLeft.y, size, size, startAngle, arcAngle, Arc2D.OPEN))
+                }
             }
         }
     }

@@ -11,6 +11,10 @@ import kotlin.math.sqrt
 
 const val EPSILON = 1e-10
 fun Edge<Vec2>.inside(p : Vec2) : Boolean{
+    if(bound.isUnbounded()){
+        return true
+    }
+
     val p0 = bound.start.point
     val p1 = bound.end.point
 

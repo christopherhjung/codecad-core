@@ -46,7 +46,7 @@ fun circleBB(edge: Edge<Vec2>) : Pair<Double, Double>{
     fun left(x1: Double, y1: Double, x2: Double, y2: Double) : Double{
         return if(y1 < 0.0 && x1 < x2){
             x1
-        }else if(y2 >= 0.0){
+        }else if(y2 > 0.0){
             x2
         }else{
             -radius

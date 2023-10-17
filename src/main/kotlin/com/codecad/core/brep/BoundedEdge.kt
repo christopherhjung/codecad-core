@@ -19,10 +19,6 @@ enum class Sense{
 }
 
 class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense: Sense = Sense.Same){
-    init {
-        assert(start !== end)
-    }
-
     fun isUnbounded() : Boolean {
         return start === end
     }
@@ -48,13 +44,13 @@ class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>){
             return line(Vertex(start), Vertex(end))
         }
 
-        fun <T : Vec<T>> circle(workplane: Workplane<T>, radius: Double) : Edge<T> {
+        fun <T : Vec<T>> circle(workplane: Workplane<T>, radius: Double, sense: Sense = Sense.Same) : Edge<T> {
             val outerPoint = Vertex( workplane.origin + workplane.x * radius )
-            return Edge(Circle(workplane, radius), EdgeBound(outerPoint, outerPoint, Sense.Same))
+            return Edge(Circle(workplane, radius), EdgeBound(outerPoint, outerPoint, sense))
         }
 
-        fun circle(center: Vec2, radius: Double) : Edge<Vec2> {
-            return circle(Workplane(center, Vec2.DirY, Vec2.DirX), radius)
+        fun circle(center: Vec2, radius: Double, sense: Sense = Sense.Same) : Edge<Vec2> {
+            return circle(Workplane(center, Vec2.DirY, Vec2.DirX), radius, sense)
         }
 
         fun <T : Vec<T>> arc(workplane: Workplane<T>, start: Vertex<T>, end: Vertex<T>, sense: Sense) : Edge<T> {

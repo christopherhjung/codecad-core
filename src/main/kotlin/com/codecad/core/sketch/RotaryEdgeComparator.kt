@@ -5,14 +5,6 @@ import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 
-fun startTangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
-    return if(orientedEdge.orientation == EdgeOrientation.Forward){
-        startTangent(orientedEdge.edge)
-    }else{
-        endTangent(orientedEdge.edge)
-    }
-}
-
 fun startNormal(orientedEdge: OrientedEdge<Vec2>) : Vec2{
     return if(orientedEdge.orientation == EdgeOrientation.Forward){
         startNormal(orientedEdge.edge)
@@ -29,19 +21,26 @@ fun endNormal(orientedEdge: OrientedEdge<Vec2>) : Vec2{
     }
 }
 
+fun startTangent(orientedEdge: OrientedEdge<Vec2>) : Vec2{
+    return if(orientedEdge.orientation == EdgeOrientation.Forward){
+        startTangent(orientedEdge.edge)
+    }else{
+        endTangent(orientedEdge.edge)
+    }
+}
+
 fun startTangent(edge: Edge<Vec2>) : Vec2{
     return when(val curve = edge.curve){
         is Line -> curve.direction
         is Circle -> {
             val center = curve.workplane.origin
             val bound = edge.bound
-            (center - bound.start.point).apply {
-                if(bound.sense == Sense.Same){
-                    rotateCCW()
-                }else{
-                    rotateCW()
-                }
-            }
+            val start = center - bound.start.point
+            if(bound.sense == Sense.Same){
+                start.rotateCCW()
+            }else{
+                start.rotateCW()
+            }.normalized()
         }
         else -> Vec2.Zero
     }
@@ -53,13 +52,12 @@ fun endTangent(edge: Edge<Vec2>) : Vec2{
         is Circle -> {
             val center = curve.workplane.origin
             val bound = edge.bound
-            (center - bound.end.point).apply {
-                if(bound.sense == Sense.Same){
-                    rotateCW()
-                }else{
-                    rotateCCW()
-                }
-            }
+            val end = center - bound.end.point
+            if(bound.sense == Sense.Same){
+                end.rotateCW()
+            }else{
+                end.rotateCCW()
+            }.normalized()
         }
         else -> Vec2.Zero
     }

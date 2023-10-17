@@ -14,6 +14,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import javax.imageio.ImageIO
+import kotlin.math.sign
 
 
 class OffsetTest {
@@ -81,22 +82,59 @@ class OffsetTest {
         val topRight = Vertex(Vec2(0.8, 1.0))
 
         val loop = Loop.wireCircular(topLeft, bottomLeft, extraLeft, bottomMid, bottomRight, topRight, topMid)
-        val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
+        val loop2 = Loop.wireCircular(Edge.circle(Vec2(0.0, 0.0), 0.2, Sense.Opposite))
+        val sketchFace = SketchFace(listOf(
+            FaceBound(loop, FaceBoundKind.OuterBound),
+            FaceBound(loop2, FaceBoundKind.InnerBound)
+        ))
 
         val printer = DebugPrinter(4096)
-        val rawEdges = loop.map { it.edge.edge }
-        printer.add(rawEdges, Color.GREEN)
+        printer.add(sketchFace, Color.GREEN)
+        printer.add(offsetFace(sketchFace, -0.2), Color.BLUE)
         //printer.add(testFaces)
 
-
-        for( i in 1 until 25 ){
-            val offset = -i / 25.0
-            val result = offsetFace(sketchFace, offset)
-            printer.add(result, Color.WHITE)
-        }
+        //val result = buildPathTree(sketchFace, -0.05)
+        //result.print(printer)
 
         printer.finish()
+    }
+
+    open class PathTree(val children : List<PathTree> = emptyList()){
+        open fun print(printer: DebugPrinter){
+            children.forEach { it.print(printer) }
+        }
+    }
+    class BoundedPathTree(val bound : FaceBound<Vec2>, children : List<PathTree> = emptyList()) : PathTree(children)
+    {
+        override fun print(printer: DebugPrinter) {
+            printer.add(SketchFace(listOf(bound)))
+            super.print(printer)
+        }
+    }
+
+
+    fun smoothOffset(face : SketchFace, offset: Double, factor: Double) : SketchFace{
+        val first = offsetFace(face, offset + factor)
+        return offsetFace(first, -factor)
+    }
+
+    fun buildPathTree(face : SketchFace, offset: Double) : PathTree{
+        val offsets = smoothOffset(face, offset, -0.01)
+
+        val trees = arrayListOf<PathTree>()
+        for( offsetBound in offsets.bounds ){
+            val children = arrayListOf<PathTree>()
+            val tree = BoundedPathTree(offsetBound, children)
+            children.add(buildPathTree(SketchFace(listOf(offsetBound)), offset))
+            trees.add(tree)
+        }
+
+        if(trees.size == 1){
+            return trees.first()
+        }
+
+        return PathTree(trees)
     }
 
     @Test
@@ -110,11 +148,8 @@ class OffsetTest {
         val g = Vertex(Vec2(0.8, 1.0))
         val h = Vertex(Vec2(0.0, 1.0))
 
-
-
         val loop = Loop.wireCircular(a,b,c,d,e,f,g,h)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
-
 
         val printer = DebugPrinter(4096)
         val rawEdges = loop.map { it.edge.edge }
@@ -127,11 +162,8 @@ class OffsetTest {
             printer.add(result, Color.WHITE)
         }*/
 
-        val i = 6
-        val x = offsetFace(sketchFace, i / 40.0)
-        val y = offsetFace(x, -i / 40.0)
-        printer.add(x)
-        printer.add(y)
+        val i = 3
+        val x = buildPathTree(sketchFace, i / 40.0)
 
         printer.finish()
     }

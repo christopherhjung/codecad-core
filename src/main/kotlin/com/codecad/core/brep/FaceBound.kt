@@ -105,9 +105,13 @@ fun Loop<Vec2>.computeAreaVec2(ignoreCurve : Boolean = false) : Double{
     if(isClosed()){
         val curve = edge.edge.curve as Circle
         val radius = curve.radius
-        return Math.PI * radius * radius
+        val bound = edge.bound
+        return if(bound.sense == Sense.Same){
+            Math.PI * radius * radius
+        }else{
+            -Math.PI * radius * radius
+        }
     }
-
 
     for( loop in this ){
         val orientedEdge = loop.edge

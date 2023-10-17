@@ -45,11 +45,11 @@ data class VertexHelper(val point: Vertex<Vec2>){
     }
 
     fun finalizeMirrored(){
+        assert(loops.size % 2 == 0)
         val copy = loops.toMutableList()
         copy.sortWith(Comparator.comparing({it.edge}, RotaryEdgeComparator))
 
         var idx = 0
-
         while(copy.isNotEmpty()){
             val currentIdx = idx % copy.size
             idx++
