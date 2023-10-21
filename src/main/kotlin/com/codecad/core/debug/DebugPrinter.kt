@@ -1,3 +1,5 @@
+package com.codecad.core.debug
+
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Edge
 import com.codecad.core.brep.SketchFace
