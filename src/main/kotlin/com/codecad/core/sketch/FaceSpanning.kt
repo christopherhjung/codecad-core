@@ -12,7 +12,6 @@ import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.face.SketchEdgeLoop
 import com.codecad.core.part.Sketch
 import com.codecad.core.rollover
-import org.jetbrains.kotlin.utils.keysToMap
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.HashMap
@@ -180,16 +179,24 @@ open class FaceTree(
     override fun toString(): String {
         return "FaceTree(area=$area, kind=$kind, children=$children)"
     }
+
+    open fun toSketchFace() : SketchFace{
+        return SketchFace((children + children.flatMap { it.children }).map { it.bound })
+    }
 }
 
 class BoundedFaceTree(
     val bound: FaceBound<Vec2>,
     area: Double,
     kind: FaceBoundKind
-) : FaceTree(area, kind)
+) : FaceTree(area, kind){
+    override fun toSketchFace(): SketchFace {
+        return SketchFace(listOf(bound) + children.map { it.bound })
+    }
+}
 
 
-fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
+fun nestContours(holes : List<FaceBound<Vec2>>) : FaceTree{
     val trees = holes.map {
         val area = it.loop.computeAreaVec2()
         val kind = if(area > 0.0){
@@ -206,7 +213,7 @@ fun nestHoles(holes : List<FaceBound<Vec2>>) : FaceTree{
         val loop = tree.bound.loop
         val edge = loop.edge.edge
         val midpoint = midpoint(edge)
-        nestHoles(tree, midpoint, rootSurface)
+        nestContours(tree, midpoint, rootSurface)
     }
 
     removeOddNesting(rootSurface)
@@ -249,13 +256,13 @@ fun midpoint(edge: Edge<Vec2>) : Vec2{
     }
 }
 
-fun nestHoles(newFace : BoundedFaceTree, midpoint: Vec2, parentSurface: FaceTree){
+fun nestContours(newFace : BoundedFaceTree, midpoint: Vec2, parentSurface: FaceTree){
     for( childFace in parentSurface.children){
         if(childFace.area <= newFace.area) continue
 
         val childLoop = childFace.bound.loop
         if(childLoop.isInside(midpoint)){
-            nestHoles(newFace, midpoint, childFace)
+            nestContours(newFace, midpoint, childFace)
             return
         }
     }

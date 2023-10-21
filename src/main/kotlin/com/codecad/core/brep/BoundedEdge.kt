@@ -30,10 +30,15 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
             EdgeBound(end, start, Sense.Same)
         }
     }
+
+    fun invert() : EdgeBound<T>{
+        return EdgeBound(end, start, sense.invert())
+    }
 }
 
 class Marker
 class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>){
+
 
     companion object{
         fun <T : Vec<T>> line(start: Vertex<T>, end: Vertex<T>) : Edge<T> {
@@ -63,4 +68,38 @@ class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>){
     }
 }
 
+fun Loop<Vec2>.length() : Double{
+    var length = 0.0
 
+    for( loop in this ){
+        length += loop.edge.edge.length()
+    }
+
+    return length
+}
+fun Edge<Vec2>.length() : Double{
+    val start = bound.start
+    val end = bound.end
+    return when(val curve = curve){
+        is Line -> start.point.distanceTo(end.point)
+        is Circle -> {
+            val radius = curve.radius
+            val angle = if (start === end){
+                2.0 * Math.PI
+            }else{
+                val center = curve.workplane.origin
+                val startDiff = start.point - center
+                val endDiff = end.point - center
+
+                if(bound.sense == Sense.Same){
+                    startDiff.angleTo(endDiff)
+                }else{
+                    endDiff.angleTo(startDiff)
+                }
+            }
+
+            angle * radius
+        }
+        else -> throw NotImplementedError()
+    }
+}

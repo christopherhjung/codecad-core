@@ -4,17 +4,12 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.sketch.*
 import org.junit.jupiter.api.Test
-import java.awt.BasicStroke
 import java.awt.Color
-import java.awt.geom.Arc2D
-import java.awt.geom.Ellipse2D
-import java.awt.geom.Line2D
-import java.awt.image.BufferedImage
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
-import javax.imageio.ImageIO
-import kotlin.math.sign
+import java.util.*
+import java.util.Collections.emptyList
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.abs
+import kotlin.math.ceil
 
 
 class OffsetTest {
@@ -59,7 +54,7 @@ class OffsetTest {
         val loop = Loop.wireCircular(left, bottom, right, top)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
-        val offsetFace = offsetFace(sketchFace, -0.1)
+        val offsetFace = offsetFace(sketchFace, -0.1).toSketchFace()
 
         for( bound in offsetFace.bounds ){
             val edges = bound.loop.map { it.edge.edge }
@@ -73,66 +68,106 @@ class OffsetTest {
 
     @Test
     fun hourGlass(){
-        val topLeft = Vertex(Vec2(-0.8, 1.0))
-        val bottomLeft = Vertex(Vec2(-0.8, -1.0))
-        val extraLeft = Vertex(Vec2(-0.2, -1.0))
-        val topMid = Vertex(Vec2(0.4, 0.4))
-        val bottomMid = Vertex(Vec2(-0.79, -0.4))
-        val bottomRight = Vertex(Vec2(0.8, -1.0))
-        val topRight = Vertex(Vec2(0.8, 1.0))
+        val topLeft = Vertex(Vec2(-0.8, 1.0) * 100.0)
+        val bottomLeft = Vertex(Vec2(-0.8, -1.0) * 100.0)
+        val extraLeft = Vertex(Vec2(-0.2, -1.0) * 100.0)
+        val topMid = Vertex(Vec2(0.4, 0.4) * 100.0)
+        val bottomMid = Vertex(Vec2(-0.79, -0.4) * 100.0)
+        val bottomRight = Vertex(Vec2(0.8, -1.0) * 100.0)
+        val topRight = Vertex(Vec2(0.8, 1.0) * 100.0)
 
         val loop = Loop.wireCircular(topLeft, bottomLeft, extraLeft, bottomMid, bottomRight, topRight, topMid)
-
-        val loop2 = Loop.wireCircular(Edge.circle(Vec2(0.0, 0.0), 0.2, Sense.Opposite))
+        val loop2 = Loop.wireCircular(Edge.circle(Vec2(0.0, 0.0), 0.2 * 100.0, Sense.Opposite))
         val sketchFace = SketchFace(listOf(
             FaceBound(loop, FaceBoundKind.OuterBound),
             FaceBound(loop2, FaceBoundKind.InnerBound)
         ))
 
-        val printer = DebugPrinter(4096, 2.0)
-        printer.add(sketchFace, Color.GREEN)
+        val tree = buildPathTree(sketchFace, -3.0, -4.0,0.5)
+        val gen = ProgramGenerator()
+        val gcode = gen.generate(tree, 0.0, 1.0, -10.0, 2.0)
 
-        var offset = -0.05
-        var idx = 0
-        while( offset > -1.0 ){
-            val result = offsetFace(offsetFace(sketchFace, offset - 0.01), 0.01)
-            printer.add(result, Color.getHSBColor((idx / 8.0f ).toFloat(), 1.0f, 1.0f))
-            offset -= 0.05
-            idx++
-        }
+        println(gcode)
+        val printer = DebugPrinter(4096, 1/50.0)
+        printer.add(sketchFace, Color.GREEN)
+        tree.print(printer)
+        /*
+        //tree.print(printer)
+        val x = offsetFace(offsetFace(sketchFace, -31.5).toSketchFace(), 0.5).toSketchFace()
+        val x2 = SketchFace(x.bounds.filter { it.loop.computeAreaVec2() < 10.0 })
+        printer.add(x2)
+        printer.add(offsetFace(x2, -1.0).toSketchFace())
+        printer.add(offsetFace(x2, -2.0).toSketchFace())*/
         printer.finish()
+    }
+
+    fun gen(face: SketchFace) : String{
+        val tree = buildPathTree(face, -0.05, 0.01,0.01)
+        var gen = ProgramGenerator()
+        return gen.generate(tree, 1.0, 0.0, 0.0, 0.1)
+    }
+    fun genOut(face: SketchFace) : String{
+        val firstOffset = offsetFace(face, 0.1)
+
+        val trees = ArrayList<PathTree>()
+        for( offsetBound in firstOffset.children ){
+            val children = ArrayList<PathTree>()
+            val tree = BoundedPathTree(offsetBound, children)
+            trees.add(tree)
+        }
+
+        val tree = if(trees.size == 1){
+            trees.first()
+        }else{
+            PathTree(trees)
+        }
+
+        var gen = ProgramGenerator()
+        return gen.generate(tree, 1.0, 0.0, 0.0, 0.1)
     }
 
     open class PathTree(val children : List<PathTree> = emptyList()){
         open fun print(printer: DebugPrinter){
             children.forEach { it.print(printer) }
         }
+        fun collect() : List<FaceBound<Vec2>>{
+            val list = arrayListOf<FaceBound<Vec2>>()
+            collect(list)
+            return list
+        }
+
+        protected open fun collect(list: MutableList<FaceBound<Vec2>>){
+            children.forEach { it.collect(list) }
+        }
     }
-    class BoundedPathTree(val bound : FaceBound<Vec2>, children : List<PathTree> = emptyList()) : PathTree(children)
+
+    class BoundedPathTree(val tree : BoundedFaceTree, children : List<PathTree> = emptyList()) : PathTree(children)
     {
         override fun print(printer: DebugPrinter) {
-            printer.add(SketchFace(listOf(bound)))
+            printer.add(tree.toSketchFace())
             super.print(printer)
+        }
+        override fun collect(list: MutableList<FaceBound<Vec2>>){
+            super.collect(list)
+            list.add(tree.bound)
+            tree.children.forEach{list.add(it.bound)}
         }
     }
 
 
-    fun smoothOffset2(face : SketchFace, offset: Double, factor: Double) : SketchFace{
-        val first = offsetFace(face, offset + factor)
+    fun smoothOffset(face : SketchFace, offset: Double, factor: Double) : FaceTree{
+        val first = offsetFace(face, offset + factor).toSketchFace()
         return offsetFace(first, -factor)
     }
-    fun smoothOffset(face : SketchFace, offset: Double, factor: Double) : SketchFace{
-        return offsetFace(face, offset)
-    }
 
-    fun buildPathTree(face : SketchFace, offset: Double) : PathTree{
-        val offsets = smoothOffset(face, offset, -0.01)
+    private fun buildPathTree(face : SketchFace, offset: Double, nextOffset: Double, round : Double) : PathTree{
+        val firstOffset = smoothOffset(face, offset, -round)
 
-        val trees = arrayListOf<PathTree>()
-        for( offsetBound in offsets.bounds ){
-            val children = arrayListOf<PathTree>()
+        val trees = ArrayList<PathTree>()
+        for( offsetBound in firstOffset.children ){
+            val children = ArrayList<PathTree>()
             val tree = BoundedPathTree(offsetBound, children)
-            children.add(buildPathTree(SketchFace(listOf(offsetBound)), offset))
+            children.add(buildPathTree(offsetBound.toSketchFace(), nextOffset, nextOffset, round))
             trees.add(tree)
         }
 
@@ -142,6 +177,121 @@ class OffsetTest {
 
         return PathTree(trees)
     }
+
+    abstract class Command{
+        var feed: Double? = null
+
+        fun Double.format(scale: Int) = "%.${scale}f".format(Locale.US, this)
+
+        abstract fun gcode(prev : Vec2) : String
+    }
+
+    class LineCommand(val target: Vec2, val depth: Double, val fast: Boolean) : Command(){
+        override fun gcode(prev : Vec2): String {
+            val code = if(fast){
+                "G0"
+            }else{
+                "G1"
+            }
+
+            return "${code} X${target.x.format(4)} Y${target.y.format(4)} Z${depth.format(4)}"
+        }
+    }
+    class HelixCommand(val center: Vec2, val end: Vec2, val depth: Double, val sense : Sense) : Command(){
+        override fun gcode(prev : Vec2): String {
+            val code = if(sense == Sense.Same){
+                "G3"
+            }else{
+                "G2"
+            }
+
+            return "$code X${end.x.format(4)} Y${end.y.format(4)} Z${depth.format(4)} I${center.x.format(4)} J${center.y.format(4)}"
+        }
+    }
+
+    class Program{
+        private val commands = arrayListOf<Command>()
+
+        fun moveTo(target: Vec2, z : Double, fast: Boolean = false){
+            commands.add(LineCommand(target, z, fast))
+        }
+
+        fun helixTo(center: Vec2, end: Vec2, z : Double, sense: Sense){
+            commands.add(HelixCommand(center, end, z, sense))
+        }
+
+        fun gcode() : String{
+            val sb = StringBuilder()
+            for(commend in commands){
+                sb.append(commend.gcode(Vec2.Zero)).append("\n")
+            }
+            return sb.toString()
+        }
+    }
+
+    class ProgramGenerator(){
+        private val program = Program()
+
+        fun generate(pathTree: PathTree, startHeight: Double, securityDistance : Double, endHeight: Double, increment: Double) : String{
+            val bounds = pathTree.collect()
+            assert(endHeight <= startHeight)
+
+            val approachingHeight = startHeight + securityDistance
+            val depth = abs(endHeight - startHeight)
+            val cuts = ceil(depth / increment).toInt()
+
+            for( bound in bounds ){
+                val currentLoop = bound.loop
+                val startEdge = currentLoop.edge.normalized()
+                val startPoint = startEdge.bound.start.point
+
+                program.moveTo(startPoint, approachingHeight, true)
+                program.moveTo(startPoint, startHeight, true)
+
+                for(cut in 0 until cuts){
+                    val cutDepth = startHeight - cut * increment
+                    generateHelix(currentLoop, cutDepth, increment)
+                }
+
+                generate(currentLoop, endHeight)
+                program.moveTo(startPoint, approachingHeight, true)
+            }
+
+            return program.gcode()
+        }
+
+        fun generateHelix(currentLoop: Loop<Vec2>, startZ: Double, increment: Double) : Double{
+            var currentZ = startZ
+            val lengthFactor = increment / currentLoop.length() //desired depth
+
+            for(loop in currentLoop){
+                loop.edge.let {
+                    val offset = it.edge.length() * lengthFactor
+                    currentZ -= offset
+                    generate(it, currentZ)
+                }
+            }
+
+            return currentZ
+        }
+
+        fun generate(currentLoop: Loop<Vec2>, currentZ: Double){
+            for(loop in currentLoop){
+                generate(loop.edge, currentZ)
+            }
+        }
+
+        fun generate(edge: OrientedEdge<Vec2>, depth : Double){
+            val edge = edge.normalized()
+            val start = edge.bound.start.point
+            val end = edge.bound.end.point
+            when(val curve = edge.curve){
+                is Line -> program.moveTo(end, depth)
+                is Circle ->  program.helixTo(curve.workplane.origin - start, end, depth, edge.bound.sense)
+            }
+        }
+    }
+
 
     @Test
     fun outInside(){
@@ -157,21 +307,25 @@ class OffsetTest {
         val loop = Loop.wireCircular(a,b,c,d,e,f,g,h)
         val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
-        val printer = DebugPrinter(4096, 2.0)
-        val rawEdges = loop.map { it.edge.edge }
-        //printer.add(rawEdges, Color.GREEN)
-        //printer.add(testFaces)
-/*
-        for( i in 1 until 20 ){
-            val offset = i / 40.0
-            val result = offsetFace(sketchFace, offset)
-            printer.add(result, Color.WHITE)
-        }*/
+        val code = gen(sketchFace)
 
-        val i = 3
-        val x = buildPathTree(sketchFace, i / 40.0)
+        println(code)
 
-        printer.finish()
+    }
+    @Test
+    fun rect(){
+        val a = Vertex(Vec2(0.0, 0.0))
+        val b = Vertex(Vec2(1.0, 0.0))
+        val c = Vertex(Vec2(1.0, 1.0))
+        val d = Vertex(Vec2(0.0, 1.0))
+
+        val loop = Loop.wireCircular(a,b,c,d)
+        val sketchFace = SketchFace(listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
+
+        val code = genOut(sketchFace)
+
+        println(code)
+
     }
 
 }

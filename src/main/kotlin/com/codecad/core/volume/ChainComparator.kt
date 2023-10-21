@@ -1,5 +1,7 @@
 package com.codecad.core.volume
 
+import java.util.*
+
 class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int) : Comparator<T> {
     override fun compare(o1: T, o2: T): Int {
         for(comparator in comparators){
@@ -14,7 +16,7 @@ class ChainComparator<T>(val comparators: List<Comparator<T>>, val default: Int)
     }
 
     class Builder<T>{
-        val comparators: MutableList<Comparator<T>> = mutableListOf()
+        val comparators = ArrayList<Comparator<T>>()
         var default : Int = 0
 
         fun withComparator(comp : Comparator<T>) : Builder<T> {

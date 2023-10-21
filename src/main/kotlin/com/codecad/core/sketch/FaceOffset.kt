@@ -6,15 +6,15 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
 
-fun offsetFace(sourceFace : SketchFace, offset: Double) : SketchFace{
-    if(offset == 0.0) return sourceFace
+fun offsetFace(sourceFace : SketchFace, offset: Double) : FaceTree{
+    if(offset == 0.0) return nestContours(sourceFace.bounds)
     val rawOffsetFace = offsetFaceRaw(sourceFace, offset)
     val edges = rawOffsetFace.bounds.flatMap { bound -> bound.loop.map { it.edge.edge } }
     val cutEdges = cutLines(edges)
     val loops = connectVerticesMirrored(cutEdges)
     val offsetFace = generateFaces(loops)
-    val tree = nestHoles(offsetFace.bounds)
-    return SketchFace((tree.children + tree.children.flatMap { it.children }).map { it.bound })
+    val tree = nestContours(offsetFace.bounds)
+    return tree//SketchFace((tree.children + tree.children.flatMap { it.children }).map { it.bound })
 }
 
 fun offsetFaceRaw(sketchFace: SketchFace, offset: Double) : SketchFace{
@@ -64,17 +64,14 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         val offsetCurve = when(curve){
             is Line -> Line(curve.origin + currentEndOffsetVec, curve.direction)
             is Circle -> {
-                val radius = curve.radius
-                val newRadius = if(bound.sense == Sense.Same){
-                    radius + offset
+                val newRadius = curve.radius + if(bound.sense == Sense.Same){
+                    offset
                 }else{
-                    radius - offset
+                    -offset
                 }
 
-                if(abs(newRadius) < 1e-5){
+                if(newRadius < 1e-5){
                     null
-                }else if(newRadius < 0.0){
-                    Line.fromTo(currentStartVertex.point, currentEndVertex.point)
                 }else{
                     Circle(curve.workplane, newRadius)
                 }
@@ -83,7 +80,7 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
         }
 
         if(offsetCurve != null){
-            val offsetEdge =
+            addEdge(
                 Edge(offsetCurve,
                     EdgeBound(
                         currentStartVertex,
@@ -91,14 +88,18 @@ fun offsetLoopRaw(initLoop: Loop<Vec2>, offset: Double) : Loop<Vec2>{
                         bound.sense
                     )
                 )
-
-            addEdge(offsetEdge)
+            )
+        }else{
+            addEdge(Edge.line(currentStartVertex, bound.end))
+            addEdge(Edge(curve.invert(), bound.invert()))
+            addEdge(Edge.line(bound.start, currentEndVertex))
         }
 
         if(currentEndVertex !== nextStartVertex){
             if(currentEndNormal.crossZ(nextStartNormal) * offset < 0.0){
                 //no arc
-                addEdge(Edge.line(currentEndVertex, nextStartVertex))
+                addEdge(Edge.line(currentEndVertex, nextBound.start))
+                addEdge(Edge.line(nextBound.start, nextStartVertex))
             }else{
                 //arc
                 val workplane = Workplane(bound.end.point, Vec2.DirY, Vec2.DirX)

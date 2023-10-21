@@ -5,6 +5,8 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import java.awt.BasicStroke
 import java.awt.Color
+import java.awt.Font
+import java.awt.geom.AffineTransform
 import java.awt.geom.Arc2D
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
@@ -33,14 +35,18 @@ class DebugPrinter(val size: Int, val scale : Double = 1.0){
     val graphics = image.createGraphics()
     val invSize = 1.0 / size
     var idx = 0
+    var plot = 0
 
     init {
-        graphics.stroke = BasicStroke(10.0f * invSize.toFloat())
+        graphics.stroke = BasicStroke((10 * invSize / scale).toFloat())
         val halfSize = size.toDouble() * 0.5
         val quadSize = size.toDouble() * 0.25
-        graphics.translate(halfSize, halfSize)
-        graphics.scale(quadSize, -quadSize)
-        graphics.scale(scale, scale)
+        val transform = AffineTransform()
+
+        transform.translate(halfSize, halfSize)
+        transform.scale(quadSize, -quadSize)
+        transform.scale(scale, scale)
+        graphics.transform = transform
     }
 
     class DotPointer(val point: Vec2, val color: Color, val size: Double)
@@ -53,7 +59,11 @@ class DebugPrinter(val size: Int, val scale : Double = 1.0){
     fun add(face: SketchFace, color: Color){
         graphics.color = color
 
+        val plotIdx = plot++
         face.bounds.forEach { bound ->
+            //val pos = bound.loop.edge.edge.bound.start.point
+            //graphics.drawString(plotIdx.toString(), pos.x.toFloat(), pos.y.toFloat())
+
             bound.loop.forEach { loop ->
                 drawEdge(loop.edge.edge)
             }
@@ -61,12 +71,8 @@ class DebugPrinter(val size: Int, val scale : Double = 1.0){
     }
 
     fun add(face: SketchFace){
-        face.bounds.forEach { bound ->
-            graphics.color = PASTEL_COLORS[idx++ % PASTEL_COLORS.size]
-            bound.loop.forEach { loop ->
-                drawEdge(loop.edge.edge)
-            }
-        }
+        val color = PASTEL_COLORS[idx++ % PASTEL_COLORS.size]
+        add(face, color)
     }
 
     fun finish(){

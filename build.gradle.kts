@@ -4,7 +4,7 @@ import org.gradle.kotlin.dsl.execution.ProgramText.Companion.from
 
 plugins {
     java
-    kotlin("jvm") version "1.7.20"
+    kotlin("jvm") version "1.9.10"
     `maven-publish`
     //id("com.palantir.docker") version "0.27.0"
     //id("com.palantir.docker-run") version "0.27.0"
@@ -15,7 +15,7 @@ plugins {
 
 group = "com.codecad"
 version = "1.0-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_16
+java.sourceCompatibility = JavaVersion.VERSION_20
 
 //docker {
 //    dependsOn(tasks.findByName("build"))
@@ -66,16 +66,10 @@ dependencies {
     //implementation("de.lighti:Clipper:6.4.2")
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    implementation(kotlin("script-runtime"))
-    implementation(kotlin("script-util"))
     implementation(kotlin("daemon"))
     implementation(kotlin("daemon-client"))
-    implementation(kotlin("compiler"))
-    implementation(kotlin("compiler-embeddable"))
-    implementation(kotlin("scripting-jsr223"))
-    implementation(kotlin("scripting-compiler-embeddable"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.orbisgis:poly2tri:0.1.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
 
@@ -87,11 +81,11 @@ tasks.test {
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "16"
-    targetCompatibility = "16"
+    sourceCompatibility = "20"
+    targetCompatibility = "20"
 }
 
 
 tasks.withType<KotlinCompile>() {
-    kotlinOptions.jvmTarget = "16"
+    kotlinOptions.jvmTarget = "20"
 }

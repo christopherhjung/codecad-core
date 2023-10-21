@@ -1,5 +1,7 @@
 package com.codecad.core.sketch
 
+import kotlin.collections.*
+
 class Key(val obj : Any){
     override fun hashCode(): Int {
         return System.identityHashCode(obj)
