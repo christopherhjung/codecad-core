@@ -79,7 +79,7 @@ object BooleanCombine{
 
     fun isInside(point: Vec3, bound: FaceBound<Vec3>, workplane : Workplane<Vec3>) : Boolean{
         val projPoint = workplane.project2d(point)
-        val points = bound.loop.map { workplane.project2d(it.edge.start!!.point) }
+        val points = bound.loop.map { workplane.project2d(it.edge.start.point) }
         return isPointInPolygon(projPoint, points)
     }
 

@@ -50,11 +50,8 @@ fun buildContourTree(face : SketchFace, offset: Double, nextOffset: Double, roun
     for( offsetBound in firstOffset.children ){
         val children = ArrayList<ContourTree>()
         val tree = BoundedContourTree(offsetBound, children)
-
-        if(offsetFace(offsetBound.toSketchFace(), nextOffset).children.isNotEmpty()){
-            children.add(buildContourTree(offsetBound.toSketchFace(), nextOffset, nextOffset, round))
-            trees.add(tree)
-        }
+        children.add(buildContourTree(offsetBound.toSketchFace(), nextOffset, nextOffset, round))
+        trees.add(tree)
     }
 
     if(trees.size == 1){

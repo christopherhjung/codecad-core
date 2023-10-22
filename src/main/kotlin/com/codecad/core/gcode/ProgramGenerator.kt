@@ -28,7 +28,7 @@ class LineCommand(val target: Vec2, val depth: Double, val fast: Boolean) : Comm
             "G1"
         }
 
-        return "${code} X${target.x.format(4)} Y${target.y.format(4)} Z${depth.format(4)}"
+        return "$code X${target.x.format(4)} Y${target.y.format(4)} Z${depth.format(4)}"
     }
 }
 class HelixCommand(val center: Vec2, val end: Vec2, val depth: Double, val sense : Sense) : Command(){
@@ -94,7 +94,7 @@ class ProgramGenerator(){
             return program.gcode()
         }
 
-        fun generateHelix(currentLoop: Loop<Vec2>, startZ: Double, increment: Double) : Double{
+        fun generateHelix(currentLoop: Loop<Vec2>, startZ: Double, increment: Double){
             var currentZ = startZ
             val lengthFactor = increment / currentLoop.length() //desired depth
 
@@ -105,8 +105,6 @@ class ProgramGenerator(){
                     generate(it, currentZ)
                 }
             }
-
-            return currentZ
         }
 
         fun generate(currentLoop: Loop<Vec2>, currentZ: Double){
