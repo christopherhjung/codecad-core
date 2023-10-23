@@ -9,6 +9,8 @@ import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.brep.surface.Surface
+import com.codecad.core.sketch.EPSILON
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -17,24 +19,25 @@ class SurfaceIntersect {
         return when(lhs){
             is PlaneSurface -> {
                 when(rhs){
-                    is PlaneSurface -> intersectPlanePlane(lhs, rhs)
+                    is PlaneSurface -> intersectPlane(lhs, rhs)
                     is CylindricalSurface -> intersectPlaneCylindrical(lhs, rhs)
-                    else -> throw NotImplementedError()
+                    else -> intersectMarching(lhs, rhs)
                 }
             }
 
             is CylindricalSurface -> {
                 when(rhs){
                     is PlaneSurface -> intersectPlaneCylindrical(rhs, lhs)
-                    else -> throw NotImplementedError()
+                    is CylindricalSurface -> intersectCylindrical(lhs, rhs)
+                    else -> intersectMarching(lhs, rhs)
                 }
             }
 
-            else -> throw NotImplementedError()
+            else -> intersectMarching(lhs, rhs)
         }
     }
 
-    fun intersectPlanePlane(lhs: PlaneSurface, rhs: PlaneSurface) : List<Curve<Vec3>>{
+    private fun intersectPlane(lhs: PlaneSurface, rhs: PlaneSurface) : List<Curve<Vec3>>{
         val lhsPlane = lhs.workplane.toPlane()
         val rhsPlane = rhs.workplane.toPlane()
 
@@ -45,39 +48,50 @@ class SurfaceIntersect {
         return listOf(Plane.intersect(lhsPlane, rhsPlane))
     }
 
-    fun intersectPlaneCylindrical(pln: PlaneSurface, cyl: CylindricalSurface) : List<Curve<Vec3>>{
+    private fun intersectPlaneCylindrical(pln: PlaneSurface, cyl: CylindricalSurface) : List<Curve<Vec3>>{
         val planeWorkplane = pln.workplane
         val cylWorkplane = cyl.workplane
         val radius = cyl.radius
+        val plnNormal = planeWorkplane.normal
+        val cylNormal = cylWorkplane.normal
 
-        val normalDot = planeWorkplane.normal.dot(cylWorkplane.normal)
-        return if( normalDot < 1e-10){
+        val normalDot = plnNormal.dot(cylNormal)
+        return if( normalDot < 1e-10 ){
             val cylOrigin = cylWorkplane.origin
             val projCylOrigin = planeWorkplane.project3d(cylOrigin)
-            val offset = cylOrigin.distanceTo(projCylOrigin) - radius
-            return if( offset > 1e-10 ){
+            val segOffset = cylOrigin.distanceTo(projCylOrigin)
+            val offset = segOffset - radius
+            return if( offset > EPSILON ){
                 emptyList()
-            }else if( offset > -1e-10 ){
-                listOf(Line(planeWorkplane.origin, cylWorkplane.normal))
+            }else if( offset > -EPSILON ){
+                listOf(Line(planeWorkplane.origin, cylNormal))
             }else{
-                val dir = planeWorkplane.normal.cross(cylWorkplane.normal)
-                val spanVec = dir * sqrt(radius.pow(2) - offset)
+                val dir = plnNormal.cross(cylNormal)
+                val spanVec = dir * sqrt(radius.pow(2) - segOffset)
                 val first = projCylOrigin + spanVec
                 val second = projCylOrigin - spanVec
 
-                listOf(Line(first, cylWorkplane.normal), Line(second, cylWorkplane.normal))
+                listOf(Line(first, cylNormal), Line(second, cylNormal))
             }
         }else{
             val newOrigin = planeWorkplane.project3d(cylWorkplane.origin)
-            if(planeWorkplane.normal.cross(cylWorkplane.normal).squaredLength() < 1e-10.pow(1.0)){
-                val circleWorkplane = Workplane(newOrigin, planeWorkplane.normal, cylWorkplane.x)
+            if(abs(1.0 - normalDot) < EPSILON.pow(2)){
+                val circleWorkplane = Workplane(newOrigin, plnNormal, cylWorkplane.x)
                 listOf(Circle(circleWorkplane, radius))
             }else{
-                val newX = Vec3.project(cylWorkplane.normal, planeWorkplane.normal) - cylWorkplane.normal
-                val ellipseWorkplane = Workplane(newOrigin, planeWorkplane.normal, newX)
+                val newX = Vec3.project(cylNormal, plnNormal) - cylNormal
+                val ellipseWorkplane = Workplane(newOrigin, plnNormal, newX)
                 val major = radius / normalDot
                 listOf(Ellipse(ellipseWorkplane, major, radius))
             }
         }
+    }
+
+    private fun intersectCylindrical(lhs: CylindricalSurface, rhs: CylindricalSurface) : List<Curve<Vec3>>{
+        return emptyList()
+    }
+
+    private fun intersectMarching(lhs: Surface, rhs: Surface) : List<Curve<Vec3>>{
+        return emptyList()
     }
 }

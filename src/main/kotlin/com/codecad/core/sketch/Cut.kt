@@ -93,14 +93,12 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     return result
 }
 
-inline fun <T> Iterable<T>.distinctWithNext(): List<T> {
+fun <T> Iterable<T>.distinctWithNext(): List<T> {
     val list = ArrayList<T>()
     var last : T? = null
     for (e in this) {
         if(e !== last){
             list.add(e)
-        }else{
-            println("s")
         }
 
         last = e
