@@ -1,6 +1,6 @@
 package com.codecad.core.ast.vec
 
-import com.codecad.core.EPSILON
+import com.codecad.core.sketch.EPSILON
 import com.codecad.core.Utils
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr

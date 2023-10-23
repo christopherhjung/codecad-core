@@ -1,13 +1,11 @@
-package com.codecad.core
+package com.codecad.core.sketch
 
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Edge
-import com.codecad.core.brep.Vertex
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 const val EPSILON = 1e-10
@@ -108,15 +106,13 @@ object Intersect {
 
         return if(c2lDistance > EPSILON){
             emptyList()
+        }else if(c2lDistance > -EPSILON){
+            listOf(l2projC)
         }else{
-            if(abs(c2lDistance) < EPSILON){
-                listOf(l2projC)
-            }else{
-                val h = dir * sqrt(r1 * r1 - c2l.squaredLength())
-                val first = l2projC - h
-                val second = l2projC + h
-                return listOf(first, second)
-            }
+            val h = dir * sqrt(r1 * r1 - c2l.squaredLength())
+            val first = l2projC - h
+            val second = l2projC + h
+            return listOf(first, second)
         }
     }
 

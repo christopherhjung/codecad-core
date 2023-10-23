@@ -1,12 +1,9 @@
-import com.codecad.core.Intersect
+import com.codecad.core.sketch.Intersect
 import com.codecad.core.World
-import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
-import com.codecad.core.ast.vec.Vec3Expr
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Line
-import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.part.BooleanCombine
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

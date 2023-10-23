@@ -56,10 +56,10 @@ class WorkplaneExpr(val origin: Vec3Expr, val normal: Vec3Expr, val x: Vec3Expr)
     val y get() = normal.cross(x).normalized()
 
     init {
-        if(kotlin.math.abs(normal.length().evalDouble() - 1.0) > 1e-5){
+        if(abs(normal.length().evalDouble() - 1.0) > 1e-5){
             throw RuntimeException("Check")
         }
-        if(kotlin.math.abs(x.length().evalDouble() - 1.0) > 1e-5){
+        if(abs(x.length().evalDouble() - 1.0) > 1e-5){
             throw RuntimeException("Check")
         }
     }

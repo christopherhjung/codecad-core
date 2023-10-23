@@ -1,6 +1,5 @@
 package com.codecad.core.sketch
 
-import com.codecad.core.*
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Edge
 import com.codecad.core.brep.EdgeBound
