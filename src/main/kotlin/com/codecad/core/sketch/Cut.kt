@@ -10,6 +10,7 @@ import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.face.Event
 import com.codecad.core.face.events
+import com.codecad.core.utils.Unifier
 
 fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
     val unifier = Unifier<Vertex<Vec2>>()

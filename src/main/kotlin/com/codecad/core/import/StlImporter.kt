@@ -4,7 +4,7 @@ import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.part.Context
-import com.codecad.core.sketch.Unifier
+import com.codecad.core.utils.Unifier
 import com.codecad.core.volume.Volume
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

@@ -8,7 +8,7 @@ import com.codecad.core.brep.curve.Ellipse
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.regression.Regression
-import com.codecad.core.sketch.Unifier
+import com.codecad.core.utils.Unifier
 import com.codecad.core.volume.Volume
 import java.util.*
 import kotlin.collections.ArrayList

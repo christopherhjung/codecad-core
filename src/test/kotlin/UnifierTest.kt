@@ -1,8 +1,3 @@
-import com.codecad.core.ast.vec.Vec2
-import com.codecad.core.sketch.Unifier
-import org.junit.jupiter.api.Test
-import kotlin.test.assertSame
-
 class UnifierTest {
 /*
     @Test

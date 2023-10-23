@@ -1,4 +1,4 @@
-package com.codecad.core.sketch
+package com.codecad.core.utils
 
 import kotlin.collections.*
 
@@ -24,8 +24,8 @@ class Unifier<T : Any>(){
         }
     }
 
-    fun get( value : T ) : UnionNode<T>{
-        return nodes.computeIfAbsent(Key(value)){UnionNode(value)}
+    fun get( value : T ) : UnionNode<T> {
+        return nodes.computeIfAbsent(Key(value)){ UnionNode(value) }
     }
 
     fun unify(x: UnionNode<T>, y: T){
@@ -52,7 +52,7 @@ class UnionNode<T>(val value: T){
     var parent : UnionNode<T> = this
     var size = 1
 
-    fun find() : UnionNode<T>{
+    fun find() : UnionNode<T> {
         if (parent != this) {
             parent = parent.find()
         }
