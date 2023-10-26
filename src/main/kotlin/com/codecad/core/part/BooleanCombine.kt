@@ -47,58 +47,61 @@ object BooleanCombine{
             return
         }
 
-        val planeSurface = rhsFace.surface as PlaneSurface
-        val plane = planeSurface.workplane.toPlane()
-
         for( interCurve in interCurves ){
-            val points = arrayListOf<Intersection>()
-
-            for( lhsBound in lhsFace.bounds ) {
-                for (lhsEdgeLoop in lhsBound.loop) {
-                    val lhsOrientedEdge = lhsEdgeLoop.edge
-                    val lhsEdge = lhsOrientedEdge.edge
-
-                    val inters =
-                        CurveEdgeIntersect.intersect(interCurve, lhsFace.surface, lhsEdge)
-                    inters.forEach { points.add(Intersection(Vertex(it), lhsFace)) }
-                }
-            }
-
-            for( rhsBound in rhsFace.bounds ) {
-                for (rhsEdgeLoop in rhsBound.loop) {
-                    val rhsOrientedEdge = rhsEdgeLoop.edge
-                    val rhsEdge = rhsOrientedEdge.edge
-
-                    val inters =
-                        CurveEdgeIntersect.intersect(interCurve, rhsFace.surface, rhsEdge)
-                    inters.forEach { points.add(Intersection(Vertex(it), rhsFace)) }
-                }
-            }
-
-            val line = interCurves.first() as Line<Vec3>
-            points.sortBy { line.direction.dot(it.vertex.point - line.origin) }
-
-            var lhsActive = false
-            var rhsActive = false
-            var last : Intersection? = null
-            val edges = arrayListOf<Edge<Vec3>>()
-            for( inter in points ){
-                if(lhsActive && rhsActive){
-                    edges.add(Edge(line, EdgeBound(last!!.vertex, inter.vertex)))
-                }
-
-                if(lhsFace === inter.face){
-                    lhsActive = !lhsActive
-                }else if(rhsFace === inter.face){
-                    rhsActive = !rhsActive
-                }
-
-                last = inter
-            }
-            assert(!lhsActive && !rhsActive)
-
-            println(edges)
+            val points = findIters(interCurve, lhsFace, rhsFace)
+            val edges = createEdges(points, interCurve, lhsFace, rhsFace)
         }
+    }
+
+    private fun findIters(
+        interCurve: Curve<Vec3>,
+        lhsFace: Face,
+        rhsFace: Face
+    ): ArrayList<Intersection> {
+        val points = arrayListOf<Intersection>()
+
+        fun scan(face: Face) {
+            for (bound in face.bounds) {
+                for (edgeLoop in bound.loop) {
+                    val orientedEdge = edgeLoop.edge
+                    val edge = orientedEdge.edge
+
+                    val inters =
+                        CurveEdgeIntersect.intersect(interCurve, face.surface, edge)
+                    inters.forEach { points.add(Intersection(Vertex(it), face)) }
+                }
+            }
+        }
+
+        scan(lhsFace)
+        scan(rhsFace)
+
+        val line = interCurve as Line<Vec3>
+        points.sortBy { line.direction.dot(it.vertex.point - line.origin) }
+        return points
+    }
+
+
+    fun createEdges(points: List<Intersection>, curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : Edge<Vec3>{
+        var lhsActive = false
+        var rhsActive = false
+        var last : Intersection? = null
+        val edges = arrayListOf<Edge<Vec3>>()
+        for( inter in points ){
+            if(lhsActive && rhsActive){
+                edges.add(Edge(curve, EdgeBound(last!!.vertex, inter.vertex)))
+            }
+
+            if(lhsFace === inter.face){
+                lhsActive = !lhsActive
+            }else if(rhsFace === inter.face){
+                rhsActive = !rhsActive
+            }
+
+            last = inter
+        }
+        assert(!lhsActive && !rhsActive)
+        return edges
     }
 
     var count = 0
