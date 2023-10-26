@@ -43,10 +43,6 @@ object BooleanCombine{
     fun intersectFace(lhsFace: Face, rhsFace: Face){
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
 
-        if(interCurves.isEmpty()){
-            return
-        }
-
         for( interCurve in interCurves ){
             val points = findIters(interCurve, lhsFace, rhsFace)
             val edges = createEdges(points, interCurve, lhsFace, rhsFace)
@@ -82,7 +78,8 @@ object BooleanCombine{
     }
 
 
-    fun createEdges(points: List<Intersection>, curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : Edge<Vec3>{
+
+    fun createEdges(points: List<Intersection>, curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
         var lhsActive = false
         var rhsActive = false
         var last : Intersection? = null
