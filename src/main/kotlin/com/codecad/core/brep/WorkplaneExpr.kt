@@ -5,6 +5,7 @@ import com.codecad.core.ast.vec.*
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.rollover
 import com.codecad.core.scope.Scope
+import com.codecad.core.sketch.EPSILON
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -19,11 +20,11 @@ class Plane(val normal: Vec3, val distance: Double){
 
     fun intersect(rhs : Line<Vec3>) : Vec3? {
         val p0 = rhs.origin
-        val dir = rhs.origin
+        val dir = rhs.direction
 
         val denominator = normal.dot(dir)
 
-        if(denominator == 0.0){
+        if(abs(denominator) < EPSILON){
             return null
         }
 

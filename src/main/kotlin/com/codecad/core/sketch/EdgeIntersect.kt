@@ -3,6 +3,7 @@ package com.codecad.core.sketch
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.brep.Edge
 import com.codecad.core.brep.curve.Circle
+import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
 import kotlin.math.abs
 import kotlin.math.max
@@ -64,6 +65,12 @@ object Intersect {
         val lhsCurve = lhs.curve
         val rhsCurve = rhs.curve
 
+        return of(lhsCurve, rhsCurve).filter {
+            lhs.inside(it) && rhs.inside(it)
+        }
+    }
+
+    fun of(lhsCurve: Curve<Vec2>, rhsCurve: Curve<Vec2>) : List<Vec2> {
         return when (lhsCurve) {
             is Line -> when (rhsCurve) {
                 is Line -> ofLineLine(lhsCurve, rhsCurve)
@@ -78,8 +85,6 @@ object Intersect {
             }
 
             else -> throw NotImplementedError()
-        }.filter {
-            lhs.inside(it) && rhs.inside(it)
         }
     }
 

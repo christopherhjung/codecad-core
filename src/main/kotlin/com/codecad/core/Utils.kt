@@ -87,3 +87,18 @@ fun <T> Iterable<T>.rollover() : Iterable<Pair<T, T>> where T : Any
         }
     }
 }
+
+
+
+
+fun invSqrt( y: Double ) : Double
+{
+    val x2 = y * 0.5
+    var i = y.toBits()
+    i = 0x5fe6eb50c7b537a9 - (i shr 1)
+    var y2 = Double.fromBits(i)
+    y2 *= (1.5 - (x2 * y2 * y2))  // 1st iteration
+    y2  = y2 * ( 1.5 - ( x2 * y2 * y2 ) )
+    y2  = y2 * ( 1.5 - ( x2 * y2 * y2 ) )   // 2nd iteration, this can be removed
+    return y2
+}

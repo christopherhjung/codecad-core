@@ -14,7 +14,7 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class SurfaceIntersect {
+object SurfaceIntersect {
     fun intersect(lhs: Surface, rhs: Surface) : List<Curve<Vec3>>{
         return when(lhs){
             is PlaneSurface -> {

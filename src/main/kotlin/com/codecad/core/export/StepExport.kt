@@ -164,19 +164,11 @@ class StepExport : ModelExport{
 
             val edgeCurve = edge.curve
             val curve = createCurve(edgeCurve)
-            if(bound != null){
-                val start = createVertexPoint(bound.start)
-                val end = createVertexPoint(bound.end)
-                val sameSense = bound.sense == Sense.Same
-                createEdgeCurve(start, end, curve, sameSense)
-            }else if(edgeCurve is Circle){
-                val vertex = circleSeam.computeIfAbsent(edge){
-                    Vertex(edgeCurve.rightmostPoint())
-                }
 
-                val startEnd = createVertexPoint(vertex)
-                createEdgeCurve(startEnd, startEnd, curve, true)
-            }else throw RuntimeException("Bound not found")
+            val start = createVertexPoint(bound.start)
+            val end = createVertexPoint(bound.end)
+            val sameSense = bound.sense == Sense.Same
+            createEdgeCurve(start, end, curve, sameSense)
         }
     }
 
