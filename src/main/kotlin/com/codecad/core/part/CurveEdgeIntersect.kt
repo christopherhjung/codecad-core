@@ -9,53 +9,84 @@ import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
 import com.codecad.core.brep.surface.Surface
 import com.codecad.core.sketch.EPSILON
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 object CurveEdgeIntersect {
-    fun intersect(lhs: Curve<Vec3>, rhsSurface: Surface, rhsEdge: Edge<Vec3>) : List<Vec3>{
-        return when(lhs){
+    fun intersect(lhsCurve: Curve<Vec3>, rhsSurface: Surface, rhsEdge: Edge<Vec3>) : List<Vec3>{
+        val rhsCurve = rhsEdge.curve
+        return when(lhsCurve){
             is Line -> {
                 when(rhsSurface){
-                    is PlaneSurface -> intersectLinePlane(lhs, rhsEdge)
-                    is CylindricalSurface -> intersectLineCylindrical(lhs, rhsSurface, rhsEdge)
+                    is PlaneSurface -> intersectLinePlane(lhsCurve, rhsCurve)
+                    is CylindricalSurface -> intersectLineCylindrical(lhsCurve, rhsSurface, rhsCurve)
                     else -> throw NotImplementedError()
                 }
             }
 
             is Circle -> {
                 when(rhsSurface){
-                    is PlaneSurface -> intersectCirclePlane(lhs, rhsSurface, rhsEdge)
-                    is CylindricalSurface -> intersectCircleCylindrical(lhs, rhsSurface, rhsEdge)
+                    is PlaneSurface -> intersectCirclePlane(lhsCurve, rhsSurface, rhsCurve)
+                    is CylindricalSurface -> intersectCircleCylindrical(lhsCurve, rhsSurface, rhsCurve)
                     else -> throw NotImplementedError()
                 }
             }
 
             else -> throw NotImplementedError()
-        }
+        }.filter { rhsEdge.inside(it) }
     }
 
-    public fun intersectLinePlane(lhs: Line<Vec3>, rhsEdge: Edge<Vec3>) : List<Vec3>{
-        return when(val curve = rhsEdge.curve){
-            is Line -> intersectPlaneLineLine(lhs, curve)
-            is Circle -> intersectPlaneLineCircle(lhs, curve)
+    public fun intersectLinePlane(lhs: Line<Vec3>, rhsCurve: Curve<Vec3>) : List<Vec3>{
+        return when(rhsCurve){
+            is Line -> intersectPlaneLineLine(lhs, rhsCurve)
+            is Circle -> intersectPlaneLineCircle(lhs, rhsCurve)
             else -> throw NotImplementedError()
         }
     }
 
-    private fun intersectCirclePlane(circle: Circle<Vec3>, rhsSurface: PlaneSurface, rhsEdge: Edge<Vec3>) : List<Vec3>{
-        return when(val curve = rhsEdge.curve){
-            is Line -> intersectPlaneLineCircle(curve, circle)
+    private fun intersectCirclePlane(circle: Circle<Vec3>, rhsSurface: PlaneSurface, rhsCurve: Curve<Vec3>) : List<Vec3>{
+        return when(rhsCurve){
+            is Line -> intersectPlaneLineCircle(rhsCurve, circle)
+            is Circle -> intersectPlaneCircleCircle(circle, rhsCurve)
             else -> throw NotImplementedError()
         }
     }
 
-    private fun intersectLineCylindrical(lhs: Line<Vec3>, rhsSurface: CylindricalSurface, rhsEdge: Edge<Vec3>) : List<Vec3>{
+    private fun intersectLineCylindrical(lhs: Line<Vec3>, rhsSurface: CylindricalSurface, rhsEdge: Curve<Vec3>) : List<Vec3>{
         return emptyList()
     }
 
-    private fun intersectCircleCylindrical(lhs: Circle<Vec3>, rhsSurface: CylindricalSurface, rhsEdge: Edge<Vec3>) : List<Vec3>{
+    private fun intersectCircleCylindrical(lhs: Circle<Vec3>, rhsSurface: CylindricalSurface, rhsEdge: Curve<Vec3>) : List<Vec3>{
         return emptyList()
+    }
+
+    fun Edge<Vec3>.inside(p : Vec3) : Boolean{
+        if(bound.isUnbounded()){
+            return true
+        }
+
+        val p0 = bound.start.point
+        val p1 = bound.end.point
+
+        if(p0.near(p, EPSILON) || p1.near(p, EPSILON)){
+            return true
+        }
+
+        return when(val curve = curve){
+            is Line -> {
+                ((p0.x - EPSILON <= p.x) == (p.x <= p1.x + EPSILON)) &&
+                ((p0.y - EPSILON <= p.y) == (p.y <= p1.y + EPSILON)) &&
+                ((p0.z - EPSILON <= p.z) == (p.z <= p1.z + EPSILON))
+            }
+            is Circle -> {
+                val radius = curve.radius
+                val center = curve.workplane.origin
+
+                return abs(center.distanceTo(p) - radius) < EPSILON
+            }
+            else -> true
+        }
     }
 
 
@@ -90,6 +121,32 @@ object CurveEdgeIntersect {
             val first = l2projC - h
             val second = l2projC + h
             return listOf(first, second)
+        }
+    }
+
+    private fun intersectPlaneCircleCircle(lhs: Circle<Vec3>, rhs: Circle<Vec3>) : List<Vec3>{
+        val r1 = lhs.radius
+        val r2 = rhs.radius
+        val p1 = lhs.workplane.origin
+        val p2 = rhs.workplane.origin
+        val distance = p2.distanceTo(p1)
+        val radiusSum = r1 + r2
+        return if(distance > radiusSum || distance <= abs(r2 - r1)){
+            emptyList()
+        } else {
+            val dir = (p2 - p1) / distance
+
+            if(abs(distance - radiusSum) < EPSILON){
+                listOf(p1 + dir * r1)
+            }else{
+                val normal = lhs.workplane.normal
+                val a = 0.5 * (r1*r1 - r2*r2 + distance*distance) / distance
+                val p3 = p1 + dir * a
+                val h = dir.cross(normal) * sqrt(r1*r1 - a*a)
+                val i1 = p3 + h
+                val i2 = p3 - h
+                listOf(i1, i2)
+            }
         }
     }
 }

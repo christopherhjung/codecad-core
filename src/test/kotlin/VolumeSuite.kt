@@ -5,6 +5,7 @@ import com.codecad.core.brep.curve.BSplineControlPoint
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.surface.CylindricalSurface
 import com.codecad.core.brep.surface.PlaneSurface
+import com.codecad.core.part.Extruder
 import com.codecad.core.volume.Volume
 
 object VolumeSuite {
@@ -200,5 +201,12 @@ object VolumeSuite {
         val face = Face(surface, listOf(FaceBound(loop, FaceBoundKind.OuterBound)))
 
         return face
+    }
+
+    fun cube(pos: Vec3, size: Double): Volume{
+        val workplaneA = Workplane(Vec3(pos.x, pos.y, pos.z - size / 2.0), Vec3.DirectionZ, Vec3.DirectionX)
+        val faceA = createPlane(workplaneA, size)
+
+        return Extruder.extrude(faceA, Vec3.DirectionZ, size)
     }
 }

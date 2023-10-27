@@ -1,10 +1,12 @@
 package com.codecad.core.part
 
+import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.*
+import com.codecad.core.sketch.EPSILON
 import com.codecad.core.sketch.isPointInPolygon
 import com.codecad.core.volume.Volume
 
@@ -16,20 +18,34 @@ class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec
 }
 
 object BooleanCombine{
-    val curves = arrayListOf<Curve<Vec3>>()
+    val sectionMap = HashMap<Edge<Vec3>, MutableList<Vertex<Vec3>>>()
+
+    fun addSection(entity: Edge<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
+        val list = sectionMap.computeIfAbsent(entity){ mutableListOf() }
+
+        list.forEach {
+            if(it.point.near(pos, EPSILON) ){
+                return it
+            }
+        }
+
+        val vertex = Vertex(pos)
+        list.add(vertex)
+        return vertex
+    }
+
+    fun findClose(){
+
+    }
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
-
+        val edges = arrayListOf<Edge<Vec3>>()
         for( lhsShell in lhsVolume.shells ){
             for( lhsFace in lhsShell.faces ){
 
                 for( rhsShell in rhsVolume.shells ){
                     for( rhsFace in rhsShell.faces ){
-
-                        //val curve = combine(lhsFace, rhsFace)
-
-                        intersectFace(lhsFace, rhsFace)
-                        //Intersection(lhsFace, rhsFace, curve)
+                        edges.addAll(intersectFace(lhsFace, rhsFace))
                     }
                 }
             }
@@ -40,13 +56,15 @@ object BooleanCombine{
 
     data class Intersection(val vertex: Vertex<Vec3>, val face: Face)
 
-    fun intersectFace(lhsFace: Face, rhsFace: Face){
+    fun intersectFace(lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
 
-        for( interCurve in interCurves ){
-            val points = findIters(interCurve, lhsFace, rhsFace)
-            val edges = createEdges(points, interCurve, lhsFace, rhsFace)
+        val edges = interCurves.flatMap {
+            val points = findIters(it, lhsFace, rhsFace)
+            createEdges(points, it, lhsFace, rhsFace)
         }
+
+        return edges
     }
 
     private fun findIters(
@@ -64,7 +82,11 @@ object BooleanCombine{
 
                     val inters =
                         CurveEdgeIntersect.intersect(interCurve, face.surface, edge)
-                    inters.forEach { points.add(Intersection(Vertex(it), face)) }
+
+                    inters.forEach {
+                        val vertex = addSection(edge, it)
+                        points.add(Intersection(vertex, face))
+                    }
                 }
             }
         }
@@ -103,16 +125,6 @@ object BooleanCombine{
 
     var count = 0
     var test = 0
-    fun cutEdge(lhsEdge: Edge<Vec3>, rhsFace: Face, rhsPlane : Plane){
-        when(val curve = lhsEdge.curve){
-            is Line -> {
-                val intersection = rhsPlane.intersect(curve)
-                if(intersection != null && isInside(intersection, rhsFace)){
-                    println(intersection)
-                }
-            }
-        }
-    }
 
     fun isInside(point: Vec3, rhsFace: Face) : Boolean{
         val planeSurface = rhsFace.surface as PlaneSurface
@@ -132,29 +144,6 @@ object BooleanCombine{
         return isPointInPolygon(projPoint, points)
     }
 
-    fun combine(lhsFace: Face, rhsFace: Face) : Curve<Vec3>{
-        val lhsSurface = lhsFace.surface
-        val rhsSurface = rhsFace.surface
 
-
-        when(lhsSurface){
-            is PlaneSurface -> {
-                when(rhsSurface){
-                    is PlaneSurface -> {
-                        val line = combine(lhsSurface, rhsSurface)
-                        curves.add(line)
-
-                        return line
-                    }
-                }
-            }
-        }
-
-        throw RuntimeException("Not implemented")
-    }
-
-    fun combine(lhsSurface: PlaneSurface, rhsSurface: PlaneSurface) : Line<Vec3>{
-        return Workplane.intersect(lhsSurface.workplane, rhsSurface.workplane)
-    }
 }
 

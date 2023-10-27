@@ -34,11 +34,18 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
     fun invert() : EdgeBound<T>{
         return EdgeBound(end, start, sense.invert())
     }
+
+    override fun toString(): String {
+        return "EdgeBound(start=$start, end=$end)"
+    }
 }
 
 class Marker
 class Edge<T : Vec<T>>(var curve: Curve<T>, val bound : EdgeBound<T>){
 
+    override fun toString(): String {
+        return "Edge($bound)"
+    }
 
     companion object{
         fun <T : Vec<T>> line(start: Vertex<T>, end: Vertex<T>) : Edge<T> {

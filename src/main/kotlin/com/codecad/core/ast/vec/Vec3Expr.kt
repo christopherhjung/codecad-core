@@ -11,6 +11,10 @@ import kotlin.math.sqrt
 
 data class Vec3(val x: Double, val y: Double, val z: Double) : Vec<Vec3>
 {
+    fun near(other: Vec3, distance : Double) : Boolean{
+        return squaredDistance(other) < distance.pow(2)
+    }
+
     override fun dot(other: Vec3) : Double {
         return x * other.x + y * other.y + z * other.z
     }
@@ -51,7 +55,7 @@ data class Vec3(val x: Double, val y: Double, val z: Double) : Vec<Vec3>
     }
 
     override fun squaredDistance(other: Vec3): Double {
-        return ( x - other.x ).pow(2) + ( y - other.y ).pow(2)
+        return ( x - other.x ).pow(2) + ( y - other.y ).pow(2) + ( z - other.z ).pow(2)
     }
 
     override fun distanceTo(other: Vec3): Double {

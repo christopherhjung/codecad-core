@@ -26,4 +26,26 @@ class BooleanTest {
         val test = BooleanCombine.intersectFace(faceA, faceB)
 
     }
+    @Test
+    fun importTest2Outside(){
+        val workplaneA = Workplane(Vec3(0.0, 0.5, 0.0), Vec3.DirectionY, Vec3.DirectionX)
+        val faceA = VolumeSuite.createPlane(workplaneA, 1.0)
+
+        val workplaneB = Workplane(Vec3(0.5, 0.1, 1.0), Vec3.DirectionZ, Vec3.DirectionX)
+        val faceB = VolumeSuite.createPlane(workplaneB, 1.0)
+
+        val test = BooleanCombine.intersectFace(faceB, faceA)
+
+        println(test)
+    }
+
+    @Test
+    fun importTest3(){
+        val volumeA = VolumeSuite.cube(Vec3(0.0, 0.0, 0.0), 1.0)
+        val volumeB = VolumeSuite.cube(Vec3(0.5, 0.5, 0.5), 1.0)
+
+        val test = BooleanCombine.combine(CombineKind.Add, volumeA, volumeB)
+
+
+    }
 }
