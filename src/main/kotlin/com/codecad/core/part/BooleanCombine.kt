@@ -34,10 +34,6 @@ object BooleanCombine{
         return vertex
     }
 
-    fun findClose(){
-
-    }
-
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
         val edges = arrayListOf<Edge<Vec3>>()
         for( lhsShell in lhsVolume.shells ){
@@ -54,7 +50,7 @@ object BooleanCombine{
         return lhsVolume
     }
 
-    data class Intersection(val vertex: Vertex<Vec3>, val face: Face)
+    data class Intersection(val point: Vec3, val face: Face, val edge: Edge<Vec3>)
 
     fun intersectFace(lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
@@ -84,8 +80,7 @@ object BooleanCombine{
                         CurveEdgeIntersect.intersect(interCurve, face.surface, edge)
 
                     inters.forEach {
-                        val vertex = addSection(edge, it)
-                        points.add(Intersection(vertex, face))
+                        points.add(Intersection(it, face, edge))
                     }
                 }
             }
@@ -95,7 +90,7 @@ object BooleanCombine{
         scan(rhsFace)
 
         val line = interCurve as Line<Vec3>
-        points.sortBy { line.direction.dot(it.vertex.point - line.origin) }
+        points.sortBy { line.direction.dot(it.point - line.origin) }
         return points
     }
 
@@ -108,7 +103,11 @@ object BooleanCombine{
         val edges = arrayListOf<Edge<Vec3>>()
         for( inter in points ){
             if(lhsActive && rhsActive){
-                edges.add(Edge(curve, EdgeBound(last!!.vertex, inter.vertex)))
+                last!!
+                val lastVertex = addSection(last.edge, last.point)
+                val interVertex = addSection(inter.edge, inter.point)
+
+                edges.add(Edge(curve, EdgeBound(lastVertex, interVertex)))
             }
 
             if(lhsFace === inter.face){
