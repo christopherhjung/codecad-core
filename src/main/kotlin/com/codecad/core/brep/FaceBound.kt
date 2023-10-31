@@ -194,6 +194,11 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         next.prev = this
     }
 
+    fun twinWith(next : Loop<T>){
+        this.twin = next
+        next.twin = this
+    }
+
     fun star() : Iterable<Loop<T>>{
         val loop = this
         return object : Iterable<Loop<T>>{
@@ -209,7 +214,7 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             if(idx == num){
                 break
             }
-            result.add(loop.edge.start!!.point)
+            result.add(loop.edge.start.point)
         }
         return result
     }
@@ -220,19 +225,16 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             if(idx == num){
                 break
             }
-            result.add(loop.edge.start!!)
+            result.add(loop.edge.start)
         }
         return result
     }
 
     fun validate() : Boolean{
         val visited = hashSetOf<Vertex<T>>()
-        if(edge.bound == null){
-            return true
-        }
 
         for( loop in this ){
-            if(!visited.add(loop.edge.start!!)){
+            if(!visited.add(loop.edge.start)){
                 return false
             }
             if(loop.face != face){
@@ -255,13 +257,6 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
                 .append(bound.end)
                 .append(" -- ")
                 .append(orientedEdge.edge.curve::class.simpleName)
-
-            /*
-        if(bound.sense != Sense.None){
-            sb.append("(")
-                .append(bound.sense)
-                .append(")")
-        }*/
 
             sep = "\n"
 
@@ -287,6 +282,13 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
 
         fun <T : Vec<T>> wrap(edge: Edge<T>) : Loop<T> {
             return Loop(OrientedEdge(edge, EdgeOrientation.Forward))
+        }
+
+        fun <T : Vec<T>> twin(edge: Edge<T>) : Loop<T> {
+            val edgeLoop = Loop(OrientedEdge(edge, EdgeOrientation.Forward))
+            val twinLoop = Loop(OrientedEdge(edge, EdgeOrientation.Backward))
+            edgeLoop.twinWith(twinLoop)
+            return edgeLoop
         }
 
         fun <T : Vec<T>> wireCircular(vararg vertices: Vertex<T>) : Loop<T> {

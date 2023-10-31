@@ -13,56 +13,40 @@ enum class CombineKind{
     Add, Subtract, Intersect
 }
 
-class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>){
-}
+class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>)
+
+class Split(val vertex: Vertex<Vec3>)
+class EdgeSplit(val vertex : Vertex<Vec3>, val loop : Loop<Vec3>)
+class VertexSplit(val vertex : Vertex<Vec3>, val loop : Loop<Vec3>)
+
 
 object BooleanCombine{
-    val sectionMap = HashMap<Edge<Vec3>, MutableList<Vertex<Vec3>>>()
+    private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<EdgeSplit>>()
+    private val edgeSplitLoops = hashMapOf<Loop<Vec3>, Loop<Vec3>>()
 
-    fun addSection(entity: Edge<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
-        val bound = entity.bound
-        if(bound.start.point.near(pos, EPSILON) ){
-            return bound.start
-        }
+    private val vertexSplitMap = hashMapOf<Vertex<Vec3>, MutableList<VertexSplit>>()
 
-        if(bound.end.point.near(pos, EPSILON) ){
-            return bound.end
-        }
-
-        val list = sectionMap.computeIfAbsent(entity){ mutableListOf() }
-        list.forEach {
-            if(it.point.near(pos, EPSILON) ){
-                return it
-            }
-        }
-
-        val vertex = Vertex(pos)
-        list.add(vertex)
-        return vertex
-    }
-
-    class Section(val lhsLoop : Loop<Vec3>, val rhsLoop: Loop<Vec3>, val p : Vertex<Vec3>)
-
-    fun addSection(loop: Loop<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
+    fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
         val edge = loop.edge.edge
         val bound = edge.bound
-        if(bound.start.point.near(pos, EPSILON) ){
+        if(bound.start.point.near(pos, EPSILON)){
             return bound.start
         }
 
-        if(bound.end.point.near(pos, EPSILON) ){
+        if(bound.end.point.near(pos, EPSILON)){
             return bound.end
         }
 
-        val list = sectionMap.computeIfAbsent(edge){ mutableListOf() }
+        val list = edgeSplitMap.computeIfAbsent(edge){ mutableListOf() }
         list.forEach {
-            if(it.point.near(pos, EPSILON) ){
-                return it
+            val vertex = it.vertex
+            if(vertex.point.near(pos, EPSILON)){
+                return vertex
             }
         }
 
         val vertex = Vertex(pos)
-        list.add(vertex)
+        list.add(EdgeSplit(vertex, loop))
         return vertex
     }
 
@@ -134,9 +118,14 @@ object BooleanCombine{
         for( inter in inters ){
             if(lhsActive && rhsActive){
                 last!!
-                val lastVertex = addSection(last.loop, last.point)
-                val interVertex = addSection(inter.loop, inter.point)
+                val lastVertex = addSplit(last.loop, last.point)
+                val interVertex = addSplit(inter.loop, inter.point)
                 val edge = Edge(curve, EdgeBound(lastVertex, interVertex))
+
+                val loop = Loop.twin(edge)
+
+                edgeSplitLoops[last.loop] = loop
+                edgeSplitLoops[inter.loop] = loop.twin!!
 
                 edges.add(edge)
             }

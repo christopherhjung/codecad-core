@@ -60,8 +60,7 @@ class StlImporter : Importer {
 
             val previous = loops[pair]
             if(previous != null){
-                loop.twin = previous
-                previous.twin = loop
+                loop.twinWith(previous)
             }else{
                 loops[pair] = loop
             }
