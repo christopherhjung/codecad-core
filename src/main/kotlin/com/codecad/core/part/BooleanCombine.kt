@@ -1,6 +1,5 @@
 package com.codecad.core.part
 
-import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Curve
@@ -21,8 +20,41 @@ object BooleanCombine{
     val sectionMap = HashMap<Edge<Vec3>, MutableList<Vertex<Vec3>>>()
 
     fun addSection(entity: Edge<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
-        val list = sectionMap.computeIfAbsent(entity){ mutableListOf() }
+        val bound = entity.bound
+        if(bound.start.point.near(pos, EPSILON) ){
+            return bound.start
+        }
 
+        if(bound.end.point.near(pos, EPSILON) ){
+            return bound.end
+        }
+
+        val list = sectionMap.computeIfAbsent(entity){ mutableListOf() }
+        list.forEach {
+            if(it.point.near(pos, EPSILON) ){
+                return it
+            }
+        }
+
+        val vertex = Vertex(pos)
+        list.add(vertex)
+        return vertex
+    }
+
+    class Section(val lhsLoop : Loop<Vec3>, val rhsLoop: Loop<Vec3>, val p : Vertex<Vec3>)
+
+    fun addSection(loop: Loop<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
+        val edge = loop.edge.edge
+        val bound = edge.bound
+        if(bound.start.point.near(pos, EPSILON) ){
+            return bound.start
+        }
+
+        if(bound.end.point.near(pos, EPSILON) ){
+            return bound.end
+        }
+
+        val list = sectionMap.computeIfAbsent(edge){ mutableListOf() }
         list.forEach {
             if(it.point.near(pos, EPSILON) ){
                 return it
@@ -50,14 +82,13 @@ object BooleanCombine{
         return lhsVolume
     }
 
-    data class Intersection(val point: Vec3, val face: Face, val edge: Edge<Vec3>)
+    data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>, val edge: Edge<Vec3>)
 
     fun intersectFace(lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
 
         val edges = interCurves.flatMap {
-            val points = findIters(it, lhsFace, rhsFace)
-            createEdges(points, it, lhsFace, rhsFace)
+            createEdges(it, lhsFace, rhsFace)
         }
 
         return edges
@@ -80,7 +111,7 @@ object BooleanCombine{
                         CurveEdgeIntersect.intersect(interCurve, face.surface, edge)
 
                     inters.forEach {
-                        points.add(Intersection(it, face, edge))
+                        points.add(Intersection(it, face, edgeLoop, edge))
                     }
                 }
             }
@@ -94,20 +125,20 @@ object BooleanCombine{
         return points
     }
 
-
-
-    fun createEdges(points: List<Intersection>, curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
+    fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
+        val inters = findIters(curve, lhsFace, rhsFace)
         var lhsActive = false
         var rhsActive = false
         var last : Intersection? = null
         val edges = arrayListOf<Edge<Vec3>>()
-        for( inter in points ){
+        for( inter in inters ){
             if(lhsActive && rhsActive){
                 last!!
-                val lastVertex = addSection(last.edge, last.point)
-                val interVertex = addSection(inter.edge, inter.point)
+                val lastVertex = addSection(last.loop, last.point)
+                val interVertex = addSection(inter.loop, inter.point)
+                val edge = Edge(curve, EdgeBound(lastVertex, interVertex))
 
-                edges.add(Edge(curve, EdgeBound(lastVertex, interVertex)))
+                edges.add(edge)
             }
 
             if(lhsFace === inter.face){
@@ -121,9 +152,6 @@ object BooleanCombine{
         assert(!lhsActive && !rhsActive)
         return edges
     }
-
-    var count = 0
-    var test = 0
 
     fun isInside(point: Vec3, rhsFace: Face) : Boolean{
         val planeSurface = rhsFace.surface as PlaneSurface
