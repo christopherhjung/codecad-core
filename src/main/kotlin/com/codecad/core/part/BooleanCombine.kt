@@ -15,40 +15,35 @@ enum class CombineKind{
 
 class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>)
 
-class Split(val vertex: Vertex<Vec3>)
-class EdgeSplit(val vertex : Vertex<Vec3>, val loop : Loop<Vec3>)
-class VertexSplit(val vertex : Vertex<Vec3>, val loop : Loop<Vec3>)
+abstract class Split(val vertex: Vertex<Vec3>){
+    abstract fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>)
+}
+class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex){
+    private var branches = hashMapOf<Loop<Vec3>, Loop<Vec3>>()
+    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
+        branches[loop] = target
+    }
+}
+class VertexSplit(vertex : Vertex<Vec3>, loop: Loop<Vec3>) : Split(vertex){
+    private var branches = arrayListOf<Loop<Vec3>>()
+    val initLoop = run{
+        val edge = loop.edge.bound
+
+        if(edge.start === vertex){
+            loop
+        }else{
+            loop.next
+        }
+    }
+    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
+        branches.add(target)
+    }
+}
 
 
 object BooleanCombine{
     private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<EdgeSplit>>()
-    private val edgeSplitLoops = hashMapOf<Loop<Vec3>, Loop<Vec3>>()
-
     private val vertexSplitMap = hashMapOf<Vertex<Vec3>, MutableList<VertexSplit>>()
-
-    fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Vertex<Vec3>{
-        val edge = loop.edge.edge
-        val bound = edge.bound
-        if(bound.start.point.near(pos, EPSILON)){
-            return bound.start
-        }
-
-        if(bound.end.point.near(pos, EPSILON)){
-            return bound.end
-        }
-
-        val list = edgeSplitMap.computeIfAbsent(edge){ mutableListOf() }
-        list.forEach {
-            val vertex = it.vertex
-            if(vertex.point.near(pos, EPSILON)){
-                return vertex
-            }
-        }
-
-        val vertex = Vertex(pos)
-        list.add(EdgeSplit(vertex, loop))
-        return vertex
-    }
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
         val edges = arrayListOf<Edge<Vec3>>()
@@ -75,6 +70,65 @@ object BooleanCombine{
             createEdges(it, lhsFace, rhsFace)
         }
 
+        return edges
+    }
+
+    fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Split{
+        val edge = loop.edge.edge
+        val bound = edge.bound
+
+        for( boundVertex in bound ){
+            if(boundVertex.point.near(pos, EPSILON)){
+                val split = VertexSplit(boundVertex, loop)
+                val list = vertexSplitMap.computeIfAbsent(boundVertex){ mutableListOf() }
+                list.add(split)
+                return split
+            }
+        }
+
+        val list = edgeSplitMap.computeIfAbsent(edge){ mutableListOf() }
+        list.forEach {
+            val vertex = it.vertex
+            if(vertex.point.near(pos, EPSILON)){
+                return it
+            }
+        }
+
+        val split = EdgeSplit(Vertex(pos))
+        list.add(split)
+        return split
+    }
+
+    fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
+        val inters = findIters(curve, lhsFace, rhsFace)
+        var lhsActive = false
+        var rhsActive = false
+        var last : Intersection? = null
+        val edges = arrayListOf<Edge<Vec3>>()
+        for( inter in inters ){
+            if(lhsActive && rhsActive){
+                last!!
+                val lastVertex = addSplit(last.loop, last.point)
+                val interVertex = addSplit(inter.loop, inter.point)
+                val edge = Edge(curve, EdgeBound(lastVertex.vertex, interVertex.vertex))
+
+                val loop = Loop.twin(edge)
+
+                lastVertex.addBranch(last.loop, loop)
+                interVertex.addBranch(inter.loop, loop.twin!!)
+
+                edges.add(edge)
+            }
+
+            if(lhsFace === inter.face){
+                lhsActive = !lhsActive
+            }else if(rhsFace === inter.face){
+                rhsActive = !rhsActive
+            }
+
+            last = inter
+        }
+        assert(!lhsActive && !rhsActive)
         return edges
     }
 
@@ -107,39 +161,6 @@ object BooleanCombine{
         val line = interCurve as Line<Vec3>
         points.sortBy { line.direction.dot(it.point - line.origin) }
         return points
-    }
-
-    fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
-        val inters = findIters(curve, lhsFace, rhsFace)
-        var lhsActive = false
-        var rhsActive = false
-        var last : Intersection? = null
-        val edges = arrayListOf<Edge<Vec3>>()
-        for( inter in inters ){
-            if(lhsActive && rhsActive){
-                last!!
-                val lastVertex = addSplit(last.loop, last.point)
-                val interVertex = addSplit(inter.loop, inter.point)
-                val edge = Edge(curve, EdgeBound(lastVertex, interVertex))
-
-                val loop = Loop.twin(edge)
-
-                edgeSplitLoops[last.loop] = loop
-                edgeSplitLoops[inter.loop] = loop.twin!!
-
-                edges.add(edge)
-            }
-
-            if(lhsFace === inter.face){
-                lhsActive = !lhsActive
-            }else if(rhsFace === inter.face){
-                rhsActive = !rhsActive
-            }
-
-            last = inter
-        }
-        assert(!lhsActive && !rhsActive)
-        return edges
     }
 
     fun isInside(point: Vec3, rhsFace: Face) : Boolean{

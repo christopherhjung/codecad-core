@@ -18,7 +18,7 @@ enum class Sense{
     }
 }
 
-class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense: Sense = Sense.Same){
+class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense: Sense = Sense.Same) : Iterable<Vertex<T>>{
     fun isUnbounded() : Boolean {
         return start === end
     }
@@ -37,6 +37,10 @@ class EdgeBound<T : Vec<T>>(val start: Vertex<T>, val end : Vertex<T>, val sense
 
     override fun toString(): String {
         return "EdgeBound(start=$start, end=$end)"
+    }
+
+    override fun iterator(): Iterator<Vertex<T>> {
+        return arrayOf(start, end).iterator()
     }
 }
 
