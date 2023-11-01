@@ -1,6 +1,7 @@
 package com.codecad.core.sketch
 
 import com.codecad.core.ast.vec.Vec2
+import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.brep.curve.Line
@@ -123,3 +124,16 @@ class DirectionVertexComparator(private val reference : Vec2 = Vec2.DirX) : Comp
     }
 }
 
+object CurveComparator{
+    fun line(line: Line<Vec3>) : Comparator<Vertex<Vec3>>{
+        return Comparator.comparing { line.direction.dot(it.point - line.origin) }
+    }
+    fun rotary(origin: Vec3, axis: Vec3, ref: Vec3) : Comparator<Vertex<Vec3>>{
+        val refDir = ref - origin
+
+        return Comparator.comparing {
+            val radiant1 = it.point - origin
+            radiant1.angleTo(refDir, axis)
+        }
+    }
+}

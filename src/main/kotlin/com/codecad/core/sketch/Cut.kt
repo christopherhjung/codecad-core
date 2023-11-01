@@ -72,7 +72,7 @@ fun cutLines(edges: List<Edge<Vec2>>): List<Edge<Vec2>> {
                 .toMutableList()
 
             sections.sortWith(comp)
-            if(edge.bound.isUnbounded()){
+            if(bound.isUnbounded()){
                 sections.add(sections.first())
             }else{
                 sections.add(0, start)

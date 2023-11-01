@@ -74,6 +74,55 @@ data class VertexHelper(val point: Vertex<Vec2>){
     }
 }
 
+data class VertexHelper3(val point: Vertex<Vec3>, val normal: Vec3, val ref: Vec3){
+    val loops = mutableListOf<Loop<Vec3>>()
+
+    fun addLoop(loop: Loop<Vec3>){
+        if(loop.edge.start != point){
+            throw RuntimeException("ss")
+        }
+
+        loops.add(loop)
+    }
+
+    fun finalizeCCW(){
+        loops.sortWith(Comparator.comparing({it.edge.bound.end}, CurveComparator.rotary(point.point, normal, ref)))
+        for((top, bottom) in loops.rollover()){
+            top.twin!!.followedBy(bottom)
+        }
+    }
+
+    fun finalizeMirrored(){
+        assert(loops.size % 2 == 0)
+        val copy = loops.toMutableList()
+        copy.sortWith(Comparator.comparing({it.edge.bound.end}, CurveComparator.rotary(point.point, normal, ref)))
+
+        var idx = 0
+        while(copy.isNotEmpty()){
+            val currentIdx = idx % copy.size
+            idx++
+            val nextIdx = idx % copy.size
+
+            val current = copy[currentIdx]
+            val next = copy[nextIdx]
+
+            if(current.edge.orientation == EdgeOrientation.Forward){
+                if(next.edge.orientation == EdgeOrientation.Backward){
+                    if(currentIdx < nextIdx){
+                        copy.removeAt(nextIdx)
+                        copy.removeAt(currentIdx)
+                    }else{
+                        copy.removeAt(currentIdx)
+                        copy.removeAt(nextIdx)
+                    }
+
+                    next.twin!!.followedBy(current)
+                }
+            }
+        }
+    }
+}
+
 fun createFaceTree(edges: List<Edge<Vec2>>): SketchFace {
     val cutEdges = cutLines(edges)
     val loops = connectVerticesCCW(cutEdges)

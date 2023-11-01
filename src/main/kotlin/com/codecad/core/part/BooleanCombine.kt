@@ -6,6 +6,7 @@ import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.*
 import com.codecad.core.sketch.EPSILON
+import com.codecad.core.sketch.VertexHelper
 import com.codecad.core.sketch.isPointInPolygon
 import com.codecad.core.volume.Volume
 
@@ -15,15 +16,15 @@ enum class CombineKind{
 data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>)
 
 open class Split(val vertex: Vertex<Vec3>){
-    private var branches = hashMapOf<Loop<Vec3>, MutableList<Loop<Vec3>>>()
-    open fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
+    val branches = hashMapOf<Loop<Vec3>, MutableList<Loop<Vec3>>>()
+    open fun addBranch(loop: Loop<Vec3>, branch: Loop<Vec3>){
         val key = if(loop.edge.bound.end === vertex){
             loop.next
         }else{
             loop
         }
 
-        branches.computeIfAbsent(key){ mutableListOf() }.add(target)
+        branches.computeIfAbsent(key){ mutableListOf() }.add(branch)
     }
 }
 
@@ -44,7 +45,41 @@ object BooleanCombine{
             }
         }
 
+        connect()
+
         return lhsVolume
+    }
+
+    private fun connect(){
+        for((edge, edgeSplits) in edgeSplitMap.entries){
+            val line = edge.curve as Line
+            edgeSplits.sortBy { line.direction.dot(it.vertex.point - line.origin) }
+
+            val bound = edge.bound
+            var lastVertex = bound.start
+            var lastLoop : Loop<Vec3>? = null
+            for(edgeSplit in edgeSplits){
+                val currentVertex = edgeSplit.vertex
+                val segEdge = Edge(line, EdgeBound(lastVertex, currentVertex))
+                val segLoop = Loop.twin(segEdge)
+                lastLoop?.followedBy(segLoop)
+
+                for((loop, branch) in edgeSplit.branches.entries){
+                    if(loop.edge.orientation == EdgeOrientation.Forward){
+
+                    }else{
+
+                    }
+                }
+
+                lastVertex = currentVertex
+                lastLoop = segLoop
+            }
+
+            val segEdge = Edge(line, EdgeBound(lastVertex, bound.end))
+            val segLoop = Loop.twin(segEdge)
+            lastLoop?.followedBy(segLoop)
+        }
     }
 
 

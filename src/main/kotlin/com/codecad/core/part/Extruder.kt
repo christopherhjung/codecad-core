@@ -32,6 +32,8 @@ object Extruder{
         }
 
         for( (baseBound, extrudeBound) in baseFace.bounds.zip(extrudeFace.bounds) ){
+            var initExtrusionLine : Loop<Vec3>? = null
+            var lastExtrusionLine : Loop<Vec3>? = null
             for((baseLoop, extrudeLoop) in baseBound.loop.zip(extrudeBound.loop)){
                 val baseOrientedEdge = baseLoop.edge
                 val extrudeOrientedEdge = extrudeLoop.edge
@@ -85,15 +87,24 @@ object Extruder{
                     )
 
                     loop.twinWith(baseLoop)
-                    loop.next.next.twinWith(extrudeLoop)
+                    val nextLastExtrusionLine = loop.next
+                    nextLastExtrusionLine.next.twinWith(extrudeLoop)
 
+                    if(lastExtrusionLine != null){
+                        lastExtrusionLine.twinWith(nextLastExtrusionLine)
+                    }else{
+                        initExtrusionLine = loop.prev
+                    }
+
+                    lastExtrusionLine = nextLastExtrusionLine
                     val bound = FaceBound(loop, FaceBoundKind.OuterBound )
-
                     Face(surface, listOf(bound))
                 }
 
                 faces.add(sideFace)
             }
+
+            initExtrusionLine?.twinWith(lastExtrusionLine!!)
         }
 
         faces.add(extrudeFace)

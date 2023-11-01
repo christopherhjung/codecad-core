@@ -1,18 +1,24 @@
 package com.codecad.core.ast.vec
 
+import com.codecad.core.Utils
 import com.codecad.core.World
 import com.codecad.core.ast.primitive.Expr
 import com.codecad.core.scope.Scope
 import java.util.*
-import kotlin.math.acos
-import kotlin.math.asin
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 data class Vec3(val x: Double, val y: Double, val z: Double) : Vec<Vec3>
 {
     fun near(other: Vec3, distance : Double) : Boolean{
         return squaredDistance(other) < distance.pow(2)
+    }
+
+    fun angleTo(other: Vec3, axis: Vec3) : Double{
+        return atan2(cross(other).dot(axis), dot(other))
+    }
+
+    fun angleToNormalized(other: Vec3, axis: Vec3) : Double{
+        return Utils.normalizeAngle(angleTo(other, axis))
     }
 
     override fun dot(other: Vec3) : Double {
