@@ -43,13 +43,12 @@ object BooleanCombine{
     private val vertexSplitMap = hashMapOf<Vertex<Vec3>, VertexSplit>()
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
-        val edges = arrayListOf<Edge<Vec3>>()
         for( lhsShell in lhsVolume.shells ){
             for( lhsFace in lhsShell.faces ){
 
                 for( rhsShell in rhsVolume.shells ){
                     for( rhsFace in rhsShell.faces ){
-                        edges.addAll(intersectFace(lhsFace, rhsFace))
+                        intersectFace(lhsFace, rhsFace)
                     }
                 }
             }
@@ -60,14 +59,12 @@ object BooleanCombine{
 
     data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>, val edge: Edge<Vec3>)
 
-    fun intersectFace(lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
+    fun intersectFace(lhsFace: Face, rhsFace: Face){
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
 
-        val edges = interCurves.flatMap {
+        interCurves.forEach {
             createEdges(it, lhsFace, rhsFace)
         }
-
-        return edges
     }
 
     private fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Split{
@@ -95,12 +92,11 @@ object BooleanCombine{
         return split
     }
 
-    fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face) : List<Edge<Vec3>>{
+    fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face){
         val inters = findIters(curve, lhsFace, rhsFace)
         var lhsActive = false
         var rhsActive = false
         var last : Intersection? = null
-        val edges = arrayListOf<Edge<Vec3>>()
         for( inter in inters ){
             if(lhsActive && rhsActive){
                 last!!
@@ -109,11 +105,8 @@ object BooleanCombine{
                 val edge = Edge(curve, EdgeBound(lastVertex.vertex, interVertex.vertex))
 
                 val loop = Loop.twin(edge)
-
                 lastVertex.addBranch(last.loop, loop)
                 interVertex.addBranch(inter.loop, loop.twin!!)
-
-                edges.add(edge)
             }
 
             if(lhsFace === inter.face){
@@ -125,7 +118,6 @@ object BooleanCombine{
             last = inter
         }
         assert(!lhsActive && !rhsActive)
-        return edges
     }
 
     private fun findIters(
