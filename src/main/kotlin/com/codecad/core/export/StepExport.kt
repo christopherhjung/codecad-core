@@ -186,8 +186,8 @@ class StepExport : ModelExport{
         return addNamedObject("VERTEX_LOOP", vertex)
     }
 
-    private fun createFaceBound(edgeLoop: Id, sense: Boolean) : Id{
-        return addNamedObject("FACE_BOUND", edgeLoop, sense)
+    private fun createFaceBound(loop: Id, sense: Boolean) : Id{
+        return addNamedObject("FACE_BOUND", loop, sense)
     }
 
     private fun createAdvancedFace(faceBound: List<Id>, surface: Id, sense: Boolean) : Id{

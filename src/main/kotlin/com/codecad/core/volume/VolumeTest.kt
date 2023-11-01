@@ -42,8 +42,8 @@ class Debugger{
             faceBuilder.append("Face(")
             faceBuilder.append(getFaceIndex(face)).append(",")
             var sep = ""
-            for(edgeLoop in faceBound.loop){
-                val orientedEdge = edgeLoop.edge
+            for(loop in faceBound.loop){
+                val orientedEdge = loop.edge
                 val bound = orientedEdge.bound
                 faceBuilder.append(sep)
                     .append(getVertexIndex(bound.start))
@@ -51,7 +51,7 @@ class Debugger{
                     .append(getVertexIndex(bound.end))
 
                 faceBuilder.append("[")
-                    .append(getFaceIndex(edgeLoop.twin!!.face))
+                    .append(getFaceIndex(loop.twin!!.face))
                     .append("]")
 
                     /*

@@ -12,35 +12,25 @@ import com.codecad.core.volume.Volume
 enum class CombineKind{
     Add, Subtract, Intersect
 }
-
-class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>)
+data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>)
 
 open class Split(val vertex: Vertex<Vec3>){
     private var branches = hashMapOf<Loop<Vec3>, MutableList<Loop<Vec3>>>()
     open fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
-        branches.computeIfAbsent(loop){ mutableListOf() }.add(target)
-    }
-}
-
-class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex)
-class VertexSplit(vertex : Vertex<Vec3>) : Split(vertex){
-    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
-        val edge = loop.edge.bound
-
-        val key = if(edge.start === vertex){
-            loop
-        }else{
+        val key = if(loop.edge.bound.end === vertex){
             loop.next
+        }else{
+            loop
         }
 
-        super.addBranch(key, target)
+        branches.computeIfAbsent(key){ mutableListOf() }.add(target)
     }
 }
 
 
 object BooleanCombine{
-    private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<EdgeSplit>>()
-    private val vertexSplitMap = hashMapOf<Vertex<Vec3>, VertexSplit>()
+    private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<Split>>()
+    private val vertexSplitMap = hashMapOf<Vertex<Vec3>, Split>()
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
         for( lhsShell in lhsVolume.shells ){
@@ -57,7 +47,6 @@ object BooleanCombine{
         return lhsVolume
     }
 
-    data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>, val edge: Edge<Vec3>)
 
     fun intersectFace(lhsFace: Face, rhsFace: Face){
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
@@ -74,7 +63,7 @@ object BooleanCombine{
         for( boundVertex in bound ){
             if(boundVertex.point.near(pos, EPSILON)){
                 return vertexSplitMap.computeIfAbsent(boundVertex){
-                    VertexSplit(boundVertex)
+                    Split(boundVertex)
                 }
             }
         }
@@ -87,7 +76,7 @@ object BooleanCombine{
             }
         }
 
-        val split = EdgeSplit(Vertex(pos))
+        val split = Split(Vertex(pos))
         list.add(split)
         return split
     }
@@ -125,20 +114,17 @@ object BooleanCombine{
         lhsFace: Face,
         rhsFace: Face
     ): ArrayList<Intersection> {
-        val points = arrayListOf<Intersection>()
+        val intersections = arrayListOf<Intersection>()
 
         fun scan(face: Face) {
             for (bound in face.bounds) {
-                for (edgeLoop in bound.loop) {
-                    val orientedEdge = edgeLoop.edge
+                for (loop in bound.loop) {
+                    val orientedEdge = loop.edge
                     val edge = orientedEdge.edge
 
-                    val inters =
-                        CurveEdgeIntersect.intersect(interCurve, face.surface, edge)
-
-                    inters.forEach {
-                        points.add(Intersection(it, face, edgeLoop, edge))
-                    }
+                    CurveEdgeIntersect.intersect(interCurve, face.surface, edge).map {
+                        Intersection(it, face, loop)
+                    }.forEach(intersections::add)
                 }
             }
         }
@@ -147,8 +133,8 @@ object BooleanCombine{
         scan(rhsFace)
 
         val line = interCurve as Line<Vec3>
-        points.sortBy { line.direction.dot(it.point - line.origin) }
-        return points
+        intersections.sortBy { line.direction.dot(it.point - line.origin) }
+        return intersections
     }
 
     fun isInside(point: Vec3, rhsFace: Face) : Boolean{

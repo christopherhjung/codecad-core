@@ -5,7 +5,6 @@ import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.curve.Circle
 import com.codecad.core.rollover
-import kotlin.math.sign
 import kotlin.math.sin
 
 enum class FaceBoundKind{
@@ -248,8 +247,8 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     fun toString(sb: StringBuilder){
         var sep = ""
         val visited = hashSetOf<OrientedEdge<T>>()
-        for(edgeLoop in this){
-            val orientedEdge = edgeLoop.edge
+        for(loop in this){
+            val orientedEdge = loop.edge
             val bound = orientedEdge.bound
             sb.append(sep)
                 .append(bound.start)
@@ -285,10 +284,10 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         }
 
         fun <T : Vec<T>> twin(edge: Edge<T>) : Loop<T> {
-            val edgeLoop = Loop(OrientedEdge(edge, EdgeOrientation.Forward))
+            val loop = Loop(OrientedEdge(edge, EdgeOrientation.Forward))
             val twinLoop = Loop(OrientedEdge(edge, EdgeOrientation.Backward))
-            edgeLoop.twinWith(twinLoop)
-            return edgeLoop
+            loop.twinWith(twinLoop)
+            return loop
         }
 
         fun <T : Vec<T>> wireCircular(vararg vertices: Vertex<T>) : Loop<T> {

@@ -18,10 +18,10 @@ class Revolver(){
 
         val shells = arrayListOf<Shell>()
         for( faceBound in face.bounds ) {
-            val edgeLoop = faceBound.loop
-            val circleCurve = edgeLoop.edge.edge.curve
+            val loop = faceBound.loop
+            val circleCurve = loop.edge.edge.curve
 
-            if(circleCurve is Circle && edgeLoop.isClosed()){
+            if(circleCurve is Circle && loop.isClosed()){
                 val center = circleCurve.workplane.origin
                 val surfaceWorkplane = axis.alignWorkplane(center)
                 val radius = surfaceWorkplane.origin.distanceTo(center)
@@ -66,7 +66,7 @@ class Revolver(){
             }else{
                 val faceBounds = arrayListOf<FaceBound<Vec3>>()
                 val surfaces = arrayListOf<Surface>()
-                for (currentEdgeLoop in edgeLoop) {
+                for (currentEdgeLoop in loop) {
                     val orientedEdge = currentEdgeLoop.edge
                     val curve = orientedEdge.edge.curve
                     val start = orientedEdge.start!!

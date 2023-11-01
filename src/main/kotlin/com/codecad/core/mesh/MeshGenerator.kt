@@ -1,6 +1,5 @@
 package com.codecad.core.mesh
 
-import com.codecad.core.ast.vec.Quaternion
 import com.codecad.core.ast.vec.Vec2
 import com.codecad.core.ast.vec.Vec3
 import com.codecad.core.brep.*
@@ -55,11 +54,11 @@ class MeshGenerator {
             var outline : List<Vec3>? = null
             val holes = arrayListOf<List<Vec3>>()
             for(bound in face.bounds){
-               val edgeLoop = bound.loop
+               val loop = bound.loop
                if(bound.sense == FaceBoundKind.OuterBound){
-                   outline = sweepVertices(edgeLoop)
+                   outline = sweepVertices(loop)
                }else{
-                   holes.add(sweepVertices(edgeLoop))
+                   holes.add(sweepVertices(loop))
                }
             }
 
