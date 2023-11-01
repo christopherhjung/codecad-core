@@ -15,35 +15,39 @@ enum class CombineKind{
 
 class Intersection(var lhsFace : Face, var rhsFace : Face, var curve : Curve<Vec3>)
 
-abstract class Split(val vertex: Vertex<Vec3>){
-    abstract fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>)
-}
-class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex){
-    private var branches = hashMapOf<Loop<Vec3>, Loop<Vec3>>()
-    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
-        branches[loop] = target
+open class Split(val vertex: Vertex<Vec3>){
+    private var branches = hashMapOf<Loop<Vec3>, MutableList<Loop<Vec3>>>()
+    open fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
+        branches.computeIfAbsent(loop){ mutableListOf() }.add(target)
     }
 }
-class VertexSplit(vertex : Vertex<Vec3>, loop: Loop<Vec3>) : Split(vertex){
-    private var branches = arrayListOf<Loop<Vec3>>()
-    val initLoop = run{
+
+class SplitAdapter(private val split: Split, private val loop: Loop<Vec3>){
+    val vertex get() = split.vertex
+    fun addBranch(target: Loop<Vec3>){
+        split.addBranch(loop, target)
+    }
+}
+class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex){
+}
+class VertexSplit(vertex : Vertex<Vec3>) : Split(vertex){
+    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
         val edge = loop.edge.bound
 
-        if(edge.start === vertex){
+        val key = if(edge.start === vertex){
             loop
         }else{
             loop.next
         }
-    }
-    override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
-        branches.add(target)
+
+        super.addBranch(key, target)
     }
 }
 
 
 object BooleanCombine{
     private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<EdgeSplit>>()
-    private val vertexSplitMap = hashMapOf<Vertex<Vec3>, MutableList<VertexSplit>>()
+    private val vertexSplitMap = hashMapOf<Vertex<Vec3>, VertexSplit>()
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
         val edges = arrayListOf<Edge<Vec3>>()
@@ -73,16 +77,20 @@ object BooleanCombine{
         return edges
     }
 
-    fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Split{
+    private fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : SplitAdapter{
+        val split = addSplitImpl(loop, pos)
+        return SplitAdapter(split, loop)
+    }
+
+    private fun addSplitImpl(loop: Loop<Vec3>, pos : Vec3 ) : Split{
         val edge = loop.edge.edge
         val bound = edge.bound
 
         for( boundVertex in bound ){
             if(boundVertex.point.near(pos, EPSILON)){
-                val split = VertexSplit(boundVertex, loop)
-                val list = vertexSplitMap.computeIfAbsent(boundVertex){ mutableListOf() }
-                list.add(split)
-                return split
+                return vertexSplitMap.computeIfAbsent(boundVertex){
+                    VertexSplit(boundVertex)
+                }
             }
         }
 
@@ -108,8 +116,8 @@ object BooleanCombine{
         for( inter in inters ){
             if(lhsActive && rhsActive){
                 last!!
-                val lastVertex = addSplit(last.loop, last.point)
-                val interVertex = addSplit(inter.loop, inter.point)
+                val lastVertex = addSplitImpl(last.loop, last.point)
+                val interVertex = addSplitImpl(inter.loop, inter.point)
                 val edge = Edge(curve, EdgeBound(lastVertex.vertex, interVertex.vertex))
 
                 val loop = Loop.twin(edge)
