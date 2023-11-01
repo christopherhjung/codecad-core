@@ -22,14 +22,7 @@ open class Split(val vertex: Vertex<Vec3>){
     }
 }
 
-class SplitAdapter(private val split: Split, private val loop: Loop<Vec3>){
-    val vertex get() = split.vertex
-    fun addBranch(target: Loop<Vec3>){
-        split.addBranch(loop, target)
-    }
-}
-class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex){
-}
+class EdgeSplit(vertex : Vertex<Vec3>) : Split(vertex)
 class VertexSplit(vertex : Vertex<Vec3>) : Split(vertex){
     override fun addBranch(loop: Loop<Vec3>, target: Loop<Vec3>){
         val edge = loop.edge.bound
@@ -77,12 +70,7 @@ object BooleanCombine{
         return edges
     }
 
-    private fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : SplitAdapter{
-        val split = addSplitImpl(loop, pos)
-        return SplitAdapter(split, loop)
-    }
-
-    private fun addSplitImpl(loop: Loop<Vec3>, pos : Vec3 ) : Split{
+    private fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Split{
         val edge = loop.edge.edge
         val bound = edge.bound
 
@@ -116,8 +104,8 @@ object BooleanCombine{
         for( inter in inters ){
             if(lhsActive && rhsActive){
                 last!!
-                val lastVertex = addSplitImpl(last.loop, last.point)
-                val interVertex = addSplitImpl(inter.loop, inter.point)
+                val lastVertex = addSplit(last.loop, last.point)
+                val interVertex = addSplit(inter.loop, inter.point)
                 val edge = Edge(curve, EdgeBound(lastVertex.vertex, interVertex.vertex))
 
                 val loop = Loop.twin(edge)

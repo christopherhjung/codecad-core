@@ -32,9 +32,9 @@ object Extruder{
         }
 
         for( (baseBound, extrudeBound) in baseFace.bounds.zip(extrudeFace.bounds) ){
-            for((baseEdgeLoop, extrudeEdgeLoop) in baseBound.loop.zip(extrudeBound.loop)){
-                val baseOrientedEdge = baseEdgeLoop.edge
-                val extrudeOrientedEdge = extrudeEdgeLoop.edge
+            for((baseLoop, extrudeLoop) in baseBound.loop.zip(extrudeBound.loop)){
+                val baseOrientedEdge = baseLoop.edge
+                val extrudeOrientedEdge = extrudeLoop.edge
                 val baseEdge = baseOrientedEdge.edge
                 val extrudeEdge = extrudeOrientedEdge.edge
                 val baseEdgeBound = baseEdge.bound
@@ -62,21 +62,32 @@ object Extruder{
                     else -> throw RuntimeException()
                 }
 
-                val sideFace = if(baseEdgeBound.start === baseEdgeBound.end){
-                    Face(surface, listOf(baseBound, extrudeBound))
+                val sideFace = if(baseEdgeBound.isUnbounded()){
+                    val baseCopyLoop = Loop.wireCircular(baseOrientedEdge)
+                    val extrudeCopyLoop = Loop.wireCircular(extrudeEdge)
+
+                    baseCopyLoop.twinWith(baseLoop)
+                    extrudeCopyLoop.twinWith(extrudeLoop)
+
+                    Face(surface, listOf(
+                        FaceBound(baseCopyLoop, FaceBoundKind.OuterBound),
+                        FaceBound(extrudeCopyLoop, FaceBoundKind.OuterBound)
+                    ))
                 }else{
                     val startEdge = extrusionLine(baseEdgeBound.start, extrudeEdgeBound.start)
                     val endEdge = extrusionLine(baseEdgeBound.end, extrudeEdgeBound.end)
 
-                    val bound = FaceBound(
-                        Loop.wireCircular(
-                            baseOrientedEdge,
-                            OrientedEdge(endEdge, baseOrientedEdge.orientation),
-                            OrientedEdge(extrudeEdge, baseOrientedEdge.orientation.invert()),
-                            OrientedEdge(startEdge, baseOrientedEdge.orientation.invert())
-                        ),
-                        FaceBoundKind.OuterBound
+                    val loop = Loop.wireCircular(
+                        baseOrientedEdge,
+                        OrientedEdge(endEdge, baseOrientedEdge.orientation),
+                        OrientedEdge(extrudeEdge, baseOrientedEdge.orientation.invert()),
+                        OrientedEdge(startEdge, baseOrientedEdge.orientation.invert())
                     )
+
+                    loop.twinWith(baseLoop)
+                    loop.next.next.twinWith(extrudeLoop)
+
+                    val bound = FaceBound(loop, FaceBoundKind.OuterBound )
 
                     Face(surface, listOf(bound))
                 }
