@@ -183,6 +183,14 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
         return null!!
     }
 
+    fun connectWith(other : Loop<T>){
+        if(edge.end === other.edge.start){
+            followedBy(other)
+        }else{
+            other.followedBy(this)
+        }
+    }
+
     fun followedBy(next : Loop<T>){
         val bound = edge.bound
         val nextBound = next.edge.bound
@@ -194,6 +202,9 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
     }
 
     fun twinWith(next : Loop<T>){
+        if(edge.edge !== next.edge.edge){
+            throw RuntimeException("xxx")
+        }
         this.twin = next
         next.twin = this
     }
@@ -283,9 +294,11 @@ class Loop<T : Vec<T>>(var edge : OrientedEdge<T>) : Iterable<Loop<T>>{
             return Loop(OrientedEdge(edge, EdgeOrientation.Forward))
         }
 
-        fun <T : Vec<T>> twin(edge: Edge<T>) : Loop<T> {
-            val loop = Loop(OrientedEdge(edge, EdgeOrientation.Forward))
-            val twinLoop = Loop(OrientedEdge(edge, EdgeOrientation.Backward))
+        fun <T : Vec<T>> twin(edge: Edge<T>,
+                              orientation: EdgeOrientation = EdgeOrientation.Forward,
+                              twinOrient: EdgeOrientation = orientation.invert()) : Loop<T> {
+            val loop = Loop(OrientedEdge(edge, orientation))
+            val twinLoop = Loop(OrientedEdge(edge, twinOrient))
             loop.twinWith(twinLoop)
             return loop
         }

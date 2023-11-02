@@ -5,15 +5,13 @@ import com.codecad.core.brep.*
 import com.codecad.core.brep.curve.Curve
 import com.codecad.core.brep.curve.Line
 import com.codecad.core.brep.surface.*
-import com.codecad.core.sketch.EPSILON
-import com.codecad.core.sketch.VertexHelper
 import com.codecad.core.sketch.isPointInPolygon
 import com.codecad.core.volume.Volume
 
 enum class CombineKind{
     Add, Subtract, Intersect
 }
-data class Intersection(val point: Vec3, val face: Face, val loop: Loop<Vec3>)
+data class Intersection(val vertex: Vertex<Vec3>, val face: Face, val loop: Loop<Vec3>)
 
 open class Split(val vertex: Vertex<Vec3>){
     val branches = hashMapOf<Loop<Vec3>, MutableList<Loop<Vec3>>>()
@@ -30,7 +28,6 @@ open class Split(val vertex: Vertex<Vec3>){
 
 
 object BooleanCombine{
-    private val edgeSplitMap = hashMapOf<Edge<Vec3>, MutableList<Split>>()
     private val vertexSplitMap = hashMapOf<Vertex<Vec3>, Split>()
 
     fun combine(kind: CombineKind, lhsVolume : Volume, rhsVolume: Volume) : Volume{
@@ -45,43 +42,8 @@ object BooleanCombine{
             }
         }
 
-        connect()
-
         return lhsVolume
     }
-
-    private fun connect(){
-        for((edge, edgeSplits) in edgeSplitMap.entries){
-            val line = edge.curve as Line
-            edgeSplits.sortBy { line.direction.dot(it.vertex.point - line.origin) }
-
-            val bound = edge.bound
-            var lastVertex = bound.start
-            var lastLoop : Loop<Vec3>? = null
-            for(edgeSplit in edgeSplits){
-                val currentVertex = edgeSplit.vertex
-                val segEdge = Edge(line, EdgeBound(lastVertex, currentVertex))
-                val segLoop = Loop.twin(segEdge)
-                lastLoop?.followedBy(segLoop)
-
-                for((loop, branch) in edgeSplit.branches.entries){
-                    if(loop.edge.orientation == EdgeOrientation.Forward){
-
-                    }else{
-
-                    }
-                }
-
-                lastVertex = currentVertex
-                lastLoop = segLoop
-            }
-
-            val segEdge = Edge(line, EdgeBound(lastVertex, bound.end))
-            val segLoop = Loop.twin(segEdge)
-            lastLoop?.followedBy(segLoop)
-        }
-    }
-
 
     fun intersectFace(lhsFace: Face, rhsFace: Face){
         val interCurves = SurfaceIntersect.intersect(lhsFace.surface, rhsFace.surface)
@@ -91,29 +53,84 @@ object BooleanCombine{
         }
     }
 
-    private fun addSplit(loop: Loop<Vec3>, pos : Vec3 ) : Split{
-        val edge = loop.edge.edge
-        val bound = edge.bound
-
+    private fun addSplit(loop: Loop<Vec3>, vertex: Vertex<Vec3> ) : Split{
+        val bound = loop.edge.edge.bound
         for( boundVertex in bound ){
-            if(boundVertex.point.near(pos, EPSILON)){
+            if(boundVertex === vertex){
                 return vertexSplitMap.computeIfAbsent(boundVertex){
-                    Split(boundVertex)
+                    Split(it)
                 }
             }
         }
 
-        val list = edgeSplitMap.computeIfAbsent(edge){ mutableListOf() }
-        list.forEach {
-            val vertex = it.vertex
-            if(vertex.point.near(pos, EPSILON)){
-                return it
+        splitEdge(loop, vertex)
+        val split = Split(vertex)
+        vertexSplitMap[vertex] = split
+        return split
+    }
+
+    private fun splitEdge(
+        loop: Loop<Vec3>,
+        vertex: Vertex<Vec3>,
+    ) {
+        val edge = loop.edge.edge
+        val bound = edge.bound
+        val curve = edge.curve
+        val firstEdge = Edge(curve, EdgeBound(bound.start, vertex))
+        val secondEdge = Edge(curve, EdgeBound(vertex, bound.end))
+
+        val twin = loop.twin!!
+        val orient = loop.edge.orientation
+        val twinOrient = twin.edge.orientation
+
+        val firstLoop = Loop.twin(firstEdge, orient, twinOrient)
+        val secondLoop = Loop.twin(secondEdge, orient, twinOrient)
+        val face = loop.face
+        val twinFace = twin.face
+        firstLoop.face = face
+        secondLoop.face = face
+        firstLoop.twin!!.face = twinFace
+        secondLoop.twin!!.face = twinFace
+
+        if (orient == EdgeOrientation.Forward) {
+            firstLoop.followedBy(secondLoop)
+
+            loop.prev.followedBy(firstLoop)
+            secondLoop.followedBy(loop.next)
+        } else {
+            secondLoop.followedBy(firstLoop)
+
+            loop.prev.followedBy(secondLoop)
+            firstLoop.followedBy(loop.next)
+        }
+
+        if (twinOrient == EdgeOrientation.Forward) {
+            firstLoop.twin!!.followedBy(secondLoop.twin!!)
+
+            twin.prev.followedBy(firstLoop.twin!!)
+            secondLoop.twin!!.followedBy(twin.next)
+        } else {
+            secondLoop.twin!!.followedBy(firstLoop.twin!!)
+
+            twin.prev.followedBy(secondLoop.twin!!)
+            firstLoop.twin!!.followedBy(twin.next)
+        }
+
+        face.bounds = face.bounds.map {
+            if (it.loop === loop) {
+                FaceBound(firstLoop, it.sense)
+            } else {
+                it
             }
         }
 
-        val split = Split(Vertex(pos))
-        list.add(split)
-        return split
+        twinFace.bounds = twinFace.bounds.map {
+            if (it.loop === twin) {
+                FaceBound(firstLoop.twin!!, it.sense)
+            } else {
+                it
+            }
+        }
     }
 
     fun createEdges(curve: Curve<Vec3>, lhsFace: Face, rhsFace: Face){
@@ -122,10 +139,14 @@ object BooleanCombine{
         var rhsActive = false
         var last : Intersection? = null
         for( inter in inters ){
+            if(inter.vertex === last?.vertex){
+                continue
+            }
+
             if(lhsActive && rhsActive){
                 last!!
-                val lastVertex = addSplit(last.loop, last.point)
-                val interVertex = addSplit(inter.loop, inter.point)
+                val lastVertex = addSplit(last.loop, last.vertex)
+                val interVertex = addSplit(inter.loop, inter.vertex)
                 val edge = Edge(curve, EdgeBound(lastVertex.vertex, interVertex.vertex))
 
                 val loop = Loop.twin(edge)
@@ -168,7 +189,7 @@ object BooleanCombine{
         scan(rhsFace)
 
         val line = interCurve as Line<Vec3>
-        intersections.sortBy { line.direction.dot(it.point - line.origin) }
+        intersections.sortBy { line.direction.dot(it.vertex.point - line.origin) }
         return intersections
     }
 

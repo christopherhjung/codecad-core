@@ -14,7 +14,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 object CurveEdgeIntersect {
-    fun intersect(lhsCurve: Curve<Vec3>, rhsSurface: Surface, rhsEdge: Edge<Vec3>) : List<Vec3>{
+    fun intersect(lhsCurve: Curve<Vec3>, rhsSurface: Surface, rhsEdge: Edge<Vec3>) : List<Vertex<Vec3>>{
         val rhsCurve = rhsEdge.curve
         return when(lhsCurve){
             is Line -> {
@@ -34,7 +34,7 @@ object CurveEdgeIntersect {
             }
 
             else -> throw NotImplementedError()
-        }.filter { rhsEdge.inside(it) }
+        }.mapNotNull { rhsEdge.inside(it) }
     }
 
     public fun intersectLinePlane(lhs: Line<Vec3>, rhsCurve: Curve<Vec3>) : List<Vec3>{
@@ -61,19 +61,23 @@ object CurveEdgeIntersect {
         return emptyList()
     }
 
-    fun Edge<Vec3>.inside(p : Vec3) : Boolean{
+    fun Edge<Vec3>.inside(p : Vec3) : Vertex<Vec3>?{
         if(bound.isUnbounded()){
-            return true
+            return Vertex(p)
         }
 
         val p0 = bound.start.point
         val p1 = bound.end.point
 
-        if(p0.near(p, EPSILON) || p1.near(p, EPSILON)){
-            return true
+        if(p0.near(p, EPSILON)){
+            return bound.start
         }
 
-        return when(val curve = curve){
+        if(p1.near(p, EPSILON)){
+            return bound.end
+        }
+
+        val isInside = when(val curve = curve){
             is Line -> {
                 ((p0.x - EPSILON <= p.x) == (p.x <= p1.x + EPSILON)) &&
                 ((p0.y - EPSILON <= p.y) == (p.y <= p1.y + EPSILON)) &&
@@ -83,10 +87,16 @@ object CurveEdgeIntersect {
                 val radius = curve.radius
                 val center = curve.workplane.origin
 
-                return abs(center.distanceTo(p) - radius) < EPSILON
+                abs(center.distanceTo(p) - radius) < EPSILON
             }
             else -> true
         }
+
+        if(isInside){
+            return Vertex(p)
+        }
+
+        return null
     }
 
 

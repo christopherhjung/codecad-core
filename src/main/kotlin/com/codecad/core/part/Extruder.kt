@@ -89,11 +89,12 @@ object Extruder{
                     loop.twinWith(baseLoop)
                     val nextLastExtrusionLine = loop.next
                     nextLastExtrusionLine.next.twinWith(extrudeLoop)
+                    val prevLoop = loop.prev
 
                     if(lastExtrusionLine != null){
-                        lastExtrusionLine.twinWith(nextLastExtrusionLine)
+                        lastExtrusionLine.twinWith(prevLoop)
                     }else{
-                        initExtrusionLine = loop.prev
+                        initExtrusionLine = prevLoop
                     }
 
                     lastExtrusionLine = nextLastExtrusionLine
